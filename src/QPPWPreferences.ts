@@ -3,7 +3,7 @@
  */
 
 import { BooleanProperty, Property } from "scenerystack/axon";
-import { Tandem } from "scenerystack/tandem";
+import { Tandem, StringIO } from "scenerystack/tandem";
 import qppw from "./QPPWNamespace.js";
 import { NumericalMethod } from "./common/model/Schrodinger1DSolver.js";
 
@@ -25,6 +25,7 @@ const QPPWPreferences = {
   numericalMethodProperty: new Property<NumericalMethod>(NumericalMethod.DVR, {
     tandem: Tandem.PREFERENCES.createTandem("numericalMethodProperty"),
     phetioFeatured: true,
+    phetioValueType: StringIO,
     validValues: [NumericalMethod.NUMEROV, NumericalMethod.DVR],
   }),
 
