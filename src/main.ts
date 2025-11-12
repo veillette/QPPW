@@ -99,6 +99,42 @@ onReadyToLaunch(() => {
                     }),
                     tandemName: "dvrRadioButton",
                   },
+                  {
+                    value: NumericalMethod.FGH,
+                    createNode: () => new VBox({
+                      align: "left",
+                      spacing: 4,
+                      children: [
+                        new Text(numericalMethodNames.fghStringProperty, {
+                          font: new PhetFont(14),
+                        }),
+                        new Text(numericalMethodDescriptions.fghStringProperty, {
+                          font: new PhetFont(11),
+                          fill: "rgb(80,80,80)",
+                          maxWidth: 550,
+                        }),
+                      ],
+                    }),
+                    tandemName: "fghRadioButton",
+                  },
+                  {
+                    value: NumericalMethod.SPECTRAL,
+                    createNode: () => new VBox({
+                      align: "left",
+                      spacing: 4,
+                      children: [
+                        new Text(numericalMethodNames.spectralStringProperty, {
+                          font: new PhetFont(14),
+                        }),
+                        new Text(numericalMethodDescriptions.spectralStringProperty, {
+                          font: new PhetFont(11),
+                          fill: "rgb(80,80,80)",
+                          maxWidth: 550,
+                        }),
+                      ],
+                    }),
+                    tandemName: "spectralRadioButton",
+                  },
                 ],
                 {
                   spacing: 12,

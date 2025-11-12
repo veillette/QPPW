@@ -20,13 +20,13 @@ const QPPWPreferences = {
 
   /**
    * Numerical method for solving the Schrödinger equation
-   * Options: 'numerov' (Numerov method) or 'dvr' (Discrete Variable Representation)
+   * Options: 'numerov', 'dvr', 'fgh', 'spectral'
    */
   numericalMethodProperty: new Property<NumericalMethod>(NumericalMethod.DVR, {
     tandem: Tandem.PREFERENCES.createTandem("numericalMethodProperty"),
     phetioFeatured: true,
     phetioValueType: StringIO,
-    validValues: [NumericalMethod.NUMEROV, NumericalMethod.DVR],
+    validValues: [NumericalMethod.NUMEROV, NumericalMethod.DVR, NumericalMethod.FGH, NumericalMethod.SPECTRAL],
   }),
 
   // Visual Preferences

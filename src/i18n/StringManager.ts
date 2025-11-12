@@ -52,6 +52,10 @@ export class StringManager {
   public readonly numerovDescriptionStringProperty: StringProperty;
   public readonly dvrStringProperty: StringProperty;
   public readonly dvrDescriptionStringProperty: StringProperty;
+  public readonly fghStringProperty: StringProperty;
+  public readonly fghDescriptionStringProperty: StringProperty;
+  public readonly spectralStringProperty: StringProperty;
+  public readonly spectralDescriptionStringProperty: StringProperty;
   public readonly autoPauseWhenTabHiddenStringProperty: StringProperty;
   public readonly autoPauseDescriptionStringProperty: StringProperty;
 
@@ -102,6 +106,10 @@ export class StringManager {
     this.numerovDescriptionStringProperty = new StringProperty("Traditional shooting method - accurate and stable for most potentials");
     this.dvrStringProperty = new StringProperty("DVR (Discrete Variable Representation)");
     this.dvrDescriptionStringProperty = new StringProperty("Matrix diagonalization method - faster and more robust for complex potentials");
+    this.fghStringProperty = new StringProperty("FGH (Fourier Grid Hamiltonian)");
+    this.fghDescriptionStringProperty = new StringProperty("Plane wave basis method - natural for periodic systems with spectral accuracy");
+    this.spectralStringProperty = new StringProperty("Spectral (Chebyshev)");
+    this.spectralDescriptionStringProperty = new StringProperty("Chebyshev polynomial method - exponential convergence for smooth functions");
     this.autoPauseWhenTabHiddenStringProperty = new StringProperty("Auto-pause when tab is hidden");
     this.autoPauseDescriptionStringProperty = new StringProperty("Automatically pause the simulation when the browser tab is not visible");
   }
@@ -144,6 +152,8 @@ export class StringManager {
     return {
       numerovStringProperty: this.numerovStringProperty,
       dvrStringProperty: this.dvrStringProperty,
+      fghStringProperty: this.fghStringProperty,
+      spectralStringProperty: this.spectralStringProperty,
     };
   }
 
@@ -154,6 +164,8 @@ export class StringManager {
     return {
       numerovStringProperty: this.numerovDescriptionStringProperty,
       dvrStringProperty: this.dvrDescriptionStringProperty,
+      fghStringProperty: this.fghDescriptionStringProperty,
+      spectralStringProperty: this.spectralDescriptionStringProperty,
     };
   }
 }

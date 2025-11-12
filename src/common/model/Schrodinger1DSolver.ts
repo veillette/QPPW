@@ -21,6 +21,8 @@ import {
 } from "./AnalyticalSolutions.js";
 import { solveNumerov } from "./NumerovSolver.js";
 import { solveDVR } from "./DVRSolver.js";
+import { solveFGH } from "./FGHSolver.js";
+import { solveSpectral } from "./SpectralSolver.js";
 import QuantumConstants from "./QuantumConstants.js";
 import qppw from "../../QPPWNamespace.js";
 
@@ -30,6 +32,8 @@ import qppw from "../../QPPWNamespace.js";
 export enum NumericalMethod {
   NUMEROV = "numerov",
   DVR = "dvr",
+  FGH = "fgh",
+  SPECTRAL = "spectral",
 }
 
 /**
@@ -208,9 +212,15 @@ export class Schrodinger1DSolver {
         energyRange[0],
         energyRange[1],
       );
-    } else {
+    } else if (this.numericalMethod === NumericalMethod.DVR) {
       // DVR method
       return solveDVR(potential, mass, numStates, gridConfig);
+    } else if (this.numericalMethod === NumericalMethod.FGH) {
+      // Fourier Grid Hamiltonian method
+      return solveFGH(potential, mass, numStates, gridConfig);
+    } else {
+      // Spectral (Chebyshev) method
+      return solveSpectral(potential, mass, numStates, gridConfig);
     }
   }
 
