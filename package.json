@@ -2,21 +2,60 @@
   "name": "QPPW",
   "private": true,
   "version": "0.0.0",
+  "description": "Interactive quantum physics simulations using SceneryStack.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/veillette/QPPW.git"
+  },
+  "bugs": {
+    "url": "https://github.com/veillette/QPPW/issues"
+  },
+  "homepage": "https://github.com/veillette/QPPW#readme",
   "type": "module",
+  "keywords": [
+    "quantum physics",
+    "physics",
+    "simulation",
+    "SceneryStack",
+    "interactive",
+    "education"
+  ],
   "scripts": {
     "start": "npx vite",
-    "build": "npx tsc && npx vite build"
+    "build": "npx tsgo && npx vite build",
+    "preview": "npx vite preview",
+    "lint": "npx eslint .",
+    "format": "npx prettier --write .",
+    "fix": "npx eslint --fix . && npx prettier --write .",
+    "release": "npm version patch && git push && git push --tags",
+    "check": "npx tsgo --noEmit",
+    "check:tsc": "npx tsc --noEmit",
+    "serve": "npx serve -s dist",
+    "watch": "npx tsgo --watch",
+    "watch:tsc": "npx tsc --watch",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@typescript/native-preview": "^7.0.0-dev.20251105.1",
+    "katex": "^0.16.25",
     "scenerystack": "^3.0.0"
   },
   "devDependencies": {
-    "vite": "^5.4.10",
+    "@eslint/js": "^9.39.1",
     "eslint": "^9.17.0",
-    "@eslint/js": "^9.17.0",
-    "typescript-eslint": "^8.18.2",
+    "globals": "^15.15.0",
     "prettier": "^3.4.2",
     "typescript": "~5.7.2",
-    "globals": "^15.14.0"
+    "typescript-eslint": "^8.46.4",
+    "vite": "^5.4.10",
+    "vite-plugin-singlefile": "^2.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "phet-io": {
+    "validation": false,
+    "compareDesignedAPIChanges": false
   }
 }
