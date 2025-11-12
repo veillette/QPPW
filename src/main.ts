@@ -3,19 +3,43 @@
 import "./brand.js";
 
 import { onReadyToLaunch, Sim } from "scenerystack/sim";
-import { StringProperty } from "scenerystack/axon";
 import { Tandem } from "scenerystack/tandem";
-import { SimScreen } from "./screen-name/SimScreen.js";
+import stringManager from "./i18n/StringManager.js";
+import QPPWColors from "./QPPWColors.js";
+import { OneWellScreen } from "./one-well/OneWellScreen.js";
+import { TwoWellsScreen } from "./two-wells/TwoWellsScreen.js";
+import { ManyWellsScreen } from "./many-wells/ManyWellsScreen.js";
+import { OneWellScreenIcon } from "./one-well/view/OneWellScreenIcon.js";
+import { TwoWellsScreenIcon } from "./two-wells/view/TwoWellsScreenIcon.js";
+import { ManyWellsScreenIcon } from "./many-wells/view/ManyWellsScreenIcon.js";
 
 onReadyToLaunch(() => {
-  // The title, like most string-like things, is a StringProperty that can change to different values (e.g. for
-  // different languages, see localeProperty from scenerystack/joist)
-  const titleStringProperty = new StringProperty("QPPW");
+  const screenNames = stringManager.getScreenNames();
 
   const screens = [
-    new SimScreen({ tandem: Tandem.ROOT.createTandem("simScreen") }),
+    new OneWellScreen({
+      name: screenNames.oneWellStringProperty,
+      tandem: Tandem.ROOT.createTandem("oneWellScreen"),
+      backgroundColorProperty: QPPWColors.backgroundColorProperty,
+      homeScreenIcon: new OneWellScreenIcon(),
+    }),
+    new TwoWellsScreen({
+      name: screenNames.twoWellsStringProperty,
+      tandem: Tandem.ROOT.createTandem("twoWellsScreen"),
+      backgroundColorProperty: QPPWColors.backgroundColorProperty,
+      homeScreenIcon: new TwoWellsScreenIcon(),
+    }),
+    new ManyWellsScreen({
+      name: screenNames.manyWellsStringProperty,
+      tandem: Tandem.ROOT.createTandem("manyWellsScreen"),
+      backgroundColorProperty: QPPWColors.backgroundColorProperty,
+      homeScreenIcon: new ManyWellsScreenIcon(),
+    }),
   ];
 
-  const sim = new Sim(titleStringProperty, screens);
+  const sim = new Sim(
+    stringManager.getTitleStringProperty(),
+    screens,
+  );
   sim.start();
 });
