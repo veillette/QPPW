@@ -1,0 +1,192 @@
+/**
+ * ManyWellsScreenView is the main view for the Many Wells screen.
+ * It displays multiple quantum potential wells and demonstrates energy band formation.
+ */
+
+import { BaseScreenView } from "../../common/view/BaseScreenView.js";
+import { ManyWellsModel } from "../model/ManyWellsModel.js";
+import { ScreenViewOptions } from "scenerystack/sim";
+import { Node, Rectangle, Text, VBox, HBox } from "scenerystack/scenery";
+import { Panel } from "scenerystack/sun";
+import QPPWColors from "../../QPPWColors.js";
+import stringManager from "../../i18n/StringManager.js";
+
+export class ManyWellsScreenView extends BaseScreenView {
+  private readonly model: ManyWellsModel;
+  private readonly wellsContainer: Node;
+  private readonly controlPanel: Panel;
+
+  public constructor(model: ManyWellsModel, options?: ScreenViewOptions) {
+    super(
+      () => {
+        model.reset();
+        this.reset();
+      },
+      options,
+    );
+
+    this.model = model;
+
+    // Create container for the wells
+    this.wellsContainer = new Node();
+    this.addChild(this.wellsContainer);
+
+    // Create the initial wells array
+    this.createWellsVisualization();
+
+    // Add title text
+    const titleText = new Text(stringManager.manyWellsStringProperty, {
+      font: "24px sans-serif",
+      fill: QPPWColors.textFillProperty,
+      centerX: this.layoutBounds.centerX,
+      top: 20,
+    });
+    this.addChild(titleText);
+
+    // Create control panel
+    this.controlPanel = this.createControlPanel();
+    this.addChild(this.controlPanel);
+
+    // Add placeholder content text
+    const contentText = new Text("Multiple wells showing energy band formation", {
+      font: "16px sans-serif",
+      fill: QPPWColors.labelFillProperty,
+      centerX: this.layoutBounds.centerX - 100,
+      top: titleText.bottom + 20,
+    });
+    this.addChild(contentText);
+
+    // Listen to numberOfWellsProperty changes
+    model.numberOfWellsProperty.link(() => {
+      this.updateWellsVisualization();
+    });
+  }
+
+  /**
+   * Creates the visualization of multiple potential wells.
+   */
+  private createWellsVisualization(): void {
+    const numWells = this.model.numberOfWellsProperty.value;
+    const wellWidth = 40;
+    const wellHeight = 200;
+    const barrierWidth = 15;
+    const spacing = wellWidth + barrierWidth;
+
+    const totalWidth = numWells * wellWidth + (numWells - 1) * barrierWidth;
+    const startX = this.layoutBounds.centerX - totalWidth / 2 - 100;
+    const centerY = this.layoutBounds.centerY;
+
+    for (let i = 0; i < numWells; i++) {
+      // Create well
+      const well = new Rectangle(0, 0, wellWidth, wellHeight, {
+        fill: QPPWColors.backgroundColorProperty,
+        stroke: QPPWColors.potentialWellProperty,
+        lineWidth: 2,
+        left: startX + i * spacing,
+        centerY: centerY,
+      });
+      this.wellsContainer.addChild(well);
+
+      // Create barrier (except after the last well)
+      if (i < numWells - 1) {
+        const barrier = new Rectangle(0, 0, barrierWidth, wellHeight, {
+          fill: QPPWColors.potentialBarrierProperty,
+          opacity: 0.4,
+          left: startX + i * spacing + wellWidth,
+          centerY: centerY,
+        });
+        this.wellsContainer.addChild(barrier);
+      }
+    }
+  }
+
+  /**
+   * Updates the wells visualization when parameters change.
+   */
+  private updateWellsVisualization(): void {
+    this.wellsContainer.removeAllChildren();
+    this.createWellsVisualization();
+  }
+
+  /**
+   * Creates the control panel for adjusting well parameters.
+   */
+  private createControlPanel(): Panel {
+    const content = new VBox({
+      spacing: 10,
+      align: "left",
+      children: [
+        new Text(stringManager.numberOfWellsStringProperty, {
+          font: "14px sans-serif",
+          fill: QPPWColors.textFillProperty,
+        }),
+        new Text(stringManager.latticeConstantStringProperty, {
+          font: "14px sans-serif",
+          fill: QPPWColors.textFillProperty,
+        }),
+        new Text(stringManager.energyBandsStringProperty, {
+          font: "14px sans-serif",
+          fill: QPPWColors.textFillProperty,
+        }),
+        new Text(stringManager.wellWidthStringProperty, {
+          font: "14px sans-serif",
+          fill: QPPWColors.textFillProperty,
+        }),
+      ],
+    });
+
+    return new Panel(content, {
+      fill: QPPWColors.panelFillProperty,
+      stroke: QPPWColors.panelStrokeProperty,
+      xMargin: 10,
+      yMargin: 10,
+      right: this.layoutBounds.maxX - 10,
+      top: 20,
+    });
+  }
+
+  /**
+   * Creates the content for the info dialog.
+   */
+  public createInfoDialogContent(): Node {
+    return new Text(
+      "Explore energy bands in a periodic potential.\n" +
+        "Add or remove wells to see how energy bands form.\n" +
+        "This demonstrates the foundation of solid-state physics!",
+      {
+        font: "14px sans-serif",
+        fill: QPPWColors.textFillProperty,
+      },
+    );
+  }
+
+  /**
+   * Creates the screen summary content for accessibility.
+   */
+  public createScreenSummaryContent(): Node {
+    return new Text(
+      "Many Wells screen demonstrates energy band formation in periodic potentials.",
+      {
+        font: "14px sans-serif",
+        fill: QPPWColors.textFillProperty,
+      },
+    );
+  }
+
+  /**
+   * Resets the screen view to its initial state.
+   */
+  public override reset(): void {
+    super.reset();
+    this.updateWellsVisualization();
+  }
+
+  /**
+   * Steps the screen view forward in time.
+   * @param dt - The time step in seconds
+   */
+  public override step(dt: number): void {
+    super.step(dt);
+    // Add animation/update logic here
+  }
+}

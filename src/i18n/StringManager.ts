@@ -1,178 +1,108 @@
 /**
- * StringManager - Centralized string management for the Quantum Bound States (QPPW) Simulation
- * Provides localized strings for the application
+ * StringManager handles internationalization for the QPPW simulation.
+ * It provides StringProperty instances for all translatable strings in the application.
  */
 
-import { DerivedProperty, LocalizedStringProperty, TReadOnlyProperty } from "scenerystack/axon";
-import { localeProperty } from "scenerystack/joist";
-import stringsEn from "./strings_en.json";
-import stringsFr from "./strings_fr.json";
+import { StringProperty } from "scenerystack/axon";
 
-/**
- * StringManager provides a singleton pattern for accessing localized strings
- */
 export class StringManager {
-  private static instance: StringManager;
+  // Simulation title
+  public readonly titleStringProperty: StringProperty;
 
-  private readonly stringsMap: Map<string, Record<string, string>>;
+  // Screen names
+  public readonly oneWellStringProperty: StringProperty;
+  public readonly twoWellsStringProperty: StringProperty;
+  public readonly manyWellsStringProperty: StringProperty;
 
-  private constructor() {
-    this.stringsMap = new Map();
-    this.stringsMap.set("en", stringsEn);
-    this.stringsMap.set("fr", stringsFr);
+  // Common labels
+  public readonly energyStringProperty: StringProperty;
+  public readonly positionStringProperty: StringProperty;
+  public readonly wavefunctionStringProperty: StringProperty;
+  public readonly probabilityStringProperty: StringProperty;
+  public readonly potentialStringProperty: StringProperty;
+
+  // Controls
+  public readonly playStringProperty: StringProperty;
+  public readonly pauseStringProperty: StringProperty;
+  public readonly resetStringProperty: StringProperty;
+  public readonly stepStringProperty: StringProperty;
+
+  // One Well screen strings
+  public readonly singleWellStringProperty: StringProperty;
+  public readonly wellWidthStringProperty: StringProperty;
+  public readonly wellDepthStringProperty: StringProperty;
+
+  // Two Wells screen strings
+  public readonly doubleWellStringProperty: StringProperty;
+  public readonly barrierHeightStringProperty: StringProperty;
+  public readonly barrierWidthStringProperty: StringProperty;
+  public readonly tunnelingStringProperty: StringProperty;
+
+  // Many Wells screen strings
+  public readonly multipleWellsStringProperty: StringProperty;
+  public readonly numberOfWellsStringProperty: StringProperty;
+  public readonly latticeConstantStringProperty: StringProperty;
+  public readonly energyBandsStringProperty: StringProperty;
+
+  public constructor() {
+    // Initialize all string properties with English defaults
+    this.titleStringProperty = new StringProperty("Quantum Physics: Potential Wells");
+
+    // Screen names
+    this.oneWellStringProperty = new StringProperty("One Well");
+    this.twoWellsStringProperty = new StringProperty("Two Wells");
+    this.manyWellsStringProperty = new StringProperty("Many Wells");
+
+    // Common labels
+    this.energyStringProperty = new StringProperty("Energy");
+    this.positionStringProperty = new StringProperty("Position");
+    this.wavefunctionStringProperty = new StringProperty("Wavefunction");
+    this.probabilityStringProperty = new StringProperty("Probability");
+    this.potentialStringProperty = new StringProperty("Potential");
+
+    // Controls
+    this.playStringProperty = new StringProperty("Play");
+    this.pauseStringProperty = new StringProperty("Pause");
+    this.resetStringProperty = new StringProperty("Reset");
+    this.stepStringProperty = new StringProperty("Step");
+
+    // One Well screen strings
+    this.singleWellStringProperty = new StringProperty("Single Well");
+    this.wellWidthStringProperty = new StringProperty("Well Width");
+    this.wellDepthStringProperty = new StringProperty("Well Depth");
+
+    // Two Wells screen strings
+    this.doubleWellStringProperty = new StringProperty("Double Well");
+    this.barrierHeightStringProperty = new StringProperty("Barrier Height");
+    this.barrierWidthStringProperty = new StringProperty("Barrier Width");
+    this.tunnelingStringProperty = new StringProperty("Tunneling");
+
+    // Many Wells screen strings
+    this.multipleWellsStringProperty = new StringProperty("Multiple Wells");
+    this.numberOfWellsStringProperty = new StringProperty("Number of Wells");
+    this.latticeConstantStringProperty = new StringProperty("Lattice Constant");
+    this.energyBandsStringProperty = new StringProperty("Energy Bands");
   }
 
   /**
-   * Get the singleton instance of StringManager
+   * Gets the title string property for the simulation.
    */
-  public static getInstance(): StringManager {
-    if (!StringManager.instance) {
-      StringManager.instance = new StringManager();
-    }
-    return StringManager.instance;
+  public getTitleStringProperty(): StringProperty {
+    return this.titleStringProperty;
   }
 
   /**
-   * Create a localized string property for a given key
-   */
-  private createStringProperty(key: string): TReadOnlyProperty<string> {
-    return new DerivedProperty([localeProperty], (locale) => {
-      const strings = this.stringsMap.get(locale) || this.stringsMap.get("en")!;
-      return strings[key] || key;
-    });
-  }
-
-  /**
-   * Get screen name strings
+   * Gets an object containing the screen name properties.
    */
   public getScreenNames() {
     return {
-      oneWellScreen: this.createStringProperty("oneWellScreen"),
-      twoWellsScreen: this.createStringProperty("twoWellsScreen"),
-      manyWellsScreen: this.createStringProperty("manyWellsScreen"),
-    };
-  }
-
-  /**
-   * Get control label strings
-   */
-  public getControlLabels() {
-    return {
-      wellDepth: this.createStringProperty("wellDepth"),
-      wellWidth: this.createStringProperty("wellWidth"),
-      wellSeparation: this.createStringProperty("wellSeparation"),
-      numberOfWells: this.createStringProperty("numberOfWells"),
-      barrierHeight: this.createStringProperty("barrierHeight"),
-      barrierWidth: this.createStringProperty("barrierWidth"),
-      mass: this.createStringProperty("mass"),
-      energy: this.createStringProperty("energy"),
-      eigenstate: this.createStringProperty("eigenstate"),
-    };
-  }
-
-  /**
-   * Get unit strings
-   */
-  public getUnits() {
-    return {
-      electronVolts: this.createStringProperty("electronVolts"),
-      nanometers: this.createStringProperty("nanometers"),
-      electronMass: this.createStringProperty("electronMass"),
-    };
-  }
-
-  /**
-   * Get graph property strings
-   */
-  public getGraphProperties() {
-    return {
-      position: this.createStringProperty("position"),
-      waveFunction: this.createStringProperty("waveFunction"),
-      probabilityDensity: this.createStringProperty("probabilityDensity"),
-      realPart: this.createStringProperty("realPart"),
-      imaginaryPart: this.createStringProperty("imaginaryPart"),
-      magnitude: this.createStringProperty("magnitude"),
-      phase: this.createStringProperty("phase"),
-      potentialEnergy: this.createStringProperty("potentialEnergy"),
-      energyLevel: this.createStringProperty("energyLevel"),
-    };
-  }
-
-  /**
-   * Get visualization label strings
-   */
-  public getVisualizationLabels() {
-    return {
-      showWaveFunction: this.createStringProperty("showWaveFunction"),
-      showProbabilityDensity: this.createStringProperty("showProbabilityDensity"),
-      showMagnitude: this.createStringProperty("showMagnitude"),
-      showPhase: this.createStringProperty("showPhase"),
-      showGrid: this.createStringProperty("showGrid"),
-      showEnergyLevels: this.createStringProperty("showEnergyLevels"),
-      showMeasuringTape: this.createStringProperty("showMeasuringTape"),
-    };
-  }
-
-  /**
-   * Get control button strings
-   */
-  public getControlButtons() {
-    return {
-      play: this.createStringProperty("play"),
-      pause: this.createStringProperty("pause"),
-      step: this.createStringProperty("step"),
-      reset: this.createStringProperty("reset"),
-      resetAll: this.createStringProperty("resetAll"),
-    };
-  }
-
-  /**
-   * Get preference strings
-   */
-  public getPreferences() {
-    return {
-      autoPauseWhenTabHidden: this.createStringProperty("autoPauseWhenTabHidden"),
-      reducedMotion: this.createStringProperty("reducedMotion"),
-      highContrastMode: this.createStringProperty("highContrastMode"),
-      announceParameterChanges: this.createStringProperty("announceParameterChanges"),
-      announceStateChanges: this.createStringProperty("announceStateChanges"),
-      announceDragInteractions: this.createStringProperty("announceDragInteractions"),
-    };
-  }
-
-  /**
-   * Get accessibility announcement strings
-   */
-  public getAnnouncements() {
-    return {
-      simulationPaused: this.createStringProperty("simulationPaused"),
-      simulationPlaying: this.createStringProperty("simulationPlaying"),
-      simulationReset: this.createStringProperty("simulationReset"),
-      wellDepthChanged: this.createStringProperty("wellDepthChanged"),
-      wellWidthChanged: this.createStringProperty("wellWidthChanged"),
-      energyLevelSelected: this.createStringProperty("energyLevelSelected"),
-    };
-  }
-
-  /**
-   * Get keyboard shortcut strings
-   */
-  public getKeyboardShortcuts() {
-    return {
-      playPause: this.createStringProperty("playPause"),
-      stepForward: this.createStringProperty("stepForward"),
-      resetAll: this.createStringProperty("resetAll"),
-    };
-  }
-
-  /**
-   * Get screen summary strings (for accessibility)
-   */
-  public getScreenSummaries() {
-    return {
-      oneWellScreenSummary: this.createStringProperty("oneWellScreenSummary"),
-      twoWellsScreenSummary: this.createStringProperty("twoWellsScreenSummary"),
-      manyWellsScreenSummary: this.createStringProperty("manyWellsScreenSummary"),
+      oneWellStringProperty: this.oneWellStringProperty,
+      twoWellsStringProperty: this.twoWellsStringProperty,
+      manyWellsStringProperty: this.manyWellsStringProperty,
     };
   }
 }
+
+// Create and export a singleton instance
+const stringManager = new StringManager();
+export default stringManager;
