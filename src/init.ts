@@ -23,4 +23,7 @@ init({
   splashDataURI: madeWithSceneryStackSplashDataURI,
 
   allowLocaleSwitching: true,
+
+  // Color profiles supported by this simulation
+  colorProfiles: ["default", "projector"],
 });
