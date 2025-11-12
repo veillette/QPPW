@@ -4,6 +4,10 @@
  */
 
 import { NumberProperty, Property } from "scenerystack/axon";
+import Schrodinger1DSolver from "../../common/model/Schrodinger1DSolver.js";
+import { PotentialType, BoundStateResult } from "../../common/model/PotentialFunction.js";
+import QuantumConstants from "../../common/model/QuantumConstants.js";
+import QPPWPreferences from "../../QPPWPreferences.js";
 
 export class OneWellModel {
   // Well parameters
@@ -17,6 +21,12 @@ export class OneWellModel {
   public readonly isPlayingProperty: Property<boolean>;
   public readonly timeProperty: NumberProperty;
 
+  // Solver for quantum calculations
+  private readonly solver: Schrodinger1DSolver;
+
+  // Cached bound state results
+  private boundStateResult: BoundStateResult | null = null;
+
   public constructor() {
     // Initialize well parameters with default values
     this.wellWidthProperty = new NumberProperty(10); // in nanometers
@@ -28,6 +38,23 @@ export class OneWellModel {
     // Initialize simulation state
     this.isPlayingProperty = new Property<boolean>(false);
     this.timeProperty = new NumberProperty(0);
+
+    // Initialize solver with user's preferred method
+    this.solver = new Schrodinger1DSolver();
+
+    // Update solver method when preference changes
+    QPPWPreferences.numericalMethodProperty.link((method) => {
+      this.solver.setNumericalMethod(method);
+      this.boundStateResult = null; // Invalidate cache
+    });
+
+    // Recalculate bound states when well parameters change
+    this.wellWidthProperty.link(() => {
+      this.boundStateResult = null;
+    });
+    this.wellDepthProperty.link(() => {
+      this.boundStateResult = null;
+    });
   }
 
   /**
@@ -54,17 +81,103 @@ export class OneWellModel {
 
   /**
    * Calculates the energy eigenvalues for the current well parameters.
-   * For an infinite square well: E_n = (n^2 * h^2) / (8 * m * L^2)
+   * Uses the Schrödinger solver with analytical solution for infinite well.
    * @param n - The quantum number (1, 2, 3, ...)
    * @returns The energy in eV
    */
   public getEnergyLevel(n: number): number {
-    const hbar = 1.054571817e-34; // Reduced Planck constant (J·s)
-    const m = 9.10938356e-31; // Electron mass (kg)
-    const L = this.wellWidthProperty.value * 1e-9; // Convert nm to m
-    const eV = 1.602176634e-19; // Electron volt in joules
+    // Ensure bound states are calculated
+    if (!this.boundStateResult) {
+      this.calculateBoundStates();
+    }
 
-    const energy = (n * n * hbar * hbar * Math.PI * Math.PI) / (2 * m * L * L);
-    return energy / eV; // Convert to eV
+    // Return energy for quantum number n (1-indexed)
+    if (this.boundStateResult && n > 0 && n <= this.boundStateResult.energies.length) {
+      const energyJoules = this.boundStateResult.energies[n - 1];
+      return Schrodinger1DSolver.joulesToEV(energyJoules);
+    }
+
+    // Fallback to analytical formula if solver fails
+    const L = this.wellWidthProperty.value * QuantumConstants.NM_TO_M;
+    const energy =
+      (n * n * Math.PI * Math.PI * QuantumConstants.HBAR * QuantumConstants.HBAR) /
+      (2 * QuantumConstants.ELECTRON_MASS * L * L);
+    return Schrodinger1DSolver.joulesToEV(energy);
+  }
+
+  /**
+   * Get all bound state energies and wavefunctions for the current well.
+   * @returns BoundStateResult with energies (in eV) and wavefunctions
+   */
+  public getBoundStates(): BoundStateResult | null {
+    if (!this.boundStateResult) {
+      this.calculateBoundStates();
+    }
+    return this.boundStateResult;
+  }
+
+  /**
+   * Calculate bound states using the Schrödinger solver.
+   * Results are cached until well parameters change.
+   */
+  private calculateBoundStates(): void {
+    const wellWidth = this.wellWidthProperty.value * QuantumConstants.NM_TO_M;
+    const numStates = 10; // Calculate first 10 states
+
+    const gridConfig = {
+      xMin: 0,
+      xMax: wellWidth,
+      numPoints: 200,
+    };
+
+    try {
+      // Use analytical solution for infinite well
+      this.boundStateResult = this.solver.solveAnalyticalIfPossible(
+        {
+          type: PotentialType.INFINITE_WELL,
+          wellWidth: wellWidth,
+        },
+        QuantumConstants.ELECTRON_MASS,
+        numStates,
+        gridConfig,
+      );
+    } catch (error) {
+      console.error("Error calculating bound states:", error);
+      this.boundStateResult = null;
+    }
+  }
+
+  /**
+   * Get the wavefunction for a specific quantum number.
+   * @param n - The quantum number (1, 2, 3, ...)
+   * @returns Array of wavefunction values at grid points, or null if unavailable
+   */
+  public getWavefunction(n: number): number[] | null {
+    if (!this.boundStateResult) {
+      this.calculateBoundStates();
+    }
+
+    if (this.boundStateResult && n > 0 && n <= this.boundStateResult.wavefunctions.length) {
+      return this.boundStateResult.wavefunctions[n - 1];
+    }
+
+    return null;
+  }
+
+  /**
+   * Get the spatial grid points for wavefunctions.
+   * @returns Array of x positions in nanometers
+   */
+  public getXGrid(): number[] | null {
+    if (!this.boundStateResult) {
+      this.calculateBoundStates();
+    }
+
+    if (this.boundStateResult) {
+      // Convert from meters to nanometers
+      return this.boundStateResult.xGrid.map((x) => x * QuantumConstants.M_TO_NM);
+    }
+
+    return null;
   }
 }
