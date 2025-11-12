@@ -13,7 +13,12 @@ import {
   PotentialFunction,
   PotentialType,
 } from "./PotentialFunction.js";
-import { solveInfiniteWell, solveHarmonicOscillator } from "./AnalyticalSolutions.js";
+import {
+  solveInfiniteWell,
+  solveHarmonicOscillator,
+  solveMorsePotential,
+  solvePoschlTellerPotential
+} from "./AnalyticalSolutions.js";
 import { solveNumerov } from "./NumerovSolver.js";
 import { solveDVR } from "./DVRSolver.js";
 import QuantumConstants from "./QuantumConstants.js";
@@ -37,6 +42,12 @@ export interface WellParameters {
   wellWidth?: number;
   /** Spring constant for harmonic oscillator (N/m) */
   springConstant?: number;
+  /** Dissociation energy for Morse potential (Joules) */
+  dissociationEnergy?: number;
+  /** Equilibrium position for Morse potential (meters) */
+  equilibriumPosition?: number;
+  /** Potential depth for Pöschl-Teller potential (Joules) */
+  potentialDepth?: number;
 }
 
 /**
@@ -101,6 +112,38 @@ export class Schrodinger1DSolver {
         if (wellParams.springConstant !== undefined) {
           return solveHarmonicOscillator(
             wellParams.springConstant,
+            mass,
+            numStates,
+            gridConfig,
+          );
+        }
+        break;
+
+      case PotentialType.MORSE:
+        if (
+          wellParams.dissociationEnergy !== undefined &&
+          wellParams.wellWidth !== undefined &&
+          wellParams.equilibriumPosition !== undefined
+        ) {
+          return solveMorsePotential(
+            wellParams.dissociationEnergy,
+            wellParams.wellWidth,
+            wellParams.equilibriumPosition,
+            mass,
+            numStates,
+            gridConfig,
+          );
+        }
+        break;
+
+      case PotentialType.POSCHL_TELLER:
+        if (
+          wellParams.potentialDepth !== undefined &&
+          wellParams.wellWidth !== undefined
+        ) {
+          return solvePoschlTellerPotential(
+            wellParams.potentialDepth,
+            wellParams.wellWidth,
             mass,
             numStates,
             gridConfig,
@@ -226,6 +269,44 @@ export class Schrodinger1DSolver {
       } else {
         return 0;
       }
+    };
+  }
+
+  /**
+   * Create a potential function for a Morse potential.
+   * V(x) = D_e * (1 - exp(-a(x - x_e)))^2
+   *
+   * @param dissociationEnergy - Dissociation energy D_e in Joules
+   * @param wellWidth - Width parameter a (inverse meters)
+   * @param equilibriumPosition - Equilibrium position x_e in meters
+   * @returns Potential function V(x)
+   */
+  public static createMorsePotential(
+    dissociationEnergy: number,
+    wellWidth: number,
+    equilibriumPosition: number,
+  ): PotentialFunction {
+    return (x: number) => {
+      const exponent = Math.exp(-wellWidth * (x - equilibriumPosition));
+      return dissociationEnergy * Math.pow(1 - exponent, 2);
+    };
+  }
+
+  /**
+   * Create a potential function for a Pöschl-Teller potential.
+   * V(x) = -V_0 / cosh²(ax)
+   *
+   * @param potentialDepth - Potential depth V_0 in Joules (positive value)
+   * @param wellWidth - Width parameter a (inverse meters)
+   * @returns Potential function V(x)
+   */
+  public static createPoschlTellerPotential(
+    potentialDepth: number,
+    wellWidth: number,
+  ): PotentialFunction {
+    return (x: number) => {
+      const coshVal = Math.cosh(wellWidth * x);
+      return -potentialDepth / (coshVal * coshVal);
     };
   }
 

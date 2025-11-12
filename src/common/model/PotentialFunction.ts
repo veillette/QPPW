@@ -10,6 +10,8 @@ import qppw from "../../QPPWNamespace.js";
 export enum PotentialType {
   INFINITE_WELL = "infiniteWell",
   HARMONIC_OSCILLATOR = "harmonicOscillator",
+  MORSE = "morse",
+  POSCHL_TELLER = "poschlTeller",
   CUSTOM = "custom",
 }
 
