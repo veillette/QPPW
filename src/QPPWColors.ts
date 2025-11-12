@@ -11,64 +11,78 @@ const QPPWColors = {
   // Background colors
   backgroundColorProperty: new ProfileColorProperty(qppw, "background", {
     default: new Color(10, 10, 30), // Deep blue-black for quantum theme
+    projector: new Color(255, 255, 255), // White for projector mode
   }),
 
   // Panel and control colors
   panelFillProperty: new ProfileColorProperty(qppw, "panelFill", {
     default: new Color(240, 240, 245),
+    projector: new Color(245, 245, 250),
   }),
 
   panelStrokeProperty: new ProfileColorProperty(qppw, "panelStroke", {
     default: new Color(100, 100, 120),
+    projector: new Color(80, 80, 100),
   }),
 
   // Wavefunction colors
   wavefunctionRealProperty: new ProfileColorProperty(qppw, "wavefunctionReal", {
     default: new Color(0, 150, 255), // Bright blue
+    projector: new Color(0, 100, 200), // Darker blue for projector
   }),
 
   wavefunctionImaginaryProperty: new ProfileColorProperty(qppw, "wavefunctionImaginary", {
     default: new Color(255, 100, 0), // Orange
+    projector: new Color(200, 80, 0), // Darker orange for projector
   }),
 
   wavefunctionProbabilityProperty: new ProfileColorProperty(qppw, "wavefunctionProbability", {
     default: new Color(255, 200, 0), // Gold/yellow
+    projector: new Color(200, 150, 0), // Darker yellow for projector
   }),
 
   // Potential well colors
   potentialWellProperty: new ProfileColorProperty(qppw, "potentialWell", {
     default: new Color(150, 150, 200), // Light purple
+    projector: new Color(100, 100, 150), // Darker purple for projector
   }),
 
   potentialBarrierProperty: new ProfileColorProperty(qppw, "potentialBarrier", {
     default: new Color(180, 50, 50), // Red
+    projector: new Color(150, 40, 40), // Darker red for projector
   }),
 
   // Energy level colors
   energyLevelProperty: new ProfileColorProperty(qppw, "energyLevel", {
     default: new Color(0, 255, 150), // Bright green
+    projector: new Color(0, 150, 100), // Darker green for projector
   }),
 
   energyLevelSelectedProperty: new ProfileColorProperty(qppw, "energyLevelSelected", {
     default: new Color(255, 255, 100), // Bright yellow
+    projector: new Color(200, 200, 0), // Darker yellow for projector
   }),
 
   // Grid and axis colors
   gridLineProperty: new ProfileColorProperty(qppw, "gridLine", {
     default: new Color(80, 80, 100, 0.3),
+    projector: new Color(160, 160, 180, 0.5),
   }),
 
   axisProperty: new ProfileColorProperty(qppw, "axis", {
     default: new Color(200, 200, 220),
+    projector: new Color(100, 100, 120),
   }),
 
   // Text colors
   textFillProperty: new ProfileColorProperty(qppw, "textFill", {
     default: new Color(255, 255, 255),
+    projector: new Color(0, 0, 0), // Black text for projector mode
   }),
 
   labelFillProperty: new ProfileColorProperty(qppw, "labelFill", {
     default: new Color(200, 200, 220),
+    projector: new Color(40, 40, 60), // Dark gray for projector mode
   }),
 };
 
