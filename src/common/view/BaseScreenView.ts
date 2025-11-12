@@ -6,7 +6,6 @@
 import { ScreenView, ScreenViewOptions } from "scenerystack/sim";
 import { ResetAllButton } from "scenerystack/scenery-phet";
 import { Node } from "scenerystack/scenery";
-import QPPWColors from "../../QPPWColors.js";
 
 export abstract class BaseScreenView extends ScreenView {
   protected readonly resetAllButton: ResetAllButton;
@@ -19,7 +18,6 @@ export abstract class BaseScreenView extends ScreenView {
       listener: resetCallback,
       right: this.layoutBounds.maxX - 10,
       bottom: this.layoutBounds.maxY - 10,
-      baseColor: QPPWColors.panelFillProperty,
     });
     this.addChild(this.resetAllButton);
   }
