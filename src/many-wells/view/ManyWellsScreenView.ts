@@ -6,15 +6,15 @@
 import { BaseScreenView } from "../../common/view/BaseScreenView.js";
 import { ManyWellsModel } from "../model/ManyWellsModel.js";
 import { ScreenViewOptions } from "scenerystack/sim";
-import { Node, Rectangle, Text, VBox, HBox } from "scenerystack/scenery";
+import { Node, Rectangle, Text, VBox } from "scenerystack/scenery";
 import { Panel } from "scenerystack/sun";
 import QPPWColors from "../../QPPWColors.js";
 import stringManager from "../../i18n/StringManager.js";
 
 export class ManyWellsScreenView extends BaseScreenView {
-  private readonly model: ManyWellsModel;
   private readonly wellsContainer: Node;
   private readonly controlPanel: Panel;
+  private readonly _model: ManyWellsModel;
 
   public constructor(model: ManyWellsModel, options?: ScreenViewOptions) {
     super(
@@ -25,7 +25,7 @@ export class ManyWellsScreenView extends BaseScreenView {
       options,
     );
 
-    this.model = model;
+    this._model = model;
 
     // Create container for the wells
     this.wellsContainer = new Node();
@@ -66,7 +66,7 @@ export class ManyWellsScreenView extends BaseScreenView {
    * Creates the visualization of multiple potential wells.
    */
   private createWellsVisualization(): void {
-    const numWells = this.model.numberOfWellsProperty.value;
+    const numWells = this._model.numberOfWellsProperty.value;
     const wellWidth = 40;
     const wellHeight = 200;
     const barrierWidth = 15;

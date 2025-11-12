@@ -2,7 +2,8 @@
  * TwoWellsScreenIcon provides the icon for the Two Wells screen.
  */
 
-import { Rectangle, ScreenIcon, Node, HBox } from "scenerystack/scenery";
+import { Rectangle, HBox } from "scenerystack/scenery";
+import { ScreenIcon } from "scenerystack/sim";
 import QPPWColors from "../../QPPWColors.js";
 
 export class TwoWellsScreenIcon extends ScreenIcon {

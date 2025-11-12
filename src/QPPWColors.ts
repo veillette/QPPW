@@ -5,68 +5,69 @@
 
 import { ProfileColorProperty } from "scenerystack/scenery";
 import { Color } from "scenerystack/scenery";
+import qppw from "./QPPWNamespace.js";
 
 const QPPWColors = {
   // Background colors
-  backgroundColorProperty: new ProfileColorProperty("qppw", "background", {
+  backgroundColorProperty: new ProfileColorProperty(qppw, "background", {
     default: new Color(10, 10, 30), // Deep blue-black for quantum theme
   }),
 
   // Panel and control colors
-  panelFillProperty: new ProfileColorProperty("qppw", "panelFill", {
+  panelFillProperty: new ProfileColorProperty(qppw, "panelFill", {
     default: new Color(240, 240, 245),
   }),
 
-  panelStrokeProperty: new ProfileColorProperty("qppw", "panelStroke", {
+  panelStrokeProperty: new ProfileColorProperty(qppw, "panelStroke", {
     default: new Color(100, 100, 120),
   }),
 
   // Wavefunction colors
-  wavefunctionRealProperty: new ProfileColorProperty("qppw", "wavefunctionReal", {
+  wavefunctionRealProperty: new ProfileColorProperty(qppw, "wavefunctionReal", {
     default: new Color(0, 150, 255), // Bright blue
   }),
 
-  wavefunctionImaginaryProperty: new ProfileColorProperty("qppw", "wavefunctionImaginary", {
+  wavefunctionImaginaryProperty: new ProfileColorProperty(qppw, "wavefunctionImaginary", {
     default: new Color(255, 100, 0), // Orange
   }),
 
-  wavefunctionProbabilityProperty: new ProfileColorProperty("qppw", "wavefunctionProbability", {
+  wavefunctionProbabilityProperty: new ProfileColorProperty(qppw, "wavefunctionProbability", {
     default: new Color(255, 200, 0), // Gold/yellow
   }),
 
   // Potential well colors
-  potentialWellProperty: new ProfileColorProperty("qppw", "potentialWell", {
+  potentialWellProperty: new ProfileColorProperty(qppw, "potentialWell", {
     default: new Color(150, 150, 200), // Light purple
   }),
 
-  potentialBarrierProperty: new ProfileColorProperty("qppw", "potentialBarrier", {
+  potentialBarrierProperty: new ProfileColorProperty(qppw, "potentialBarrier", {
     default: new Color(180, 50, 50), // Red
   }),
 
   // Energy level colors
-  energyLevelProperty: new ProfileColorProperty("qppw", "energyLevel", {
+  energyLevelProperty: new ProfileColorProperty(qppw, "energyLevel", {
     default: new Color(0, 255, 150), // Bright green
   }),
 
-  energyLevelSelectedProperty: new ProfileColorProperty("qppw", "energyLevelSelected", {
+  energyLevelSelectedProperty: new ProfileColorProperty(qppw, "energyLevelSelected", {
     default: new Color(255, 255, 100), // Bright yellow
   }),
 
   // Grid and axis colors
-  gridLineProperty: new ProfileColorProperty("qppw", "gridLine", {
+  gridLineProperty: new ProfileColorProperty(qppw, "gridLine", {
     default: new Color(80, 80, 100, 0.3),
   }),
 
-  axisProperty: new ProfileColorProperty("qppw", "axis", {
+  axisProperty: new ProfileColorProperty(qppw, "axis", {
     default: new Color(200, 200, 220),
   }),
 
   // Text colors
-  textFillProperty: new ProfileColorProperty("qppw", "textFill", {
+  textFillProperty: new ProfileColorProperty(qppw, "textFill", {
     default: new Color(255, 255, 255),
   }),
 
-  labelFillProperty: new ProfileColorProperty("qppw", "labelFill", {
+  labelFillProperty: new ProfileColorProperty(qppw, "labelFill", {
     default: new Color(200, 200, 220),
   }),
 };

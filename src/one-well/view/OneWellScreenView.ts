@@ -12,7 +12,6 @@ import QPPWColors from "../../QPPWColors.js";
 import stringManager from "../../i18n/StringManager.js";
 
 export class OneWellScreenView extends BaseScreenView {
-  private readonly model: OneWellModel;
   private readonly potentialWellNode: Rectangle;
   private readonly controlPanel: Panel;
 
@@ -24,8 +23,6 @@ export class OneWellScreenView extends BaseScreenView {
       },
       options,
     );
-
-    this.model = model;
 
     // Create the potential well visualization
     this.potentialWellNode = new Rectangle(0, 0, 400, 300, {

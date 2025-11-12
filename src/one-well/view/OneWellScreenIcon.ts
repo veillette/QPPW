@@ -2,7 +2,8 @@
  * OneWellScreenIcon provides the icon for the One Well screen.
  */
 
-import { Rectangle, ScreenIcon } from "scenerystack/scenery";
+import { Rectangle } from "scenerystack/scenery";
+import { ScreenIcon } from "scenerystack/sim";
 import QPPWColors from "../../QPPWColors.js";
 
 export class OneWellScreenIcon extends ScreenIcon {

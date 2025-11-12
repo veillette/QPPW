@@ -6,13 +6,12 @@
 import { BaseScreenView } from "../../common/view/BaseScreenView.js";
 import { TwoWellsModel } from "../model/TwoWellsModel.js";
 import { ScreenViewOptions } from "scenerystack/sim";
-import { Node, Rectangle, Text, VBox, HBox } from "scenerystack/scenery";
+import { Node, Rectangle, Text, VBox } from "scenerystack/scenery";
 import { Panel } from "scenerystack/sun";
 import QPPWColors from "../../QPPWColors.js";
 import stringManager from "../../i18n/StringManager.js";
 
 export class TwoWellsScreenView extends BaseScreenView {
-  private readonly model: TwoWellsModel;
   private readonly leftWellNode: Rectangle;
   private readonly rightWellNode: Rectangle;
   private readonly barrierNode: Rectangle;
@@ -26,8 +25,6 @@ export class TwoWellsScreenView extends BaseScreenView {
       },
       options,
     );
-
-    this.model = model;
 
     const wellWidth = 150;
     const wellHeight = 300;

@@ -2,7 +2,8 @@
  * ManyWellsScreenIcon provides the icon for the Many Wells screen.
  */
 
-import { Rectangle, ScreenIcon, Node, HBox } from "scenerystack/scenery";
+import { Rectangle, Node, HBox } from "scenerystack/scenery";
+import { ScreenIcon } from "scenerystack/sim";
 import QPPWColors from "../../QPPWColors.js";
 
 export class ManyWellsScreenIcon extends ScreenIcon {
