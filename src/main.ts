@@ -2,20 +2,57 @@
 // order: init.ts => assert.ts => splash.ts => brand.ts => everything else (here)
 import "./brand.js";
 
-import { onReadyToLaunch, Sim } from "scenerystack/sim";
-import { StringProperty } from "scenerystack/axon";
+import { onReadyToLaunch, Sim, PreferencesModel } from "scenerystack/sim";
 import { Tandem } from "scenerystack/tandem";
 import { SimScreen } from "./screen-name/SimScreen.js";
+import { StringManager } from "./i18n/StringManager.js";
+import QPPWPreferences from "./QPPWPreferences.js";
+import QPPWColors from "./QPPWColors.js";
 
 onReadyToLaunch(() => {
-  // The title, like most string-like things, is a StringProperty that can change to different values (e.g. for
-  // different languages, see localeProperty from scenerystack/joist)
-  const titleStringProperty = new StringProperty("QPPW");
+  // Get the string manager instance
+  const stringManager = StringManager.getInstance();
+  const screenNames = stringManager.getScreenNames();
+
+  // The title uses localized strings
+  const titleStringProperty = screenNames.oneWellScreen; // Will be "QPPW" or full title
+
+  // TODO: Create three specific screen classes:
+  // - OneWellScreen (extending Screen with OneWellModel and OneWellScreenView)
+  // - TwoWellsScreen (extending Screen with TwoWellsModel and TwoWellsScreenView)
+  // - ManyWellsScreen (extending Screen with ManyWellsModel and ManyWellsScreenView)
+  // Each ScreenView should extend BaseScreenView from common/view/BaseScreenView.ts
 
   const screens = [
-    new SimScreen({ tandem: Tandem.ROOT.createTandem("simScreen") }),
+    new SimScreen({ tandem: Tandem.ROOT.createTandem("oneWellScreen") }),
+    // new TwoWellsScreen({ tandem: Tandem.ROOT.createTandem("twoWellsScreen") }),
+    // new ManyWellsScreen({ tandem: Tandem.ROOT.createTandem("manyWellsScreen") }),
   ];
 
-  const sim = new Sim(titleStringProperty, screens);
+  // Create preferences model
+  const preferencesModel = new PreferencesModel({
+    simulationOptions: {
+      customPreferences: [
+        {
+          createContent: () => {
+            // TODO: Create preferences panel UI using QPPWPreferences
+            // This should include toggles for:
+            // - autoPauseWhenTabHiddenProperty
+            // - announceParameterChangesProperty
+            // - announceStateChangesProperty
+            // - announceDragInteractionsProperty
+            return null;
+          },
+        },
+      ],
+    },
+  });
+
+  const sim = new Sim(titleStringProperty, screens, {
+    preferencesModel: preferencesModel,
+    // Enable WebGL for better performance
+    webgl: true,
+  });
+
   sim.start();
 });
