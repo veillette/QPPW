@@ -2,9 +2,10 @@
  * Preferences for the Quantum Bound States (QPPW) Simulation
  */
 
-import { BooleanProperty } from "scenerystack/axon";
+import { BooleanProperty, Property } from "scenerystack/axon";
 import { Tandem } from "scenerystack/tandem";
 import qppw from "./QPPWNamespace.js";
+import { NumericalMethod } from "./common/model/Schrodinger1DSolver.js";
 
 const QPPWPreferences = {
   // Simulation Preferences
@@ -15,6 +16,16 @@ const QPPWPreferences = {
   autoPauseWhenTabHiddenProperty: new BooleanProperty(true, {
     tandem: Tandem.PREFERENCES.createTandem("autoPauseWhenTabHiddenProperty"),
     phetioFeatured: true,
+  }),
+
+  /**
+   * Numerical method for solving the Schrödinger equation
+   * Options: 'numerov' (Numerov method) or 'dvr' (Discrete Variable Representation)
+   */
+  numericalMethodProperty: new Property<NumericalMethod>(NumericalMethod.DVR, {
+    tandem: Tandem.PREFERENCES.createTandem("numericalMethodProperty"),
+    phetioFeatured: true,
+    validValues: [NumericalMethod.NUMEROV, NumericalMethod.DVR],
   }),
 
   // Visual Preferences

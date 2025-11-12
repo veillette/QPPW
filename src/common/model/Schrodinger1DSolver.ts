@@ -1,0 +1,249 @@
+/**
+ * Main solver for the 1D time-independent Schrödinger equation.
+ * Provides a unified interface for analytical and numerical solutions.
+ *
+ * Usage:
+ *   const solver = new Schrodinger1DSolver();
+ *   const result = solver.solve(potential, mass, numStates, gridConfig);
+ */
+
+import {
+  BoundStateResult,
+  GridConfig,
+  PotentialFunction,
+  PotentialType,
+} from "./PotentialFunction.js";
+import { solveInfiniteWell, solveHarmonicOscillator } from "./AnalyticalSolutions.js";
+import { solveNumerov } from "./NumerovSolver.js";
+import { solveDVR } from "./DVRSolver.js";
+import QuantumConstants from "./QuantumConstants.js";
+import qppw from "../../QPPWNamespace.js";
+
+/**
+ * Numerical method selection for solving the Schrödinger equation
+ */
+export enum NumericalMethod {
+  NUMEROV = "numerov",
+  DVR = "dvr",
+}
+
+/**
+ * Configuration for potential well parameters (for analytical solutions)
+ */
+export interface WellParameters {
+  /** Type of potential well */
+  type: PotentialType;
+  /** Well width for infinite well (meters) */
+  wellWidth?: number;
+  /** Spring constant for harmonic oscillator (N/m) */
+  springConstant?: number;
+}
+
+/**
+ * Main class for solving the 1D time-independent Schrödinger equation.
+ */
+export class Schrodinger1DSolver {
+  private numericalMethod: NumericalMethod;
+
+  /**
+   * Create a new solver instance.
+   * @param method - Numerical method to use (default: DVR)
+   */
+  constructor(method: NumericalMethod = NumericalMethod.DVR) {
+    this.numericalMethod = method;
+  }
+
+  /**
+   * Set the numerical method to use for calculations.
+   * @param method - Numerov or DVR method
+   */
+  public setNumericalMethod(method: NumericalMethod): void {
+    this.numericalMethod = method;
+  }
+
+  /**
+   * Get the current numerical method setting.
+   */
+  public getNumericalMethod(): NumericalMethod {
+    return this.numericalMethod;
+  }
+
+  /**
+   * Solve the Schrödinger equation using analytical solution if available,
+   * otherwise use numerical method.
+   *
+   * @param wellParams - Parameters defining the potential well (for analytical solutions)
+   * @param mass - Particle mass in kg
+   * @param numStates - Number of bound states to calculate
+   * @param gridConfig - Grid configuration for spatial discretization
+   * @returns Bound state results with energies and wavefunctions
+   */
+  public solveAnalyticalIfPossible(
+    wellParams: WellParameters,
+    mass: number,
+    numStates: number,
+    gridConfig: GridConfig,
+  ): BoundStateResult {
+    // Try analytical solution first
+    switch (wellParams.type) {
+      case PotentialType.INFINITE_WELL:
+        if (wellParams.wellWidth !== undefined) {
+          return solveInfiniteWell(
+            wellParams.wellWidth,
+            mass,
+            numStates,
+            gridConfig,
+          );
+        }
+        break;
+
+      case PotentialType.HARMONIC_OSCILLATOR:
+        if (wellParams.springConstant !== undefined) {
+          return solveHarmonicOscillator(
+            wellParams.springConstant,
+            mass,
+            numStates,
+            gridConfig,
+          );
+        }
+        break;
+
+      case PotentialType.CUSTOM:
+        // No analytical solution, fall through to numerical
+        break;
+    }
+
+    // If we reach here, we need to use numerical method
+    // But we need a potential function, which should be provided separately
+    throw new Error(
+      "Analytical solution not available. Use solveNumerical() with a custom potential function.",
+    );
+  }
+
+  /**
+   * Solve the Schrödinger equation numerically for an arbitrary potential.
+   *
+   * @param potential - Function V(x) returning potential energy in Joules
+   * @param mass - Particle mass in kg
+   * @param numStates - Number of bound states to calculate
+   * @param gridConfig - Grid configuration for spatial discretization
+   * @param energyRange - Optional energy range for Numerov method [min, max] in Joules
+   * @returns Bound state results with energies and wavefunctions
+   */
+  public solveNumerical(
+    potential: PotentialFunction,
+    mass: number,
+    numStates: number,
+    gridConfig: GridConfig,
+    energyRange?: [number, number],
+  ): BoundStateResult {
+    if (this.numericalMethod === NumericalMethod.NUMEROV) {
+      // Numerov method requires energy range for shooting method
+      if (!energyRange) {
+        // Estimate energy range based on potential at grid points
+        const { xMin, xMax, numPoints } = gridConfig;
+        const dx = (xMax - xMin) / (numPoints - 1);
+        let Vmin = Infinity;
+        let Vmax = -Infinity;
+
+        for (let i = 0; i < numPoints; i++) {
+          const x = xMin + i * dx;
+          const V = potential(x);
+          if (V < Vmin) Vmin = V;
+          if (V < 1e100 && V > Vmax) Vmax = V; // Ignore infinite barriers
+        }
+
+        // Search for bound states between Vmin and Vmax
+        energyRange = [Vmin, Vmax];
+      }
+
+      return solveNumerov(
+        potential,
+        mass,
+        numStates,
+        gridConfig,
+        energyRange[0],
+        energyRange[1],
+      );
+    } else {
+      // DVR method
+      return solveDVR(potential, mass, numStates, gridConfig);
+    }
+  }
+
+  /**
+   * Create a potential function for an infinite square well.
+   * @param wellWidth - Width of the well in meters
+   * @param wellDepth - Depth of the well in Joules (0 inside, depth outside)
+   * @returns Potential function V(x)
+   */
+  public static createInfiniteWellPotential(
+    wellWidth: number,
+    wellDepth = 1e100,
+  ): PotentialFunction {
+    return (x: number) => {
+      if (x >= 0 && x <= wellWidth) {
+        return 0;
+      } else {
+        return wellDepth; // Very large value to approximate infinity
+      }
+    };
+  }
+
+  /**
+   * Create a potential function for a harmonic oscillator.
+   * @param springConstant - Spring constant k in N/m
+   * @param center - Center position of oscillator in meters (default 0)
+   * @returns Potential function V(x) = (1/2) * k * (x - center)²
+   */
+  public static createHarmonicOscillatorPotential(
+    springConstant: number,
+    center = 0,
+  ): PotentialFunction {
+    return (x: number) => {
+      const displacement = x - center;
+      return 0.5 * springConstant * displacement * displacement;
+    };
+  }
+
+  /**
+   * Create a potential function for a finite square well.
+   * @param wellWidth - Width of the well in meters
+   * @param wellDepth - Depth of the well in Joules (V=0 outside, V=-depth inside)
+   * @param center - Center position of well in meters (default 0)
+   * @returns Potential function V(x)
+   */
+  public static createFiniteWellPotential(
+    wellWidth: number,
+    wellDepth: number,
+    center = 0,
+  ): PotentialFunction {
+    const halfWidth = wellWidth / 2;
+    return (x: number) => {
+      const xShifted = x - center;
+      if (Math.abs(xShifted) <= halfWidth) {
+        return -wellDepth;
+      } else {
+        return 0;
+      }
+    };
+  }
+
+  /**
+   * Convert energy from eV to Joules.
+   */
+  public static eVToJoules(eV: number): number {
+    return eV * QuantumConstants.EV_TO_JOULES;
+  }
+
+  /**
+   * Convert energy from Joules to eV.
+   */
+  public static joulesToEV(joules: number): number {
+    return joules * QuantumConstants.JOULES_TO_EV;
+  }
+}
+
+qppw.register("Schrodinger1DSolver", Schrodinger1DSolver);
+
+export default Schrodinger1DSolver;
