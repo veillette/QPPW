@@ -44,6 +44,17 @@ export class StringManager {
   public readonly latticeConstantStringProperty: StringProperty;
   public readonly energyBandsStringProperty: StringProperty;
 
+  // Preferences strings
+  public readonly preferencesStringProperty: StringProperty;
+  public readonly numericalMethodStringProperty: StringProperty;
+  public readonly numericalMethodDescriptionStringProperty: StringProperty;
+  public readonly numerovStringProperty: StringProperty;
+  public readonly numerovDescriptionStringProperty: StringProperty;
+  public readonly dvrStringProperty: StringProperty;
+  public readonly dvrDescriptionStringProperty: StringProperty;
+  public readonly autoPauseWhenTabHiddenStringProperty: StringProperty;
+  public readonly autoPauseDescriptionStringProperty: StringProperty;
+
   public constructor() {
     // Initialize all string properties with English defaults
     this.titleStringProperty = new StringProperty("Quantum Physics: Potential Wells");
@@ -82,6 +93,17 @@ export class StringManager {
     this.numberOfWellsStringProperty = new StringProperty("Number of Wells");
     this.latticeConstantStringProperty = new StringProperty("Lattice Constant");
     this.energyBandsStringProperty = new StringProperty("Energy Bands");
+
+    // Preferences strings
+    this.preferencesStringProperty = new StringProperty("Preferences");
+    this.numericalMethodStringProperty = new StringProperty("Numerical Method");
+    this.numericalMethodDescriptionStringProperty = new StringProperty("Choose the numerical method for solving the Schrödinger equation.");
+    this.numerovStringProperty = new StringProperty("Numerov Method");
+    this.numerovDescriptionStringProperty = new StringProperty("Traditional shooting method - accurate and stable for most potentials");
+    this.dvrStringProperty = new StringProperty("DVR (Discrete Variable Representation)");
+    this.dvrDescriptionStringProperty = new StringProperty("Matrix diagonalization method - faster and more robust for complex potentials");
+    this.autoPauseWhenTabHiddenStringProperty = new StringProperty("Auto-pause when tab is hidden");
+    this.autoPauseDescriptionStringProperty = new StringProperty("Automatically pause the simulation when the browser tab is not visible");
   }
 
   /**
@@ -99,6 +121,39 @@ export class StringManager {
       oneWellStringProperty: this.oneWellStringProperty,
       twoWellsStringProperty: this.twoWellsStringProperty,
       manyWellsStringProperty: this.manyWellsStringProperty,
+    };
+  }
+
+  /**
+   * Gets an object containing the preferences string properties.
+   */
+  public getPreferencesLabels() {
+    return {
+      preferencesStringProperty: this.preferencesStringProperty,
+      numericalMethodStringProperty: this.numericalMethodStringProperty,
+      numericalMethodDescriptionStringProperty: this.numericalMethodDescriptionStringProperty,
+      autoPauseWhenTabHiddenStringProperty: this.autoPauseWhenTabHiddenStringProperty,
+      autoPauseDescriptionStringProperty: this.autoPauseDescriptionStringProperty,
+    };
+  }
+
+  /**
+   * Gets an object containing the numerical method name properties.
+   */
+  public getNumericalMethodNames() {
+    return {
+      numerovStringProperty: this.numerovStringProperty,
+      dvrStringProperty: this.dvrStringProperty,
+    };
+  }
+
+  /**
+   * Gets an object containing the numerical method description properties.
+   */
+  public getNumericalMethodDescriptions() {
+    return {
+      numerovStringProperty: this.numerovDescriptionStringProperty,
+      dvrStringProperty: this.dvrDescriptionStringProperty,
     };
   }
 }
