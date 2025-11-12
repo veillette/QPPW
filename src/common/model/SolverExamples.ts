@@ -219,6 +219,93 @@ export function exampleCompareMethodsfiniteWell(): void {
 }
 
 /**
+ * Example 6: Morse potential using analytical solution
+ */
+export function exampleMorsePotentialAnalytical(): void {
+  console.log("\n=== Example 6: Morse Potential (Analytical) ===");
+
+  const solver = new Schrodinger1DSolver();
+  const mass = QuantumConstants.ELECTRON_MASS;
+
+  // Typical values for a diatomic molecule (scaled for electron mass)
+  const dissociationEnergy = Schrodinger1DSolver.eVToJoules(5); // 5 eV
+  const wellWidth = 1e10; // 1/Å (inverse meters)
+  const equilibriumPosition = 0; // Center at origin
+  const numStates = 10;
+
+  const gridConfig = {
+    xMin: -2e-10,
+    xMax: 5e-10,
+    numPoints: 200,
+  };
+
+  const result = solver.solveAnalyticalIfPossible(
+    {
+      type: PotentialType.MORSE,
+      dissociationEnergy: dissociationEnergy,
+      wellWidth: wellWidth,
+      equilibriumPosition: equilibriumPosition,
+    },
+    mass,
+    numStates,
+    gridConfig,
+  );
+
+  console.log(`Method used: ${result.method}`);
+  console.log(`Found ${result.energies.length} bound states\n`);
+  console.log("Energy eigenvalues (eV) relative to dissociation limit:");
+  result.energies.forEach((E, n) => {
+    const E_eV = Schrodinger1DSolver.joulesToEV(E);
+    console.log(`  E_${n} = ${E_eV.toFixed(6)} eV`);
+  });
+
+  console.log("\nNote: Morse potential includes anharmonicity effects");
+  console.log("Energy levels get closer together as n increases");
+}
+
+/**
+ * Example 7: Pöschl-Teller potential using analytical solution
+ */
+export function examplePoschlTellerPotentialAnalytical(): void {
+  console.log("\n=== Example 7: Pöschl-Teller Potential (Analytical) ===");
+
+  const solver = new Schrodinger1DSolver();
+  const mass = QuantumConstants.ELECTRON_MASS;
+
+  const potentialDepth = Schrodinger1DSolver.eVToJoules(10); // 10 eV
+  const wellWidth = 5e9; // 5/nm (inverse meters)
+  const numStates = 5;
+
+  const gridConfig = {
+    xMin: -1e-9,
+    xMax: 1e-9,
+    numPoints: 200,
+  };
+
+  const result = solver.solveAnalyticalIfPossible(
+    {
+      type: PotentialType.POSCHL_TELLER,
+      potentialDepth: potentialDepth,
+      wellWidth: wellWidth,
+    },
+    mass,
+    numStates,
+    gridConfig,
+  );
+
+  console.log(`Method used: ${result.method}`);
+  console.log(`Found ${result.energies.length} bound states\n`);
+  console.log("Energy eigenvalues (eV):");
+  result.energies.forEach((E, n) => {
+    const E_eV = Schrodinger1DSolver.joulesToEV(E);
+    console.log(`  E_${n} = ${E_eV.toFixed(6)} eV`);
+  });
+
+  console.log("\nNote: Pöschl-Teller potential is exactly solvable");
+  console.log("and useful for modeling quantum wells");
+}
+
+/**
  * Run all examples
  */
 export function runAllExamples(): void {
@@ -231,6 +318,8 @@ export function runAllExamples(): void {
   exampleHarmonicOscillatorAnalytical();
   exampleFiniteWellDVR();
   exampleCompareMethodsfiniteWell();
+  exampleMorsePotentialAnalytical();
+  examplePoschlTellerPotentialAnalytical();
 
   console.log("\n========================================");
   console.log("All examples completed!");
