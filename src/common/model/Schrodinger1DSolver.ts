@@ -17,7 +17,9 @@ import {
   solveInfiniteWell,
   solveHarmonicOscillator,
   solveMorsePotential,
-  solvePoschlTellerPotential
+  solvePoschlTellerPotential,
+  solveRosenMorsePotential,
+  solveEckartPotential
 } from "./AnalyticalSolutions.js";
 import { solveNumerov } from "./NumerovSolver.js";
 import { solveDVR } from "./DVRSolver.js";
@@ -50,8 +52,10 @@ export interface WellParameters {
   dissociationEnergy?: number;
   /** Equilibrium position for Morse potential (meters) */
   equilibriumPosition?: number;
-  /** Potential depth for Pöschl-Teller potential (Joules) */
+  /** Potential depth for Pöschl-Teller, Rosen-Morse, and Eckart potentials (Joules) */
   potentialDepth?: number;
+  /** Barrier height for Rosen-Morse and Eckart potentials (Joules) */
+  barrierHeight?: number;
 }
 
 /**
@@ -147,6 +151,40 @@ export class Schrodinger1DSolver {
         ) {
           return solvePoschlTellerPotential(
             wellParams.potentialDepth,
+            wellParams.wellWidth,
+            mass,
+            numStates,
+            gridConfig,
+          );
+        }
+        break;
+
+      case PotentialType.ROSEN_MORSE:
+        if (
+          wellParams.potentialDepth !== undefined &&
+          wellParams.barrierHeight !== undefined &&
+          wellParams.wellWidth !== undefined
+        ) {
+          return solveRosenMorsePotential(
+            wellParams.potentialDepth,
+            wellParams.barrierHeight,
+            wellParams.wellWidth,
+            mass,
+            numStates,
+            gridConfig,
+          );
+        }
+        break;
+
+      case PotentialType.ECKART:
+        if (
+          wellParams.potentialDepth !== undefined &&
+          wellParams.barrierHeight !== undefined &&
+          wellParams.wellWidth !== undefined
+        ) {
+          return solveEckartPotential(
+            wellParams.potentialDepth,
+            wellParams.barrierHeight,
             wellParams.wellWidth,
             mass,
             numStates,
@@ -317,6 +355,48 @@ export class Schrodinger1DSolver {
     return (x: number) => {
       const coshVal = Math.cosh(wellWidth * x);
       return -potentialDepth / (coshVal * coshVal);
+    };
+  }
+
+  /**
+   * Create a potential function for a Rosen-Morse potential.
+   * V(x) = -V_0 / cosh²(ax) + V_1 * tanh(ax)
+   *
+   * @param potentialDepth - Potential depth V_0 in Joules (positive value)
+   * @param barrierHeight - Barrier height V_1 in Joules
+   * @param wellWidth - Width parameter a (inverse meters)
+   * @returns Potential function V(x)
+   */
+  public static createRosenMorsePotential(
+    potentialDepth: number,
+    barrierHeight: number,
+    wellWidth: number,
+  ): PotentialFunction {
+    return (x: number) => {
+      const coshVal = Math.cosh(wellWidth * x);
+      const tanhVal = Math.tanh(wellWidth * x);
+      return -potentialDepth / (coshVal * coshVal) + barrierHeight * tanhVal;
+    };
+  }
+
+  /**
+   * Create a potential function for an Eckart potential.
+   * V(x) = V_0 / (1 + exp(ax))² - V_1 / (1 + exp(ax))
+   *
+   * @param potentialDepth - Potential depth V_0 in Joules
+   * @param barrierHeight - Barrier height V_1 in Joules
+   * @param wellWidth - Width parameter a (inverse meters)
+   * @returns Potential function V(x)
+   */
+  public static createEckartPotential(
+    potentialDepth: number,
+    barrierHeight: number,
+    wellWidth: number,
+  ): PotentialFunction {
+    return (x: number) => {
+      const expVal = Math.exp(wellWidth * x);
+      const denom = 1 + expVal;
+      return potentialDepth / (denom * denom) - barrierHeight / denom;
     };
   }
 
