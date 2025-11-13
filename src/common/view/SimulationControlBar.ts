@@ -12,6 +12,7 @@ import {
 import { DerivedProperty } from "scenerystack/axon";
 import { BaseModel } from "../model/BaseModel.js";
 import QPPWColors from "../../QPPWColors.js";
+import stringManager from "../../i18n/StringManager.js";
 
 export class SimulationControlBar extends Node {
   private readonly model: BaseModel;
@@ -32,7 +33,7 @@ export class SimulationControlBar extends Node {
     this.addChild(background);
 
     // Time display
-    const timeLabel = new Text("Time:", {
+    const timeLabel = new Text(stringManager.timeStringProperty, {
       font: new PhetFont(14),
       fill: QPPWColors.textFillProperty,
     });
