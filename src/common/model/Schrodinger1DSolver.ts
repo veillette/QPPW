@@ -24,7 +24,7 @@ import {
   solveAsymmetricTrianglePotential,
   solveCoulomb1DPotential,
   solveCoulomb3DPotential
-} from "./AnalyticalSolutions.js";
+} from "./analytical-solutions/index.js";
 import { solveNumerov } from "./NumerovSolver.js";
 import { solveDVR } from "./DVRSolver.js";
 import { solveFGH } from "./FGHSolver.js";
