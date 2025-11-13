@@ -20,7 +20,10 @@ import {
   solveMorsePotential,
   solvePoschlTellerPotential,
   solveRosenMorsePotential,
-  solveEckartPotential
+  solveEckartPotential,
+  solveAsymmetricTrianglePotential,
+  solveCoulomb1DPotential,
+  solveCoulomb3DPotential
 } from "./AnalyticalSolutions.js";
 import { solveNumerov } from "./NumerovSolver.js";
 import { solveDVR } from "./DVRSolver.js";
@@ -59,6 +62,10 @@ export interface WellParameters {
   potentialDepth?: number;
   /** Barrier height for Rosen-Morse and Eckart potentials (Joules) */
   barrierHeight?: number;
+  /** Slope parameter for asymmetric triangle potential (Joules/meter) */
+  slope?: number;
+  /** Coulomb strength parameter α for Coulomb potentials (J·m) */
+  coulombStrength?: number;
 }
 
 /**
@@ -201,6 +208,43 @@ export class Schrodinger1DSolver {
             wellParams.potentialDepth,
             wellParams.barrierHeight,
             wellParams.wellWidth,
+            mass,
+            numStates,
+            gridConfig,
+          );
+        }
+        break;
+
+      case PotentialType.ASYMMETRIC_TRIANGLE:
+        if (
+          wellParams.slope !== undefined &&
+          wellParams.wellWidth !== undefined
+        ) {
+          return solveAsymmetricTrianglePotential(
+            wellParams.slope,
+            wellParams.wellWidth,
+            mass,
+            numStates,
+            gridConfig,
+          );
+        }
+        break;
+
+      case PotentialType.COULOMB_1D:
+        if (wellParams.coulombStrength !== undefined) {
+          return solveCoulomb1DPotential(
+            wellParams.coulombStrength,
+            mass,
+            numStates,
+            gridConfig,
+          );
+        }
+        break;
+
+      case PotentialType.COULOMB_3D:
+        if (wellParams.coulombStrength !== undefined) {
+          return solveCoulomb3DPotential(
+            wellParams.coulombStrength,
             mass,
             numStates,
             gridConfig,
@@ -412,6 +456,72 @@ export class Schrodinger1DSolver {
       const expVal = Math.exp(wellWidth * x);
       const denom = 1 + expVal;
       return potentialDepth / (denom * denom) - barrierHeight / denom;
+    };
+  }
+
+  /**
+   * Create a potential function for an asymmetric triangle potential.
+   * V(x) = 0 for x < 0
+   * V(x) = -b(a-x) for 0 < x < a
+   * V(x) = 0 for x > a
+   *
+   * @param slope - Slope parameter b in Joules/meter (positive value)
+   * @param wellWidth - Width parameter a in meters
+   * @returns Potential function V(x)
+   */
+  public static createAsymmetricTrianglePotential(
+    slope: number,
+    wellWidth: number,
+  ): PotentialFunction {
+    return (x: number) => {
+      if (x < 0) {
+        return 0;
+      } else if (x <= wellWidth) {
+        return -slope * (wellWidth - x);
+      } else {
+        return 0;
+      }
+    };
+  }
+
+  /**
+   * Create a potential function for a 1D Coulomb potential.
+   * V(x) = -α/|x|
+   *
+   * This potential has a singularity at x=0 and describes a 1D hydrogen-like atom.
+   *
+   * @param coulombStrength - Coulomb strength parameter α in J·m
+   * @returns Potential function V(x)
+   */
+  public static createCoulomb1DPotential(
+    coulombStrength: number,
+  ): PotentialFunction {
+    return (x: number) => {
+      if (x === 0) {
+        return -Infinity; // Singularity at x=0
+      }
+      return -coulombStrength / Math.abs(x);
+    };
+  }
+
+  /**
+   * Create a potential function for a 3D Coulomb potential (radial).
+   * V(r) = -α/r
+   *
+   * This is the radial potential for the hydrogen atom.
+   * Note: r should always be positive for the radial coordinate.
+   *
+   * @param coulombStrength - Coulomb strength parameter α in J·m
+   * @returns Potential function V(r)
+   */
+  public static createCoulomb3DPotential(
+    coulombStrength: number,
+  ): PotentialFunction {
+    return (r: number) => {
+      if (r <= 0) {
+        return -Infinity; // Singularity at r=0
+      }
+      return -coulombStrength / r;
     };
   }
 
