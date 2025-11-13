@@ -27,7 +27,6 @@ export class SimulationControlBar extends Node {
     // Create background bar
     const background = new Rectangle(0, 0, this.barWidth, 80, {
       fill: QPPWColors.panelFillProperty,
-      stroke: QPPWColors.panelStrokeProperty,
       lineWidth: 1,
     });
     this.addChild(background);
@@ -54,10 +53,11 @@ export class SimulationControlBar extends Node {
     });
 
 
-
+    //TODO: hoist this constant to the model.
      // Default time step for manual stepping (in seconds)
     const manualStepSize = 0.016; // ~1 frame at 60 FPS
 
+    //TODO: I think there is a simpler way to achieve this
     // Create derived property: stepper buttons enabled only when paused
     const stepperEnabledProperty = new DerivedProperty(
       [this.model.isPlayingProperty],

@@ -8,11 +8,14 @@ import { Shape } from "scenerystack/kite";
 import { NumberProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
-import { ChartTransform, ChartRectangle, AxisLine } from "scenerystack/bamboo";
+import { ChartTransform, ChartRectangle, AxisLine, GridLineSet, TickMarkSet, TickLabelSet } from "scenerystack/bamboo";
 import { OneWellModel } from "../../one-well/model/OneWellModel.js";
 import { BoundStateResult } from "../model/PotentialFunction.js";
 import QuantumConstants from "../model/QuantumConstants.js";
 import QPPWColors from "../../QPPWColors.js";
+
+// Chart axis range constant (shared with EnergyChartNode)
+const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
 
 export class WaveFunctionChartNode extends Node {
   private readonly model: OneWellModel;
@@ -54,9 +57,9 @@ export class WaveFunctionChartNode extends Node {
     this.plotWidth = this.chartWidth - this.chartMargins.left - this.chartMargins.right;
     this.plotHeight = this.chartHeight - this.chartMargins.top - this.chartMargins.bottom;
 
-    // Initialize view range (will be updated based on data)
-    this.xMinProperty = new NumberProperty(0);
-    this.xMaxProperty = new NumberProperty(1);
+    // Initialize view range (x-axis is fixed, y-axis will be updated based on data)
+    this.xMinProperty = new NumberProperty(-X_AXIS_RANGE_NM);
+    this.xMaxProperty = new NumberProperty(X_AXIS_RANGE_NM);
     this.yMinProperty = new NumberProperty(-1);
     this.yMaxProperty = new NumberProperty(1);
 
@@ -161,6 +164,39 @@ export class WaveFunctionChartNode extends Node {
     xAxis.y = this.chartMargins.top + this.plotHeight;
     axesNode.addChild(xAxis);
 
+    // X-axis grid lines
+    const xGridLines = new GridLineSet(this.chartTransform, Orientation.VERTICAL, 2, {
+      stroke: QPPWColors.gridLineProperty,
+      lineWidth: 1,
+    });
+    xGridLines.x = this.chartMargins.left;
+    xGridLines.y = this.chartMargins.top;
+    axesNode.addChild(xGridLines);
+
+    // X-axis tick marks
+    const xTickMarks = new TickMarkSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
+      edge: "min",
+      extent: 8,
+      stroke: QPPWColors.axisProperty,
+      lineWidth: 1,
+    });
+    xTickMarks.x = this.chartMargins.left;
+    xTickMarks.y = this.chartMargins.top + this.plotHeight;
+    axesNode.addChild(xTickMarks);
+
+    // X-axis tick labels
+    const xTickLabels = new TickLabelSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
+      edge: "min",
+      extent: 10,
+      createLabel: (value: number) => new Text(value.toFixed(0), {
+        font: "12px sans-serif",
+        fill: QPPWColors.labelFillProperty,
+      }),
+    });
+    xTickLabels.x = this.chartMargins.left;
+    xTickLabels.y = this.chartMargins.top + this.plotHeight;
+    axesNode.addChild(xTickLabels);
+
     // Y-axis label (will be updated based on display mode)
     this.yAxisLabel = new Text("Probability Density", {
       font: "14px sans-serif",
@@ -245,15 +281,9 @@ export class WaveFunctionChartNode extends Node {
 
   /**
    * Updates the view range based on the data and updates the ChartTransform.
+   * Note: X-axis range is fixed, only Y-axis is updated dynamically.
    */
   private updateViewRange(boundStates: BoundStateResult): void {
-    const xGrid = boundStates.xGrid;
-    const xMin = xGrid[0] * QuantumConstants.M_TO_NM;
-    const xMax = xGrid[xGrid.length - 1] * QuantumConstants.M_TO_NM;
-
-    this.xMinProperty.value = xMin;
-    this.xMaxProperty.value = xMax;
-
     // Calculate Y range based on wave function values
     const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
     if (selectedIndex >= 0 && selectedIndex < boundStates.wavefunctions.length) {
@@ -270,8 +300,7 @@ export class WaveFunctionChartNode extends Node {
       }
     }
 
-    // Update ChartTransform with new ranges
-    this.chartTransform.setModelXRange(new Range(this.xMinProperty.value, this.xMaxProperty.value));
+    // Update ChartTransform with new Y range (X range is fixed)
     this.chartTransform.setModelYRange(new Range(this.yMinProperty.value, this.yMaxProperty.value));
   }
 

@@ -9,11 +9,16 @@ import { NumberProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
 import { Checkbox } from "scenerystack/sun";
-import { ChartTransform, ChartRectangle, AxisLine } from "scenerystack/bamboo";
+import { ChartTransform, ChartRectangle, AxisLine, GridLineSet, TickMarkSet, TickLabelSet } from "scenerystack/bamboo";
 import { OneWellModel } from "../../one-well/model/OneWellModel.js";
 import { PotentialType, BoundStateResult } from "../model/PotentialFunction.js";
 import QuantumConstants from "../model/QuantumConstants.js";
 import QPPWColors from "../../QPPWColors.js";
+
+// Chart axis range constants
+const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
+const ENERGY_Y_AXIS_MIN_EV = -5; // Minimum energy in eV
+const ENERGY_Y_AXIS_MAX_EV = 15; // Maximum energy in eV
 
 export class EnergyChartNode extends Node {
   private readonly model: OneWellModel;
@@ -58,11 +63,11 @@ export class EnergyChartNode extends Node {
     this.plotWidth = this.chartWidth - this.chartMargins.left - this.chartMargins.right;
     this.plotHeight = this.chartHeight - this.chartMargins.top - this.chartMargins.bottom;
 
-    // Initialize view range (will be updated based on data)
-    this.xMinProperty = new NumberProperty(0);
-    this.xMaxProperty = new NumberProperty(1);
-    this.yMinProperty = new NumberProperty(-1);
-    this.yMaxProperty = new NumberProperty(10);
+    // Initialize view range with fixed values
+    this.xMinProperty = new NumberProperty(-X_AXIS_RANGE_NM);
+    this.xMaxProperty = new NumberProperty(X_AXIS_RANGE_NM);
+    this.yMinProperty = new NumberProperty(ENERGY_Y_AXIS_MIN_EV);
+    this.yMaxProperty = new NumberProperty(ENERGY_Y_AXIS_MAX_EV);
 
     // Create ChartTransform for model-to-view coordinate conversion
     this.chartTransform = new ChartTransform({
@@ -159,6 +164,72 @@ export class EnergyChartNode extends Node {
     xAxis.y = this.chartMargins.top + this.plotHeight;
     axesNode.addChild(xAxis);
 
+    // Y-axis grid lines
+    const yGridLines = new GridLineSet(this.chartTransform, Orientation.HORIZONTAL, 5, {
+      stroke: QPPWColors.gridLineProperty,
+      lineWidth: 1,
+    });
+    yGridLines.x = this.chartMargins.left;
+    yGridLines.y = this.chartMargins.top;
+    axesNode.addChild(yGridLines);
+
+    // X-axis grid lines
+    const xGridLines = new GridLineSet(this.chartTransform, Orientation.VERTICAL, 2, {
+      stroke: QPPWColors.gridLineProperty,
+      lineWidth: 1,
+    });
+    xGridLines.x = this.chartMargins.left;
+    xGridLines.y = this.chartMargins.top;
+    axesNode.addChild(xGridLines);
+
+    // Y-axis tick marks
+    const yTickMarks = new TickMarkSet(this.chartTransform, Orientation.VERTICAL, 5, {
+      edge: "min",
+      extent: 8,
+      stroke: QPPWColors.axisProperty,
+      lineWidth: 1,
+    });
+    yTickMarks.x = this.chartMargins.left;
+    yTickMarks.y = this.chartMargins.top;
+    axesNode.addChild(yTickMarks);
+
+    // X-axis tick marks
+    const xTickMarks = new TickMarkSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
+      edge: "min",
+      extent: 8,
+      stroke: QPPWColors.axisProperty,
+      lineWidth: 1,
+    });
+    xTickMarks.x = this.chartMargins.left;
+    xTickMarks.y = this.chartMargins.top + this.plotHeight;
+    axesNode.addChild(xTickMarks);
+
+    // Y-axis tick labels
+    const yTickLabels = new TickLabelSet(this.chartTransform, Orientation.VERTICAL, 5, {
+      edge: "min",
+      extent: 10,
+      createLabel: (value: number) => new Text(value.toFixed(0), {
+        font: "12px sans-serif",
+        fill: QPPWColors.labelFillProperty,
+      }),
+    });
+    yTickLabels.x = this.chartMargins.left;
+    yTickLabels.y = this.chartMargins.top;
+    axesNode.addChild(yTickLabels);
+
+    // X-axis tick labels
+    const xTickLabels = new TickLabelSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
+      edge: "min",
+      extent: 10,
+      createLabel: (value: number) => new Text(value.toFixed(0), {
+        font: "12px sans-serif",
+        fill: QPPWColors.labelFillProperty,
+      }),
+    });
+    xTickLabels.x = this.chartMargins.left;
+    xTickLabels.y = this.chartMargins.top + this.plotHeight;
+    axesNode.addChild(xTickLabels);
+
     // Axis labels
     const yLabel = new Text("Energy (eV)", {
       font: "14px sans-serif",
@@ -249,35 +320,10 @@ export class EnergyChartNode extends Node {
       return;
     }
 
-    this.updateViewRange(boundStates);
     this.updatePotentialCurve(boundStates);
     this.updateEnergyLevels(boundStates);
     this.updateZeroLine();
     this.updateTotalEnergyLine(boundStates);
-  }
-
-  /**
-   * Updates the view range based on the data and updates the ChartTransform.
-   */
-  private updateViewRange(boundStates: BoundStateResult): void {
-    const xGrid = boundStates.xGrid;
-    const xMin = xGrid[0] * QuantumConstants.M_TO_NM;
-    const xMax = xGrid[xGrid.length - 1] * QuantumConstants.M_TO_NM;
-
-    // Calculate energy range
-    const energies = boundStates.energies.map((e) => e * QuantumConstants.JOULES_TO_EV);
-    const maxEnergy = Math.max(...energies);
-    const yMin = -this.model.wellDepthProperty.value * 0.2; // Small margin below zero
-    const yMax = maxEnergy * 1.2; // 20% margin above highest energy
-
-    this.xMinProperty.value = xMin;
-    this.xMaxProperty.value = xMax;
-    this.yMinProperty.value = yMin;
-    this.yMaxProperty.value = yMax;
-
-    // Update ChartTransform with new ranges
-    this.chartTransform.setModelXRange(new Range(this.xMinProperty.value, this.xMaxProperty.value));
-    this.chartTransform.setModelYRange(new Range(this.yMinProperty.value, this.yMaxProperty.value));
   }
 
   /**
