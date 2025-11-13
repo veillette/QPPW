@@ -5,7 +5,7 @@
 
 import { NumberProperty, Property } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
-import Schrodinger1DSolver from "../../common/model/Schrodinger1DSolver.js";
+import Schrodinger1DSolver, { WellParameters } from "../../common/model/Schrodinger1DSolver.js";
 import { PotentialType, BoundStateResult } from "../../common/model/PotentialFunction.js";
 import QuantumConstants from "../../common/model/QuantumConstants.js";
 import QPPWPreferences from "../../QPPWPreferences.js";
@@ -206,7 +206,7 @@ export class OneWellModel {
 
     try {
       // Build potential parameters based on type
-      const potentialParams: any = {
+      const potentialParams: WellParameters = {
         type: this.potentialTypeProperty.value,
         wellWidth: wellWidth,
       };
@@ -220,16 +220,22 @@ export class OneWellModel {
           potentialParams.wellDepth = wellDepth;
           break;
         case PotentialType.HARMONIC_OSCILLATOR:
-          potentialParams.omega = Math.sqrt((4 * wellDepth) / (mass * wellWidth * wellWidth));
+          // Convert well depth to spring constant: k = mω² = m(4V₀/mL²) = 4V₀/L²
+          potentialParams.springConstant = (4 * wellDepth) / (wellWidth * wellWidth);
           break;
         case PotentialType.ASYMMETRIC_TRIANGLE:
-          potentialParams.fieldStrength = wellDepth / wellWidth;
-          potentialParams.offset = this.wellOffsetProperty.value * wellWidth;
+          // Slope is the field strength
+          potentialParams.slope = wellDepth / wellWidth;
           break;
         case PotentialType.COULOMB_1D:
-        case PotentialType.COULOMB_3D:
-          potentialParams.charge = -1; // Electron charge
+        case PotentialType.COULOMB_3D: {
+          // For Coulomb potentials, use coulombStrength parameter α = k*e²
+          // where k = 1/(4πε₀) ≈ 8.9875517923e9 N·m²/C²
+          // α ≈ 2.307e-28 J·m for electron charge
+          const k = 8.9875517923e9; // Coulomb's constant in N·m²/C²
+          potentialParams.coulombStrength = k * QuantumConstants.ELEMENTARY_CHARGE * QuantumConstants.ELEMENTARY_CHARGE;
           break;
+        }
         default:
           // For other potential types, use numerical solution
           break;
