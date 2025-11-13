@@ -112,18 +112,20 @@ export function solveAsymmetricTrianglePotential(
     return z;
   }
 
-  // Find eigenvalues using pre-computed zeros or root finding
+  // Find eigenvalues using Newton-Raphson root finding with appropriate initial guesses
   for (let n = 0; n < numStates; n++) {
-    let z0: number;
+    let initialGuess: number;
 
     if (n < airyZeros.length) {
-      // Use pre-computed Airy zero for the first 30 states
-      z0 = airyZeros[n];
+      // Use pre-computed Airy zero as initial guess for the first 30 states
+      initialGuess = airyZeros[n];
     } else {
-      // Use asymptotic approximation and refine with Newton-Raphson
-      const initialGuess = getApproximateAiryZero(n + 1); // n+1 because zeros are 1-indexed
-      z0 = refineAiryZero(initialGuess);
+      // Use asymptotic approximation for states beyond the 30th
+      initialGuess = getApproximateAiryZero(n + 1); // n+1 because zeros are 1-indexed
     }
+
+    // Refine the zero using Newton-Raphson
+    const z0 = refineAiryZero(initialGuess);
 
     // For the asymmetric triangle, the energy eigenvalues are approximately:
     // E_n ≈ -ba + (ℏ²/2m)^(1/3) * (2b)^(2/3) * z_n
