@@ -14,6 +14,7 @@ import {
   PotentialType,
 } from "./PotentialFunction.js";
 import {
+  solveFiniteSquareWell,
   solveInfiniteWell,
   solveHarmonicOscillator,
   solveMorsePotential,
@@ -42,8 +43,10 @@ export enum NumericalMethod {
 export interface WellParameters {
   /** Type of potential well */
   type: PotentialType;
-  /** Well width for infinite well (meters) */
+  /** Well width for infinite/finite well (meters) */
   wellWidth?: number;
+  /** Well depth for finite square well (Joules, positive value) */
+  wellDepth?: number;
   /** Spring constant for harmonic oscillator (N/m) */
   springConstant?: number;
   /** Dissociation energy for Morse potential (Joules) */
@@ -105,6 +108,18 @@ export class Schrodinger1DSolver {
         if (wellParams.wellWidth !== undefined) {
           return solveInfiniteWell(
             wellParams.wellWidth,
+            mass,
+            numStates,
+            gridConfig,
+          );
+        }
+        break;
+
+      case PotentialType.FINITE_WELL:
+        if (wellParams.wellWidth !== undefined && wellParams.wellDepth !== undefined) {
+          return solveFiniteSquareWell(
+            wellParams.wellWidth,
+            wellParams.wellDepth,
             mass,
             numStates,
             gridConfig,
