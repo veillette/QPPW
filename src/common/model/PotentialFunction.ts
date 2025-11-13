@@ -12,6 +12,8 @@ export enum PotentialType {
   HARMONIC_OSCILLATOR = "harmonicOscillator",
   MORSE = "morse",
   POSCHL_TELLER = "poschlTeller",
+  ROSEN_MORSE = "rosenMorse",
+  ECKART = "eckart",
   CUSTOM = "custom",
 }
 
