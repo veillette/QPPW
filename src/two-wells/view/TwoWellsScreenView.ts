@@ -8,6 +8,7 @@ import { TwoWellsModel } from "../model/TwoWellsModel.js";
 import { ScreenViewOptions } from "scenerystack/sim";
 import { Node, Rectangle, Text, VBox } from "scenerystack/scenery";
 import { Panel } from "scenerystack/sun";
+import { PhetFont } from "scenerystack/scenery-phet";
 import QPPWColors from "../../QPPWColors.js";
 import stringManager from "../../i18n/StringManager.js";
 
@@ -64,7 +65,7 @@ export class TwoWellsScreenView extends BaseScreenView {
 
     // Add title text
     const titleText = new Text(stringManager.twoWellsStringProperty, {
-      font: "24px sans-serif",
+      font: new PhetFont(24),
       fill: QPPWColors.textFillProperty,
       centerX: centerX,
       top: 20,
@@ -76,8 +77,8 @@ export class TwoWellsScreenView extends BaseScreenView {
     this.addChild(this.customControlPanel);
 
     // Add placeholder content text
-    const contentText = new Text("Double well with quantum tunneling", {
-      font: "16px sans-serif",
+    const contentText = new Text(stringManager.doubleWellStringProperty, {
+      font: new PhetFont(16),
       fill: QPPWColors.labelFillProperty,
       centerX: centerX,
       top: titleText.bottom + 20,
@@ -94,19 +95,19 @@ export class TwoWellsScreenView extends BaseScreenView {
       align: "left",
       children: [
         new Text(stringManager.wellWidthStringProperty, {
-          font: "14px sans-serif",
+          font: new PhetFont(14),
           fill: QPPWColors.textFillProperty,
         }),
         new Text(stringManager.barrierHeightStringProperty, {
-          font: "14px sans-serif",
+          font: new PhetFont(14),
           fill: QPPWColors.textFillProperty,
         }),
         new Text(stringManager.barrierWidthStringProperty, {
-          font: "14px sans-serif",
+          font: new PhetFont(14),
           fill: QPPWColors.textFillProperty,
         }),
         new Text(stringManager.tunnelingStringProperty, {
-          font: "14px sans-serif",
+          font: new PhetFont(14),
           fill: QPPWColors.textFillProperty,
         }),
       ],
@@ -126,28 +127,20 @@ export class TwoWellsScreenView extends BaseScreenView {
    * Creates the content for the info dialog.
    */
   public createInfoDialogContent(): Node {
-    return new Text(
-      "Explore quantum tunneling in a double potential well.\n" +
-        "Adjust barrier parameters to see how tunneling probability changes.\n" +
-        "Watch particles tunnel through classically forbidden regions!",
-      {
-        font: "14px sans-serif",
-        fill: QPPWColors.textFillProperty,
-      },
-    );
+    return new Text(stringManager.twoWellsDescriptionStringProperty, {
+      font: new PhetFont(14),
+      fill: QPPWColors.textFillProperty,
+    });
   }
 
   /**
    * Creates the screen summary content for accessibility.
    */
   public createScreenSummaryContent(): Node {
-    return new Text(
-      "Two Wells screen demonstrates quantum tunneling between two potential wells.",
-      {
-        font: "14px sans-serif",
-        fill: QPPWColors.textFillProperty,
-      },
-    );
+    return new Text(stringManager.twoWellsSummaryStringProperty, {
+      font: new PhetFont(14),
+      fill: QPPWColors.textFillProperty,
+    });
   }
 
   /**

@@ -10,6 +10,7 @@ import { OneWellModel } from "../../one-well/model/OneWellModel.js";
 import { PotentialType } from "../model/PotentialFunction.js";
 import QPPWColors from "../../QPPWColors.js";
 import { PhetFont } from "scenerystack/scenery-phet";
+import stringManager from "../../i18n/StringManager.js";
 
 interface ComboBoxItem<T> {
   value: T;
@@ -64,7 +65,7 @@ export class ControlPanelNode extends Node {
    * Creates the Energy Chart control group.
    */
   private createEnergyChartGroup(listBoxParent: Node): Node {
-    const titleText = new Text("Energy Chart", {
+    const titleText = new Text(stringManager.energyChartStringProperty, {
       font: new PhetFont({ size: 16, weight: "bold" }),
       fill: QPPWColors.textFillProperty,
     });
@@ -74,7 +75,7 @@ export class ControlPanelNode extends Node {
       {
         value: PotentialType.INFINITE_WELL,
         createNode: () =>
-          new Text("Square (Infinite)", {
+          new Text(stringManager.squareInfiniteStringProperty, {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
@@ -82,7 +83,7 @@ export class ControlPanelNode extends Node {
       {
         value: PotentialType.FINITE_WELL,
         createNode: () =>
-          new Text("Square (Finite)", {
+          new Text(stringManager.squareFiniteStringProperty, {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
@@ -90,7 +91,7 @@ export class ControlPanelNode extends Node {
       {
         value: PotentialType.HARMONIC_OSCILLATOR,
         createNode: () =>
-          new Text("Harmonic Oscillator", {
+          new Text(stringManager.harmonicOscillatorStringProperty, {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
@@ -98,7 +99,7 @@ export class ControlPanelNode extends Node {
       {
         value: PotentialType.ASYMMETRIC_TRIANGLE,
         createNode: () =>
-          new Text("Asymmetric Triangle", {
+          new Text(stringManager.asymmetricTriangleStringProperty, {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
@@ -106,7 +107,7 @@ export class ControlPanelNode extends Node {
       {
         value: PotentialType.COULOMB_1D,
         createNode: () =>
-          new Text("1D Coulomb", {
+          new Text(stringManager.coulomb1DStringProperty, {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
@@ -114,7 +115,7 @@ export class ControlPanelNode extends Node {
       {
         value: PotentialType.COULOMB_3D,
         createNode: () =>
-          new Text("3D Coulomb", {
+          new Text(stringManager.coulomb3DStringProperty, {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
@@ -137,7 +138,7 @@ export class ControlPanelNode extends Node {
       },
     );
 
-    const potentialLabel = new Text("Potential Well:", {
+    const potentialLabel = new Text(stringManager.potentialWellStringProperty, {
       font: new PhetFont(14),
       fill: QPPWColors.textFillProperty,
     });
@@ -175,7 +176,7 @@ export class ControlPanelNode extends Node {
    * Creates the Bottom Chart control group.
    */
   private createBottomChartGroup(): Node {
-    const titleText = new Text("Bottom Chart", {
+    const titleText = new Text(stringManager.bottomChartStringProperty, {
       font: new PhetFont({ size: 16, weight: "bold" }),
       fill: QPPWColors.textFillProperty,
     });
@@ -185,7 +186,7 @@ export class ControlPanelNode extends Node {
       {
         value: "probabilityDensity" as const,
         createNode: () =>
-          new Text("Probability Density", {
+          new Text(stringManager.probabilityDensityStringProperty, {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
@@ -193,7 +194,7 @@ export class ControlPanelNode extends Node {
       {
         value: "waveFunction" as const,
         createNode: () =>
-          new Text("Wave Function", {
+          new Text(stringManager.wavefunctionStringProperty, {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
@@ -211,20 +212,20 @@ export class ControlPanelNode extends Node {
       },
     );
 
-    const displayLabel = new Text("Display:", {
+    const displayLabel = new Text(stringManager.displayStringProperty, {
       font: new PhetFont(14),
       fill: QPPWColors.textFillProperty,
     });
 
     // Wave function views checkboxes
-    const waveFunctionViewsLabel = new Text("Wave Function views:", {
+    const waveFunctionViewsLabel = new Text(stringManager.waveFunctionViewsStringProperty, {
       font: new PhetFont(14),
       fill: QPPWColors.textFillProperty,
     });
 
     const realPartCheckbox = new Checkbox(
       this.model.showRealPartProperty,
-      new Text("real part", {
+      new Text(stringManager.realPartStringProperty, {
         font: new PhetFont(12),
         fill: QPPWColors.textFillProperty,
       }),
@@ -233,7 +234,7 @@ export class ControlPanelNode extends Node {
 
     const imaginaryPartCheckbox = new Checkbox(
       this.model.showImaginaryPartProperty,
-      new Text("imaginary part", {
+      new Text(stringManager.imaginaryPartStringProperty, {
         font: new PhetFont(12),
         fill: QPPWColors.textFillProperty,
       }),
@@ -242,7 +243,7 @@ export class ControlPanelNode extends Node {
 
     const magnitudeCheckbox = new Checkbox(
       this.model.showMagnitudeProperty,
-      new Text("magnitude", {
+      new Text(stringManager.magnitudeStringProperty, {
         font: new PhetFont(12),
         fill: QPPWColors.textFillProperty,
       }),
@@ -251,7 +252,7 @@ export class ControlPanelNode extends Node {
 
     const phaseCheckbox = new Checkbox(
       this.model.showPhaseProperty,
-      new Text("phase", {
+      new Text(stringManager.phaseStringProperty, {
         font: new PhetFont(12),
         fill: QPPWColors.textFillProperty,
       }),
@@ -296,7 +297,7 @@ export class ControlPanelNode extends Node {
    * Creates the Particle Mass control group.
    */
   private createParticleMassGroup(): Node {
-    const titleText = new Text("Particle Mass", {
+    const titleText = new Text(stringManager.particleMassStringProperty, {
       font: new PhetFont({ size: 16, weight: "bold" }),
       fill: QPPWColors.textFillProperty,
     });
@@ -337,7 +338,7 @@ export class ControlPanelNode extends Node {
    * Creates the Well Configuration control group.
    */
   private createWellConfigurationGroup(): Node {
-    const titleText = new Text("Well Configuration", {
+    const titleText = new Text(stringManager.wellConfigurationStringProperty, {
       font: new PhetFont({ size: 16, weight: "bold" }),
       fill: QPPWColors.textFillProperty,
     });
@@ -365,7 +366,7 @@ export class ControlPanelNode extends Node {
       spacing: 4,
       align: "left",
       children: [
-        new Text("Well Width", {
+        new Text(stringManager.wellWidthStringProperty, {
           font: new PhetFont(12),
           fill: QPPWColors.textFillProperty,
         }),
@@ -399,7 +400,7 @@ export class ControlPanelNode extends Node {
       spacing: 4,
       align: "left",
       children: [
-        new Text("Well Depth", {
+        new Text(stringManager.wellDepthStringProperty, {
           font: new PhetFont(12),
           fill: QPPWColors.textFillProperty,
         }),

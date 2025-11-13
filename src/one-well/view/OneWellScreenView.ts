@@ -7,7 +7,9 @@ import { BaseScreenView } from "../../common/view/BaseScreenView.js";
 import { OneWellModel } from "../model/OneWellModel.js";
 import { ScreenViewOptions } from "scenerystack/sim";
 import { Node, Text } from "scenerystack/scenery";
+import { PhetFont } from "scenerystack/scenery-phet";
 import QPPWColors from "../../QPPWColors.js";
+import stringManager from "../../i18n/StringManager.js";
 
 export class OneWellScreenView extends BaseScreenView {
   public constructor(model: OneWellModel, options?: ScreenViewOptions) {
@@ -28,14 +30,10 @@ export class OneWellScreenView extends BaseScreenView {
    * Creates the content for the info dialog.
    */
   public createInfoDialogContent(): Node {
-    const text = new Text(
-      "Explore quantum mechanics in a single potential well.\n" +
-        "Adjust the well parameters to see how energy levels change.",
-      {
-        font: "14px sans-serif",
-        fill: QPPWColors.textFillProperty,
-      },
-    );
+    const text = new Text(stringManager.oneWellDescriptionStringProperty, {
+      font: new PhetFont(14),
+      fill: QPPWColors.textFillProperty,
+    });
     return new Node({ children: [text] });
   }
 
@@ -43,13 +41,10 @@ export class OneWellScreenView extends BaseScreenView {
    * Creates the screen summary content for accessibility.
    */
   public createScreenSummaryContent(): Node {
-    const text = new Text(
-      "One Well screen shows a single quantum potential well with adjustable parameters.",
-      {
-        font: "14px sans-serif",
-        fill: QPPWColors.textFillProperty,
-      },
-    );
+    const text = new Text(stringManager.oneWellSummaryStringProperty, {
+      font: new PhetFont(14),
+      fill: QPPWColors.textFillProperty,
+    });
     return new Node({ children: [text] });
   }
 

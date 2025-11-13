@@ -9,11 +9,13 @@ import { NumberProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
 import { Checkbox } from "scenerystack/sun";
+import { PhetFont } from "scenerystack/scenery-phet";
 import { ChartTransform, ChartRectangle, AxisLine, GridLineSet, TickMarkSet, TickLabelSet } from "scenerystack/bamboo";
 import { OneWellModel } from "../../one-well/model/OneWellModel.js";
 import { PotentialType, BoundStateResult } from "../model/PotentialFunction.js";
 import QuantumConstants from "../model/QuantumConstants.js";
 import QPPWColors from "../../QPPWColors.js";
+import stringManager from "../../i18n/StringManager.js";
 
 // Chart axis range constants
 const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
@@ -209,7 +211,7 @@ export class EnergyChartNode extends Node {
       edge: "min",
       extent: 10,
       createLabel: (value: number) => new Text(value.toFixed(0), {
-        font: "12px sans-serif",
+        font: new PhetFont(10),
         fill: QPPWColors.labelFillProperty,
       }),
     });
@@ -222,7 +224,7 @@ export class EnergyChartNode extends Node {
       edge: "min",
       extent: 10,
       createLabel: (value: number) => new Text(value.toFixed(0), {
-        font: "12px sans-serif",
+        font: new PhetFont(10),
         fill: QPPWColors.labelFillProperty,
       }),
     });
@@ -231,8 +233,8 @@ export class EnergyChartNode extends Node {
     axesNode.addChild(xTickLabels);
 
     // Axis labels
-    const yLabel = new Text("Energy (eV)", {
-      font: "14px sans-serif",
+    const yLabel = new Text(stringManager.energyEvStringProperty, {
+      font: new PhetFont(14),
       fill: QPPWColors.labelFillProperty,
       rotation: -Math.PI / 2,
       centerX: this.chartMargins.left - 40,
@@ -240,8 +242,8 @@ export class EnergyChartNode extends Node {
     });
     axesNode.addChild(yLabel);
 
-    const xLabel = new Text("Position (nm)", {
-      font: "14px sans-serif",
+    const xLabel = new Text(stringManager.positionNmStringProperty, {
+      font: new PhetFont(14),
       fill: QPPWColors.labelFillProperty,
       centerX: this.chartWidth / 2,
       centerY: this.chartHeight - 15,
@@ -259,14 +261,14 @@ export class EnergyChartNode extends Node {
       spacing: 5,
       align: "left",
       children: [
-        new Checkbox(this.model.showTotalEnergyProperty, new Text("Total Energy", {
-          font: "12px sans-serif",
+        new Checkbox(this.model.showTotalEnergyProperty, new Text(stringManager.totalEnergyStringProperty, {
+          font: new PhetFont(12),
           fill: QPPWColors.textFillProperty,
         }), {
           boxWidth: 15,
         }),
-        new Checkbox(this.model.showPotentialEnergyProperty, new Text("Potential Energy", {
-          font: "12px sans-serif",
+        new Checkbox(this.model.showPotentialEnergyProperty, new Text(stringManager.potentialStringProperty, {
+          font: new PhetFont(12),
           fill: QPPWColors.textFillProperty,
         }), {
           boxWidth: 15,

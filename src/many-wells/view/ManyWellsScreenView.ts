@@ -8,6 +8,7 @@ import { ManyWellsModel } from "../model/ManyWellsModel.js";
 import { ScreenViewOptions } from "scenerystack/sim";
 import { Node, Rectangle, Text, VBox } from "scenerystack/scenery";
 import { Panel } from "scenerystack/sun";
+import { PhetFont } from "scenerystack/scenery-phet";
 import QPPWColors from "../../QPPWColors.js";
 import stringManager from "../../i18n/StringManager.js";
 
@@ -37,7 +38,7 @@ export class ManyWellsScreenView extends BaseScreenView {
 
     // Add title text
     const titleText = new Text(stringManager.manyWellsStringProperty, {
-      font: "24px sans-serif",
+      font: new PhetFont(24),
       fill: QPPWColors.textFillProperty,
       centerX: this.layoutBounds.centerX,
       top: 20,
@@ -49,8 +50,8 @@ export class ManyWellsScreenView extends BaseScreenView {
     this.addChild(this.customControlPanel);
 
     // Add placeholder content text
-    const contentText = new Text("Multiple wells showing energy band formation", {
-      font: "16px sans-serif",
+    const contentText = new Text(stringManager.multipleWellsStringProperty, {
+      font: new PhetFont(16),
       fill: QPPWColors.labelFillProperty,
       centerX: this.layoutBounds.centerX - 100,
       top: titleText.bottom + 20,
@@ -118,19 +119,19 @@ export class ManyWellsScreenView extends BaseScreenView {
       align: "left",
       children: [
         new Text(stringManager.numberOfWellsStringProperty, {
-          font: "14px sans-serif",
+          font: new PhetFont(14),
           fill: QPPWColors.textFillProperty,
         }),
         new Text(stringManager.latticeConstantStringProperty, {
-          font: "14px sans-serif",
+          font: new PhetFont(14),
           fill: QPPWColors.textFillProperty,
         }),
         new Text(stringManager.energyBandsStringProperty, {
-          font: "14px sans-serif",
+          font: new PhetFont(14),
           fill: QPPWColors.textFillProperty,
         }),
         new Text(stringManager.wellWidthStringProperty, {
-          font: "14px sans-serif",
+          font: new PhetFont(14),
           fill: QPPWColors.textFillProperty,
         }),
       ],
@@ -150,28 +151,20 @@ export class ManyWellsScreenView extends BaseScreenView {
    * Creates the content for the info dialog.
    */
   public createInfoDialogContent(): Node {
-    return new Text(
-      "Explore energy bands in a periodic potential.\n" +
-        "Add or remove wells to see how energy bands form.\n" +
-        "This demonstrates the foundation of solid-state physics!",
-      {
-        font: "14px sans-serif",
-        fill: QPPWColors.textFillProperty,
-      },
-    );
+    return new Text(stringManager.manyWellsDescriptionStringProperty, {
+      font: new PhetFont(14),
+      fill: QPPWColors.textFillProperty,
+    });
   }
 
   /**
    * Creates the screen summary content for accessibility.
    */
   public createScreenSummaryContent(): Node {
-    return new Text(
-      "Many Wells screen demonstrates energy band formation in periodic potentials.",
-      {
-        font: "14px sans-serif",
-        fill: QPPWColors.textFillProperty,
-      },
-    );
+    return new Text(stringManager.manyWellsSummaryStringProperty, {
+      font: new PhetFont(14),
+      fill: QPPWColors.textFillProperty,
+    });
   }
 
   /**

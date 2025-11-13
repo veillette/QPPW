@@ -59,6 +59,46 @@ export class StringManager {
   public readonly autoPauseWhenTabHiddenStringProperty: StringProperty;
   public readonly autoPauseDescriptionStringProperty: StringProperty;
 
+  // Control Panel strings
+  public readonly energyChartStringProperty: StringProperty;
+  public readonly bottomChartStringProperty: StringProperty;
+  public readonly particleMassStringProperty: StringProperty;
+  public readonly wellConfigurationStringProperty: StringProperty;
+  public readonly potentialWellStringProperty: StringProperty;
+  public readonly displayStringProperty: StringProperty;
+  public readonly waveFunctionViewsStringProperty: StringProperty;
+
+  // Potential type strings
+  public readonly squareInfiniteStringProperty: StringProperty;
+  public readonly squareFiniteStringProperty: StringProperty;
+  public readonly harmonicOscillatorStringProperty: StringProperty;
+  public readonly asymmetricTriangleStringProperty: StringProperty;
+  public readonly coulomb1DStringProperty: StringProperty;
+  public readonly coulomb3DStringProperty: StringProperty;
+
+  // Display mode strings
+  public readonly probabilityDensityStringProperty: StringProperty;
+  public readonly realPartStringProperty: StringProperty;
+  public readonly imaginaryPartStringProperty: StringProperty;
+  public readonly magnitudeStringProperty: StringProperty;
+  public readonly phaseStringProperty: StringProperty;
+
+  // Axis labels
+  public readonly energyEvStringProperty: StringProperty;
+  public readonly positionNmStringProperty: StringProperty;
+  public readonly totalEnergyStringProperty: StringProperty;
+
+  // Time display
+  public readonly timeStringProperty: StringProperty;
+
+  // Screen descriptions
+  public readonly oneWellDescriptionStringProperty: StringProperty;
+  public readonly twoWellsDescriptionStringProperty: StringProperty;
+  public readonly manyWellsDescriptionStringProperty: StringProperty;
+  public readonly oneWellSummaryStringProperty: StringProperty;
+  public readonly twoWellsSummaryStringProperty: StringProperty;
+  public readonly manyWellsSummaryStringProperty: StringProperty;
+
   public constructor() {
     // Initialize all string properties with English defaults
     this.titleStringProperty = new StringProperty("Quantum Physics: Potential Wells");
@@ -112,6 +152,52 @@ export class StringManager {
     this.spectralDescriptionStringProperty = new StringProperty("Chebyshev polynomial method - exponential convergence for smooth functions");
     this.autoPauseWhenTabHiddenStringProperty = new StringProperty("Auto-pause when tab is hidden");
     this.autoPauseDescriptionStringProperty = new StringProperty("Automatically pause the simulation when the browser tab is not visible");
+
+    // Control Panel strings
+    this.energyChartStringProperty = new StringProperty("Energy Chart");
+    this.bottomChartStringProperty = new StringProperty("Bottom Chart");
+    this.particleMassStringProperty = new StringProperty("Particle Mass");
+    this.wellConfigurationStringProperty = new StringProperty("Well Configuration");
+    this.potentialWellStringProperty = new StringProperty("Potential Well:");
+    this.displayStringProperty = new StringProperty("Display:");
+    this.waveFunctionViewsStringProperty = new StringProperty("Wave Function views:");
+
+    // Potential type strings
+    this.squareInfiniteStringProperty = new StringProperty("Square (Infinite)");
+    this.squareFiniteStringProperty = new StringProperty("Square (Finite)");
+    this.harmonicOscillatorStringProperty = new StringProperty("Harmonic Oscillator");
+    this.asymmetricTriangleStringProperty = new StringProperty("Asymmetric Triangle");
+    this.coulomb1DStringProperty = new StringProperty("1D Coulomb");
+    this.coulomb3DStringProperty = new StringProperty("3D Coulomb");
+
+    // Display mode strings
+    this.probabilityDensityStringProperty = new StringProperty("Probability Density");
+    this.realPartStringProperty = new StringProperty("real part");
+    this.imaginaryPartStringProperty = new StringProperty("imaginary part");
+    this.magnitudeStringProperty = new StringProperty("magnitude");
+    this.phaseStringProperty = new StringProperty("phase");
+
+    // Axis labels
+    this.energyEvStringProperty = new StringProperty("Energy (eV)");
+    this.positionNmStringProperty = new StringProperty("Position (nm)");
+    this.totalEnergyStringProperty = new StringProperty("Total Energy");
+
+    // Time display
+    this.timeStringProperty = new StringProperty("Time:");
+
+    // Screen descriptions
+    this.oneWellDescriptionStringProperty = new StringProperty(
+      "Explore quantum mechanics in a single potential well.\nAdjust the well parameters to see how energy levels change."
+    );
+    this.twoWellsDescriptionStringProperty = new StringProperty(
+      "Explore quantum tunneling in a double potential well.\nAdjust barrier parameters to see how tunneling probability changes.\nWatch particles tunnel through classically forbidden regions!"
+    );
+    this.manyWellsDescriptionStringProperty = new StringProperty(
+      "Explore energy bands in a periodic potential.\nAdd or remove wells to see how energy bands form.\nThis demonstrates the foundation of solid-state physics!"
+    );
+    this.oneWellSummaryStringProperty = new StringProperty("One Well screen shows a single quantum potential well with adjustable parameters.");
+    this.twoWellsSummaryStringProperty = new StringProperty("Two Wells screen demonstrates quantum tunneling between two potential wells.");
+    this.manyWellsSummaryStringProperty = new StringProperty("Many Wells screen demonstrates energy band formation in periodic potentials.");
   }
 
   /**

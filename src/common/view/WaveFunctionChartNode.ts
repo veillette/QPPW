@@ -8,11 +8,13 @@ import { Shape } from "scenerystack/kite";
 import { NumberProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
+import { PhetFont } from "scenerystack/scenery-phet";
 import { ChartTransform, ChartRectangle, AxisLine, GridLineSet, TickMarkSet, TickLabelSet } from "scenerystack/bamboo";
 import { OneWellModel } from "../../one-well/model/OneWellModel.js";
 import { BoundStateResult } from "../model/PotentialFunction.js";
 import QuantumConstants from "../model/QuantumConstants.js";
 import QPPWColors from "../../QPPWColors.js";
+import stringManager from "../../i18n/StringManager.js";
 
 // Chart axis range constant (shared with EnergyChartNode)
 const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
@@ -189,7 +191,7 @@ export class WaveFunctionChartNode extends Node {
       edge: "min",
       extent: 10,
       createLabel: (value: number) => new Text(value.toFixed(0), {
-        font: "12px sans-serif",
+        font: new PhetFont(12),
         fill: QPPWColors.labelFillProperty,
       }),
     });
@@ -198,8 +200,8 @@ export class WaveFunctionChartNode extends Node {
     axesNode.addChild(xTickLabels);
 
     // Y-axis label (will be updated based on display mode)
-    this.yAxisLabel = new Text("Probability Density", {
-      font: "14px sans-serif",
+    this.yAxisLabel = new Text(stringManager.probabilityDensityStringProperty, {
+      font: new PhetFont(14),
       fill: QPPWColors.labelFillProperty,
       rotation: -Math.PI / 2,
       centerX: this.chartMargins.left - 40,
@@ -208,8 +210,8 @@ export class WaveFunctionChartNode extends Node {
     axesNode.addChild(this.yAxisLabel);
 
     // X-axis label
-    const xLabel = new Text("Position (nm)", {
-      font: "14px sans-serif",
+    const xLabel = new Text(stringManager.positionNmStringProperty, {
+      font: new PhetFont(14),
       fill: QPPWColors.labelFillProperty,
       centerX: this.chartWidth / 2,
       centerY: this.chartHeight - 15,
