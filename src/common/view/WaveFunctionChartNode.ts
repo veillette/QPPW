@@ -356,7 +356,8 @@ export class WaveFunctionChartNode extends Node {
 
     for (let i = 0; i < xGrid.length; i++) {
       const x = this.dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
-      const psi = wavefunction[i];
+      // Invert the Y-axis: negate wavefunction values to render upright
+      const psi = -wavefunction[i];
 
       // Apply time evolution: ψ(x,t) = ψ(x) * e^(-iEt/ℏ)
       const realPart = psi * cosPhi;
