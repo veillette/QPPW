@@ -290,10 +290,13 @@ export class EnergyChartNode extends Node {
     const wellWidth = this.model.wellWidthProperty.value;
     const wellDepth = this.model.wellDepthProperty.value;
 
+    // Calculate the center of the xGrid for alignment
+    const xCenter = ((xGrid[0] + xGrid[xGrid.length - 1]) / 2) * QuantumConstants.M_TO_NM;
+
     if (potentialType === PotentialType.INFINITE_WELL) {
-      // Draw square well
-      const x1 = this.dataToViewX(0);
-      const x2 = this.dataToViewX(wellWidth);
+      // Draw square well centered at xCenter
+      const x1 = this.dataToViewX(xCenter - wellWidth / 2);
+      const x2 = this.dataToViewX(xCenter + wellWidth / 2);
       const y1 = this.dataToViewY(0);
       const yTop = this.chartMargins.top;
       const yBottom = this.chartHeight - this.chartMargins.bottom;
@@ -318,11 +321,12 @@ export class EnergyChartNode extends Node {
       shape.moveTo(x2, yTop);
       shape.lineTo(this.chartWidth - this.chartMargins.right, yTop);
     } else if (potentialType === PotentialType.FINITE_WELL) {
-      // Draw finite square well
-      const x1 = this.dataToViewX(0);
-      const x2 = this.dataToViewX(wellWidth);
+      // Draw finite square well centered at xCenter
+      // Invert the Y-axis: use +wellDepth instead of -wellDepth to create a valley
+      const x1 = this.dataToViewX(xCenter - wellWidth / 2);
+      const x2 = this.dataToViewX(xCenter + wellWidth / 2);
       const y0 = this.dataToViewY(0);
-      const yDepth = this.dataToViewY(-wellDepth);
+      const yDepth = this.dataToViewY(wellDepth);
 
       shape.moveTo(this.chartMargins.left, y0);
       shape.lineTo(x1, y0);
@@ -331,8 +335,9 @@ export class EnergyChartNode extends Node {
       shape.lineTo(x2, y0);
       shape.lineTo(this.chartWidth - this.chartMargins.right, y0);
     } else if (potentialType === PotentialType.HARMONIC_OSCILLATOR) {
-      // Draw parabola
-      const centerX = wellWidth / 2;
+      // Draw parabola centered at xCenter
+      // Invert the Y-axis: negate V to create a valley
+      const centerX = xCenter;
       const numPoints = 100;
       let firstPoint = true;
 
@@ -340,7 +345,7 @@ export class EnergyChartNode extends Node {
         const x = (xGrid[0] + (xGrid[xGrid.length - 1] - xGrid[0]) * i / (numPoints - 1)) * QuantumConstants.M_TO_NM;
         const dx = x - centerX;
         const k = (2 * wellDepth) / (wellWidth * wellWidth / 4); // Spring constant
-        const V = 0.5 * k * dx * dx;
+        const V = -(0.5 * k * dx * dx); // Negate to invert Y-axis
         const viewX = this.dataToViewX(x);
         const viewY = this.dataToViewY(V);
 
