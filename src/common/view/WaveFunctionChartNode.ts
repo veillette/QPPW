@@ -8,13 +8,11 @@ import { Shape } from "scenerystack/kite";
 import { NumberProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
-import { PhetFont } from "scenerystack/scenery-phet";
-import { ChartTransform, ChartRectangle, AxisLine, GridLineSet, TickMarkSet, TickLabelSet } from "scenerystack/bamboo";
+import { ChartTransform, ChartRectangle, AxisLine } from "scenerystack/bamboo";
 import { OneWellModel } from "../../one-well/model/OneWellModel.js";
 import { BoundStateResult } from "../model/PotentialFunction.js";
 import QuantumConstants from "../model/QuantumConstants.js";
 import QPPWColors from "../../QPPWColors.js";
-import stringManager from "../../i18n/StringManager.js";
 
 // Chart axis range constant (shared with EnergyChartNode)
 const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
@@ -166,42 +164,41 @@ export class WaveFunctionChartNode extends Node {
     xAxis.y = this.chartMargins.top + this.plotHeight;
     axesNode.addChild(xAxis);
 
-    // X-axis grid lines
-    const xGridLines = new GridLineSet(this.chartTransform, Orientation.VERTICAL, 2, {
-      stroke: QPPWColors.gridLineProperty,
-      lineWidth: 1,
-    });
-    xGridLines.x = this.chartMargins.left;
-    xGridLines.y = this.chartMargins.top;
-    axesNode.addChild(xGridLines);
+    // Manual X-axis tick labels (every 2 nm from -4 to 4)
+    for (let pos = -X_AXIS_RANGE_NM; pos <= X_AXIS_RANGE_NM; pos += 2) {
+      const x = this.chartMargins.left + this.chartTransform.modelToViewX(pos);
 
-    // X-axis tick marks
-    const xTickMarks = new TickMarkSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
-      edge: "min",
-      extent: 8,
-      stroke: QPPWColors.axisProperty,
-      lineWidth: 1,
-    });
-    xTickMarks.x = this.chartMargins.left;
-    xTickMarks.y = this.chartMargins.top + this.plotHeight;
-    axesNode.addChild(xTickMarks);
+      // Tick mark
+      const tickMark = new Line(x, this.chartMargins.top + this.plotHeight, x, this.chartMargins.top + this.plotHeight + 5, {
+        stroke: QPPWColors.axisProperty,
+        lineWidth: 1,
+      });
+      axesNode.addChild(tickMark);
 
-    // X-axis tick labels
-    const xTickLabels = new TickLabelSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
-      edge: "min",
-      extent: 10,
-      createLabel: (value: number) => new Text(value.toFixed(0), {
-        font: new PhetFont(12),
+      // Tick label
+      const label = new Text(pos.toString(), {
+        font: "12px sans-serif",
         fill: QPPWColors.labelFillProperty,
-      }),
-    });
-    xTickLabels.x = this.chartMargins.left;
-    xTickLabels.y = this.chartMargins.top + this.plotHeight;
-    axesNode.addChild(xTickLabels);
+        centerX: x,
+        top: this.chartMargins.top + this.plotHeight + 8,
+      });
+      axesNode.addChild(label);
+
+      // Grid line
+      if (pos !== -X_AXIS_RANGE_NM) {
+        const gridLine = new Line(
+          x, this.chartMargins.top,
+          x, this.chartMargins.top + this.plotHeight, {
+          stroke: QPPWColors.gridLineProperty,
+          lineWidth: 1,
+        });
+        axesNode.addChild(gridLine);
+      }
+    }
 
     // Y-axis label (will be updated based on display mode)
-    this.yAxisLabel = new Text(stringManager.probabilityDensityStringProperty, {
-      font: new PhetFont(14),
+    this.yAxisLabel = new Text("Probability Density", {
+      font: "14px sans-serif",
       fill: QPPWColors.labelFillProperty,
       rotation: -Math.PI / 2,
       centerX: this.chartMargins.left - 40,
@@ -210,8 +207,8 @@ export class WaveFunctionChartNode extends Node {
     axesNode.addChild(this.yAxisLabel);
 
     // X-axis label
-    const xLabel = new Text(stringManager.positionNmStringProperty, {
-      font: new PhetFont(14),
+    const xLabel = new Text("Position (nm)", {
+      font: "14px sans-serif",
       fill: QPPWColors.labelFillProperty,
       centerX: this.chartWidth / 2,
       centerY: this.chartHeight - 15,
@@ -387,8 +384,7 @@ export class WaveFunctionChartNode extends Node {
 
     for (let i = 0; i < xGrid.length; i++) {
       const x = this.dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
-      // Invert the Y-axis: negate wavefunction values to render upright
-      const psi = -wavefunction[i];
+      const psi = wavefunction[i];
 
       // Apply time evolution: ψ(x,t) = ψ(x) * e^(-iEt/ℏ)
       const realPart = psi * cosPhi;
@@ -439,9 +435,9 @@ export class WaveFunctionChartNode extends Node {
 
   /**
    * Converts data Y coordinate to view Y coordinate using ChartTransform.
-   * Note: ChartTransform already handles the Y-axis inversion.
+   * ChartTransform handles the Y-axis inversion (higher model Y = lower view Y).
    */
   private dataToViewY(y: number): number {
-    return this.chartMargins.top + (this.plotHeight - this.chartTransform.modelToViewY(y));
+    return this.chartMargins.top + this.chartTransform.modelToViewY(y);
   }
 }
