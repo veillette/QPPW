@@ -9,7 +9,7 @@ import { Dimension2 } from "scenerystack/dot";
 import { OneWellModel } from "../../one-well/model/OneWellModel.js";
 import { PotentialType } from "../model/PotentialFunction.js";
 import QPPWColors from "../../QPPWColors.js";
-import { ResetAllButton, PhetFont } from "scenerystack/scenery-phet";
+import { PhetFont } from "scenerystack/scenery-phet";
 
 interface ComboBoxItem<T> {
   value: T;
@@ -18,20 +18,20 @@ interface ComboBoxItem<T> {
 
 export class ControlPanelNode extends Node {
   private readonly model: OneWellModel;
-  private readonly resetCallback: () => void;
 
-  public constructor(model: OneWellModel, resetCallback: () => void, listBoxParent: Node) {
+  public constructor(
+    model: OneWellModel,
+    listBoxParent: Node,
+  ) {
     super();
 
     this.model = model;
-    this.resetCallback = resetCallback;
 
     // Create all control groups
     const energyChartGroup = this.createEnergyChartGroup(listBoxParent);
     const bottomChartGroup = this.createBottomChartGroup();
     const particleMassGroup = this.createParticleMassGroup();
     const wellConfigGroup = this.createWellConfigurationGroup();
-    const actionsGroup = this.createActionsGroup();
 
     // Arrange groups vertically
     const content = new VBox({
@@ -46,7 +46,6 @@ export class ControlPanelNode extends Node {
         new HSeparator({ stroke: QPPWColors.gridLineProperty }),
         wellConfigGroup,
         new HSeparator({ stroke: QPPWColors.gridLineProperty }),
-        actionsGroup,
       ],
     });
 
@@ -74,35 +73,64 @@ export class ControlPanelNode extends Node {
     const potentialItems: ComboBoxItem<PotentialType>[] = [
       {
         value: PotentialType.INFINITE_WELL,
-        createNode: () => new Text("Square (Infinite)", { font: new PhetFont(14), fill: QPPWColors.textFillProperty }),
+        createNode: () =>
+          new Text("Square (Infinite)", {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
       },
       {
         value: PotentialType.FINITE_WELL,
-        createNode: () => new Text("Square (Finite)", { font: new PhetFont(14), fill: QPPWColors.textFillProperty }),
+        createNode: () =>
+          new Text("Square (Finite)", {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
       },
       {
         value: PotentialType.HARMONIC_OSCILLATOR,
-        createNode: () => new Text("Harmonic Oscillator", { font: new PhetFont(14), fill: QPPWColors.textFillProperty }),
+        createNode: () =>
+          new Text("Harmonic Oscillator", {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
       },
       {
         value: PotentialType.ASYMMETRIC_TRIANGLE,
-        createNode: () => new Text("Asymmetric Triangle", { font: new PhetFont(14), fill: QPPWColors.textFillProperty }),
+        createNode: () =>
+          new Text("Asymmetric Triangle", {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
       },
       {
         value: PotentialType.COULOMB_1D,
-        createNode: () => new Text("1D Coulomb", { font: new PhetFont(14), fill: QPPWColors.textFillProperty }),
+        createNode: () =>
+          new Text("1D Coulomb", {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
       },
       {
         value: PotentialType.COULOMB_3D,
-        createNode: () => new Text("3D Coulomb", { font: new PhetFont(14), fill: QPPWColors.textFillProperty }),
+        createNode: () =>
+          new Text("3D Coulomb", {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
       },
     ];
 
-    const potentialComboBox = new ComboBox(this.model.potentialTypeProperty, potentialItems, listBoxParent, {
-      xMargin: 8,
-      yMargin: 6,
-      cornerRadius: 4,
-    });
+    const potentialComboBox = new ComboBox(
+      this.model.potentialTypeProperty,
+      potentialItems,
+      listBoxParent,
+      {
+        xMargin: 8,
+        yMargin: 6,
+        cornerRadius: 4,
+      },
+    );
 
     const potentialLabel = new Text("Potential Well:", {
       font: new PhetFont(14),
@@ -151,20 +179,32 @@ export class ControlPanelNode extends Node {
     const displayModeItems = [
       {
         value: "probabilityDensity" as const,
-        createNode: () => new Text("Probability Density", { font: new PhetFont(14), fill: QPPWColors.textFillProperty }),
+        createNode: () =>
+          new Text("Probability Density", {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
       },
       {
         value: "waveFunction" as const,
-        createNode: () => new Text("Wave Function", { font: new PhetFont(14), fill: QPPWColors.textFillProperty }),
+        createNode: () =>
+          new Text("Wave Function", {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
       },
     ];
 
-    const displayModeGroup = new VerticalAquaRadioButtonGroup(this.model.displayModeProperty, displayModeItems, {
-      spacing: 8,
-      radioButtonOptions: {
-        radius: 8,
+    const displayModeGroup = new VerticalAquaRadioButtonGroup(
+      this.model.displayModeProperty,
+      displayModeItems,
+      {
+        spacing: 8,
+        radioButtonOptions: {
+          radius: 8,
+        },
       },
-    });
+    );
 
     const displayLabel = new Text("Display:", {
       font: new PhetFont(14),
@@ -179,32 +219,49 @@ export class ControlPanelNode extends Node {
 
     const realPartCheckbox = new Checkbox(
       this.model.showRealPartProperty,
-      new Text("real part", { font: new PhetFont(12), fill: QPPWColors.textFillProperty }),
+      new Text("real part", {
+        font: new PhetFont(12),
+        fill: QPPWColors.textFillProperty,
+      }),
       { boxWidth: 16 },
     );
 
     const imaginaryPartCheckbox = new Checkbox(
       this.model.showImaginaryPartProperty,
-      new Text("imaginary part", { font: new PhetFont(12), fill: QPPWColors.textFillProperty }),
+      new Text("imaginary part", {
+        font: new PhetFont(12),
+        fill: QPPWColors.textFillProperty,
+      }),
       { boxWidth: 16 },
     );
 
     const magnitudeCheckbox = new Checkbox(
       this.model.showMagnitudeProperty,
-      new Text("magnitude", { font: new PhetFont(12), fill: QPPWColors.textFillProperty }),
+      new Text("magnitude", {
+        font: new PhetFont(12),
+        fill: QPPWColors.textFillProperty,
+      }),
       { boxWidth: 16 },
     );
 
     const phaseCheckbox = new Checkbox(
       this.model.showPhaseProperty,
-      new Text("phase", { font: new PhetFont(12), fill: QPPWColors.textFillProperty }),
+      new Text("phase", {
+        font: new PhetFont(12),
+        fill: QPPWColors.textFillProperty,
+      }),
       { boxWidth: 16 },
     );
 
     const waveFunctionCheckboxes = new VBox({
       spacing: 6,
       align: "left",
-      children: [realPartCheckbox, imaginaryPartCheckbox, magnitudeCheckbox, phaseCheckbox],
+      children: [
+        realPartCheckbox,
+        imaginaryPartCheckbox,
+        magnitudeCheckbox,
+        phaseCheckbox,
+      ],
       leftMargin: 20,
     });
 
@@ -220,7 +277,13 @@ export class ControlPanelNode extends Node {
     return new VBox({
       spacing: 8,
       align: "left",
-      children: [titleText, displayLabel, displayModeGroup, waveFunctionViewsLabel, waveFunctionCheckboxes],
+      children: [
+        titleText,
+        displayLabel,
+        displayModeGroup,
+        waveFunctionViewsLabel,
+        waveFunctionCheckboxes,
+      ],
     });
   }
 
@@ -243,10 +306,14 @@ export class ControlPanelNode extends Node {
       massValueText.string = `${mass.toFixed(2)} mₑ`;
     });
 
-    const massSlider = new HSlider(this.model.particleMassProperty, this.model.particleMassProperty.range!, {
-      trackSize: new Dimension2(150, 4),
-      thumbSize: new Dimension2(15, 30),
-    });
+    const massSlider = new HSlider(
+      this.model.particleMassProperty,
+      this.model.particleMassProperty.range!,
+      {
+        trackSize: new Dimension2(150, 4),
+        thumbSize: new Dimension2(15, 30),
+      },
+    );
 
     return new VBox({
       spacing: 8,
@@ -280,16 +347,23 @@ export class ControlPanelNode extends Node {
       widthValueText.string = `${width.toFixed(2)} nm`;
     });
 
-    const widthSlider = new HSlider(this.model.wellWidthProperty, this.model.wellWidthProperty.range!, {
-      trackSize: new Dimension2(150, 4),
-      thumbSize: new Dimension2(15, 30),
-    });
+    const widthSlider = new HSlider(
+      this.model.wellWidthProperty,
+      this.model.wellWidthProperty.range!,
+      {
+        trackSize: new Dimension2(150, 4),
+        thumbSize: new Dimension2(15, 30),
+      },
+    );
 
     const widthRow = new VBox({
       spacing: 4,
       align: "left",
       children: [
-        new Text("Well Width", { font: new PhetFont(12), fill: QPPWColors.textFillProperty }),
+        new Text("Well Width", {
+          font: new PhetFont(12),
+          fill: QPPWColors.textFillProperty,
+        }),
         new HBox({
           spacing: 10,
           children: [widthSlider, widthValueText],
@@ -307,16 +381,23 @@ export class ControlPanelNode extends Node {
       depthValueText.string = `${depth.toFixed(2)} eV`;
     });
 
-    const depthSlider = new HSlider(this.model.wellDepthProperty, this.model.wellDepthProperty.range!, {
-      trackSize: new Dimension2(150, 4),
-      thumbSize: new Dimension2(15, 30),
-    });
+    const depthSlider = new HSlider(
+      this.model.wellDepthProperty,
+      this.model.wellDepthProperty.range!,
+      {
+        trackSize: new Dimension2(150, 4),
+        thumbSize: new Dimension2(15, 30),
+      },
+    );
 
     const depthRow = new VBox({
       spacing: 4,
       align: "left",
       children: [
-        new Text("Well Depth", { font: new PhetFont(12), fill: QPPWColors.textFillProperty }),
+        new Text("Well Depth", {
+          font: new PhetFont(12),
+          fill: QPPWColors.textFillProperty,
+        }),
         new HBox({
           spacing: 10,
           children: [depthSlider, depthValueText],
@@ -337,22 +418,6 @@ export class ControlPanelNode extends Node {
       spacing: 10,
       align: "left",
       children: [titleText, widthRow, depthRow],
-    });
-  }
-
-  /**
-   * Creates the Actions control group.
-   */
-  private createActionsGroup(): Node {
-    const resetButton = new ResetAllButton({
-      listener: this.resetCallback,
-      radius: 20,
-    });
-
-    return new VBox({
-      spacing: 8,
-      align: "center",
-      children: [resetButton],
     });
   }
 }

@@ -16,8 +16,8 @@ const QPPWColors = {
 
   // Panel and control colors
   panelFillProperty: new ProfileColorProperty(qppw, "panelFill", {
-    default: new Color(240, 240, 245),
-    projector: new Color(245, 245, 250),
+    default: new Color(10, 10, 30,0),
+    projector: new Color(245, 245, 250,0),
   }),
 
   panelStrokeProperty: new ProfileColorProperty(qppw, "panelStroke", {

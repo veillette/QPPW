@@ -49,10 +49,6 @@ export abstract class BaseScreenView extends ScreenView {
    * @param model - The OneWellModel instance
    */
   protected createStandardLayout(model: OneWellModel): void {
-    const resetCallback = () => {
-      model.resetAll();
-      this.reset();
-    };
 
     // Calculate layout dimensions
     const screenWidth = this.layoutBounds.width;
@@ -87,7 +83,7 @@ export abstract class BaseScreenView extends ScreenView {
 
     // Create control panel (needs a parent node for ComboBox listbox)
     this.listBoxParent = new Node();
-    this.controlPanel = new ControlPanelNode(model, resetCallback, this.listBoxParent);
+    this.controlPanel = new ControlPanelNode(model, this.listBoxParent);
     this.controlPanel.left = chartsWidth + margin * 2;
     this.controlPanel.top = margin;
 

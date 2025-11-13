@@ -7,7 +7,6 @@ import { Node, Text, HBox, VBox, Rectangle } from "scenerystack/scenery";
 import {
   TimeControlNode,
   PhetFont,
-  ResetAllButton,
 } from "scenerystack/scenery-phet";
 
 import { DerivedProperty } from "scenerystack/axon";
@@ -94,16 +93,7 @@ export class SimulationControlBar extends Node {
           fill: QPPWColors.textFillProperty,
         },
       },
-    });
-
-
-    // Reset button
-    const resetButton = new ResetAllButton({
-      listener: () => {
-        this.model.resetAll();
-      }
-    });
-    this.addChild(resetButton);
+    })
 
 
     const playbackButtons = new HBox({
