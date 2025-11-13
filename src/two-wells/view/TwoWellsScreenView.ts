@@ -12,6 +12,7 @@ import QPPWColors from "../../QPPWColors.js";
 import stringManager from "../../i18n/StringManager.js";
 
 export class TwoWellsScreenView extends BaseScreenView {
+  private readonly model: TwoWellsModel;
   private readonly leftWellNode: Rectangle;
   private readonly rightWellNode: Rectangle;
   private readonly barrierNode: Rectangle;
@@ -20,11 +21,13 @@ export class TwoWellsScreenView extends BaseScreenView {
   public constructor(model: TwoWellsModel, options?: ScreenViewOptions) {
     super(
       () => {
-        model.reset();
+        model.resetAll();
         this.reset();
       },
       options,
     );
+
+    this.model = model;
 
     const wellWidth = 150;
     const wellHeight = 300;
@@ -163,6 +166,6 @@ export class TwoWellsScreenView extends BaseScreenView {
    */
   public override step(dt: number): void {
     super.step(dt);
-    // Add animation/update logic here
+    this.model.step(dt);
   }
 }

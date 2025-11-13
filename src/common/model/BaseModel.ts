@@ -14,7 +14,6 @@ export abstract class BaseModel {
   // Simulation state properties
   public readonly isPlayingProperty: Property<boolean>;
   public readonly timeProperty: NumberProperty; // In femtoseconds
-  public readonly simulationSpeedProperty: Property<SimulationSpeed>;
   public readonly timeSpeedProperty: EnumerationProperty<TimeSpeed>;
 
   // Solver for quantum calculations
@@ -24,7 +23,6 @@ export abstract class BaseModel {
     // Initialize simulation state
     this.isPlayingProperty = new Property<boolean>(false);
     this.timeProperty = new NumberProperty(0); // in femtoseconds
-    this.simulationSpeedProperty = new Property<SimulationSpeed>("normal");
     this.timeSpeedProperty = new EnumerationProperty(TimeSpeed.NORMAL);
 
     // Initialize solver with user's preferred method
@@ -51,7 +49,6 @@ export abstract class BaseModel {
   public resetAll(): void {
     this.isPlayingProperty.reset();
     this.timeProperty.reset();
-    this.simulationSpeedProperty.reset();
     this.timeSpeedProperty.reset();
   }
 
@@ -63,18 +60,10 @@ export abstract class BaseModel {
   public step(dt: number, forced = false): void {
     if (this.isPlayingProperty.value || forced) {
       // Convert dt to femtoseconds and apply speed multiplier (only when playing normally)
-      const speedMultiplier = forced ? 1 : (this.simulationSpeedProperty.value === "fast" ? 10 : 1);
-      const dtFemtoseconds = (dt * 1e15) * speedMultiplier; // seconds to femtoseconds
+      const speedMultiplier = forced ? 1 : (this.timeSpeedProperty.value === TimeSpeed.SLOW ? 1/10 : 1);
+      const dtFemtoseconds = (dt) * speedMultiplier; // seconds to femtoseconds
       this.timeProperty.value += dtFemtoseconds;
       // Quantum mechanical time evolution is handled in the view layer
     }
-  }
-
-  /**
-   * Restarts the simulation (resets time to zero).
-   */
-  public restart(): void {
-    this.timeProperty.value = 0;
-    this.isPlayingProperty.value = false;
   }
 }

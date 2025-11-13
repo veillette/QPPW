@@ -3,9 +3,11 @@
  * It demonstrates energy bands and band gaps in a periodic potential (solid-state physics).
  */
 
-import { NumberProperty, Property } from "scenerystack/axon";
+import { NumberProperty } from "scenerystack/axon";
+import { BaseModel } from "../../common/model/BaseModel.js";
+import { NumericalMethod } from "../../common/model/Schrodinger1DSolver.js";
 
-export class ManyWellsModel {
+export class ManyWellsModel extends BaseModel {
   // Well parameters
   public readonly wellWidthProperty: NumberProperty;
   public readonly wellDepthProperty: NumberProperty;
@@ -21,11 +23,8 @@ export class ManyWellsModel {
   // Energy bands
   public readonly selectedBandProperty: NumberProperty;
 
-  // Simulation state
-  public readonly isPlayingProperty: Property<boolean>;
-  public readonly timeProperty: NumberProperty;
-
   public constructor() {
+    super();
     // Initialize well parameters with default values
     this.wellWidthProperty = new NumberProperty(10); // in nanometers
     this.wellDepthProperty = new NumberProperty(5); // in eV
@@ -40,16 +39,31 @@ export class ManyWellsModel {
 
     // Initialize selected energy band
     this.selectedBandProperty = new NumberProperty(0);
+  }
 
-    // Initialize simulation state
-    this.isPlayingProperty = new Property<boolean>(false);
-    this.timeProperty = new NumberProperty(0);
+  /**
+   * Called when the solver method changes.
+   * @param _method - The new numerical method (unused)
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected onSolverMethodChanged(_method: NumericalMethod): void {
+    // No cached results to invalidate for many wells model yet
   }
 
   /**
    * Resets the model to its initial state.
+   * This is the public API method that delegates to resetAll().
    */
   public reset(): void {
+    this.resetAll();
+  }
+
+  /**
+   * Resets all properties to their initial state.
+   * Override from BaseModel.
+   */
+  public override resetAll(): void {
+    super.resetAll();
     this.wellWidthProperty.reset();
     this.wellDepthProperty.reset();
     this.numberOfWellsProperty.reset();
@@ -57,19 +71,16 @@ export class ManyWellsModel {
     this.barrierHeightProperty.reset();
     this.latticeConstantProperty.reset();
     this.selectedBandProperty.reset();
-    this.isPlayingProperty.reset();
-    this.timeProperty.reset();
   }
 
   /**
    * Steps the model forward in time.
-   * @param dt - The time step in seconds
+   * @param dt - The time step in seconds (can be negative for backward stepping)
+   * @param forced - If true, steps even when paused (for manual stepping buttons)
    */
-  public step(dt: number): void {
-    if (this.isPlayingProperty.value) {
-      this.timeProperty.value += dt;
-      // Add Bloch wave dynamics here
-    }
+  public override step(dt: number, forced = false): void {
+    super.step(dt, forced);
+    // Add Bloch wave dynamics here
   }
 
   /**

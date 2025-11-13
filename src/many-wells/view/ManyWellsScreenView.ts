@@ -19,7 +19,7 @@ export class ManyWellsScreenView extends BaseScreenView {
   public constructor(model: ManyWellsModel, options?: ScreenViewOptions) {
     super(
       () => {
-        model.reset();
+        model.resetAll();
         this.reset();
       },
       options,
@@ -187,6 +187,6 @@ export class ManyWellsScreenView extends BaseScreenView {
    */
   public override step(dt: number): void {
     super.step(dt);
-    // Add animation/update logic here
+    this._model.step(dt);
   }
 }
