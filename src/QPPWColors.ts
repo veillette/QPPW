@@ -84,6 +84,17 @@ const QPPWColors = {
     default: new Color(200, 200, 220),
     projector: new Color(40, 40, 60), // Dark gray for projector mode
   }),
+
+  // Control panel specific colors (for ComboBox, buttons, etc.)
+  controlPanelBackgroundColorProperty: new ProfileColorProperty(qppw, "controlPanelBackground", {
+    default: new Color(30, 30, 50), // Slightly lighter than main background
+    projector: new Color(250, 250, 255), // Almost white for projector
+  }),
+
+  controlPanelStrokeColorProperty: new ProfileColorProperty(qppw, "controlPanelStroke", {
+    default: new Color(120, 120, 160), // Light purple-gray
+    projector: new Color(100, 100, 140), // Darker for projector
+  }),
 };
 
 export default QPPWColors;

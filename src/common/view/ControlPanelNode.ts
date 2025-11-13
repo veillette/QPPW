@@ -129,6 +129,11 @@ export class ControlPanelNode extends Node {
         xMargin: 8,
         yMargin: 6,
         cornerRadius: 4,
+        buttonFill: QPPWColors.controlPanelBackgroundColorProperty,
+        buttonStroke: QPPWColors.controlPanelStrokeColorProperty,
+        listFill: QPPWColors.controlPanelBackgroundColorProperty,
+        listStroke: QPPWColors.controlPanelStrokeColorProperty,
+        highlightFill: QPPWColors.controlPanelStrokeColorProperty,
       },
     );
 
