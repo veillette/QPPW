@@ -13,11 +13,12 @@ import stringManager from "../../i18n/StringManager.js";
 
 export class ManyWellsScreenView extends BaseScreenView {
   private readonly wellsContainer: Node;
-  private readonly controlPanel: Panel;
+  private readonly customControlPanel: Panel;
   private readonly _model: ManyWellsModel;
 
   public constructor(model: ManyWellsModel, options?: ScreenViewOptions) {
     super(
+      model,
       () => {
         model.resetAll();
         this.reset();
@@ -44,8 +45,8 @@ export class ManyWellsScreenView extends BaseScreenView {
     this.addChild(titleText);
 
     // Create control panel
-    this.controlPanel = this.createControlPanel();
-    this.addChild(this.controlPanel);
+    this.customControlPanel = this.createControlPanel();
+    this.addChild(this.customControlPanel);
 
     // Add placeholder content text
     const contentText = new Text("Multiple wells showing energy band formation", {

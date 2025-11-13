@@ -6,22 +6,13 @@
 import { BaseScreenView } from "../../common/view/BaseScreenView.js";
 import { OneWellModel } from "../model/OneWellModel.js";
 import { ScreenViewOptions } from "scenerystack/sim";
-import { Node, VBox, Text } from "scenerystack/scenery";
-import { EnergyChartNode } from "../../common/view/EnergyChartNode.js";
-import { WaveFunctionChartNode } from "../../common/view/WaveFunctionChartNode.js";
-import { ControlPanelNode } from "../../common/view/ControlPanelNode.js";
-import { SimulationControlBar } from "../../common/view/SimulationControlBar.js";
+import { Node, Text } from "scenerystack/scenery";
 import QPPWColors from "../../QPPWColors.js";
 
 export class OneWellScreenView extends BaseScreenView {
-  private readonly model: OneWellModel;
-  private readonly energyChart: EnergyChartNode;
-  private readonly waveFunctionChart: WaveFunctionChartNode;
-  private readonly controlPanel: ControlPanelNode;
-  private readonly simulationControlBar: SimulationControlBar;
-
   public constructor(model: OneWellModel, options?: ScreenViewOptions) {
     super(
+      model,
       () => {
         model.resetAll();
         this.reset();
@@ -29,64 +20,8 @@ export class OneWellScreenView extends BaseScreenView {
       options,
     );
 
-    this.model = model;
-
-    // Calculate layout dimensions
-    const screenWidth = this.layoutBounds.width;
-    const screenHeight = this.layoutBounds.height;
-    const margin = 20;
-    const controlBarHeight = 80;
-
-    // Left side: 70% width for charts
-    const chartsWidth = screenWidth * 0.65;
-    const chartHeight = (screenHeight - controlBarHeight - margin * 3) / 2;
-
-    // Create the energy chart (top plot)
-    this.energyChart = new EnergyChartNode(model, {
-      width: chartsWidth,
-      height: chartHeight,
-    });
-
-    // Create the wave function chart (bottom plot)
-    this.waveFunctionChart = new WaveFunctionChartNode(model, {
-      width: chartsWidth,
-      height: chartHeight,
-    });
-
-    // Stack charts vertically
-    const chartsStack = new VBox({
-      spacing: margin,
-      align: "left",
-      children: [this.energyChart, this.waveFunctionChart],
-      left: margin,
-      top: margin,
-    });
-
-    // Create control panel (needs a parent node for ComboBox listbox)
-    const listBoxParent = new Node();
-    this.controlPanel = new ControlPanelNode(
-      model,
-      () => {
-        model.resetAll();
-        this.reset();
-      },
-      listBoxParent,
-    );
-    this.controlPanel.left = chartsWidth + margin * 2;
-    this.controlPanel.top = margin;
-
-    // Create simulation control bar (footer)
-    this.simulationControlBar = new SimulationControlBar(model, {
-      width: screenWidth,
-    });
-    this.simulationControlBar.left = 0;
-    this.simulationControlBar.bottom = screenHeight;
-
-    // Add all components to the view
-    this.addChild(chartsStack);
-    this.addChild(this.controlPanel);
-    this.addChild(this.simulationControlBar);
-    this.addChild(listBoxParent); // ListBox parent must be added last for proper z-ordering
+    // Create the standard quantum well layout
+    this.createStandardLayout(model);
   }
 
   /**
@@ -132,6 +67,8 @@ export class OneWellScreenView extends BaseScreenView {
    */
   public override step(dt: number): void {
     super.step(dt);
-    this.model.step(dt);
+    if (this.model) {
+      (this.model as OneWellModel).step(dt);
+    }
   }
 }

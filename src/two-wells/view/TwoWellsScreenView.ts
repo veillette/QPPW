@@ -12,22 +12,20 @@ import QPPWColors from "../../QPPWColors.js";
 import stringManager from "../../i18n/StringManager.js";
 
 export class TwoWellsScreenView extends BaseScreenView {
-  private readonly model: TwoWellsModel;
   private readonly leftWellNode: Rectangle;
   private readonly rightWellNode: Rectangle;
   private readonly barrierNode: Rectangle;
-  private readonly controlPanel: Panel;
+  private readonly customControlPanel: Panel;
 
   public constructor(model: TwoWellsModel, options?: ScreenViewOptions) {
     super(
+      model,
       () => {
         model.resetAll();
         this.reset();
       },
       options,
     );
-
-    this.model = model;
 
     const wellWidth = 150;
     const wellHeight = 300;
@@ -74,8 +72,8 @@ export class TwoWellsScreenView extends BaseScreenView {
     this.addChild(titleText);
 
     // Create control panel
-    this.controlPanel = this.createControlPanel();
-    this.addChild(this.controlPanel);
+    this.customControlPanel = this.createControlPanel();
+    this.addChild(this.customControlPanel);
 
     // Add placeholder content text
     const contentText = new Text("Double well with quantum tunneling", {
@@ -166,6 +164,6 @@ export class TwoWellsScreenView extends BaseScreenView {
    */
   public override step(dt: number): void {
     super.step(dt);
-    this.model.step(dt);
+    (this.model as TwoWellsModel).step(dt);
   }
 }
