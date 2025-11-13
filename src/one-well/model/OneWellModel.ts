@@ -3,12 +3,13 @@
  * It handles the quantum mechanical calculations for a particle in a single well.
  */
 
-import { NumberProperty, Property } from "scenerystack/axon";
+import { EnumerationProperty, NumberProperty, Property } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import Schrodinger1DSolver, { WellParameters } from "../../common/model/Schrodinger1DSolver.js";
 import { PotentialType, BoundStateResult } from "../../common/model/PotentialFunction.js";
 import QuantumConstants from "../../common/model/QuantumConstants.js";
 import QPPWPreferences from "../../QPPWPreferences.js";
+import { TimeSpeed } from "scenerystack";
 
 export type DisplayMode = "probabilityDensity" | "waveFunction";
 export type SimulationSpeed = "normal" | "fast";
@@ -50,6 +51,7 @@ export class OneWellModel {
 
   // Cached bound state results
   private boundStateResult: BoundStateResult | null = null;
+  public timeSpeedProperty: EnumerationProperty<TimeSpeed>;
 
   public constructor() {
     // Initialize potential type (square/infinite well by default)
@@ -59,6 +61,8 @@ export class OneWellModel {
     this.wellWidthProperty = new NumberProperty(1.0, { range: new Range(0.1, 10.0) }); // in nanometers
     this.wellDepthProperty = new NumberProperty(5.0, { range: new Range(0.1, 20.0) }); // in eV
     this.wellOffsetProperty = new NumberProperty(0.5, { range: new Range(0.0, 1.0) }); // normalized position
+
+    this.timeSpeedProperty = new EnumerationProperty(TimeSpeed.NORMAL);
 
     // Initialize particle mass (1.0 = electron mass)
     this.particleMassProperty = new NumberProperty(1.0, { range: new Range(0.1, 10.0) });

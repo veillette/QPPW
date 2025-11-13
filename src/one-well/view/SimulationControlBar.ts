@@ -4,10 +4,12 @@
  */
 
 import { Node, Text, HBox, VBox, Rectangle } from "scenerystack/scenery";
-import { TimeControlNode, PhetFont } from "scenerystack/scenery-phet";
-import { RectangularPushButton, VerticalAquaRadioButtonGroup } from "scenerystack/sun";
-import { Path } from "scenerystack/scenery";
-import { Shape } from "scenerystack/kite";
+import {
+  TimeControlNode,
+  PhetFont,
+  ResetAllButton,
+} from "scenerystack/scenery-phet";
+
 import { DerivedProperty } from "scenerystack/axon";
 import { OneWellModel } from "../model/OneWellModel.js";
 import QPPWColors from "../../QPPWColors.js";
@@ -52,48 +54,9 @@ export class SimulationControlBar extends Node {
       children: [timeLabel, this.timeText],
     });
 
-    // Speed control
-    const speedLabel = new Text("Speed:", {
-      font: new PhetFont(14),
-      fill: QPPWColors.textFillProperty,
-    });
 
-    const speedItems = [
-      {
-        value: "normal" as const,
-        createNode: () => new Text("Normal", { font: new PhetFont(12), fill: QPPWColors.textFillProperty }),
-      },
-      {
-        value: "fast" as const,
-        createNode: () => new Text("Fast", { font: new PhetFont(12), fill: QPPWColors.textFillProperty }),
-      },
-    ];
 
-    const speedControl = new VerticalAquaRadioButtonGroup(this.model.simulationSpeedProperty, speedItems, {
-      spacing: 6,
-      radioButtonOptions: {
-        radius: 6,
-      },
-    });
-
-    const speedSection = new VBox({
-      spacing: 8,
-      align: "center",
-      children: [speedLabel, speedControl],
-    });
-
-    // Playback controls
-    const restartButton = new RectangularPushButton({
-      content: this.createRestartIcon(),
-      baseColor: "#e0e0e0",
-      listener: () => {
-        this.model.restart();
-      },
-      xMargin: 8,
-      yMargin: 8,
-    });
-
-    // Default time step for manual stepping (in seconds)
+     // Default time step for manual stepping (in seconds)
     const manualStepSize = 0.016; // ~1 frame at 60 FPS
 
     // Create derived property: stepper buttons enabled only when paused
@@ -104,6 +67,7 @@ export class SimulationControlBar extends Node {
 
     // Time controls (play/pause and step buttons)
     const timeControlNode = new TimeControlNode(this.model.isPlayingProperty, {
+      timeSpeedProperty: this.model.timeSpeedProperty,
       playPauseStepButtonOptions: {
         includeStepForwardButton: true,
         includeStepBackwardButton: true,
@@ -124,71 +88,44 @@ export class SimulationControlBar extends Node {
           radius: 15, // Smaller than play/pause button
         },
       },
+      speedRadioButtonGroupPlacement: "left",
+      speedRadioButtonGroupOptions: {
+        labelOptions: {
+          fill: QPPWColors.textFillProperty,
+        },
+      },
     });
 
-    const playbackLabel = new Text("Playback:", {
-      font: new PhetFont(14),
-      fill: QPPWColors.textFillProperty,
+
+    // Reset button
+    const resetButton = new ResetAllButton({
+      listener: () => {
+        this.model.reset();
+      }
     });
+    this.addChild(resetButton);
+
 
     const playbackButtons = new HBox({
       spacing: 10,
-      children: [restartButton, timeControlNode],
+      children: [timeControlNode],
     });
 
     const playbackSection = new VBox({
       spacing: 8,
       align: "center",
-      children: [playbackLabel, playbackButtons],
+      children: [ playbackButtons],
     });
 
     // Arrange all sections horizontally
     const content = new HBox({
       spacing: 40,
       align: "center",
-      children: [timeDisplay, speedSection, playbackSection],
+      children: [timeDisplay, playbackSection],
       centerX: this.barWidth / 2,
       centerY: 40,
     });
 
     this.addChild(content);
-  }
-
-  /**
-   * Creates a restart/rewind icon.
-   */
-  private createRestartIcon(): Node {
-    const size = 20;
-    const shape = new Shape();
-
-    // Draw a circular arrow (restart symbol)
-    shape.arc(0, 0, size / 2, Math.PI * 0.7, Math.PI * 2.3, false);
-
-    // Add arrow head
-    shape.moveTo(size / 2, -size / 4);
-    shape.lineTo(size / 2 + 4, -size / 4 - 6);
-    shape.lineTo(size / 2 + 6, -size / 4 + 2);
-
-    const path = new Path(shape, {
-      stroke: "black",
-      lineWidth: 2,
-      lineCap: "round",
-      lineJoin: "round",
-    });
-
-    // Add a small triangle at the center
-    const triangleShape = new Shape();
-    triangleShape.moveTo(-size / 3, size / 3);
-    triangleShape.lineTo(-size / 3, -size / 3);
-    triangleShape.lineTo(0, 0);
-    triangleShape.close();
-
-    const triangle = new Path(triangleShape, {
-      fill: "black",
-    });
-
-    return new Node({
-      children: [path, triangle],
-    });
   }
 }
