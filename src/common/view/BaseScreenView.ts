@@ -54,11 +54,10 @@ export abstract class BaseScreenView extends ScreenView {
     const screenWidth = this.layoutBounds.width;
     const screenHeight = this.layoutBounds.height;
     const margin = 20;
-    const controlBarHeight = 80;
 
-    // Left side: 65% width for charts
-    const chartsWidth = screenWidth * 0.65;
-    const chartHeight = (screenHeight - controlBarHeight - margin * 3) / 2;
+    // Fixed chart dimensions (both charts share the same width and have fixed height)
+    const chartsWidth = 600; // Fixed width for consistency
+    const chartHeight = 300; // Fixed height for both charts
 
     // Create the energy chart (top plot)
     this.energyChart = new EnergyChartNode(model, {

@@ -36,6 +36,7 @@ export class EnergyChartNode extends Node {
 
   // Visual elements
   private readonly backgroundRect: ChartRectangle;
+  private readonly plotContentNode: Node; // Clipped container for plot content
   private readonly potentialPath: Path;
   private readonly energyLevelNodes: Map<number, Line>;
   private readonly totalEnergyLine: Line;
@@ -84,20 +85,31 @@ export class EnergyChartNode extends Node {
     this.axesNode = this.createAxes();
     this.addChild(this.axesNode);
 
+    // Create a clipped content node for all plot elements
+    this.plotContentNode = new Node({
+      clipArea: Shape.rectangle(
+        this.chartMargins.left,
+        this.chartMargins.top,
+        this.plotWidth,
+        this.plotHeight
+      ),
+    });
+    this.addChild(this.plotContentNode);
+
     // Create zero line
     this.zeroLine = new Line(0, 0, 0, 0, {
       stroke: "red",
       lineWidth: 1,
       lineDash: [5, 5],
     });
-    this.addChild(this.zeroLine);
+    this.plotContentNode.addChild(this.zeroLine);
 
     // Create potential energy path
     this.potentialPath = new Path(null, {
       stroke: QPPWColors.potentialWellProperty,
       lineWidth: 3,
     });
-    this.addChild(this.potentialPath);
+    this.plotContentNode.addChild(this.potentialPath);
 
     // Create energy level lines container
     this.energyLevelNodes = new Map();
@@ -108,9 +120,9 @@ export class EnergyChartNode extends Node {
       lineWidth: 2,
       lineDash: [10, 5],
     });
-    this.addChild(this.totalEnergyLine);
+    this.plotContentNode.addChild(this.totalEnergyLine);
 
-    // Create legend
+    // Create legend (outside clipped area)
     this.legendNode = this.createLegend();
     this.addChild(this.legendNode);
 
@@ -355,7 +367,7 @@ export class EnergyChartNode extends Node {
   private updateEnergyLevels(boundStates: BoundStateResult): void {
     // Remove old energy level nodes
     this.energyLevelNodes.forEach((line) => {
-      this.removeChild(line);
+      this.plotContentNode.removeChild(line);
     });
     this.energyLevelNodes.clear();
 
@@ -392,9 +404,9 @@ export class EnergyChartNode extends Node {
       });
 
       this.energyLevelNodes.set(index, line);
-      this.addChild(line);
+      this.plotContentNode.addChild(line); // Add to clipped content
 
-      // Add energy label
+      // Add energy label (outside clipped area for visibility)
       const label = new Text(`E${index + 1} = ${energy.toFixed(3)} eV`, {
         font: "10px sans-serif",
         fill: QPPWColors.labelFillProperty,

@@ -35,6 +35,7 @@ export class WaveFunctionChartNode extends Node {
 
   // Visual elements
   private readonly backgroundRect: ChartRectangle;
+  private readonly plotContentNode: Node; // Clipped container for plot content
   private readonly realPartPath: Path;
   private readonly imaginaryPartPath: Path;
   private readonly magnitudePath: Path;
@@ -81,13 +82,24 @@ export class WaveFunctionChartNode extends Node {
     this.axesNode = this.createAxes();
     this.addChild(this.axesNode);
 
+    // Create a clipped content node for all plot elements
+    this.plotContentNode = new Node({
+      clipArea: Shape.rectangle(
+        this.chartMargins.left,
+        this.chartMargins.top,
+        this.plotWidth,
+        this.plotHeight
+      ),
+    });
+    this.addChild(this.plotContentNode);
+
     // Create zero line
     this.zeroLine = new Line(0, 0, 0, 0, {
       stroke: QPPWColors.gridLineProperty,
       lineWidth: 1,
       lineDash: [5, 5],
     });
-    this.addChild(this.zeroLine);
+    this.plotContentNode.addChild(this.zeroLine);
 
     // Create wave function paths
     this.realPartPath = new Path(null, {
@@ -95,28 +107,28 @@ export class WaveFunctionChartNode extends Node {
       lineWidth: 2,
       visible: false,
     });
-    this.addChild(this.realPartPath);
+    this.plotContentNode.addChild(this.realPartPath);
 
     this.imaginaryPartPath = new Path(null, {
       stroke: QPPWColors.wavefunctionImaginaryProperty,
       lineWidth: 2,
       visible: false,
     });
-    this.addChild(this.imaginaryPartPath);
+    this.plotContentNode.addChild(this.imaginaryPartPath);
 
     this.magnitudePath = new Path(null, {
       stroke: "purple",
       lineWidth: 2,
       visible: false,
     });
-    this.addChild(this.magnitudePath);
+    this.plotContentNode.addChild(this.magnitudePath);
 
     this.probabilityDensityPath = new Path(null, {
       stroke: QPPWColors.wavefunctionProbabilityProperty,
       lineWidth: 2,
       fill: "rgba(255, 215, 0, 0.2)", // Semi-transparent fill
     });
-    this.addChild(this.probabilityDensityPath);
+    this.plotContentNode.addChild(this.probabilityDensityPath);
 
     // Link to model properties
     this.linkToModel();
