@@ -51,18 +51,79 @@ export function solveAsymmetricTrianglePotential(
   const energies: number[] = [];
   const eigenvaluesZ: number[] = []; // Store scaled eigenvalues
 
-  // Use the zeros of Ai(z) as approximate starting points
-  // The first few zeros of Ai(z) are approximately: -2.338, -4.088, -5.521, -6.787, ...
-  const airyZeros = [-2.338, -4.088, -5.521, -6.787, -7.944, -9.023, -10.040, -11.009, -11.936, -12.829];
+  // The first 30 zeros of Ai(z) (accurate values)
+  const airyZeros = [
+    -2.338107410459767, -4.087949444130970, -5.520559828095551, -6.786708090071759,
+    -7.944133587120853, -9.022650853340979, -10.040174341558084, -11.008524303733002,
+    -11.936015563236262, -12.828776752865757, -13.691489035210607, -14.527829951775463,
+    -15.340755001621408, -16.132835528308838, -16.906291446690082, -17.662905962335834,
+    -18.404068668178972, -19.131643636269826, -19.847112158863527, -20.551677677124827,
+    -21.246334533298977, -21.931907636970310, -22.609160682643028, -23.278791381046098,
+    -23.941435849768022, -24.597682601296316, -25.248072408788864, -25.893094095935044,
+    -26.533193466885800, -27.168772654843493
+  ];
 
-  // Find eigenvalues using Newton-Raphson method
-  for (let n = 0; n < Math.min(numStates, airyZeros.length); n++) {
-    // Initial guess based on Airy zeros
-    let z0 = airyZeros[n];
+  /**
+   * Asymptotic approximation for Airy zeros when n >= 30
+   * z_n ≈ -(3π(4n-1)/8)^(2/3)
+   */
+  function getApproximateAiryZero(n: number): number {
+    return -Math.pow((3 * Math.PI * (4 * n - 1)) / 8, 2 / 3);
+  }
 
-    // Transcendental equation: Ai(z0) * Ai'(z0 + α*a) - Ai(z0 + α*a) * Ai'(z0) = 0
-    // For simplicity, we use the approximate eigenvalues z_n ≈ airyZeros[n]
-    // More accurate solution would require iterative root finding
+  /**
+   * Refine Airy zero using Newton-Raphson method
+   * We're looking for zeros of Ai(z), so we need Ai(z) = 0
+   */
+  function refineAiryZero(initialGuess: number, maxIterations: number = 10, tolerance: number = 1e-10): number {
+    let z = initialGuess;
+    const h = 1e-6; // Small step for numerical derivative
+
+    for (let iter = 0; iter < maxIterations; iter++) {
+      const aiZ = airyAi(z);
+
+      // Check convergence
+      if (Math.abs(aiZ) < tolerance) {
+        break;
+      }
+
+      // Numerical derivative: Ai'(z) ≈ (Ai(z+h) - Ai(z-h)) / (2h)
+      const aiZPlusH = airyAi(z + h);
+      const aiZMinusH = airyAi(z - h);
+      const aiPrime = (aiZPlusH - aiZMinusH) / (2 * h);
+
+      // Newton-Raphson step: z_new = z - Ai(z) / Ai'(z)
+      if (Math.abs(aiPrime) < 1e-12) {
+        // Derivative too small, can't continue
+        break;
+      }
+
+      const zNew = z - aiZ / aiPrime;
+
+      // Check for convergence
+      if (Math.abs(zNew - z) < tolerance) {
+        z = zNew;
+        break;
+      }
+
+      z = zNew;
+    }
+
+    return z;
+  }
+
+  // Find eigenvalues using pre-computed zeros or root finding
+  for (let n = 0; n < numStates; n++) {
+    let z0: number;
+
+    if (n < airyZeros.length) {
+      // Use pre-computed Airy zero for the first 30 states
+      z0 = airyZeros[n];
+    } else {
+      // Use asymptotic approximation and refine with Newton-Raphson
+      const initialGuess = getApproximateAiryZero(n + 1); // n+1 because zeros are 1-indexed
+      z0 = refineAiryZero(initialGuess);
+    }
 
     // For the asymmetric triangle, the energy eigenvalues are approximately:
     // E_n ≈ -ba + (ℏ²/2m)^(1/3) * (2b)^(2/3) * z_n
@@ -74,6 +135,9 @@ export function solveAsymmetricTrianglePotential(
     if (energy < 0) {
       energies.push(energy);
       eigenvaluesZ.push(z0);
+    } else {
+      // No more bound states
+      break;
     }
   }
 
