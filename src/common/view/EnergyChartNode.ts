@@ -39,6 +39,7 @@ export class EnergyChartNode extends Node {
   private readonly plotContentNode: Node; // Clipped container for plot content
   private readonly potentialPath: Path;
   private readonly energyLevelNodes: Map<number, Line>;
+  private readonly energyLabelNodes: Map<number, Text>;
   private readonly totalEnergyLine: Line;
   private readonly zeroLine: Line;
   private readonly axesNode: Node;
@@ -111,8 +112,9 @@ export class EnergyChartNode extends Node {
     });
     this.plotContentNode.addChild(this.potentialPath);
 
-    // Create energy level lines container
+    // Create energy level lines and labels containers
     this.energyLevelNodes = new Map();
+    this.energyLabelNodes = new Map();
 
     // Create total energy line
     this.totalEnergyLine = new Line(0, 0, 0, 0, {
@@ -376,6 +378,12 @@ export class EnergyChartNode extends Node {
     });
     this.energyLevelNodes.clear();
 
+    // Remove old energy label nodes
+    this.energyLabelNodes.forEach((label) => {
+      this.removeChild(label);
+    });
+    this.energyLabelNodes.clear();
+
     // Create new energy level lines
     const energies = boundStates.energies.map((e) => e * QuantumConstants.JOULES_TO_EV);
     const x1 = this.chartMargins.left;
@@ -418,6 +426,7 @@ export class EnergyChartNode extends Node {
         left: x2 + 5,
         centerY: y,
       });
+      this.energyLabelNodes.set(index, label);
       this.addChild(label);
     });
 
