@@ -8,11 +8,12 @@ import { Shape } from "scenerystack/kite";
 import { NumberProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
-import { ChartTransform, ChartRectangle, AxisLine } from "scenerystack/bamboo";
+import { ChartTransform, ChartRectangle, AxisLine, TickMarkSet, TickLabelSet } from "scenerystack/bamboo";
 import { OneWellModel } from "../../one-well/model/OneWellModel.js";
 import { BoundStateResult } from "../model/PotentialFunction.js";
 import QuantumConstants from "../model/QuantumConstants.js";
 import QPPWColors from "../../QPPWColors.js";
+import { PhetFont } from "scenerystack/scenery-phet";
 
 // Chart axis range constant (shared with EnergyChartNode)
 const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
@@ -141,10 +142,25 @@ export class WaveFunctionChartNode extends Node {
   }
 
   /**
-   * Creates the axes (X and Y) with labels using bamboo components.
+   * Creates the axes (X and Y) with labels - using bamboo components where possible.
+   * Note: GridLineSet from bamboo causes infinite loops, so we use manual grid lines.
    */
   private createAxes(): Node {
     const axesNode = new Node();
+
+    // Manual X-axis grid lines (GridLineSet causes hang)
+    for (let pos = -X_AXIS_RANGE_NM; pos <= X_AXIS_RANGE_NM; pos += 2) {
+      if (pos !== -X_AXIS_RANGE_NM) {
+        const x = this.chartMargins.left + this.chartTransform.modelToViewX(pos);
+        const gridLine = new Line(
+          x, this.chartMargins.top,
+          x, this.chartMargins.top + this.plotHeight, {
+          stroke: QPPWColors.gridLineProperty,
+          lineWidth: 1,
+        });
+        axesNode.addChild(gridLine);
+      }
+    }
 
     // Y-axis using bamboo AxisLine
     const yAxis = new AxisLine(this.chartTransform, Orientation.VERTICAL, {
@@ -164,41 +180,32 @@ export class WaveFunctionChartNode extends Node {
     xAxis.y = this.chartMargins.top + this.plotHeight;
     axesNode.addChild(xAxis);
 
-    // Manual X-axis tick labels (every 2 nm from -4 to 4)
-    for (let pos = -X_AXIS_RANGE_NM; pos <= X_AXIS_RANGE_NM; pos += 2) {
-      const x = this.chartMargins.left + this.chartTransform.modelToViewX(pos);
+    // X-axis tick marks using bamboo TickMarkSet
+    const xTickMarks = new TickMarkSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
+      edge: "min",
+      extent: 8,
+      stroke: QPPWColors.axisProperty,
+      lineWidth: 1,
+    });
+    xTickMarks.x = this.chartMargins.left;
+    xTickMarks.y = this.chartMargins.top + this.plotHeight;
+    axesNode.addChild(xTickMarks);
 
-      // Tick mark
-      const tickMark = new Line(x, this.chartMargins.top + this.plotHeight, x, this.chartMargins.top + this.plotHeight + 5, {
-        stroke: QPPWColors.axisProperty,
-        lineWidth: 1,
-      });
-      axesNode.addChild(tickMark);
-
-      // Tick label
-      const label = new Text(pos.toString(), {
-        font: "12px sans-serif",
+    // X-axis tick labels using bamboo TickLabelSet
+    const xTickLabels = new TickLabelSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
+      edge: "min",
+      createLabel: (value: number) => new Text(value.toFixed(0), {
+        font: new PhetFont(12),
         fill: QPPWColors.labelFillProperty,
-        centerX: x,
-        top: this.chartMargins.top + this.plotHeight + 8,
-      });
-      axesNode.addChild(label);
-
-      // Grid line
-      if (pos !== -X_AXIS_RANGE_NM) {
-        const gridLine = new Line(
-          x, this.chartMargins.top,
-          x, this.chartMargins.top + this.plotHeight, {
-          stroke: QPPWColors.gridLineProperty,
-          lineWidth: 1,
-        });
-        axesNode.addChild(gridLine);
-      }
-    }
+      }),
+    });
+    xTickLabels.x = this.chartMargins.left;
+    xTickLabels.y = this.chartMargins.top + this.plotHeight;
+    axesNode.addChild(xTickLabels);
 
     // Y-axis label (will be updated based on display mode)
     this.yAxisLabel = new Text("Probability Density", {
-      font: "14px sans-serif",
+      font: new PhetFont(14),
       fill: QPPWColors.labelFillProperty,
       rotation: -Math.PI / 2,
       centerX: this.chartMargins.left - 40,
@@ -208,7 +215,7 @@ export class WaveFunctionChartNode extends Node {
 
     // X-axis label
     const xLabel = new Text("Position (nm)", {
-      font: "14px sans-serif",
+      font: new PhetFont(14),
       fill: QPPWColors.labelFillProperty,
       centerX: this.chartWidth / 2,
       centerY: this.chartHeight - 15,

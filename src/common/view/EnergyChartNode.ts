@@ -9,11 +9,12 @@ import { NumberProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
 import { Checkbox } from "scenerystack/sun";
-import { ChartTransform, ChartRectangle, AxisLine } from "scenerystack/bamboo";
+import { ChartTransform, ChartRectangle, AxisLine, TickMarkSet, TickLabelSet } from "scenerystack/bamboo";
 import { OneWellModel } from "../../one-well/model/OneWellModel.js";
 import { PotentialType, BoundStateResult } from "../model/PotentialFunction.js";
 import QuantumConstants from "../model/QuantumConstants.js";
 import QPPWColors from "../../QPPWColors.js";
+import { PhetFont } from "scenerystack/scenery-phet";
 
 // Chart axis range constants
 const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
@@ -141,10 +142,39 @@ export class EnergyChartNode extends Node {
   }
 
   /**
-   * Creates the axes (X and Y) with labels using bamboo components.
+   * Creates the axes (X and Y) with labels - using bamboo components where possible.
+   * Note: GridLineSet from bamboo causes infinite loops, so we use manual grid lines.
    */
   private createAxes(): Node {
     const axesNode = new Node();
+
+    // Manual Y-axis grid lines (GridLineSet causes hang)
+    for (let energy = ENERGY_Y_AXIS_MIN_EV; energy <= ENERGY_Y_AXIS_MAX_EV; energy += 5) {
+      if (energy !== ENERGY_Y_AXIS_MIN_EV) {
+        const y = this.chartMargins.top + this.chartTransform.modelToViewY(energy);
+        const gridLine = new Line(
+          this.chartMargins.left, y,
+          this.chartMargins.left + this.plotWidth, y, {
+          stroke: QPPWColors.gridLineProperty,
+          lineWidth: 1,
+        });
+        axesNode.addChild(gridLine);
+      }
+    }
+
+    // Manual X-axis grid lines (GridLineSet causes hang)
+    for (let pos = -X_AXIS_RANGE_NM; pos <= X_AXIS_RANGE_NM; pos += 2) {
+      if (pos !== -X_AXIS_RANGE_NM) {
+        const x = this.chartMargins.left + this.chartTransform.modelToViewX(pos);
+        const gridLine = new Line(
+          x, this.chartMargins.top,
+          x, this.chartMargins.top + this.plotHeight, {
+          stroke: QPPWColors.gridLineProperty,
+          lineWidth: 1,
+        });
+        axesNode.addChild(gridLine);
+      }
+    }
 
     // Y-axis using bamboo AxisLine
     const yAxis = new AxisLine(this.chartTransform, Orientation.VERTICAL, {
@@ -164,73 +194,55 @@ export class EnergyChartNode extends Node {
     xAxis.y = this.chartMargins.top + this.plotHeight;
     axesNode.addChild(xAxis);
 
-    // Manual Y-axis tick labels (every 5 eV from -5 to 15)
-    for (let energy = ENERGY_Y_AXIS_MIN_EV; energy <= ENERGY_Y_AXIS_MAX_EV; energy += 5) {
-      const y = this.chartMargins.top + this.chartTransform.modelToViewY(energy);
+    // Y-axis tick marks using bamboo TickMarkSet
+    const yTickMarks = new TickMarkSet(this.chartTransform, Orientation.VERTICAL, 5, {
+      edge: "min",
+      extent: 8,
+      stroke: QPPWColors.axisProperty,
+      lineWidth: 1,
+    });
+    yTickMarks.x = this.chartMargins.left;
+    yTickMarks.y = this.chartMargins.top;
+    axesNode.addChild(yTickMarks);
 
-      // Tick mark
-      const tickMark = new Line(this.chartMargins.left - 5, y, this.chartMargins.left, y, {
-        stroke: QPPWColors.axisProperty,
-        lineWidth: 1,
-      });
-      axesNode.addChild(tickMark);
+    // X-axis tick marks using bamboo TickMarkSet
+    const xTickMarks = new TickMarkSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
+      edge: "min",
+      extent: 8,
+      stroke: QPPWColors.axisProperty,
+      lineWidth: 1,
+    });
+    xTickMarks.x = this.chartMargins.left;
+    xTickMarks.y = this.chartMargins.top + this.plotHeight;
+    axesNode.addChild(xTickMarks);
 
-      // Tick label
-      const label = new Text(energy.toString(), {
-        font: "12px sans-serif",
+    // Y-axis tick labels using bamboo TickLabelSet
+    const yTickLabels = new TickLabelSet(this.chartTransform, Orientation.VERTICAL, 5, {
+      edge: "min",
+      createLabel: (value: number) => new Text(value.toFixed(0), {
+        font: new PhetFont(12),
         fill: QPPWColors.labelFillProperty,
-        right: this.chartMargins.left - 8,
-        centerY: y,
-      });
-      axesNode.addChild(label);
+      }),
+    });
+    yTickLabels.x = this.chartMargins.left;
+    yTickLabels.y = this.chartMargins.top;
+    axesNode.addChild(yTickLabels);
 
-      // Grid line
-      if (energy !== ENERGY_Y_AXIS_MIN_EV) {
-        const gridLine = new Line(
-          this.chartMargins.left, y,
-          this.chartMargins.left + this.plotWidth, y, {
-          stroke: QPPWColors.gridLineProperty,
-          lineWidth: 1,
-        });
-        axesNode.addChild(gridLine);
-      }
-    }
-
-    // Manual X-axis tick labels (every 2 nm from -4 to 4)
-    for (let pos = -X_AXIS_RANGE_NM; pos <= X_AXIS_RANGE_NM; pos += 2) {
-      const x = this.chartMargins.left + this.chartTransform.modelToViewX(pos);
-
-      // Tick mark
-      const tickMark = new Line(x, this.chartMargins.top + this.plotHeight, x, this.chartMargins.top + this.plotHeight + 5, {
-        stroke: QPPWColors.axisProperty,
-        lineWidth: 1,
-      });
-      axesNode.addChild(tickMark);
-
-      // Tick label
-      const label = new Text(pos.toString(), {
-        font: "12px sans-serif",
+    // X-axis tick labels using bamboo TickLabelSet
+    const xTickLabels = new TickLabelSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
+      edge: "min",
+      createLabel: (value: number) => new Text(value.toFixed(0), {
+        font: new PhetFont(12),
         fill: QPPWColors.labelFillProperty,
-        centerX: x,
-        top: this.chartMargins.top + this.plotHeight + 8,
-      });
-      axesNode.addChild(label);
-
-      // Grid line
-      if (pos !== -X_AXIS_RANGE_NM) {
-        const gridLine = new Line(
-          x, this.chartMargins.top,
-          x, this.chartMargins.top + this.plotHeight, {
-          stroke: QPPWColors.gridLineProperty,
-          lineWidth: 1,
-        });
-        axesNode.addChild(gridLine);
-      }
-    }
+      }),
+    });
+    xTickLabels.x = this.chartMargins.left;
+    xTickLabels.y = this.chartMargins.top + this.plotHeight;
+    axesNode.addChild(xTickLabels);
 
     // Axis labels
     const yLabel = new Text("Energy (eV)", {
-      font: "14px sans-serif",
+      font: new PhetFont(14),
       fill: QPPWColors.labelFillProperty,
       rotation: -Math.PI / 2,
       centerX: this.chartMargins.left - 40,
@@ -239,7 +251,7 @@ export class EnergyChartNode extends Node {
     axesNode.addChild(yLabel);
 
     const xLabel = new Text("Position (nm)", {
-      font: "14px sans-serif",
+      font: new PhetFont(14),
       fill: QPPWColors.labelFillProperty,
       centerX: this.chartWidth / 2,
       centerY: this.chartHeight - 15,
