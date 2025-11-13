@@ -14,6 +14,7 @@ export enum PotentialType {
   POSCHL_TELLER = "poschlTeller",
   ROSEN_MORSE = "rosenMorse",
   ECKART = "eckart",
+  ASYMMETRIC_TRIANGLE = "asymmetricTriangle",
   CUSTOM = "custom",
 }
 
