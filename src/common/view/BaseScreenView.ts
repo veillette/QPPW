@@ -5,7 +5,7 @@
 
 import { ScreenView, ScreenViewOptions } from "scenerystack/sim";
 import { ResetAllButton } from "scenerystack/scenery-phet";
-import { Node, VBox } from "scenerystack/scenery";
+import { Node } from "scenerystack/scenery";
 import { OneWellModel } from "../../one-well/model/OneWellModel.js";
 import { EnergyChartNode } from "./EnergyChartNode.js";
 import { WaveFunctionChartNode } from "./WaveFunctionChartNode.js";
@@ -22,7 +22,7 @@ export abstract class BaseScreenView extends ScreenView {
   protected waveFunctionChart?: WaveFunctionChartNode;
   protected controlPanel?: ControlPanelNode;
   protected simulationControlBar?: SimulationControlBar;
-  protected chartsStack?: VBox;
+  protected chartsContainer?: Node;
   protected listBoxParent?: Node;
 
   protected constructor(
@@ -71,13 +71,16 @@ export abstract class BaseScreenView extends ScreenView {
       height: chartHeight,
     });
 
-    // Stack charts vertically
-    this.chartsStack = new VBox({
-      spacing: margin,
-      align: "left",
+    // Position charts with fixed layout, ensuring x-axes align horizontally
+    this.energyChart.left = margin;
+    this.energyChart.top = margin;
+
+    this.waveFunctionChart.left = margin; // Same left position to align x-axes
+    this.waveFunctionChart.top = margin + chartHeight + margin;
+
+    // Create container for charts
+    this.chartsContainer = new Node({
       children: [this.energyChart, this.waveFunctionChart],
-      left: margin,
-      top: margin,
     });
 
     // Create control panel (needs a parent node for ComboBox listbox)
@@ -94,7 +97,7 @@ export abstract class BaseScreenView extends ScreenView {
     this.simulationControlBar.bottom = screenHeight;
 
     // Add all components to the view
-    this.addChild(this.chartsStack);
+    this.addChild(this.chartsContainer);
     this.addChild(this.controlPanel);
     this.addChild(this.simulationControlBar);
     this.addChild(this.listBoxParent); // ListBox parent must be added last for proper z-ordering
