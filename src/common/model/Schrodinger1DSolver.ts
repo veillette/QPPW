@@ -20,7 +20,9 @@ import {
   solvePoschlTellerPotential,
   solveRosenMorsePotential,
   solveEckartPotential,
-  solveAsymmetricTrianglePotential
+  solveAsymmetricTrianglePotential,
+  solveCoulomb1DPotential,
+  solveCoulomb3DPotential
 } from "./AnalyticalSolutions.js";
 import { solveNumerov } from "./NumerovSolver.js";
 import { solveDVR } from "./DVRSolver.js";
@@ -59,6 +61,8 @@ export interface WellParameters {
   barrierHeight?: number;
   /** Slope parameter for asymmetric triangle potential (Joules/meter) */
   slope?: number;
+  /** Coulomb strength parameter α for Coulomb potentials (J·m) */
+  coulombStrength?: number;
 }
 
 /**
@@ -204,6 +208,28 @@ export class Schrodinger1DSolver {
           return solveAsymmetricTrianglePotential(
             wellParams.slope,
             wellParams.wellWidth,
+            mass,
+            numStates,
+            gridConfig,
+          );
+        }
+        break;
+
+      case PotentialType.COULOMB_1D:
+        if (wellParams.coulombStrength !== undefined) {
+          return solveCoulomb1DPotential(
+            wellParams.coulombStrength,
+            mass,
+            numStates,
+            gridConfig,
+          );
+        }
+        break;
+
+      case PotentialType.COULOMB_3D:
+        if (wellParams.coulombStrength !== undefined) {
+          return solveCoulomb3DPotential(
+            wellParams.coulombStrength,
             mass,
             numStates,
             gridConfig,
@@ -440,6 +466,47 @@ export class Schrodinger1DSolver {
       } else {
         return 0;
       }
+    };
+  }
+
+  /**
+   * Create a potential function for a 1D Coulomb potential.
+   * V(x) = -α/|x|
+   *
+   * This potential has a singularity at x=0 and describes a 1D hydrogen-like atom.
+   *
+   * @param coulombStrength - Coulomb strength parameter α in J·m
+   * @returns Potential function V(x)
+   */
+  public static createCoulomb1DPotential(
+    coulombStrength: number,
+  ): PotentialFunction {
+    return (x: number) => {
+      if (x === 0) {
+        return -Infinity; // Singularity at x=0
+      }
+      return -coulombStrength / Math.abs(x);
+    };
+  }
+
+  /**
+   * Create a potential function for a 3D Coulomb potential (radial).
+   * V(r) = -α/r
+   *
+   * This is the radial potential for the hydrogen atom.
+   * Note: r should always be positive for the radial coordinate.
+   *
+   * @param coulombStrength - Coulomb strength parameter α in J·m
+   * @returns Potential function V(r)
+   */
+  public static createCoulomb3DPotential(
+    coulombStrength: number,
+  ): PotentialFunction {
+    return (r: number) => {
+      if (r <= 0) {
+        return -Infinity; // Singularity at r=0
+      }
+      return -coulombStrength / r;
     };
   }
 
