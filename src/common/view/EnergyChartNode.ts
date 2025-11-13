@@ -10,9 +10,9 @@ import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
 import { Checkbox } from "scenerystack/sun";
 import { ChartTransform, ChartRectangle, AxisLine } from "scenerystack/bamboo";
-import { OneWellModel } from "../model/OneWellModel.js";
-import { PotentialType, BoundStateResult } from "../../common/model/PotentialFunction.js";
-import QuantumConstants from "../../common/model/QuantumConstants.js";
+import { OneWellModel } from "../../one-well/model/OneWellModel.js";
+import { PotentialType, BoundStateResult } from "../model/PotentialFunction.js";
+import QuantumConstants from "../model/QuantumConstants.js";
 import QPPWColors from "../../QPPWColors.js";
 
 export class EnergyChartNode extends Node {

@@ -3,18 +3,16 @@
  * It handles the quantum mechanical calculations for a particle in a single well.
  */
 
-import { EnumerationProperty, NumberProperty, Property } from "scenerystack/axon";
+import { NumberProperty, Property } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
-import Schrodinger1DSolver, { WellParameters } from "../../common/model/Schrodinger1DSolver.js";
+import { BaseModel } from "../../common/model/BaseModel.js";
+import Schrodinger1DSolver, { WellParameters, NumericalMethod } from "../../common/model/Schrodinger1DSolver.js";
 import { PotentialType, BoundStateResult } from "../../common/model/PotentialFunction.js";
 import QuantumConstants from "../../common/model/QuantumConstants.js";
-import QPPWPreferences from "../../QPPWPreferences.js";
-import { TimeSpeed } from "scenerystack";
 
 export type DisplayMode = "probabilityDensity" | "waveFunction";
-export type SimulationSpeed = "normal" | "fast";
 
-export class OneWellModel {
+export class OneWellModel extends BaseModel {
   // Potential type selection
   public readonly potentialTypeProperty: Property<PotentialType>;
 
@@ -41,19 +39,11 @@ export class OneWellModel {
   public readonly showTotalEnergyProperty: Property<boolean>;
   public readonly showPotentialEnergyProperty: Property<boolean>;
 
-  // Simulation state
-  public readonly isPlayingProperty: Property<boolean>;
-  public readonly timeProperty: NumberProperty; // In femtoseconds
-  public readonly simulationSpeedProperty: Property<SimulationSpeed>;
-
-  // Solver for quantum calculations
-  private readonly solver: Schrodinger1DSolver;
-
   // Cached bound state results
   private boundStateResult: BoundStateResult | null = null;
-  public timeSpeedProperty: EnumerationProperty<TimeSpeed>;
 
   public constructor() {
+    super();
     // Initialize potential type (square/infinite well by default)
     this.potentialTypeProperty = new Property<PotentialType>(PotentialType.INFINITE_WELL);
 
@@ -61,8 +51,6 @@ export class OneWellModel {
     this.wellWidthProperty = new NumberProperty(1.0, { range: new Range(0.1, 10.0) }); // in nanometers
     this.wellDepthProperty = new NumberProperty(5.0, { range: new Range(0.1, 20.0) }); // in eV
     this.wellOffsetProperty = new NumberProperty(0.5, { range: new Range(0.0, 1.0) }); // normalized position
-
-    this.timeSpeedProperty = new EnumerationProperty(TimeSpeed.NORMAL);
 
     // Initialize particle mass (1.0 = electron mass)
     this.particleMassProperty = new NumberProperty(1.0, { range: new Range(0.1, 10.0) });
@@ -82,20 +70,6 @@ export class OneWellModel {
     this.showTotalEnergyProperty = new Property<boolean>(true);
     this.showPotentialEnergyProperty = new Property<boolean>(true);
 
-    // Initialize simulation state
-    this.isPlayingProperty = new Property<boolean>(false);
-    this.timeProperty = new NumberProperty(0); // in femtoseconds
-    this.simulationSpeedProperty = new Property<SimulationSpeed>("normal");
-
-    // Initialize solver with user's preferred method
-    this.solver = new Schrodinger1DSolver();
-
-    // Update solver method when preference changes
-    QPPWPreferences.numericalMethodProperty.link((method) => {
-      this.solver.setNumericalMethod(method);
-      this.boundStateResult = null; // Invalidate cache
-    });
-
     // Recalculate bound states when parameters change
     const invalidateCache = () => {
       this.boundStateResult = null;
@@ -109,9 +83,29 @@ export class OneWellModel {
   }
 
   /**
+   * Called when the solver method changes.
+   * Invalidates the cached bound state results.
+   * @param _method - The new numerical method (unused but required by interface)
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected onSolverMethodChanged(_method: NumericalMethod): void {
+    this.boundStateResult = null; // Invalidate cache
+  }
+
+  /**
    * Resets the model to its initial state.
+   * This is the public API method that delegates to resetAll().
    */
   public reset(): void {
+    this.resetAll();
+  }
+
+  /**
+   * Resets all properties to their initial state.
+   * Override from BaseModel.
+   */
+  public override resetAll(): void {
+    super.resetAll();
     this.potentialTypeProperty.reset();
     this.wellWidthProperty.reset();
     this.wellDepthProperty.reset();
@@ -126,32 +120,6 @@ export class OneWellModel {
     this.showPhaseProperty.reset();
     this.showTotalEnergyProperty.reset();
     this.showPotentialEnergyProperty.reset();
-    this.isPlayingProperty.reset();
-    this.timeProperty.reset();
-    this.simulationSpeedProperty.reset();
-  }
-
-  /**
-   * Steps the model forward in time.
-   * @param dt - The time step in seconds (can be negative for backward stepping)
-   * @param forced - If true, steps even when paused (for manual stepping buttons)
-   */
-  public step(dt: number, forced = false): void {
-    if (this.isPlayingProperty.value || forced) {
-      // Convert dt to femtoseconds and apply speed multiplier (only when playing normally)
-      const speedMultiplier = forced ? 1 : (this.simulationSpeedProperty.value === "fast" ? 10 : 1);
-      const dtFemtoseconds = (dt * 1e15) * speedMultiplier; // seconds to femtoseconds
-      this.timeProperty.value += dtFemtoseconds;
-      // Quantum mechanical time evolution is handled in the view layer
-    }
-  }
-
-  /**
-   * Restarts the simulation (resets time to zero).
-   */
-  public restart(): void {
-    this.timeProperty.value = 0;
-    this.isPlayingProperty.value = false;
   }
 
   /**

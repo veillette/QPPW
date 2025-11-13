@@ -9,9 +9,9 @@ import { NumberProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
 import { ChartTransform, ChartRectangle, AxisLine } from "scenerystack/bamboo";
-import { OneWellModel } from "../model/OneWellModel.js";
-import { BoundStateResult } from "../../common/model/PotentialFunction.js";
-import QuantumConstants from "../../common/model/QuantumConstants.js";
+import { OneWellModel } from "../../one-well/model/OneWellModel.js";
+import { BoundStateResult } from "../model/PotentialFunction.js";
+import QuantumConstants from "../model/QuantumConstants.js";
 import QPPWColors from "../../QPPWColors.js";
 
 export class WaveFunctionChartNode extends Node {

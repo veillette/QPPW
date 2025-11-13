@@ -7,10 +7,10 @@ import { BaseScreenView } from "../../common/view/BaseScreenView.js";
 import { OneWellModel } from "../model/OneWellModel.js";
 import { ScreenViewOptions } from "scenerystack/sim";
 import { Node, VBox, Text } from "scenerystack/scenery";
-import { EnergyChartNode } from "./EnergyChartNode.js";
-import { WaveFunctionChartNode } from "./WaveFunctionChartNode.js";
-import { ControlPanelNode } from "./ControlPanelNode.js";
-import { SimulationControlBar } from "./SimulationControlBar.js";
+import { EnergyChartNode } from "../../common/view/EnergyChartNode.js";
+import { WaveFunctionChartNode } from "../../common/view/WaveFunctionChartNode.js";
+import { ControlPanelNode } from "../../common/view/ControlPanelNode.js";
+import { SimulationControlBar } from "../../common/view/SimulationControlBar.js";
 import QPPWColors from "../../QPPWColors.js";
 
 export class OneWellScreenView extends BaseScreenView {
@@ -23,7 +23,7 @@ export class OneWellScreenView extends BaseScreenView {
   public constructor(model: OneWellModel, options?: ScreenViewOptions) {
     super(
       () => {
-        model.reset();
+        model.resetAll();
         this.reset();
       },
       options,
@@ -67,7 +67,7 @@ export class OneWellScreenView extends BaseScreenView {
     this.controlPanel = new ControlPanelNode(
       model,
       () => {
-        model.reset();
+        model.resetAll();
         this.reset();
       },
       listBoxParent,

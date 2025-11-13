@@ -1,6 +1,6 @@
 /**
  * SimulationControlBar provides playback controls and time display.
- * This is displayed at the bottom of the One Well screen.
+ * This is displayed at the bottom of quantum physics screens.
  */
 
 import { Node, Text, HBox, VBox, Rectangle } from "scenerystack/scenery";
@@ -11,15 +11,15 @@ import {
 } from "scenerystack/scenery-phet";
 
 import { DerivedProperty } from "scenerystack/axon";
-import { OneWellModel } from "../model/OneWellModel.js";
+import { BaseModel } from "../model/BaseModel.js";
 import QPPWColors from "../../QPPWColors.js";
 
 export class SimulationControlBar extends Node {
-  private readonly model: OneWellModel;
+  private readonly model: BaseModel;
   private readonly timeText: Text;
   private readonly barWidth: number;
 
-  public constructor(model: OneWellModel, options?: { width?: number }) {
+  public constructor(model: BaseModel, options?: { width?: number }) {
     super();
 
     this.model = model;
@@ -100,7 +100,7 @@ export class SimulationControlBar extends Node {
     // Reset button
     const resetButton = new ResetAllButton({
       listener: () => {
-        this.model.reset();
+        this.model.resetAll();
       }
     });
     this.addChild(resetButton);

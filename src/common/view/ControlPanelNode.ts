@@ -6,8 +6,8 @@
 import { Node, Text, VBox, HBox, HSeparator } from "scenerystack/scenery";
 import { Panel, Checkbox, VerticalAquaRadioButtonGroup, ComboBox, HSlider } from "scenerystack/sun";
 import { Dimension2 } from "scenerystack/dot";
-import { OneWellModel } from "../model/OneWellModel.js";
-import { PotentialType } from "../../common/model/PotentialFunction.js";
+import { OneWellModel } from "../../one-well/model/OneWellModel.js";
+import { PotentialType } from "../model/PotentialFunction.js";
 import QPPWColors from "../../QPPWColors.js";
 import { ResetAllButton, PhetFont } from "scenerystack/scenery-phet";
 
