@@ -14,6 +14,8 @@ export enum PotentialType {
   POSCHL_TELLER = "poschlTeller",
   ROSEN_MORSE = "rosenMorse",
   ECKART = "eckart",
+  COULOMB_1D = "coulomb1D",
+  COULOMB_3D = "coulomb3D",
   CUSTOM = "custom",
 }
 
