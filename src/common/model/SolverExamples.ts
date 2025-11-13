@@ -125,10 +125,52 @@ export function exampleHarmonicOscillatorAnalytical(): void {
 }
 
 /**
- * Example 4: Finite square well using DVR method
+ * Example 4: Finite square well using analytical solution
+ */
+export function exampleFiniteWellAnalytical(): void {
+  console.log("\n=== Example 4: Finite Square Well (Analytical) ===");
+
+  const solver = new Schrodinger1DSolver();
+  const wellWidth = 1e-9; // 1 nm
+  const wellDepth = Schrodinger1DSolver.eVToJoules(10); // 10 eV well depth
+  const mass = QuantumConstants.ELECTRON_MASS;
+  const numStates = 5;
+
+  const gridConfig = {
+    xMin: -2e-9,
+    xMax: 2e-9,
+    numPoints: 300,
+  };
+
+  const result = solver.solveAnalyticalIfPossible(
+    {
+      type: PotentialType.FINITE_WELL,
+      wellWidth: wellWidth,
+      wellDepth: wellDepth,
+    },
+    mass,
+    numStates,
+    gridConfig,
+  );
+
+  console.log(`Method used: ${result.method}`);
+  console.log(`Found ${result.energies.length} bound states\n`);
+  console.log("Energy eigenvalues (eV) relative to bottom of well:");
+  result.energies.forEach((E, n) => {
+    const E_eV = Schrodinger1DSolver.joulesToEV(E);
+    const E_relative_eV = E_eV + 10; // Shift by well depth to show energy above bottom
+    console.log(`  E_${n + 1} = ${E_relative_eV.toFixed(4)} eV (${E_eV.toFixed(4)} eV relative to V=0)`);
+  });
+
+  console.log("\nNote: Energies found by solving transcendental equations");
+  console.log("States alternate between even and odd parity");
+}
+
+/**
+ * Example 5: Finite square well using DVR method
  */
 export function exampleFiniteWellDVR(): void {
-  console.log("\n=== Example 4: Finite Square Well (DVR Numerical) ===");
+  console.log("\n=== Example 5: Finite Square Well (DVR Numerical) ===");
 
   const solver = new Schrodinger1DSolver(NumericalMethod.DVR);
   const wellWidth = 1e-9; // 1 nm
@@ -161,10 +203,10 @@ export function exampleFiniteWellDVR(): void {
 }
 
 /**
- * Example 5: Comparing Numerov and DVR methods
+ * Example 6: Comparing Numerov and DVR methods
  */
 export function exampleCompareMethodsfiniteWell(): void {
-  console.log("\n=== Example 5: Compare Numerov vs DVR for Finite Well ===");
+  console.log("\n=== Example 6: Compare Numerov vs DVR for Finite Well ===");
 
   const wellWidth = 1e-9; // 1 nm
   const wellDepth = Schrodinger1DSolver.eVToJoules(5); // 5 eV
@@ -219,10 +261,10 @@ export function exampleCompareMethodsfiniteWell(): void {
 }
 
 /**
- * Example 6: Morse potential using analytical solution
+ * Example 7: Morse potential using analytical solution
  */
 export function exampleMorsePotentialAnalytical(): void {
-  console.log("\n=== Example 6: Morse Potential (Analytical) ===");
+  console.log("\n=== Example 7: Morse Potential (Analytical) ===");
 
   const solver = new Schrodinger1DSolver();
   const mass = QuantumConstants.ELECTRON_MASS;
@@ -264,10 +306,10 @@ export function exampleMorsePotentialAnalytical(): void {
 }
 
 /**
- * Example 7: Pöschl-Teller potential using analytical solution
+ * Example 8: Pöschl-Teller potential using analytical solution
  */
 export function examplePoschlTellerPotentialAnalytical(): void {
-  console.log("\n=== Example 7: Pöschl-Teller Potential (Analytical) ===");
+  console.log("\n=== Example 8: Pöschl-Teller Potential (Analytical) ===");
 
   const solver = new Schrodinger1DSolver();
   const mass = QuantumConstants.ELECTRON_MASS;
@@ -316,6 +358,7 @@ export function runAllExamples(): void {
   exampleInfiniteWellAnalytical();
   exampleInfiniteWellDVR();
   exampleHarmonicOscillatorAnalytical();
+  exampleFiniteWellAnalytical();
   exampleFiniteWellDVR();
   exampleCompareMethodsfiniteWell();
   exampleMorsePotentialAnalytical();
