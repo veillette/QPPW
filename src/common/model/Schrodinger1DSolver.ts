@@ -19,7 +19,8 @@ import {
   solveMorsePotential,
   solvePoschlTellerPotential,
   solveRosenMorsePotential,
-  solveEckartPotential
+  solveEckartPotential,
+  solveAsymmetricTrianglePotential
 } from "./AnalyticalSolutions.js";
 import { solveNumerov } from "./NumerovSolver.js";
 import { solveDVR } from "./DVRSolver.js";
@@ -56,6 +57,8 @@ export interface WellParameters {
   potentialDepth?: number;
   /** Barrier height for Rosen-Morse and Eckart potentials (Joules) */
   barrierHeight?: number;
+  /** Slope parameter for asymmetric triangle potential (Joules/meter) */
+  slope?: number;
 }
 
 /**
@@ -185,6 +188,21 @@ export class Schrodinger1DSolver {
           return solveEckartPotential(
             wellParams.potentialDepth,
             wellParams.barrierHeight,
+            wellParams.wellWidth,
+            mass,
+            numStates,
+            gridConfig,
+          );
+        }
+        break;
+
+      case PotentialType.ASYMMETRIC_TRIANGLE:
+        if (
+          wellParams.slope !== undefined &&
+          wellParams.wellWidth !== undefined
+        ) {
+          return solveAsymmetricTrianglePotential(
+            wellParams.slope,
             wellParams.wellWidth,
             mass,
             numStates,
@@ -397,6 +415,31 @@ export class Schrodinger1DSolver {
       const expVal = Math.exp(wellWidth * x);
       const denom = 1 + expVal;
       return potentialDepth / (denom * denom) - barrierHeight / denom;
+    };
+  }
+
+  /**
+   * Create a potential function for an asymmetric triangle potential.
+   * V(x) = 0 for x < 0
+   * V(x) = -b(a-x) for 0 < x < a
+   * V(x) = 0 for x > a
+   *
+   * @param slope - Slope parameter b in Joules/meter (positive value)
+   * @param wellWidth - Width parameter a in meters
+   * @returns Potential function V(x)
+   */
+  public static createAsymmetricTrianglePotential(
+    slope: number,
+    wellWidth: number,
+  ): PotentialFunction {
+    return (x: number) => {
+      if (x < 0) {
+        return 0;
+      } else if (x <= wellWidth) {
+        return -slope * (wellWidth - x);
+      } else {
+        return 0;
+      }
     };
   }
 
