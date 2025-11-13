@@ -4,22 +4,46 @@
  */
 
 import { NumberProperty, Property } from "scenerystack/axon";
+import { Range } from "scenerystack/dot";
 import Schrodinger1DSolver from "../../common/model/Schrodinger1DSolver.js";
 import { PotentialType, BoundStateResult } from "../../common/model/PotentialFunction.js";
 import QuantumConstants from "../../common/model/QuantumConstants.js";
 import QPPWPreferences from "../../QPPWPreferences.js";
 
+export type DisplayMode = "probabilityDensity" | "waveFunction";
+export type SimulationSpeed = "normal" | "fast";
+
 export class OneWellModel {
-  // Well parameters
+  // Potential type selection
+  public readonly potentialTypeProperty: Property<PotentialType>;
+
+  // Well parameters (used for different potential types)
   public readonly wellWidthProperty: NumberProperty;
   public readonly wellDepthProperty: NumberProperty;
+  public readonly wellOffsetProperty: NumberProperty; // For asymmetric wells
 
-  // Energy level
-  public readonly energyLevelProperty: NumberProperty;
+  // Particle properties
+  public readonly particleMassProperty: NumberProperty; // In units of electron mass
+
+  // Energy level selection
+  public readonly selectedEnergyLevelIndexProperty: NumberProperty; // 0-indexed
+  public readonly energyLevelProperty: NumberProperty; // Deprecated, kept for compatibility
+
+  // Display settings
+  public readonly displayModeProperty: Property<DisplayMode>;
+  public readonly showRealPartProperty: Property<boolean>;
+  public readonly showImaginaryPartProperty: Property<boolean>;
+  public readonly showMagnitudeProperty: Property<boolean>;
+  public readonly showPhaseProperty: Property<boolean>;
+
+  // Chart visibility
+  public readonly showTotalEnergyProperty: Property<boolean>;
+  public readonly showPotentialEnergyProperty: Property<boolean>;
 
   // Simulation state
   public readonly isPlayingProperty: Property<boolean>;
-  public readonly timeProperty: NumberProperty;
+  public readonly timeProperty: NumberProperty; // In femtoseconds
+  public readonly simulationSpeedProperty: Property<SimulationSpeed>;
 
   // Solver for quantum calculations
   private readonly solver: Schrodinger1DSolver;
@@ -28,16 +52,36 @@ export class OneWellModel {
   private boundStateResult: BoundStateResult | null = null;
 
   public constructor() {
-    // Initialize well parameters with default values
-    this.wellWidthProperty = new NumberProperty(10); // in nanometers
-    this.wellDepthProperty = new NumberProperty(5); // in eV
+    // Initialize potential type (square/infinite well by default)
+    this.potentialTypeProperty = new Property<PotentialType>(PotentialType.INFINITE_WELL);
 
-    // Initialize energy level (ground state by default)
-    this.energyLevelProperty = new NumberProperty(0);
+    // Initialize well parameters with default values
+    this.wellWidthProperty = new NumberProperty(1.0, { range: new Range(0.1, 10.0) }); // in nanometers
+    this.wellDepthProperty = new NumberProperty(5.0, { range: new Range(0.1, 20.0) }); // in eV
+    this.wellOffsetProperty = new NumberProperty(0.5, { range: new Range(0.0, 1.0) }); // normalized position
+
+    // Initialize particle mass (1.0 = electron mass)
+    this.particleMassProperty = new NumberProperty(1.0, { range: new Range(0.1, 10.0) });
+
+    // Initialize energy level selection (ground state by default)
+    this.selectedEnergyLevelIndexProperty = new NumberProperty(0, { range: new Range(0, 9) });
+    this.energyLevelProperty = new NumberProperty(0); // Deprecated
+
+    // Initialize display settings
+    this.displayModeProperty = new Property<DisplayMode>("probabilityDensity");
+    this.showRealPartProperty = new Property<boolean>(true);
+    this.showImaginaryPartProperty = new Property<boolean>(false);
+    this.showMagnitudeProperty = new Property<boolean>(false);
+    this.showPhaseProperty = new Property<boolean>(false);
+
+    // Initialize chart visibility
+    this.showTotalEnergyProperty = new Property<boolean>(true);
+    this.showPotentialEnergyProperty = new Property<boolean>(true);
 
     // Initialize simulation state
     this.isPlayingProperty = new Property<boolean>(false);
-    this.timeProperty = new NumberProperty(0);
+    this.timeProperty = new NumberProperty(0); // in femtoseconds
+    this.simulationSpeedProperty = new Property<SimulationSpeed>("normal");
 
     // Initialize solver with user's preferred method
     this.solver = new Schrodinger1DSolver();
@@ -48,24 +92,39 @@ export class OneWellModel {
       this.boundStateResult = null; // Invalidate cache
     });
 
-    // Recalculate bound states when well parameters change
-    this.wellWidthProperty.link(() => {
+    // Recalculate bound states when parameters change
+    const invalidateCache = () => {
       this.boundStateResult = null;
-    });
-    this.wellDepthProperty.link(() => {
-      this.boundStateResult = null;
-    });
+    };
+
+    this.potentialTypeProperty.link(invalidateCache);
+    this.wellWidthProperty.link(invalidateCache);
+    this.wellDepthProperty.link(invalidateCache);
+    this.wellOffsetProperty.link(invalidateCache);
+    this.particleMassProperty.link(invalidateCache);
   }
 
   /**
    * Resets the model to its initial state.
    */
   public reset(): void {
+    this.potentialTypeProperty.reset();
     this.wellWidthProperty.reset();
     this.wellDepthProperty.reset();
+    this.wellOffsetProperty.reset();
+    this.particleMassProperty.reset();
+    this.selectedEnergyLevelIndexProperty.reset();
     this.energyLevelProperty.reset();
+    this.displayModeProperty.reset();
+    this.showRealPartProperty.reset();
+    this.showImaginaryPartProperty.reset();
+    this.showMagnitudeProperty.reset();
+    this.showPhaseProperty.reset();
+    this.showTotalEnergyProperty.reset();
+    this.showPotentialEnergyProperty.reset();
     this.isPlayingProperty.reset();
     this.timeProperty.reset();
+    this.simulationSpeedProperty.reset();
   }
 
   /**
@@ -74,9 +133,20 @@ export class OneWellModel {
    */
   public step(dt: number): void {
     if (this.isPlayingProperty.value) {
-      this.timeProperty.value += dt;
-      // Add quantum mechanical time evolution here
+      // Convert dt to femtoseconds and apply speed multiplier
+      const speedMultiplier = this.simulationSpeedProperty.value === "fast" ? 10 : 1;
+      const dtFemtoseconds = (dt * 1e15) * speedMultiplier; // seconds to femtoseconds
+      this.timeProperty.value += dtFemtoseconds;
+      // Quantum mechanical time evolution is handled in the view layer
     }
+  }
+
+  /**
+   * Restarts the simulation (resets time to zero).
+   */
+  public restart(): void {
+    this.timeProperty.value = 0;
+    this.isPlayingProperty.value = false;
   }
 
   /**
@@ -122,22 +192,53 @@ export class OneWellModel {
    */
   private calculateBoundStates(): void {
     const wellWidth = this.wellWidthProperty.value * QuantumConstants.NM_TO_M;
+    const wellDepth = this.wellDepthProperty.value * QuantumConstants.EV_TO_JOULES;
+    const mass = this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
     const numStates = 10; // Calculate first 10 states
 
+    // Grid configuration with buffer on sides for finite potentials
+    const bufferFactor = 2.0; // Extra space on each side
     const gridConfig = {
-      xMin: 0,
-      xMax: wellWidth,
-      numPoints: 200,
+      xMin: -wellWidth * bufferFactor,
+      xMax: wellWidth * (1 + bufferFactor),
+      numPoints: 400,
     };
 
     try {
-      // Use analytical solution for infinite well
+      // Build potential parameters based on type
+      const potentialParams: any = {
+        type: this.potentialTypeProperty.value,
+        wellWidth: wellWidth,
+      };
+
+      // Add type-specific parameters
+      switch (this.potentialTypeProperty.value) {
+        case PotentialType.INFINITE_WELL:
+          // No additional parameters needed
+          break;
+        case PotentialType.FINITE_WELL:
+          potentialParams.wellDepth = wellDepth;
+          break;
+        case PotentialType.HARMONIC_OSCILLATOR:
+          potentialParams.omega = Math.sqrt((4 * wellDepth) / (mass * wellWidth * wellWidth));
+          break;
+        case PotentialType.ASYMMETRIC_TRIANGLE:
+          potentialParams.fieldStrength = wellDepth / wellWidth;
+          potentialParams.offset = this.wellOffsetProperty.value * wellWidth;
+          break;
+        case PotentialType.COULOMB_1D:
+        case PotentialType.COULOMB_3D:
+          potentialParams.charge = -1; // Electron charge
+          break;
+        default:
+          // For other potential types, use numerical solution
+          break;
+      }
+
+      // Attempt analytical solution first
       this.boundStateResult = this.solver.solveAnalyticalIfPossible(
-        {
-          type: PotentialType.INFINITE_WELL,
-          wellWidth: wellWidth,
-        },
-        QuantumConstants.ELECTRON_MASS,
+        potentialParams,
+        mass,
         numStates,
         gridConfig,
       );
