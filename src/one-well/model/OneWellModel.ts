@@ -129,12 +129,13 @@ export class OneWellModel {
 
   /**
    * Steps the model forward in time.
-   * @param dt - The time step in seconds
+   * @param dt - The time step in seconds (can be negative for backward stepping)
+   * @param forced - If true, steps even when paused (for manual stepping buttons)
    */
-  public step(dt: number): void {
-    if (this.isPlayingProperty.value) {
-      // Convert dt to femtoseconds and apply speed multiplier
-      const speedMultiplier = this.simulationSpeedProperty.value === "fast" ? 10 : 1;
+  public step(dt: number, forced = false): void {
+    if (this.isPlayingProperty.value || forced) {
+      // Convert dt to femtoseconds and apply speed multiplier (only when playing normally)
+      const speedMultiplier = forced ? 1 : (this.simulationSpeedProperty.value === "fast" ? 10 : 1);
       const dtFemtoseconds = (dt * 1e15) * speedMultiplier; // seconds to femtoseconds
       this.timeProperty.value += dtFemtoseconds;
       // Quantum mechanical time evolution is handled in the view layer

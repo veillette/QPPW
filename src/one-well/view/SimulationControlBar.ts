@@ -4,7 +4,7 @@
  */
 
 import { Node, Text, HBox, VBox, Rectangle } from "scenerystack/scenery";
-import { PlayPauseButton, StepForwardButton, PhetFont } from "scenerystack/scenery-phet";
+import { TimeControlNode, PhetFont } from "scenerystack/scenery-phet";
 import { RectangularPushButton, VerticalAquaRadioButtonGroup } from "scenerystack/sun";
 import { Path } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
@@ -93,18 +93,37 @@ export class SimulationControlBar extends Node {
       yMargin: 8,
     });
 
-    const playPauseButton = new PlayPauseButton(this.model.isPlayingProperty, {
-      radius: 20,
-    });
+    // Default time step for manual stepping (in seconds)
+    const manualStepSize = 0.016; // ~1 frame at 60 FPS
 
-    const stepButton = new StepForwardButton({
-      listener: () => {
-        // Step forward by a small time increment
-        const dt = 0.016; // ~60 FPS
-        this.model.step(dt);
+    // Create derived property: stepper buttons enabled only when paused
+    const stepperEnabledProperty = new DerivedProperty(
+      [this.model.isPlayingProperty],
+      (isPlaying) => !isPlaying,
+    );
+
+    // Time controls (play/pause and step buttons)
+    const timeControlNode = new TimeControlNode(this.model.isPlayingProperty, {
+      playPauseStepButtonOptions: {
+        includeStepForwardButton: true,
+        includeStepBackwardButton: true,
+        stepForwardButtonOptions: {
+          listener: () => {
+            // Step forward by one frame (forced even when paused)
+            this.model.step(manualStepSize, true);
+          },
+          enabledProperty: stepperEnabledProperty,
+          radius: 15, // Smaller than play/pause button
+        },
+        stepBackwardButtonOptions: {
+          listener: () => {
+            // Step backward by one frame (negative time step, forced even when paused)
+            this.model.step(-manualStepSize, true);
+          },
+          enabledProperty: stepperEnabledProperty,
+          radius: 15, // Smaller than play/pause button
+        },
       },
-      radius: 15,
-      enabledProperty: new DerivedProperty([this.model.isPlayingProperty], (isPlaying) => !isPlaying),
     });
 
     const playbackLabel = new Text("Playback:", {
@@ -114,7 +133,7 @@ export class SimulationControlBar extends Node {
 
     const playbackButtons = new HBox({
       spacing: 10,
-      children: [restartButton, playPauseButton, stepButton],
+      children: [restartButton, timeControlNode],
     });
 
     const playbackSection = new VBox({
