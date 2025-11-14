@@ -18,10 +18,10 @@ export class TwoWellsScreenView extends BaseScreenView {
 
     // Create the standard quantum well layout with custom control panel options
     // - Hide particle mass slider
-    // - Allow Square (Infinite), Coulomb 1D, and Double Square Well potential types
+    // - Allow Coulomb 1D and Double Square Well potential types
     this.createStandardLayout(model, {
       showParticleMass: false,
-      allowedPotentialTypes: [PotentialType.INFINITE_WELL, PotentialType.COULOMB_1D, PotentialType.DOUBLE_SQUARE_WELL],
+      allowedPotentialTypes: [PotentialType.COULOMB_1D, PotentialType.DOUBLE_SQUARE_WELL],
     });
   }
 

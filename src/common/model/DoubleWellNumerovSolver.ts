@@ -48,7 +48,7 @@ export function solveDoubleWellNumerov(
     const inRightWell = Math.abs(x - rightWellCenter) <= halfWidth;
 
     if (inLeftWell || inRightWell) {
-      return -wellDepth; // Energy zero at bottom of wells
+      return wellDepth; // Energy zero at bottom of wells
     } else {
       return 0; // Barrier at zero energy
     }

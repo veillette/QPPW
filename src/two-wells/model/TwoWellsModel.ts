@@ -57,8 +57,8 @@ export class TwoWellsModel extends BaseModel {
 
   public constructor() {
     super();
-    // Initialize potential type (square/infinite well by default)
-    this.potentialTypeProperty = new Property<PotentialType>(PotentialType.INFINITE_WELL);
+    // Initialize potential type (double square well by default)
+    this.potentialTypeProperty = new Property<PotentialType>(PotentialType.DOUBLE_SQUARE_WELL);
 
     // Initialize well parameters with default values
     this.wellWidthProperty = new NumberProperty(1.0, { range: new Range(0.1, 3.0) }); // in nanometers (0.1-3 nm for double square well)

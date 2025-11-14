@@ -36,6 +36,9 @@ function getEnergyAxisRange(potentialType: PotentialType): { min: number; max: n
     case PotentialType.INFINITE_WELL:
       // V=0 inside well (centered at x=0), V=∞ outside (displayed as 15 eV)
       return { min: -5, max: 15 };
+    case PotentialType.DOUBLE_SQUARE_WELL:
+      // Double square well with barrier between wells
+      return { min: 0, max: 20 };
     case PotentialType.FINITE_WELL:
     case PotentialType.MORSE:
     case PotentialType.POSCHL_TELLER:
@@ -354,6 +357,11 @@ export class EnergyChartNode extends Node {
     this.model.showPotentialEnergyProperty.link((show) => {
       this.potentialPath.visible = show;
     });
+
+    // Link to wellSeparationProperty if available (TwoWellsModel only)
+    if ("wellSeparationProperty" in this.model) {
+      (this.model as TwoWellsModel).wellSeparationProperty.link(() => this.update());
+    }
   }
 
   /**
@@ -522,6 +530,45 @@ export class EnergyChartNode extends Node {
           shape.lineTo(viewX, viewY);
         }
       }
+    } else if (potentialType === PotentialType.DOUBLE_SQUARE_WELL) {
+      // Draw double square well
+      // Convention: V=0 in wells, V=wellDepth in barrier
+      // Wells are centered at ±(separation/2 + wellWidth/2)
+      const separation = (this.model as TwoWellsModel).wellSeparationProperty.value;
+
+      const leftWellCenter = -(separation / 2 + wellWidth / 2);
+      const rightWellCenter = separation / 2 + wellWidth / 2;
+      const halfWidth = wellWidth / 2;
+
+      // Well boundaries
+      const leftWellLeft = leftWellCenter - halfWidth;
+      const leftWellRight = leftWellCenter + halfWidth;
+      const rightWellLeft = rightWellCenter - halfWidth;
+      const rightWellRight = rightWellCenter + halfWidth;
+
+      const y0 = this.dataToViewY(0); // Well energy
+      const yBarrier = this.dataToViewY(wellDepth); // Barrier energy
+
+      // Draw from left to right
+      // Left outside region (at barrier height)
+      shape.moveTo(this.chartMargins.left, yBarrier);
+      shape.lineTo(this.dataToViewX(leftWellLeft), yBarrier);
+
+      // Left well (drop down to V=0)
+      shape.lineTo(this.dataToViewX(leftWellLeft), y0);
+      shape.lineTo(this.dataToViewX(leftWellRight), y0);
+      shape.lineTo(this.dataToViewX(leftWellRight), yBarrier);
+
+      // Barrier between wells
+      shape.lineTo(this.dataToViewX(rightWellLeft), yBarrier);
+
+      // Right well (drop down to V=0)
+      shape.lineTo(this.dataToViewX(rightWellLeft), y0);
+      shape.lineTo(this.dataToViewX(rightWellRight), y0);
+      shape.lineTo(this.dataToViewX(rightWellRight), yBarrier);
+
+      // Right outside region (at barrier height)
+      shape.lineTo(this.chartWidth - this.chartMargins.right, yBarrier);
     } else {
       // For other potential types, draw a placeholder
       const y0 = this.dataToViewY(0);
