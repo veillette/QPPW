@@ -447,6 +447,15 @@ export class ControlPanelNode extends Node {
       ],
     });
 
+    // Enable/disable width slider based on potential type
+    // Coulomb potentials have fixed spatial extent and don't use well width
+    this.model.potentialTypeProperty.link((type) => {
+      const needsWidth =
+        type !== PotentialType.COULOMB_1D &&
+        type !== PotentialType.COULOMB_3D;
+      widthRow.visible = needsWidth;
+    });
+
     // Enable/disable depth slider based on potential type
     this.model.potentialTypeProperty.link((type) => {
       const needsDepth =

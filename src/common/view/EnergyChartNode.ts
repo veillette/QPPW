@@ -377,8 +377,9 @@ export class EnergyChartNode extends Node {
 
   /**
    * Main update method - recalculates and redraws everything.
+   * Called automatically when model properties change, but can also be called explicitly (e.g., during reset).
    */
-  private update(): void {
+  public update(): void {
     const boundStates = this.model.getBoundStates();
     if (!boundStates) {
       return;

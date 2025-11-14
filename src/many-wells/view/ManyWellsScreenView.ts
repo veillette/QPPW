@@ -171,7 +171,6 @@ export class ManyWellsScreenView extends BaseScreenView {
         font: new PhetFont(13),
         fill: QPPWColors.textFillProperty,
         maxWidth: 500,
-        lineSpacing: 5,
       }
     );
 
@@ -191,7 +190,6 @@ export class ManyWellsScreenView extends BaseScreenView {
         font: new PhetFont(13),
         fill: QPPWColors.textFillProperty,
         maxWidth: 500,
-        lineSpacing: 5,
       }
     );
 
@@ -238,7 +236,6 @@ export class ManyWellsScreenView extends BaseScreenView {
         font: new PhetFont(13),
         fill: QPPWColors.textFillProperty,
         maxWidth: 600,
-        lineSpacing: 4,
       }
     );
 

@@ -48,7 +48,6 @@ export class OneWellScreenView extends BaseScreenView {
         font: new PhetFont(13),
         fill: QPPWColors.textFillProperty,
         maxWidth: 500,
-        lineSpacing: 5,
       }
     );
 
@@ -66,7 +65,6 @@ export class OneWellScreenView extends BaseScreenView {
         font: new PhetFont(13),
         fill: QPPWColors.textFillProperty,
         maxWidth: 500,
-        lineSpacing: 5,
       }
     );
 
@@ -109,7 +107,6 @@ export class OneWellScreenView extends BaseScreenView {
         font: new PhetFont(13),
         fill: QPPWColors.textFillProperty,
         maxWidth: 600,
-        lineSpacing: 4,
       }
     );
 

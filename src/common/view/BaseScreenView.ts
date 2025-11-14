@@ -8,6 +8,7 @@ import { ResetAllButton } from "scenerystack/scenery-phet";
 import { Node } from "scenerystack/scenery";
 import { OneWellModel } from "../../one-well/model/OneWellModel.js";
 import { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
+import { ManyWellsModel } from "../../many-wells/model/ManyWellsModel.js";
 import { EnergyChartNode } from "./EnergyChartNode.js";
 import { WaveFunctionChartNode } from "./WaveFunctionChartNode.js";
 import { ControlPanelNode, ControlPanelNodeOptions } from "./ControlPanelNode.js";
@@ -16,7 +17,7 @@ import { BaseModel } from "../model/BaseModel.js";
 
 export abstract class BaseScreenView extends ScreenView {
   protected readonly resetAllButton: ResetAllButton;
-  protected readonly model: BaseModel | OneWellModel | TwoWellsModel;
+  protected readonly model: BaseModel | OneWellModel | TwoWellsModel | ManyWellsModel;
 
   // Common components (may be undefined for screens that don't use them)
   protected energyChart?: EnergyChartNode;
@@ -27,7 +28,7 @@ export abstract class BaseScreenView extends ScreenView {
   protected listBoxParent?: Node;
 
   protected constructor(
-    model: BaseModel | OneWellModel | TwoWellsModel,
+    model: BaseModel | OneWellModel | TwoWellsModel | ManyWellsModel,
     options?: ScreenViewOptions
   ) {
     super(options);
@@ -129,6 +130,13 @@ export abstract class BaseScreenView extends ScreenView {
    * Subclasses should override this method to add screen-specific reset logic.
    */
   public reset(): void {
+    // Update charts to reflect reset model state
+    if (this.energyChart) {
+      this.energyChart.update();
+    }
+    if (this.waveFunctionChart) {
+      this.waveFunctionChart.update();
+    }
     // Base implementation - subclasses should call super.reset() and add their own logic
   }
 

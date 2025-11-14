@@ -236,13 +236,22 @@ export class OneWellModel extends BaseModel {
           // Slope is the field strength
           potentialParams.slope = wellDepth / wellWidth;
           break;
-        case PotentialType.COULOMB_1D:
+        case PotentialType.COULOMB_1D: {
+          // For 1D Coulomb potential: E_0 = -2mα²/ℏ² = -13.6 eV
+          // Solving for α: α = √(13.6 eV * ℏ² / (2m))
+          const groundStateEnergy = 13.6 * QuantumConstants.EV_TO_JOULES; // -13.6 eV in Joules
+          potentialParams.coulombStrength = Math.sqrt(
+            (groundStateEnergy * QuantumConstants.HBAR * QuantumConstants.HBAR) / (2 * mass)
+          );
+          break;
+        }
         case PotentialType.COULOMB_3D: {
-          // For Coulomb potentials, use coulombStrength parameter α = k*e²
-          // where k = 1/(4πε₀) ≈ 8.9875517923e9 N·m²/C²
-          // α ≈ 2.307e-28 J·m for electron charge
-          const coulombConstant = 8.9875517923e9; // Coulomb's constant in N·m²/C²
-          potentialParams.coulombStrength = coulombConstant * QuantumConstants.ELEMENTARY_CHARGE * QuantumConstants.ELEMENTARY_CHARGE;
+          // For 3D Coulomb potential (hydrogen): E_1 = -mα²/(2ℏ²) = -13.6 eV
+          // Solving for α: α = √(2ℏ² * 13.6 eV / m)
+          const groundStateEnergy = 13.6 * QuantumConstants.EV_TO_JOULES; // -13.6 eV in Joules
+          potentialParams.coulombStrength = Math.sqrt(
+            (2 * QuantumConstants.HBAR * QuantumConstants.HBAR * groundStateEnergy) / mass
+          );
           break;
         }
         default:
