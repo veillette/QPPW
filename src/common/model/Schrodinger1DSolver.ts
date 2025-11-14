@@ -66,6 +66,8 @@ export interface WellParameters {
   slope?: number;
   /** Coulomb strength parameter α for Coulomb potentials (J·m) */
   coulombStrength?: number;
+  /** Well separation for double square well (meters) */
+  wellSeparation?: number;
 }
 
 /**
@@ -249,6 +251,38 @@ export class Schrodinger1DSolver {
             numStates,
             gridConfig,
           );
+        }
+        break;
+
+      case PotentialType.DOUBLE_SQUARE_WELL:
+        if (
+          wellParams.wellWidth !== undefined &&
+          wellParams.wellDepth !== undefined &&
+          wellParams.wellSeparation !== undefined
+        ) {
+          // Create the double square well potential function
+          const wellWidth = wellParams.wellWidth;
+          const wellDepth = wellParams.wellDepth;
+          const separation = wellParams.wellSeparation;
+
+          // Two square wells centered at ±(separation/2 + wellWidth/2)
+          // Wells are symmetric about x=0
+          const leftWellCenter = -(separation / 2 + wellWidth / 2);
+          const rightWellCenter = separation / 2 + wellWidth / 2;
+
+          const potential: PotentialFunction = (x: number) => {
+            // Check if x is inside either well
+            const inLeftWell = Math.abs(x - leftWellCenter) <= wellWidth / 2;
+            const inRightWell = Math.abs(x - rightWellCenter) <= wellWidth / 2;
+
+            if (inLeftWell || inRightWell) {
+              return 0; // Ground level is 0 inside the wells
+            } else {
+              return wellDepth; // Potential height outside the wells
+            }
+          };
+
+          return this.solveNumerical(potential, mass, numStates, gridConfig);
         }
         break;
 

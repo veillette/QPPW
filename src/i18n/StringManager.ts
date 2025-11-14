@@ -38,6 +38,7 @@ export class StringManager {
   public readonly barrierHeightStringProperty: StringProperty;
   public readonly barrierWidthStringProperty: StringProperty;
   public readonly tunnelingStringProperty: StringProperty;
+  public readonly wellSeparationStringProperty: StringProperty;
 
   // Many Wells screen strings
   public readonly multipleWellsStringProperty: StringProperty;
@@ -76,6 +77,7 @@ export class StringManager {
   public readonly asymmetricTriangleStringProperty: StringProperty;
   public readonly coulomb1DStringProperty: StringProperty;
   public readonly coulomb3DStringProperty: StringProperty;
+  public readonly doubleSquareWellStringProperty: StringProperty;
 
   // Display mode strings
   public readonly probabilityDensityStringProperty: StringProperty;
@@ -153,6 +155,7 @@ export class StringManager {
     this.barrierHeightStringProperty = new StringProperty("Barrier Height");
     this.barrierWidthStringProperty = new StringProperty("Barrier Width");
     this.tunnelingStringProperty = new StringProperty("Tunneling");
+    this.wellSeparationStringProperty = new StringProperty("Well Separation");
 
     // Many Wells screen strings
     this.multipleWellsStringProperty = new StringProperty("Multiple Wells");
@@ -191,6 +194,7 @@ export class StringManager {
     this.asymmetricTriangleStringProperty = new StringProperty("Asymmetric Triangle");
     this.coulomb1DStringProperty = new StringProperty("1D Coulomb");
     this.coulomb3DStringProperty = new StringProperty("3D Coulomb");
+    this.doubleSquareWellStringProperty = new StringProperty("Double Square Well");
 
     // Display mode strings
     this.probabilityDensityStringProperty = new StringProperty("Probability Density");
