@@ -14,6 +14,7 @@
 
 import QuantumConstants from "./QuantumConstants.js";
 import { BoundStateResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
+import { integrateNumerov, normalizeWavefunction } from "./NumerovSolver.js";
 import qppw from "../../QPPWNamespace.js";
 
 /**
@@ -129,7 +130,7 @@ export function solveDoubleWellNumerov(
     if (E_sym !== null && energies.length < numStates) {
       energies.push(E_sym);
       const psi_sym = integrateNumerov(E_sym, V, xGrid, dx, mass);
-      const normalized_psi_sym = normalize(psi_sym, dx);
+      const normalized_psi_sym = normalizeWavefunction(psi_sym, dx);
       wavefunctions.push(normalized_psi_sym);
       parities.push("symmetric");
     }
@@ -150,7 +151,7 @@ export function solveDoubleWellNumerov(
     if (E_antisym !== null && energies.length < numStates) {
       energies.push(E_antisym);
       const psi_antisym = integrateNumerov(E_antisym, V, xGrid, dx, mass);
-      const normalized_psi_antisym = normalize(psi_antisym, dx);
+      const normalized_psi_antisym = normalizeWavefunction(psi_antisym, dx);
       wavefunctions.push(normalized_psi_antisym);
       parities.push("antisymmetric");
     }
@@ -483,73 +484,6 @@ function verifyParity(
   } else {
     return isAntisymmetric;
   }
-}
-
-/**
- * Integrate the Schrödinger equation using Numerov formula.
- *
- * The Numerov formula for d²ψ/dx² = -k²(x)ψ:
- * ψ_(j+1) = [(12 - 10f_j)ψ_j - (1+f_(j-1))ψ_(j-1)] / (1+f_(j+1))
- * where f_j = (h²/12) * k²(x_j) and k²(x) = 2m(E - V(x))/ℏ²
- */
-function integrateNumerov(
-  E: number,
-  V: number[],
-  xGrid: number[],
-  dx: number,
-  mass: number,
-): number[] {
-  const { HBAR } = QuantumConstants;
-  const N = xGrid.length;
-  const psi = new Array(N).fill(0);
-
-  // Calculate k²(x) = 2m(E - V(x))/ℏ²
-  const k2 = V.map((v) => (2 * mass * (E - v)) / (HBAR * HBAR));
-
-  // Calculate f_j = (h²/12) * k²(x_j)
-  const f = k2.map((k) => (dx * dx / 12) * k);
-
-  // Initial conditions (boundary condition: ψ(x_min) = 0, exponential decay)
-  psi[0] = 0;
-  psi[1] = dx; // Small non-zero value
-
-  // Numerov forward integration
-  for (let j = 1; j < N - 1; j++) {
-    const numerator = (12 - 10 * f[j]) * psi[j] - (1 + f[j - 1]) * psi[j - 1];
-    const denominator = 1 + f[j + 1];
-    psi[j + 1] = numerator / denominator;
-
-    // Check for divergence (not a bound state)
-    if (Math.abs(psi[j + 1]) > 1e10) {
-      // Force large value to indicate divergence
-      for (let k = j + 1; k < N; k++) {
-        psi[k] = psi[j + 1];
-      }
-      break;
-    }
-  }
-
-  return psi;
-}
-
-/**
- * Normalize a wavefunction using trapezoidal rule.
- */
-function normalize(psi: number[], dx: number): number[] {
-  // Calculate ∫|ψ|² dx using trapezoidal rule
-  let integral = 0;
-  for (let i = 0; i < psi.length - 1; i++) {
-    integral += (psi[i] * psi[i] + psi[i + 1] * psi[i + 1]) / 2;
-  }
-  integral *= dx;
-
-  if (integral <= 0 || !isFinite(integral)) {
-    console.warn("Invalid normalization integral:", integral);
-    return psi;
-  }
-
-  const normalization = Math.sqrt(integral);
-  return psi.map((val) => val / normalization);
 }
 
 /**

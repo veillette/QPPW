@@ -72,7 +72,7 @@ export function solveNumerov(
 
       // Calculate normalized wavefunction
       const refinedPsi = integrateNumerov(refinedEnergy, V, xGrid, dx, mass);
-      const normalizedPsi = normalize(refinedPsi, dx);
+      const normalizedPsi = normalizeWavefunction(refinedPsi, dx);
       wavefunctions.push(normalizedPsi);
     }
     prevSign = currentSign;
@@ -96,7 +96,7 @@ export function solveNumerov(
  * @param mass - Particle mass (kg)
  * @returns Wavefunction array
  */
-function integrateNumerov(
+export function integrateNumerov(
   E: number,
   V: number[],
   xGrid: number[],
@@ -148,7 +148,7 @@ function integrateNumerov(
  * @param tolerance - Energy tolerance (default 1e-10 Joules)
  * @returns Refined energy eigenvalue (Joules)
  */
-function refineEnergy(
+export function refineEnergy(
   E1: number,
   E2: number,
   V: number[],
@@ -186,7 +186,7 @@ function refineEnergy(
  * @param dx - Grid spacing (meters)
  * @returns Normalized wavefunction
  */
-function normalize(psi: number[], dx: number): number[] {
+export function normalizeWavefunction(psi: number[], dx: number): number[] {
   // Calculate ∫|ψ|² dx using trapezoidal rule
   let integral = 0;
   for (let i = 0; i < psi.length - 1; i++) {
