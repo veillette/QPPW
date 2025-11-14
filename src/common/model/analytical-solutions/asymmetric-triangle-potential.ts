@@ -30,7 +30,7 @@ import { airyAi } from "./math-utilities.js";
  */
 export function solveAsymmetricTrianglePotential(
   slope: number,
-  wellWidth: number,
+  _wellWidth: number, // Kept for API compatibility but not used in infinite wall formulation
   mass: number,
   numStates: number,
   gridConfig: GridConfig,
@@ -147,7 +147,6 @@ export function solveAsymmetricTrianglePotential(
   for (let n = 0; n < actualNumStates; n++) {
     const wavefunction: number[] = [];
     const E = energies[n];
-    const z_n = eigenvaluesZ[n];
 
     // Classical turning point: x_0 = E/F (where V(x_0) = F·x_0 = E)
     const x0 = E / F;
