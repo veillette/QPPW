@@ -11,6 +11,7 @@ import { Orientation } from "scenerystack/phet-core";
 import { Checkbox } from "scenerystack/sun";
 import { ChartTransform, ChartRectangle, AxisLine, TickMarkSet, TickLabelSet } from "scenerystack/bamboo";
 import { OneWellModel } from "../../one-well/model/OneWellModel.js";
+import { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
 import { PotentialType, BoundStateResult } from "../model/PotentialFunction.js";
 import QuantumConstants from "../model/QuantumConstants.js";
 import QPPWColors from "../../QPPWColors.js";
@@ -50,7 +51,7 @@ function getEnergyAxisRange(potentialType: PotentialType): { min: number; max: n
 }
 
 export class EnergyChartNode extends Node {
-  private readonly model: OneWellModel;
+  private readonly model: OneWellModel | TwoWellsModel;
   private readonly chartWidth: number;
   private readonly chartHeight: number;
   private readonly chartMargins = { left: 60, right: 20, top: 40, bottom: 50 };
@@ -82,7 +83,7 @@ export class EnergyChartNode extends Node {
   // Hover state
   private hoveredEnergyLevelIndex: number | null = null;
 
-  public constructor(model: OneWellModel, options?: { width?: number; height?: number }) {
+  public constructor(model: OneWellModel | TwoWellsModel, options?: { width?: number; height?: number}) {
     super();
 
     this.model = model;
