@@ -7,6 +7,7 @@ import { ScreenView, ScreenViewOptions } from "scenerystack/sim";
 import { ResetAllButton } from "scenerystack/scenery-phet";
 import { Node } from "scenerystack/scenery";
 import { OneWellModel } from "../../one-well/model/OneWellModel.js";
+import { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
 import { EnergyChartNode } from "./EnergyChartNode.js";
 import { WaveFunctionChartNode } from "./WaveFunctionChartNode.js";
 import { ControlPanelNode } from "./ControlPanelNode.js";
@@ -15,18 +16,18 @@ import { BaseModel } from "../model/BaseModel.js";
 
 export abstract class BaseScreenView extends ScreenView {
   protected readonly resetAllButton: ResetAllButton;
-  protected readonly model: BaseModel | OneWellModel;
+  protected readonly model: BaseModel | OneWellModel | TwoWellsModel;
 
   // Common components (may be undefined for screens that don't use them)
   protected energyChart?: EnergyChartNode;
   protected waveFunctionChart?: WaveFunctionChartNode;
-  protected controlPanel?: ControlPanelNode;
+  protected controlPanel?: ControlPanelNode | Node;
   protected simulationControlBar?: SimulationControlBar;
   protected chartsContainer?: Node;
   protected listBoxParent?: Node;
 
   protected constructor(
-    model: BaseModel | OneWellModel,
+    model: BaseModel | OneWellModel | TwoWellsModel,
     options?: ScreenViewOptions
   ) {
     super(options);
@@ -48,9 +49,10 @@ export abstract class BaseScreenView extends ScreenView {
   /**
    * Creates the standard quantum well layout with charts, control panel, and simulation controls.
    * This should be called by subclasses that use the standard layout.
-   * @param model - The OneWellModel instance
+   * @param model - The OneWellModel or TwoWellsModel instance
+   * @param customControlPanel - Optional custom control panel node to use instead of default ControlPanelNode
    */
-  protected createStandardLayout(model: OneWellModel): void {
+  protected createStandardLayout(model: OneWellModel | TwoWellsModel, customControlPanel?: Node): void {
 
     // Calculate layout dimensions
     const screenWidth = this.layoutBounds.width;
@@ -86,9 +88,19 @@ export abstract class BaseScreenView extends ScreenView {
       children: [this.energyChart, this.waveFunctionChart],
     });
 
-    // Create control panel (needs a parent node for ComboBox listbox)
-    this.listBoxParent = new Node();
-    this.controlPanel = new ControlPanelNode(model, this.listBoxParent);
+    // Create listbox parent node for ComboBox popups (if not already created by subclass)
+    if (!this.listBoxParent) {
+      this.listBoxParent = new Node();
+    }
+
+    // Create control panel
+    if (customControlPanel) {
+      // Use the provided custom control panel
+      this.controlPanel = customControlPanel;
+    } else {
+      // Use the default ControlPanelNode (for OneWellModel)
+      this.controlPanel = new ControlPanelNode(model as OneWellModel, this.listBoxParent);
+    }
     this.controlPanel.left = chartsWidth + margin * 2;
     this.controlPanel.top = margin;
 

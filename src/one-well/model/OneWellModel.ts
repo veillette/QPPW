@@ -40,7 +40,7 @@ export class OneWellModel extends BaseModel {
   public readonly showPotentialEnergyProperty: Property<boolean>;
 
   // Cached bound state results
-  private boundStateResult: BoundStateResult | null = null;
+  protected boundStateResult: BoundStateResult | null = null;
 
   public constructor() {
     super();
