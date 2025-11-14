@@ -267,12 +267,18 @@ export class TwoWellsModel extends BaseModel {
       // For double square well, use focused grid to keep kinetic energy manageable
       const method = this.solver.getNumericalMethod();
       const separation = this.wellSeparationProperty.value;
-      const wellCenter = (separation / 2 + wellWidth / (2 * QuantumConstants.NM_TO_M));
+      const wellWidthNm = wellWidth / QuantumConstants.NM_TO_M;
+      const wellCenter = (separation / 2 + wellWidthNm / 2);
 
-      // For Numerov, use minimal grid: just the wells plus tiny margin
-      const gridRange = method === 'numerov'
-        ? wellCenter + 0.3 * (wellWidth / QuantumConstants.NM_TO_M)
-        : wellCenter + 1.5 * (wellWidth / QuantumConstants.NM_TO_M);
+      // Grid must extend beyond the outer edge of the wells to capture decay region
+      // Outer edge of outer well is at: wellCenter + wellWidth/2
+      const outerEdge = wellCenter + wellWidthNm / 2;
+
+      // Add margin for wavefunction decay (need ~3-4 decay lengths)
+      // For bound states, decay length ~ 0.1 nm, so margin ~ 0.4 nm is sufficient
+      const margin = method === 'numerov' ? 0.5 : 1.5; // nm
+
+      const gridRange = outerEdge + margin;
 
       if (method === 'dvr') {
         // DVR: use minimal points to keep kinetic energy low
