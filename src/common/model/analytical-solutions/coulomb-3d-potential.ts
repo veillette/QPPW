@@ -19,7 +19,7 @@ import { associatedLaguerre, factorial } from "./math-utilities.js";
  * @param coulombStrength - Coulomb strength parameter α in J·m
  * @param mass - Particle mass in kg
  * @param numStates - Number of energy levels to calculate
- * @param gridConfig - Grid configuration for radial wavefunction evaluation (r > 0)
+ * @param gridConfig - Grid configuration for wavefunction evaluation (uses |x| for radial symmetry)
  * @returns Bound state results with exact energies and radial wavefunctions
  */
 export function solveCoulomb3DPotential(
@@ -38,7 +38,7 @@ export function solveCoulomb3DPotential(
     energies.push(energy);
   }
 
-  // Generate grid (must be r > 0 for radial equation)
+  // Generate grid (can include negative values; we use |r| for radial symmetry)
   const numPoints = gridConfig.numPoints;
   const xGrid: number[] = [];
   const dx = (gridConfig.xMax - gridConfig.xMin) / (numPoints - 1);
@@ -64,14 +64,16 @@ export function solveCoulomb3DPotential(
     const normalization = 2.0 / (a_n * Math.sqrt(a_n)) * Math.sqrt(factorial(n - 1) / (2 * n * factorial(n)));
 
     for (const r of xGrid) {
-      if (r <= 0) {
-        // Radial wavefunction must be zero at r=0 for L>0, but for L=0 it's finite
-        // However, we'll handle r <= 0 by setting to 0
+      // For visualization on a symmetric x-axis, use |r| so the wavefunction appears on both sides
+      const r_abs = Math.abs(r);
+
+      if (r_abs === 0) {
+        // At r=0, use a small offset to avoid singularity
         wavefunction.push(0);
         continue;
       }
 
-      const rho = 2 * r / a_n;
+      const rho = 2 * r_abs / a_n;
 
       // Radial wavefunction: R_n0(r) = N * exp(-ρ/2) * L^1_(n-1)(ρ)
       const laguerre = associatedLaguerre(n - 1, 1, rho);

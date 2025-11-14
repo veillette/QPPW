@@ -429,11 +429,11 @@ export class EnergyChartNode extends Node {
       shape.lineTo(this.chartWidth - this.chartMargins.right, y15);
     } else if (potentialType === PotentialType.FINITE_WELL) {
       // Draw finite square well centered at xCenter
-      // Invert the Y-axis: use +wellDepth instead of -wellDepth to create a valley
+      // V=0 at infinity, V=-wellDepth inside the well
       const x1 = this.dataToViewX(xCenter - wellWidth / 2);
       const x2 = this.dataToViewX(xCenter + wellWidth / 2);
       const y0 = this.dataToViewY(0);
-      const yDepth = this.dataToViewY(wellDepth);
+      const yDepth = this.dataToViewY(-wellDepth);
 
       shape.moveTo(this.chartMargins.left, y0);
       shape.lineTo(x1, y0);
@@ -443,7 +443,6 @@ export class EnergyChartNode extends Node {
       shape.lineTo(this.chartWidth - this.chartMargins.right, y0);
     } else if (potentialType === PotentialType.HARMONIC_OSCILLATOR) {
       // Draw parabola centered at xCenter
-      // Invert the Y-axis: negate V to create a valley
       const centerX = xCenter;
       const numPoints = 100;
       let firstPoint = true;
@@ -452,7 +451,7 @@ export class EnergyChartNode extends Node {
         const x = (xGrid[0] + (xGrid[xGrid.length - 1] - xGrid[0]) * i / (numPoints - 1)) * QuantumConstants.M_TO_NM;
         const dx = x - centerX;
         const k = (2 * wellDepth) / (wellWidth * wellWidth / 4); // Spring constant
-        const V = -(0.5 * k * dx * dx); // Negate to invert Y-axis
+        const V = 0.5 * k * dx * dx;
         const viewX = this.dataToViewX(x);
         const viewY = this.dataToViewY(V);
 
@@ -464,28 +463,62 @@ export class EnergyChartNode extends Node {
         }
       }
     } else if (potentialType === PotentialType.ASYMMETRIC_TRIANGLE) {
-      // Draw asymmetric triangle potential: V(∞) = 10 eV, V(0) = 0, V(a) = 10 eV
-      // V(x) = 10 eV for x < 0
-      // V(x) = 10 - ba + bx for 0 < x < a (linear ramp from 0 to 10 eV)
-      // V(x) = 10 eV for x > a
-      const centerX = xCenter;
-      const POTENTIAL_AT_INFINITY = 10; // eV
+      // Draw asymmetric triangle potential (infinite wall version):
+      // V(x) = ∞ for x < 0 (displayed as 15 eV)
+      // V(x) = F·x for x ≥ 0 (linear increasing)
+      // where F = wellDepth/wellWidth (slope)
 
-      const y10eV = this.dataToViewY(POTENTIAL_AT_INFINITY);
+      const F_eV_per_nm = (wellDepth / wellWidth); // slope in eV/nm
+      const y15eV = this.dataToViewY(15); // Display infinity as 15 eV
       const y0eV = this.dataToViewY(0);
 
-      // Left region (x < 0): horizontal line at 10 eV
-      shape.moveTo(this.chartMargins.left, y10eV);
-      shape.lineTo(this.dataToViewX(centerX - wellWidth / 2), y10eV);
+      // Left region (x < 0): vertical line at x=0 representing infinite wall
+      shape.moveTo(this.chartMargins.left, y15eV);
+      shape.lineTo(this.dataToViewX(0), y15eV);
+      shape.lineTo(this.dataToViewX(0), y0eV);
 
-      // Triangle region (0 < x < a): linear ramp from 0 to 10 eV
-      const x0 = centerX - wellWidth / 2;
-      const xa = centerX + wellWidth / 2;
-      shape.lineTo(this.dataToViewX(x0), y0eV);
-      shape.lineTo(this.dataToViewX(xa), y10eV);
+      // Right region (x ≥ 0): linear increasing potential V = F·x
+      const numPoints = 100;
+      for (let i = 0; i <= numPoints; i++) {
+        const x = (xGrid[xGrid.length - 1] * i / numPoints) * QuantumConstants.M_TO_NM;
+        if (x >= 0) {
+          const V = F_eV_per_nm * x;
+          const viewX = this.dataToViewX(x);
+          const viewY = this.dataToViewY(Math.min(V, 15)); // Clamp to chart range
+          shape.lineTo(viewX, viewY);
+        }
+      }
+    } else if (potentialType === PotentialType.COULOMB_1D || potentialType === PotentialType.COULOMB_3D) {
+      // Draw Coulomb potential: V(x) = -k/|x| where k is determined by wellDepth
+      // V→0 as x→∞, V→-wellDepth at some characteristic distance
+      const centerX = xCenter;
+      const numPoints = 200;
+      let firstPoint = true;
 
-      // Right region (x > a): horizontal line at 10 eV
-      shape.lineTo(this.chartWidth - this.chartMargins.right, y10eV);
+      // Scale factor: at distance wellWidth/2, V = -wellDepth
+      const k = wellDepth * (wellWidth / 2);
+
+      for (let i = 0; i < numPoints; i++) {
+        const x = (xGrid[0] + (xGrid[xGrid.length - 1] - xGrid[0]) * i / (numPoints - 1)) * QuantumConstants.M_TO_NM;
+        const dx = x - centerX;
+
+        // Avoid singularity at x=0
+        const distance = Math.max(Math.abs(dx), 0.01);
+        const V = -k / distance;
+
+        // Clamp V to reasonable range for display
+        const VClamped = Math.max(V, this.yMinProperty.value);
+
+        const viewX = this.dataToViewX(x);
+        const viewY = this.dataToViewY(VClamped);
+
+        if (firstPoint) {
+          shape.moveTo(viewX, viewY);
+          firstPoint = false;
+        } else {
+          shape.lineTo(viewX, viewY);
+        }
+      }
     } else {
       // For other potential types, draw a placeholder
       const y0 = this.dataToViewY(0);
@@ -532,7 +565,10 @@ export class EnergyChartNode extends Node {
       // Add click handler
       line.addInputListener({
         down: () => {
-          this.model.selectedEnergyLevelIndexProperty.value = index;
+          // Only set if index is within valid range
+          if (index >= 0 && index < boundStates.energies.length) {
+            this.model.selectedEnergyLevelIndexProperty.value = index;
+          }
         },
         enter: () => {
           this.hoveredEnergyLevelIndex = index;

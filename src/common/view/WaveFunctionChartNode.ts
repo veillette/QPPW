@@ -352,7 +352,7 @@ export class WaveFunctionChartNode extends Node {
   }
 
   /**
-   * Plots the probability density.
+   * Plots the probability density with smooth curves.
    */
   private plotProbabilityDensity(xGrid: number[], wavefunction: number[]): void {
     const shape = new Shape();
@@ -362,12 +362,29 @@ export class WaveFunctionChartNode extends Node {
     const y0 = this.dataToViewY(0);
     shape.moveTo(x0, y0);
 
-    // Plot the curve
+    // Build points array
+    const points: { x: number; y: number }[] = [];
     for (let i = 0; i < xGrid.length; i++) {
       const x = this.dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
       const probabilityDensity = wavefunction[i] * wavefunction[i];
       const y = this.dataToViewY(probabilityDensity);
-      shape.lineTo(x, y);
+      points.push({ x, y });
+    }
+
+    // Draw smooth curve using quadratic bezier curves
+    if (points.length > 0) {
+      shape.lineTo(points[0].x, points[0].y);
+
+      for (let i = 0; i < points.length - 1; i++) {
+        const p0 = points[i];
+        const p1 = points[i + 1];
+
+        // Control point is midpoint for simple smoothing
+        const cpX = (p0.x + p1.x) / 2;
+        const cpY = (p0.y + p1.y) / 2;
+
+        shape.quadraticCurveTo(cpX, cpY, p1.x, p1.y);
+      }
     }
 
     // Close at zero on the right
@@ -379,7 +396,7 @@ export class WaveFunctionChartNode extends Node {
   }
 
   /**
-   * Plots wave function components (real, imaginary, magnitude).
+   * Plots wave function components (real, imaginary, magnitude) with smooth curves.
    */
   private plotWaveFunctionComponents(xGrid: number[], wavefunction: number[], phase: number): void {
     const realShape = new Shape();
@@ -388,6 +405,11 @@ export class WaveFunctionChartNode extends Node {
 
     const cosPhi = Math.cos(phase);
     const sinPhi = Math.sin(phase);
+
+    // Build points arrays
+    const realPoints: { x: number; y: number }[] = [];
+    const imagPoints: { x: number; y: number }[] = [];
+    const magPoints: { x: number; y: number }[] = [];
 
     for (let i = 0; i < xGrid.length; i++) {
       const x = this.dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
@@ -402,16 +424,32 @@ export class WaveFunctionChartNode extends Node {
       const yImag = this.dataToViewY(imagPart);
       const yMag = this.dataToViewY(magnitude);
 
-      if (i === 0) {
-        realShape.moveTo(x, yReal);
-        imagShape.moveTo(x, yImag);
-        magShape.moveTo(x, yMag);
-      } else {
-        realShape.lineTo(x, yReal);
-        imagShape.lineTo(x, yImag);
-        magShape.lineTo(x, yMag);
-      }
+      realPoints.push({ x, y: yReal });
+      imagPoints.push({ x, y: yImag });
+      magPoints.push({ x, y: yMag });
     }
+
+    // Draw smooth curves using quadratic bezier curves
+    const drawSmoothCurve = (shape: Shape, points: { x: number; y: number }[]) => {
+      if (points.length > 0) {
+        shape.moveTo(points[0].x, points[0].y);
+
+        for (let i = 0; i < points.length - 1; i++) {
+          const p0 = points[i];
+          const p1 = points[i + 1];
+
+          // Control point is midpoint for simple smoothing
+          const cpX = (p0.x + p1.x) / 2;
+          const cpY = (p0.y + p1.y) / 2;
+
+          shape.quadraticCurveTo(cpX, cpY, p1.x, p1.y);
+        }
+      }
+    };
+
+    drawSmoothCurve(realShape, realPoints);
+    drawSmoothCurve(imagShape, imagPoints);
+    drawSmoothCurve(magShape, magPoints);
 
     this.realPartPath.shape = realShape;
     this.imaginaryPartPath.shape = imagShape;

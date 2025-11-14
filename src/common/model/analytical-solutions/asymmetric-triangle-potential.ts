@@ -1,22 +1,12 @@
 /**
  * Analytical solution for the asymmetric triangle potential.
- * Modified to have V(∞) = 10 eV and V(0) = 0 eV (minimum)
+ * V(x) = V₀ for x < 0
+ * V(x) = F·x for 0 < x < a (linear from 0 to F·a)
+ * V(x) = V₀ for x > a
  *
- * Original formulation:
- * V(x) = 0 for x < 0
- * V(x) = -b(a-x) for 0 < x < a
- * V(x) = 0 for x > a
- *
- * Shifted formulation:
- * V(x) = 10 eV for x < 0
- * V(x) = 10 - b(a-x) for 0 < x < a  (equivalently: V(x) = 10 - ba + bx)
- * V(x) = 10 eV for x > a
- *
- * At x=0: V = 10 - ba = 0 (minimum) => ba = 10 eV
- * At x=a: V = 10 eV
- * At x > a: V = 10 eV
- *
- * This potential creates a triangular well and the solution involves Airy functions.
+ * Where V₀ = F·a (the barrier height)
+ * This potential creates a triangular well with the minimum at x=0 where V=0.
+ * The solution involves Airy functions.
  */
 
 import QuantumConstants from "../QuantumConstants.js";
@@ -24,11 +14,15 @@ import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
 import { airyAi } from "./math-utilities.js";
 
 /**
- * Analytical solution for the asymmetric triangle potential.
- * Modified to have V(∞) = 10 eV and V(0) = 0 eV (minimum)
+ * Analytical solution for the asymmetric triangle potential with infinite walls.
+ * V(x) = ∞ for x < 0
+ * V(x) = F·x for 0 < x (linear increasing potential)
  *
- * @param slope - Slope parameter b in Joules/meter (positive value)
- * @param wellWidth - Width parameter a in meters
+ * This is the standard triangular well problem. The eigenvalues are related to
+ * the zeros of the Airy function Ai(z).
+ *
+ * @param slope - Slope parameter F in Joules/meter (field strength)
+ * @param wellWidth - Width parameter a in meters (not used for infinite well, but kept for compatibility)
  * @param mass - Particle mass in kg
  * @param numStates - Number of energy levels to calculate
  * @param gridConfig - Grid configuration for wavefunction evaluation
@@ -41,31 +35,19 @@ export function solveAsymmetricTrianglePotential(
   numStates: number,
   gridConfig: GridConfig,
 ): BoundStateResult {
-  const { HBAR, EV_TO_JOULES } = QuantumConstants;
-  const b = slope;
-  const a = wellWidth;
-
-  // Potential shift: we want V(∞) = 10 eV and V(0) = 0 eV
-  // In the original formulation, V(0) = -ba and V(∞) = 0
-  // So we shift by +ba + 10 eV, which makes V(0) = 0 and V(∞) = 10 eV
-  const POTENTIAL_SHIFT = 10 * EV_TO_JOULES; // 10 eV in Joules
+  const { HBAR } = QuantumConstants;
+  const F = slope; // Field strength
 
   // Define the scaling parameter for Airy functions
-  // α = (2mb/ℏ²)^(1/3)
-  const alpha = Math.pow((2 * mass * b) / (HBAR * HBAR), 1 / 3);
+  // α = (2mF/ℏ²)^(1/3)
+  const alpha = Math.pow((2 * mass * F) / (HBAR * HBAR), 1 / 3);
 
-  // The original potential minimum is at V(0) = -ba
-  // After shifting, we want V(0) = 0 eV (minimum) and V(∞) = 10 eV
-  // So we shift by +ba + 10 eV, where ba is the well depth in the original formulation
-  const V0_original = -b * a;
-
-  // Energy eigenvalues are found by solving the transcendental equation
-  // from matching boundary conditions at x = 0 and x = a
-  // For bound states in original formulation: -ba < E < 0
-  // After shifting: 0 < E < ba + 10 eV
+  // Energy eigenvalues for infinite triangular well:
+  // E_n = -z_n · (ℏ²/2m)^(1/3) · F^(2/3)
+  // where z_n are the zeros of Ai(z) (negative values)
 
   const energies: number[] = [];
-  const eigenvaluesZ: number[] = []; // Store scaled eigenvalues
+  const eigenvaluesZ: number[] = []; // Store Airy zeros
 
   // The first 30 zeros of Ai(z) (accurate values)
   const airyZeros = [
@@ -128,52 +110,28 @@ export function solveAsymmetricTrianglePotential(
     return z;
   }
 
-  // Find eigenvalues using Newton-Raphson root finding with appropriate initial guesses
+  // Calculate energies using Airy zeros
   for (let n = 0; n < numStates; n++) {
-    let initialGuess: number;
+    let z_n: number;
 
     if (n < airyZeros.length) {
-      // Use pre-computed Airy zero as initial guess for the first 30 states
-      initialGuess = airyZeros[n];
+      // Use pre-computed Airy zero
+      z_n = airyZeros[n];
     } else {
       // Use asymptotic approximation for states beyond the 30th
-      initialGuess = getApproximateAiryZero(n + 1); // n+1 because zeros are 1-indexed
+      const initialGuess = getApproximateAiryZero(n + 1); // n+1 because zeros are 1-indexed
+      z_n = refineAiryZero(initialGuess);
     }
 
-    // Refine the zero using Newton-Raphson
-    const z0 = refineAiryZero(initialGuess);
+    // Energy eigenvalues: E_n = -z_n · (ℏ²/2m)^(1/3) · F^(2/3)
+    // Since z_n < 0, we have -z_n > 0, so E > 0
+    const energy = -z_n * Math.pow(HBAR * HBAR / (2 * mass), 1 / 3) * Math.pow(F, 2 / 3);
 
-    // For the asymmetric triangle, the energy eigenvalues are approximately:
-    // E_n ≈ -ba + (ℏ²/2m)^(1/3) * (2b)^(2/3) * z_n
-    // where z_n are negative values related to Airy function zeros
-
-    // Calculate energy in original formulation (relative to V=0 at infinity)
-    const energy_original = V0_original - Math.pow(HBAR * HBAR / (2 * mass), 1 / 3) * Math.pow(2 * b, 2 / 3) * Math.abs(z0);
-
-    // Shift energy to new reference (V(0) = 0, V(∞) = 10 eV)
-    // energy_shifted = energy_original + ba + 10 eV
-    const totalShift = -V0_original + POTENTIAL_SHIFT; // This is ba + 10 eV
-    const energy = energy_original + totalShift;
-
-    // Only include bound states (0 < E < 10 eV for shifted potential)
-    if (energy > 0 && energy < POTENTIAL_SHIFT) {
-      energies.push(energy);
-      eigenvaluesZ.push(z0);
-    } else if (energy <= 0) {
-      // Energy too low, still in bound states range but may be numerical error
-      energies.push(energy);
-      eigenvaluesZ.push(z0);
-    } else {
-      // No more bound states (E >= 10 eV)
-      break;
-    }
+    energies.push(energy);
+    eigenvaluesZ.push(z_n);
   }
 
   const actualNumStates = energies.length;
-
-  if (actualNumStates === 0) {
-    throw new Error("Asymmetric triangle potential too shallow to support bound states");
-  }
 
   // Generate grid
   const numPoints = gridConfig.numPoints;
@@ -189,19 +147,15 @@ export function solveAsymmetricTrianglePotential(
   for (let n = 0; n < actualNumStates; n++) {
     const wavefunction: number[] = [];
     const E = energies[n];
+    const z_n = eigenvaluesZ[n];
 
-    // In region II (0 < x < a), the wavefunction is:
-    // ψ(x) = N * Ai(α(x - x_0))
-    // For the shifted potential, we need to work in the original formulation
-    // E_original = E - totalShift
-    const E_original = E - (-V0_original + POTENTIAL_SHIFT);
-    // where x_0 = (E_original - V_original(0))/b = (E_original + ba)/b
-    const x0 = (E_original + b * a) / b;
+    // Classical turning point: x_0 = E/F (where V(x_0) = F·x_0 = E)
+    const x0 = E / F;
 
-    // Normalization constant (approximate)
+    // Normalization constant (approximate using numerical integration)
     let normSq = 0;
     for (const x of xGrid) {
-      if (x >= 0 && x <= a) {
+      if (x >= 0) {
         const z = alpha * (x - x0);
         const psi = airyAi(z);
         normSq += psi * psi * dx;
@@ -212,31 +166,13 @@ export function solveAsymmetricTrianglePotential(
     // Calculate wavefunction on grid
     for (const x of xGrid) {
       if (x < 0) {
-        // Region I: exponentially decaying
-        // In shifted potential: V = 10 eV, so κ² = 2m(V - E)/ℏ² = 2m(10 eV - E)/ℏ²
-        const potentialDiff = POTENTIAL_SHIFT - E;
-        if (potentialDiff > 0) {
-          const kappa = Math.sqrt(2 * mass * potentialDiff) / HBAR;
-          const psi_0 = norm * airyAi(alpha * (0 - x0));
-          wavefunction.push(psi_0 * Math.exp(kappa * x));
-        } else {
-          wavefunction.push(0); // Above barrier, no bound state
-        }
-      } else if (x <= a) {
-        // Region II: Airy function solution
+        // Region x < 0: infinite wall, ψ = 0
+        wavefunction.push(0);
+      } else {
+        // Region x ≥ 0: Airy function solution
+        // ψ(x) = N · Ai(α(x - x_0))
         const z = alpha * (x - x0);
         wavefunction.push(norm * airyAi(z));
-      } else {
-        // Region III: exponentially decaying
-        // In shifted potential: V = 10 eV, so κ² = 2m(V - E)/ℏ² = 2m(10 eV - E)/ℏ²
-        const potentialDiff = POTENTIAL_SHIFT - E;
-        if (potentialDiff > 0) {
-          const kappa = Math.sqrt(2 * mass * potentialDiff) / HBAR;
-          const psi_a = norm * airyAi(alpha * (a - x0));
-          wavefunction.push(psi_a * Math.exp(-kappa * (x - a)));
-        } else {
-          wavefunction.push(0); // Above barrier, no bound state
-        }
       }
     }
 

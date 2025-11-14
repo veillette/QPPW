@@ -48,7 +48,7 @@ export class OneWellModel extends BaseModel {
     this.potentialTypeProperty = new Property<PotentialType>(PotentialType.INFINITE_WELL);
 
     // Initialize well parameters with default values
-    this.wellWidthProperty = new NumberProperty(1.0, { range: new Range(0.1, 10.0) }); // in nanometers
+    this.wellWidthProperty = new NumberProperty(1.0, { range: new Range(0.1, 6.0) }); // in nanometers (max 6 nm)
     this.wellDepthProperty = new NumberProperty(5.0, { range: new Range(0.1, 15.0) }); // in eV (within energy graph bounds)
     this.wellOffsetProperty = new NumberProperty(0.5, { range: new Range(0.0, 1.0) }); // normalized position
 
@@ -56,7 +56,8 @@ export class OneWellModel extends BaseModel {
     this.particleMassProperty = new NumberProperty(1.0, { range: new Range(0.5, 1.1) }); // 0.5 to 1.1 times electron mass
 
     // Initialize energy level selection (ground state by default)
-    this.selectedEnergyLevelIndexProperty = new NumberProperty(0, { range: new Range(0, 9) });
+    // Use a large range to accommodate potentials with many states (up to 100)
+    this.selectedEnergyLevelIndexProperty = new NumberProperty(0, { range: new Range(0, 99) });
     this.energyLevelProperty = new NumberProperty(0); // Deprecated
 
     // Initialize display settings
@@ -167,7 +168,41 @@ export class OneWellModel extends BaseModel {
     const wellWidth = this.wellWidthProperty.value * QuantumConstants.NM_TO_M;
     const wellDepth = this.wellDepthProperty.value * QuantumConstants.EV_TO_JOULES;
     const mass = this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
-    const numStates = 10; // Calculate first 10 states
+
+    // Calculate number of states based on potential type and energy range
+    let numStates = 10; // Default for most potentials
+
+    // For harmonic oscillator, calculate states up to 15 eV
+    if (this.potentialTypeProperty.value === PotentialType.HARMONIC_OSCILLATOR) {
+      const springConstant = (4 * wellDepth) / (wellWidth * wellWidth);
+      const omega = Math.sqrt(springConstant / mass);
+      const maxEnergy = 15 * QuantumConstants.EV_TO_JOULES; // 15 eV
+      // E_n = ℏω(n + 1/2), solve for n: n = E/(ℏω) - 1/2
+      const maxN = Math.floor(maxEnergy / (QuantumConstants.HBAR * omega) - 0.5);
+      numStates = Math.max(1, Math.min(maxN + 1, 100)); // Cap at 100 for safety
+    }
+    // For infinite well, calculate states up to 15 eV
+    else if (this.potentialTypeProperty.value === PotentialType.INFINITE_WELL) {
+      const maxEnergy = 15 * QuantumConstants.EV_TO_JOULES; // 15 eV
+      // E_n = (ℏ²π²n²)/(2mL²), solve for n
+      const maxN = Math.floor(Math.sqrt((2 * mass * wellWidth * wellWidth * maxEnergy) / (QuantumConstants.HBAR * QuantumConstants.HBAR * Math.PI * Math.PI)));
+      numStates = Math.max(1, Math.min(maxN, 100)); // Cap at 100 for safety
+    }
+    // For finite well, estimate maximum number of bound states
+    else if (this.potentialTypeProperty.value === PotentialType.FINITE_WELL) {
+      // Approximate number of bound states: n_max ≈ (1/π) * sqrt(2mV₀L²/ℏ²)
+      // Use generous estimate to ensure we get all states
+      const estimatedMax = Math.ceil((1 / Math.PI) * Math.sqrt((2 * mass * wellDepth * wellWidth * wellWidth) / (QuantumConstants.HBAR * QuantumConstants.HBAR)));
+      // Request more states than estimated to ensure we capture all bound states
+      numStates = Math.max(10, Math.min(estimatedMax * 2, 80)); // At least 10, cap at 80
+    }
+    // For asymmetric triangle, calculate states that fit in the energy range
+    else if (this.potentialTypeProperty.value === PotentialType.ASYMMETRIC_TRIANGLE) {
+      numStates = 50; // Asymmetric triangle may have many states, use larger number
+    }
+    else {
+      numStates = 30; // Use more states for other potentials (increased from 20)
+    }
 
     // Grid configuration with buffer on sides for finite potentials
     // For centered potentials (infinite well, harmonic oscillator), use symmetric grid
@@ -175,7 +210,7 @@ export class OneWellModel extends BaseModel {
     const gridConfig = {
       xMin: -wellWidth * (1 + bufferFactor) / 2,
       xMax: wellWidth * (1 + bufferFactor) / 2,
-      numPoints: 400,
+      numPoints: 1000, // Increased from 400 for smoother wavefunction rendering
     };
 
     try {
@@ -222,6 +257,14 @@ export class OneWellModel extends BaseModel {
         numStates,
         gridConfig,
       );
+
+      // Ensure selected energy level index is within bounds
+      if (this.boundStateResult) {
+        const maxIndex = this.boundStateResult.energies.length - 1;
+        if (this.selectedEnergyLevelIndexProperty.value > maxIndex) {
+          this.selectedEnergyLevelIndexProperty.value = Math.max(0, maxIndex);
+        }
+      }
     } catch (error) {
       console.error("Error calculating bound states:", error);
       this.boundStateResult = null;

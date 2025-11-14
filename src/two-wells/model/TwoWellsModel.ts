@@ -4,6 +4,7 @@
  */
 
 import { NumberProperty } from "scenerystack/axon";
+import { Range } from "scenerystack/dot";
 import { BaseModel } from "../../common/model/BaseModel.js";
 import { NumericalMethod } from "../../common/model/Schrodinger1DSolver.js";
 
@@ -26,9 +27,9 @@ export class TwoWellsModel extends BaseModel {
   public constructor() {
     super();
     // Initialize well parameters with default values
-    this.wellWidthProperty = new NumberProperty(10); // in nanometers
-    this.wellDepthProperty = new NumberProperty(5); // in eV
-    this.wellSeparationProperty = new NumberProperty(5); // in nanometers
+    this.wellWidthProperty = new NumberProperty(1.0, { range: new Range(0.1, 6.0) }); // in nanometers (max 6 nm)
+    this.wellDepthProperty = new NumberProperty(5.0, { range: new Range(0.1, 15.0) }); // in eV
+    this.wellSeparationProperty = new NumberProperty(5.0, { range: new Range(0.1, 10.0) }); // in nanometers
 
     // Initialize barrier parameters
     this.barrierHeightProperty = new NumberProperty(3); // in eV
