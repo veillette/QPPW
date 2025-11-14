@@ -7,6 +7,7 @@ import { Node, Text, VBox, HBox, HSeparator } from "scenerystack/scenery";
 import { Panel, Checkbox, VerticalAquaRadioButtonGroup, ComboBox, HSlider } from "scenerystack/sun";
 import { Dimension2 } from "scenerystack/dot";
 import { OneWellModel } from "../../one-well/model/OneWellModel.js";
+import { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
 import { PotentialType } from "../model/PotentialFunction.js";
 import QPPWColors from "../../QPPWColors.js";
 import { PhetFont } from "scenerystack/scenery-phet";
@@ -17,37 +18,60 @@ interface ComboBoxItem<T> {
   createNode: () => Node;
 }
 
+export interface ControlPanelNodeOptions {
+  // Whether to show the particle mass control group
+  showParticleMass?: boolean;
+  // Filter which potential types to show (if undefined, shows all)
+  allowedPotentialTypes?: PotentialType[];
+}
+
 export class ControlPanelNode extends Node {
-  private readonly model: OneWellModel;
+  private readonly model: OneWellModel | TwoWellsModel;
+  private readonly options: Required<ControlPanelNodeOptions>;
 
   public constructor(
-    model: OneWellModel,
+    model: OneWellModel | TwoWellsModel,
     listBoxParent: Node,
+    providedOptions?: ControlPanelNodeOptions,
   ) {
     super();
 
     this.model = model;
 
+    // Default options
+    this.options = {
+      showParticleMass: true,
+      allowedPotentialTypes: undefined,
+      ...providedOptions,
+    };
+
     // Create all control groups
     const energyChartGroup = this.createEnergyChartGroup(listBoxParent);
     const bottomChartGroup = this.createBottomChartGroup();
-    const particleMassGroup = this.createParticleMassGroup();
+    const particleMassGroup = this.options.showParticleMass ? this.createParticleMassGroup() : null;
     const wellConfigGroup = this.createWellConfigurationGroup();
+
+    // Arrange groups vertically (only include particle mass if enabled)
+    const children: Node[] = [
+      energyChartGroup,
+      new HSeparator({ stroke: QPPWColors.gridLineProperty }),
+      bottomChartGroup,
+      new HSeparator({ stroke: QPPWColors.gridLineProperty }),
+    ];
+
+    if (particleMassGroup) {
+      children.push(particleMassGroup);
+      children.push(new HSeparator({ stroke: QPPWColors.gridLineProperty }));
+    }
+
+    children.push(wellConfigGroup);
+    children.push(new HSeparator({ stroke: QPPWColors.gridLineProperty }));
 
     // Arrange groups vertically
     const content = new VBox({
       spacing: 15,
       align: "left",
-      children: [
-        energyChartGroup,
-        new HSeparator({ stroke: QPPWColors.gridLineProperty }),
-        bottomChartGroup,
-        new HSeparator({ stroke: QPPWColors.gridLineProperty }),
-        particleMassGroup,
-        new HSeparator({ stroke: QPPWColors.gridLineProperty }),
-        wellConfigGroup,
-        new HSeparator({ stroke: QPPWColors.gridLineProperty }),
-      ],
+      children: children,
     });
 
     const controlPanel = new Panel(content, {
@@ -70,8 +94,8 @@ export class ControlPanelNode extends Node {
       fill: QPPWColors.textFillProperty,
     });
 
-    // Potential Well dropdown
-    const potentialItems: ComboBoxItem<PotentialType>[] = [
+    // Potential Well dropdown - all available options
+    const allPotentialItems: ComboBoxItem<PotentialType>[] = [
       {
         value: PotentialType.INFINITE_WELL,
         createNode: () =>
@@ -121,6 +145,11 @@ export class ControlPanelNode extends Node {
           }),
       },
     ];
+
+    // Filter potential types if specified in options
+    const potentialItems = this.options.allowedPotentialTypes
+      ? allPotentialItems.filter((item) => this.options.allowedPotentialTypes!.includes(item.value))
+      : allPotentialItems;
 
     const potentialComboBox = new ComboBox(
       this.model.potentialTypeProperty,

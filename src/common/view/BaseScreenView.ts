@@ -10,7 +10,7 @@ import { OneWellModel } from "../../one-well/model/OneWellModel.js";
 import { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
 import { EnergyChartNode } from "./EnergyChartNode.js";
 import { WaveFunctionChartNode } from "./WaveFunctionChartNode.js";
-import { ControlPanelNode } from "./ControlPanelNode.js";
+import { ControlPanelNode, ControlPanelNodeOptions } from "./ControlPanelNode.js";
 import { SimulationControlBar } from "./SimulationControlBar.js";
 import { BaseModel } from "../model/BaseModel.js";
 
@@ -21,7 +21,7 @@ export abstract class BaseScreenView extends ScreenView {
   // Common components (may be undefined for screens that don't use them)
   protected energyChart?: EnergyChartNode;
   protected waveFunctionChart?: WaveFunctionChartNode;
-  protected controlPanel?: ControlPanelNode | Node;
+  protected controlPanel?: ControlPanelNode;
   protected simulationControlBar?: SimulationControlBar;
   protected chartsContainer?: Node;
   protected listBoxParent?: Node;
@@ -50,9 +50,9 @@ export abstract class BaseScreenView extends ScreenView {
    * Creates the standard quantum well layout with charts, control panel, and simulation controls.
    * This should be called by subclasses that use the standard layout.
    * @param model - The OneWellModel or TwoWellsModel instance
-   * @param customControlPanel - Optional custom control panel node to use instead of default ControlPanelNode
+   * @param controlPanelOptions - Optional configuration for the control panel (e.g., hiding mass slider, filtering potential types)
    */
-  protected createStandardLayout(model: OneWellModel | TwoWellsModel, customControlPanel?: Node): void {
+  protected createStandardLayout(model: OneWellModel | TwoWellsModel, controlPanelOptions?: ControlPanelNodeOptions): void {
 
     // Calculate layout dimensions
     const screenWidth = this.layoutBounds.width;
@@ -93,14 +93,8 @@ export abstract class BaseScreenView extends ScreenView {
       this.listBoxParent = new Node();
     }
 
-    // Create control panel
-    if (customControlPanel) {
-      // Use the provided custom control panel
-      this.controlPanel = customControlPanel;
-    } else {
-      // Use the default ControlPanelNode (for OneWellModel)
-      this.controlPanel = new ControlPanelNode(model as OneWellModel, this.listBoxParent);
-    }
+    // Create control panel with optional configuration
+    this.controlPanel = new ControlPanelNode(model, this.listBoxParent, controlPanelOptions);
     this.controlPanel.left = chartsWidth + margin * 2;
     this.controlPanel.top = margin;
 

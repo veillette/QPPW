@@ -5,7 +5,7 @@
 
 import { BaseScreenView } from "../../common/view/BaseScreenView.js";
 import { TwoWellsModel } from "../model/TwoWellsModel.js";
-import { TwoWellsControlPanelNode } from "./TwoWellsControlPanelNode.js";
+import { PotentialType } from "../../common/model/PotentialFunction.js";
 import { ScreenViewOptions } from "scenerystack/sim";
 import { Node, Text } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
@@ -16,14 +16,13 @@ export class TwoWellsScreenView extends BaseScreenView {
   public constructor(model: TwoWellsModel, options?: ScreenViewOptions) {
     super(model, options);
 
-    // Create the listBoxParent for ComboBox popup BEFORE creating control panel
-    this.listBoxParent = new Node();
-
-    // Create the custom control panel for Two Wells (without mass slider, limited potential types)
-    const customControlPanel = new TwoWellsControlPanelNode(model, this.listBoxParent);
-
-    // Create the standard quantum well layout with custom control panel
-    this.createStandardLayout(model, customControlPanel);
+    // Create the standard quantum well layout with custom control panel options
+    // - Hide particle mass slider
+    // - Only allow Square (Infinite) and Coulomb 1D potential types
+    this.createStandardLayout(model, {
+      showParticleMass: false,
+      allowedPotentialTypes: [PotentialType.INFINITE_WELL, PotentialType.COULOMB_1D],
+    });
   }
 
   /**
