@@ -148,26 +148,6 @@ export class ManyWellsScreenView extends BaseScreenView {
   }
 
   /**
-   * Creates the content for the info dialog.
-   */
-  public createInfoDialogContent(): Node {
-    return new Text(stringManager.manyWellsDescriptionStringProperty, {
-      font: new PhetFont(14),
-      fill: QPPWColors.textFillProperty,
-    });
-  }
-
-  /**
-   * Creates the screen summary content for accessibility.
-   */
-  public createScreenSummaryContent(): Node {
-    return new Text(stringManager.manyWellsSummaryStringProperty, {
-      font: new PhetFont(14),
-      fill: QPPWColors.textFillProperty,
-    });
-  }
-
-  /**
    * Resets the screen view to its initial state.
    */
   public override reset(): void {

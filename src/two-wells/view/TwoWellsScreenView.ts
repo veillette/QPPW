@@ -6,7 +6,7 @@
 import { BaseScreenView } from "../../common/view/BaseScreenView.js";
 import { TwoWellsModel } from "../model/TwoWellsModel.js";
 import { ScreenViewOptions } from "scenerystack/sim";
-import { Node, Rectangle, Text, VBox } from "scenerystack/scenery";
+import { Rectangle, Text, VBox } from "scenerystack/scenery";
 import { Panel } from "scenerystack/sun";
 import { PhetFont } from "scenerystack/scenery-phet";
 import QPPWColors from "../../QPPWColors.js";
@@ -120,26 +120,6 @@ export class TwoWellsScreenView extends BaseScreenView {
       yMargin: 10,
       right: this.layoutBounds.maxX - 10,
       top: 20,
-    });
-  }
-
-  /**
-   * Creates the content for the info dialog.
-   */
-  public createInfoDialogContent(): Node {
-    return new Text(stringManager.twoWellsDescriptionStringProperty, {
-      font: new PhetFont(14),
-      fill: QPPWColors.textFillProperty,
-    });
-  }
-
-  /**
-   * Creates the screen summary content for accessibility.
-   */
-  public createScreenSummaryContent(): Node {
-    return new Text(stringManager.twoWellsSummaryStringProperty, {
-      font: new PhetFont(14),
-      fill: QPPWColors.textFillProperty,
     });
   }
 

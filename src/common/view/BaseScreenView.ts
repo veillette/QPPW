@@ -104,18 +104,6 @@ export abstract class BaseScreenView extends ScreenView {
   }
 
   /**
-   * Creates the content for the info dialog.
-   * Subclasses must implement this method to provide screen-specific information.
-   */
-  public abstract createInfoDialogContent(): Node;
-
-  /**
-   * Creates the screen summary content for accessibility.
-   * Subclasses must implement this method to provide screen-specific summary.
-   */
-  public abstract createScreenSummaryContent(): Node;
-
-  /**
    * Resets the screen view to its initial state.
    * Subclasses should override this method to add screen-specific reset logic.
    */

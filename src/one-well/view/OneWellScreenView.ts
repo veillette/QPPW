@@ -6,10 +6,6 @@
 import { BaseScreenView } from "../../common/view/BaseScreenView.js";
 import { OneWellModel } from "../model/OneWellModel.js";
 import { ScreenViewOptions } from "scenerystack/sim";
-import { Node, Text } from "scenerystack/scenery";
-import { PhetFont } from "scenerystack/scenery-phet";
-import QPPWColors from "../../QPPWColors.js";
-import stringManager from "../../i18n/StringManager.js";
 
 export class OneWellScreenView extends BaseScreenView {
   public constructor(model: OneWellModel, options?: ScreenViewOptions) {
@@ -24,28 +20,6 @@ export class OneWellScreenView extends BaseScreenView {
 
     // Create the standard quantum well layout
     this.createStandardLayout(model);
-  }
-
-  /**
-   * Creates the content for the info dialog.
-   */
-  public createInfoDialogContent(): Node {
-    const text = new Text(stringManager.oneWellDescriptionStringProperty, {
-      font: new PhetFont(14),
-      fill: QPPWColors.textFillProperty,
-    });
-    return new Node({ children: [text] });
-  }
-
-  /**
-   * Creates the screen summary content for accessibility.
-   */
-  public createScreenSummaryContent(): Node {
-    const text = new Text(stringManager.oneWellSummaryStringProperty, {
-      font: new PhetFont(14),
-      fill: QPPWColors.textFillProperty,
-    });
-    return new Node({ children: [text] });
   }
 
   /**
