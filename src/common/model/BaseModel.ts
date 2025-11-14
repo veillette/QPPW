@@ -19,6 +19,9 @@ export abstract class BaseModel {
   // Solver for quantum calculations
   protected readonly solver: Schrodinger1DSolver;
 
+  // Guard flag to prevent reentry in step method
+  private isStepping: boolean = false;
+
   protected constructor() {
     // Initialize simulation state
     this.isPlayingProperty = new Property<boolean>(false);
@@ -58,12 +61,22 @@ export abstract class BaseModel {
    * @param forced - If true, steps even when paused (for manual stepping buttons)
    */
   public step(dt: number, forced = false): void {
-    if (this.isPlayingProperty.value || forced) {
-      // Convert dt to femtoseconds and apply speed multiplier (only when playing normally)
-      const speedMultiplier = forced ? 1 : (this.timeSpeedProperty.value === TimeSpeed.SLOW ? 1/10 : 1);
-      const dtFemtoseconds = (dt) * speedMultiplier; // seconds to femtoseconds
-      this.timeProperty.value += dtFemtoseconds;
-      // Quantum mechanical time evolution is handled in the view layer
+    // Prevent reentry
+    if (this.isStepping) {
+      return;
+    }
+
+    this.isStepping = true;
+    try {
+      if (this.isPlayingProperty.value || forced) {
+        // Convert dt to femtoseconds and apply speed multiplier (only when playing normally)
+        const speedMultiplier = forced ? 1 : (this.timeSpeedProperty.value === TimeSpeed.SLOW ? 1/10 : 1);
+        const dtFemtoseconds = (dt) * speedMultiplier; // seconds to femtoseconds
+        this.timeProperty.value += dtFemtoseconds;
+        // Quantum mechanical time evolution is handled in the view layer
+      }
+    } finally {
+      this.isStepping = false;
     }
   }
 }

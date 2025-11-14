@@ -199,6 +199,14 @@ export class ControlPanelNode extends Node {
             fill: QPPWColors.textFillProperty,
           }),
       },
+      {
+        value: "phaseColor" as const,
+        createNode: () =>
+          new Text(stringManager.phaseColorStringProperty, {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
+      },
     ];
 
     const displayModeRadioButtonGroup = new VerticalAquaRadioButtonGroup(

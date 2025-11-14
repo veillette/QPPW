@@ -78,6 +78,7 @@ export class StringManager {
 
   // Display mode strings
   public readonly probabilityDensityStringProperty: StringProperty;
+  public readonly phaseColorStringProperty: StringProperty;
   public readonly realPartStringProperty: StringProperty;
   public readonly imaginaryPartStringProperty: StringProperty;
   public readonly magnitudeStringProperty: StringProperty;
@@ -172,6 +173,7 @@ export class StringManager {
 
     // Display mode strings
     this.probabilityDensityStringProperty = new StringProperty("Probability Density");
+    this.phaseColorStringProperty = new StringProperty("Phase (Color)");
     this.realPartStringProperty = new StringProperty("real part");
     this.imaginaryPartStringProperty = new StringProperty("imaginary part");
     this.magnitudeStringProperty = new StringProperty("magnitude");

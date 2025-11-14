@@ -10,7 +10,7 @@ import Schrodinger1DSolver, { WellParameters, NumericalMethod } from "../../comm
 import { PotentialType, BoundStateResult } from "../../common/model/PotentialFunction.js";
 import QuantumConstants from "../../common/model/QuantumConstants.js";
 
-export type DisplayMode = "probabilityDensity" | "waveFunction";
+export type DisplayMode = "probabilityDensity" | "waveFunction" | "phaseColor";
 
 export class OneWellModel extends BaseModel {
   // Potential type selection

@@ -3,7 +3,7 @@
  * for the selected energy state. This is the bottom chart in the One Well screen.
  */
 
-import { Node, Line, Path, Text } from "scenerystack/scenery";
+import { Node, Line, Path, Text, Rectangle } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
 import { NumberProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
@@ -44,9 +44,14 @@ export class WaveFunctionChartNode extends Node {
   private readonly imaginaryPartPath: Path;
   private readonly magnitudePath: Path;
   private readonly probabilityDensityPath: Path;
+  private readonly phaseColorNode: Node; // Container for phase-colored visualization
+  private phaseColorStrips: Rectangle[]; // Pool of rectangles for phase visualization
   private readonly zeroLine: Line;
   private readonly axesNode: Node;
   private yAxisLabel!: Text;
+
+  // Guard flag to prevent reentry during updates
+  private isUpdating: boolean = false;
 
   public constructor(model: OneWellModel, options?: { width?: number; height?: number }) {
     super();
@@ -133,6 +138,15 @@ export class WaveFunctionChartNode extends Node {
       fill: "rgba(255, 215, 0, 0.2)", // Semi-transparent fill
     });
     this.plotContentNode.addChild(this.probabilityDensityPath);
+
+    // Create phase color visualization node
+    this.phaseColorNode = new Node({
+      visible: false,
+    });
+    this.plotContentNode.addChild(this.phaseColorNode);
+
+    // Initialize rectangle pool for phase color visualization (will be populated on first use)
+    this.phaseColorStrips = [];
 
     // Link to model properties
     this.linkToModel();
@@ -261,6 +275,8 @@ export class WaveFunctionChartNode extends Node {
     const displayMode = this.model.displayModeProperty.value;
     if (displayMode === "probabilityDensity") {
       this.yAxisLabel.string = "Probability Density";
+    } else if (displayMode === "phaseColor") {
+      this.yAxisLabel.string = "Wave Function Magnitude";
     } else {
       this.yAxisLabel.string = "Wave Function";
     }
@@ -270,19 +286,29 @@ export class WaveFunctionChartNode extends Node {
    * Main update method - recalculates and redraws everything.
    */
   private update(): void {
-    const boundStates = this.model.getBoundStates();
-    if (!boundStates) {
+    // Prevent reentry
+    if (this.isUpdating) {
       return;
     }
 
-    const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
-    if (selectedIndex < 0 || selectedIndex >= boundStates.wavefunctions.length) {
-      return;
-    }
+    this.isUpdating = true;
+    try {
+      const boundStates = this.model.getBoundStates();
+      if (!boundStates) {
+        return;
+      }
 
-    this.updateViewRange(boundStates);
-    this.updateZeroLine();
-    this.updateWaveFunction(boundStates, selectedIndex);
+      const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
+      if (selectedIndex < 0 || selectedIndex >= boundStates.wavefunctions.length) {
+        return;
+      }
+
+      this.updateViewRange(boundStates);
+      this.updateZeroLine();
+      this.updateWaveFunction(boundStates, selectedIndex);
+    } finally {
+      this.isUpdating = false;
+    }
   }
 
   /**
@@ -341,6 +367,15 @@ export class WaveFunctionChartNode extends Node {
       this.realPartPath.visible = false;
       this.imaginaryPartPath.visible = false;
       this.magnitudePath.visible = false;
+      this.phaseColorNode.visible = false;
+    } else if (displayMode === "phaseColor") {
+      // Plot magnitude with phase-colored fill
+      this.plotPhaseColoredWavefunction(xGrid, wavefunction, phase);
+      this.probabilityDensityPath.visible = false;
+      this.realPartPath.visible = false;
+      this.imaginaryPartPath.visible = false;
+      this.magnitudePath.visible = false;
+      this.phaseColorNode.visible = true;
     } else {
       // Plot wave function components
       this.plotWaveFunctionComponents(xGrid, wavefunction, phase);
@@ -348,6 +383,7 @@ export class WaveFunctionChartNode extends Node {
       this.realPartPath.visible = this.model.showRealPartProperty.value;
       this.imaginaryPartPath.visible = this.model.showImaginaryPartProperty.value;
       this.magnitudePath.visible = this.model.showMagnitudeProperty.value;
+      this.phaseColorNode.visible = false;
     }
   }
 
@@ -457,17 +493,93 @@ export class WaveFunctionChartNode extends Node {
   }
 
   /**
+   * Plots the wavefunction magnitude with rainbow coloring based on phase.
+   * This creates a visualization where vertical strips are colored according to the local phase.
+   * Reuses rectangle nodes from a pool to avoid creating/destroying nodes each frame.
+   */
+  private plotPhaseColoredWavefunction(xGrid: number[], wavefunction: number[], globalPhase: number): void {
+    const y0 = this.dataToViewY(0);
+    const numStrips = xGrid.length - 1;
+
+    // Ensure we have enough rectangles in the pool
+    while (this.phaseColorStrips.length < numStrips) {
+      const rect = new Rectangle(0, 0, 1, 1, {
+        fill: 'white',
+        stroke: null,
+      });
+      this.phaseColorStrips.push(rect);
+      this.phaseColorNode.addChild(rect);
+    }
+
+    // Update each strip
+    for (let i = 0; i < numStrips; i++) {
+      const x1 = this.dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
+      const x2 = this.dataToViewX(xGrid[i + 1] * QuantumConstants.M_TO_NM);
+      const stripWidth = x2 - x1;
+
+      const psi = wavefunction[i];
+      const magnitude = Math.abs(psi);
+
+      // Apply global time evolution phase
+      const cosPhi = Math.cos(globalPhase);
+      const sinPhi = Math.sin(globalPhase);
+
+      // Apply time evolution: ψ(x,t) = ψ(x) * e^(-iEt/ℏ)
+      const realPart = psi * cosPhi;
+      const imagPart = -psi * sinPhi;
+
+      // Calculate local phase: arg(ψ) = atan2(Im(ψ), Re(ψ))
+      const localPhase = Math.atan2(imagPart, realPart);
+
+      // Normalize phase to [0, 1] for hue (0 to 360 degrees)
+      // phase ranges from -π to π, so we normalize to 0 to 1
+      const normalizedPhase = (localPhase + Math.PI) / (2 * Math.PI);
+      const hue = Math.round(normalizedPhase * 360); // 0 to 360 degrees (must be integer for CSS)
+
+      // Create color using HSL: hue varies with phase, saturation and lightness are fixed
+      const saturation = 80; // 80% saturation for vibrant colors
+      const lightness = 60; // 60% lightness for good visibility
+      const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+
+      // Height of the strip is proportional to magnitude
+      const yTop = this.dataToViewY(magnitude);
+      const stripHeight = Math.abs(y0 - yTop);
+
+      // Update the rectangle from the pool
+      const strip = this.phaseColorStrips[i];
+      strip.setRect(x1, Math.min(y0, yTop), stripWidth, stripHeight);
+      strip.fill = color;
+      strip.visible = stripHeight > 0.1; // Only show if visible
+    }
+
+    // Hide any extra strips we're not using
+    for (let i = numStrips; i < this.phaseColorStrips.length; i++) {
+      this.phaseColorStrips[i].visible = false;
+    }
+  }
+
+  /**
    * Updates only the time evolution (for animation).
    */
   private updateTimeEvolution(): void {
-    if (this.model.isPlayingProperty.value) {
-      const boundStates = this.model.getBoundStates();
-      if (boundStates) {
-        const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
-        if (selectedIndex >= 0 && selectedIndex < boundStates.wavefunctions.length) {
-          this.updateWaveFunction(boundStates, selectedIndex);
+    // Prevent reentry
+    if (this.isUpdating) {
+      return;
+    }
+
+    this.isUpdating = true;
+    try {
+      if (this.model.isPlayingProperty.value) {
+        const boundStates = this.model.getBoundStates();
+        if (boundStates) {
+          const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
+          if (selectedIndex >= 0 && selectedIndex < boundStates.wavefunctions.length) {
+            this.updateWaveFunction(boundStates, selectedIndex);
+          }
         }
       }
+    } finally {
+      this.isUpdating = false;
     }
   }
 
