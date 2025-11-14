@@ -72,7 +72,7 @@ export class EnergyChartNode extends Node {
   private readonly plotContentNode: Node; // Clipped container for plot content
   private readonly potentialPath: Path;
   private readonly energyLevelNodes: Map<number, Line>;
-  private readonly energyLabelNodes: Map<number, Text>;
+  // private readonly energyLabelNodes: Map<number, Text>;
   private readonly totalEnergyLine: Line;
   private readonly zeroLine: Line;
   private axesNode: Node;
@@ -148,7 +148,7 @@ export class EnergyChartNode extends Node {
 
     // Create energy level lines and labels containers
     this.energyLevelNodes = new Map();
-    this.energyLabelNodes = new Map();
+    // this.energyLabelNodes = new Map();
 
     // Create total energy line
     this.totalEnergyLine = new Line(0, 0, 0, 0, {
@@ -507,10 +507,10 @@ export class EnergyChartNode extends Node {
     this.energyLevelNodes.clear();
 
     // Remove old energy label nodes
-    this.energyLabelNodes.forEach((label) => {
-      this.removeChild(label);
-    });
-    this.energyLabelNodes.clear();
+    // this.energyLabelNodes.forEach((label) => {
+    //   this.removeChild(label);
+    // });
+    // this.energyLabelNodes.clear();
 
     // Create new energy level lines
     const energies = boundStates.energies.map((e) => e * QuantumConstants.JOULES_TO_EV);
@@ -548,14 +548,14 @@ export class EnergyChartNode extends Node {
       this.plotContentNode.addChild(line); // Add to clipped content
 
       // Add energy label (outside clipped area for visibility)
-      const label = new Text(`E${index + 1} = ${energy.toFixed(3)} eV`, {
-        font: "10px sans-serif",
-        fill: QPPWColors.labelFillProperty,
-        left: x2 + 5,
-        centerY: y,
-      });
-      this.energyLabelNodes.set(index, label);
-      this.addChild(label);
+      // const label = new Text(`E${index + 1} = ${energy.toFixed(3)} eV`, {
+      //   font: "10px sans-serif",
+      //   fill: QPPWColors.labelFillProperty,
+      //   left: x2 + 5,
+      //   centerY: y,
+      // });
+      // this.energyLabelNodes.set(index, label);
+      // this.addChild(label);
     });
 
     // Ensure total energy line and legend are on top
