@@ -183,15 +183,37 @@ export function integrateNumerovFromCenter(
   const f = k2.map((k) => (dx * dx / 12) * k);
 
   // Initial conditions at x=0 based on parity
-  // Start with two small values to define the slope
+  // Use WKB approximation for proper behavior in classically forbidden region
+
+  // Calculate decay constant at center (if in barrier)
+  const V_center = V[centerIdx];
+  const kappa = Math.sqrt(2 * mass * Math.abs(E - V_center)) / HBAR;
+
   if (parity === "symmetric") {
-    // Symmetric: ψ'(0) = 0, so ψ starts flat
-    psi[centerIdx] = 1.0;
-    psi[centerIdx + 1] = 1.0; // Flat start (zero derivative)
+    // Symmetric: in barrier, ψ ∝ cosh(κx), so ψ'(0) = 0
+    // ψ(0) = A, ψ(dx) = A*cosh(κ*dx)
+    const A = 1.0;
+    psi[centerIdx] = A;
+
+    if (E < V_center) {
+      // In classically forbidden region - use hyperbolic
+      psi[centerIdx + 1] = A * Math.cosh(kappa * dx);
+    } else {
+      // In classically allowed region - ψ'(0) = 0 means flat start
+      psi[centerIdx + 1] = A;
+    }
   } else {
-    // Antisymmetric: ψ(0) = 0, ψ'(0) ≠ 0
+    // Antisymmetric: in barrier, ψ ∝ sinh(κx), so ψ(0) = 0
+    // ψ(0) = 0, ψ(dx) = A*sinh(κ*dx)
     psi[centerIdx] = 0.0;
-    psi[centerIdx + 1] = dx; // Linear start from zero
+
+    if (E < V_center) {
+      // In classically forbidden region - use hyperbolic
+      psi[centerIdx + 1] = Math.sinh(kappa * dx);
+    } else {
+      // In classically allowed region - linear start
+      psi[centerIdx + 1] = dx;
+    }
   }
 
   // Integrate from center (x=0) to right boundary (x_max)
