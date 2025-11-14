@@ -73,7 +73,7 @@ export class EnergyChartNode extends Node {
   private readonly energyLabelNodes: Map<number, Text>;
   private readonly totalEnergyLine: Line;
   private readonly zeroLine: Line;
-  private readonly axesNode: Node;
+  private axesNode: Node;
   private readonly legendNode: Node;
 
   // Hover state
@@ -470,12 +470,7 @@ export class EnergyChartNode extends Node {
       // V(x) = 10 - ba + bx for 0 < x < a (linear ramp from 0 to 10 eV)
       // V(x) = 10 eV for x > a
       const centerX = xCenter;
-      const a = wellWidth; // well width in nm
       const POTENTIAL_AT_INFINITY = 10; // eV
-
-      // Calculate slope b from wellDepth
-      // ba = wellDepth, so b = wellDepth / a
-      const b = wellDepth / a;
 
       const y10eV = this.dataToViewY(POTENTIAL_AT_INFINITY);
       const y0eV = this.dataToViewY(0);
