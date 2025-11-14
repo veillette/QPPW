@@ -6,7 +6,7 @@
 import { BaseScreenView } from "../../common/view/BaseScreenView.js";
 import { ManyWellsModel } from "../model/ManyWellsModel.js";
 import { ScreenViewOptions } from "scenerystack/sim";
-import { Node, Rectangle, Text, VBox } from "scenerystack/scenery";
+import { Node, Rectangle, Text, VBox, RichText } from "scenerystack/scenery";
 import { Panel } from "scenerystack/sun";
 import { PhetFont } from "scenerystack/scenery-phet";
 import QPPWColors from "../../QPPWColors.js";
@@ -144,9 +144,68 @@ export class ManyWellsScreenView extends BaseScreenView {
    * Creates the content for the info dialog.
    */
   public createInfoDialogContent(): Node {
-    return new Text(stringManager.manyWellsDescriptionStringProperty, {
+    const titleText = new Text(stringManager.manyWellsStringProperty, {
+      font: new PhetFont({ size: 18, weight: "bold" }),
+      fill: QPPWColors.textFillProperty,
+    });
+
+    const descriptionText = new RichText(stringManager.manyWellsDescriptionStringProperty, {
       font: new PhetFont(14),
       fill: QPPWColors.textFillProperty,
+      maxWidth: 500,
+    });
+
+    const keyConceptsTitle = new Text("Key Concepts:", {
+      font: new PhetFont({ size: 14, weight: "bold" }),
+      fill: QPPWColors.textFillProperty,
+    });
+
+    const keyConceptsList = new RichText(
+      "• Energy band formation in periodic potentials<br>" +
+      "• Bloch waves and crystal momentum<br>" +
+      "• Allowed and forbidden energy bands<br>" +
+      "• Band gaps and their physical origin<br>" +
+      "• Transition from discrete levels to energy bands<br>" +
+      "• Tight-binding approximation",
+      {
+        font: new PhetFont(13),
+        fill: QPPWColors.textFillProperty,
+        maxWidth: 500,
+        lineSpacing: 5,
+      }
+    );
+
+    const interactionTitle = new Text("Interactions:", {
+      font: new PhetFont({ size: 14, weight: "bold" }),
+      fill: QPPWColors.textFillProperty,
+    });
+
+    const interactionsList = new RichText(
+      "• Adjust number of wells to observe band formation<br>" +
+      "• Change lattice constant to modify band structure<br>" +
+      "• Vary well width to control band gaps<br>" +
+      "• Modify barrier properties to tune coupling<br>" +
+      "• Observe transition from isolated to strongly coupled wells<br>" +
+      "• Compare with solid-state physics band theory",
+      {
+        font: new PhetFont(13),
+        fill: QPPWColors.textFillProperty,
+        maxWidth: 500,
+        lineSpacing: 5,
+      }
+    );
+
+    return new VBox({
+      spacing: 12,
+      align: "left",
+      children: [
+        titleText,
+        descriptionText,
+        keyConceptsTitle,
+        keyConceptsList,
+        interactionTitle,
+        interactionsList,
+      ],
     });
   }
 
@@ -154,9 +213,39 @@ export class ManyWellsScreenView extends BaseScreenView {
    * Creates the screen summary content for accessibility.
    */
   public createScreenSummaryContent(): Node {
-    return new Text(stringManager.manyWellsSummaryStringProperty, {
-      font: new PhetFont(14),
-      fill: QPPWColors.textFillProperty,
+    const summaryText = new RichText(
+      stringManager.manyWellsSummaryStringProperty.value +
+      "<br><br>" +
+      "<strong>Screen Overview:</strong><br>" +
+      "This screen simulates a periodic array of quantum potential wells, demonstrating how energy bands form in solid-state systems. " +
+      "As the number of wells increases, discrete energy levels evolve into continuous energy bands separated by band gaps. " +
+      "This is fundamental to understanding electronic properties of semiconductors and crystalline materials.<br><br>" +
+      "<strong>Available Controls:</strong><br>" +
+      "• Number of Wells selector: Choose from few to many wells (2-20+)<br>" +
+      "• Lattice Constant slider: Adjusts spacing between adjacent wells<br>" +
+      "• Well Width slider: Controls the width of individual wells<br>" +
+      "• Barrier Height slider: Adjusts coupling strength between wells<br>" +
+      "• Quantum State selector: Choose different band states<br>" +
+      "• Play/Pause/Step controls: Control time evolution<br>" +
+      "• Reset button: Returns all parameters to initial values<br><br>" +
+      "<strong>Learning Objectives:</strong><br>" +
+      "Understand the origin of energy bands in crystalline solids. " +
+      "Observe the transition from discrete energy levels (few wells) to continuous bands (many wells). " +
+      "Learn how lattice periodicity and well coupling determine band structure. " +
+      "Explore the relationship between band gaps and material properties. " +
+      "Connect quantum mechanical models to real-world semiconductor behavior.",
+      {
+        font: new PhetFont(13),
+        fill: QPPWColors.textFillProperty,
+        maxWidth: 600,
+        lineSpacing: 4,
+      }
+    );
+
+    return new VBox({
+      spacing: 10,
+      align: "left",
+      children: [summaryText],
     });
   }
 
