@@ -13,14 +13,7 @@ import stringManager from "../../i18n/StringManager.js";
 
 export class OneWellScreenView extends BaseScreenView {
   public constructor(model: OneWellModel, options?: ScreenViewOptions) {
-    super(
-      model,
-      () => {
-        model.resetAll();
-        this.reset();
-      },
-      options,
-    );
+    super(model, options);
 
     // Create the standard quantum well layout
     this.createStandardLayout(model);

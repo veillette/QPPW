@@ -27,7 +27,6 @@ export abstract class BaseScreenView extends ScreenView {
 
   protected constructor(
     model: BaseModel | OneWellModel,
-    resetCallback: () => void,
     options?: ScreenViewOptions
   ) {
     super(options);
@@ -36,7 +35,10 @@ export abstract class BaseScreenView extends ScreenView {
 
     // Create the reset all button in the bottom-right corner
     this.resetAllButton = new ResetAllButton({
-      listener: resetCallback,
+      listener: () => {
+        model.resetAll();
+        this.reset();
+      },
       right: this.layoutBounds.maxX - 10,
       bottom: this.layoutBounds.maxY - 10,
     });
