@@ -170,10 +170,11 @@ export class OneWellModel extends BaseModel {
     const numStates = 10; // Calculate first 10 states
 
     // Grid configuration with buffer on sides for finite potentials
+    // For centered potentials (infinite well, harmonic oscillator), use symmetric grid
     const bufferFactor = 2.0; // Extra space on each side
     const gridConfig = {
-      xMin: -wellWidth * bufferFactor,
-      xMax: wellWidth * (1 + bufferFactor),
+      xMin: -wellWidth * (1 + bufferFactor) / 2,
+      xMax: wellWidth * (1 + bufferFactor) / 2,
       numPoints: 400,
     };
 
