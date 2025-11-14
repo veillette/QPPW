@@ -19,14 +19,7 @@ export class TwoWellsScreenView extends BaseScreenView {
   private readonly customControlPanel: Panel;
 
   public constructor(model: TwoWellsModel, options?: ScreenViewOptions) {
-    super(
-      model,
-      () => {
-        model.resetAll();
-        this.reset();
-      },
-      options,
-    );
+    super(model, options);
 
     const wellWidth = 150;
     const wellHeight = 300;

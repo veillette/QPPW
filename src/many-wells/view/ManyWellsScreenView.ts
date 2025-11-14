@@ -18,14 +18,7 @@ export class ManyWellsScreenView extends BaseScreenView {
   private readonly _model: ManyWellsModel;
 
   public constructor(model: ManyWellsModel, options?: ScreenViewOptions) {
-    super(
-      model,
-      () => {
-        model.resetAll();
-        this.reset();
-      },
-      options,
-    );
+    super(model, options);
 
     this._model = model;
 
