@@ -86,10 +86,6 @@ export function solveDoubleWellNumerov(
   // Step 2: Find double well energies by searching near single well estimates
   const energies: number[] = [];
   const wavefunctions: number[][] = [];
-  const parities: ("symmetric" | "antisymmetric")[] = [];
-
-  // Estimate level splitting based on barrier tunneling
-  const barrierWidth = wellSeparation; // Approximate barrier width
 
   for (let i = 0; i < singleWellEnergies.length && energies.length < numStates; i++) {
     const E_single = singleWellEnergies[i];
@@ -103,7 +99,7 @@ export function solveDoubleWellNumerov(
     const splitting = estimateEnergySplitting(
       E_single,
       wellDepth,
-      barrierWidth,
+      wellSeparation,
       mass,
     );
 
@@ -134,7 +130,6 @@ export function solveDoubleWellNumerov(
       const psi_sym = integrateNumerovFromCenter(E_sym, V, xGrid, dx, mass, "symmetric");
       const normalized_psi_sym = normalizeWavefunction(psi_sym, dx);
       wavefunctions.push(normalized_psi_sym);
-      parities.push("symmetric");
     }
 
     // Search for antisymmetric state
@@ -156,7 +151,6 @@ export function solveDoubleWellNumerov(
       const psi_antisym = integrateNumerovFromCenter(E_antisym, V, xGrid, dx, mass, "antisymmetric");
       const normalized_psi_antisym = normalizeWavefunction(psi_antisym, dx);
       wavefunctions.push(normalized_psi_antisym);
-      parities.push("antisymmetric");
     }
   }
 
@@ -330,8 +324,8 @@ function estimateEnergySplitting(
  * @param dx - Grid spacing (meters)
  * @param mass - Particle mass (kg)
  * @param wellDepth - Well depth/barrier height (Joules)
- * @param leftCenter - Left well center position (meters)
- * @param rightCenter - Right well center position (meters) - reserved for future use
+ * @param _leftCenter - Left well center position (meters) - reserved for future use
+ * @param _rightCenter - Right well center position (meters) - reserved for future use
  * @returns Refined energy eigenvalue or null if not found
  */
 function findEnergyNearEstimate(
@@ -364,24 +358,17 @@ function findEnergyNearEstimate(
 
   let prevSign = 0;
   let prevEnergy = energyMin;
-  let signChangeCount = 0;
 
   for (let i = 0; i <= numScanPoints; i++) {
     const E = energyMin + i * scanStep;
     const psi = integrateNumerovFromCenter(E, V, xGrid, dx, mass, parity);
 
     // Check boundary condition: wavefunction should decay at boundaries
-    const endValue = psi[xGrid.length - 1];
-
-    // For both symmetric and antisymmetric states, use boundary value
     // The sign change in the boundary value indicates a bound state
-    const meritFunction = endValue;
-
-    const currentSign = Math.sign(meritFunction);
+    const currentSign = Math.sign(psi[xGrid.length - 1]);
 
     // Detect sign change
     if (prevSign !== 0 && currentSign !== 0 && currentSign !== prevSign) {
-      signChangeCount++;
       // Refine using bisection
       const refinedEnergy = refineEnergy(
         prevEnergy,

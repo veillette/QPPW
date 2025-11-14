@@ -193,9 +193,8 @@ export class TwoWellsModel extends BaseModel {
       const V0 = barrierHeight * eV;
       const E = energy * eV;
       const kappa = Math.sqrt((2 * electronMass * (V0 - E)) / (hbar * hbar));
-      const transmissionCoeff = Math.exp(-2 * kappa * barrierWidth);
 
-      this.tunnelingProbabilityProperty.value = transmissionCoeff;
+      this.tunnelingProbabilityProperty.value = Math.exp(-2 * kappa * barrierWidth);
     }
   }
 
