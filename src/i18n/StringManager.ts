@@ -20,6 +20,7 @@ export class StringManager {
   public readonly wavefunctionStringProperty: StringProperty;
   public readonly probabilityStringProperty: StringProperty;
   public readonly potentialStringProperty: StringProperty;
+  public readonly potentialEnergyStringProperty: StringProperty;
 
   // Controls
   public readonly playStringProperty: StringProperty;
@@ -88,6 +89,13 @@ export class StringManager {
   public readonly energyEvStringProperty: StringProperty;
   public readonly positionNmStringProperty: StringProperty;
   public readonly totalEnergyStringProperty: StringProperty;
+  public readonly waveFunctionMagnitudeStringProperty: StringProperty;
+  public readonly energyLevelLabelStringProperty: StringProperty;
+
+  // Units
+  public readonly electronVoltsStringProperty: StringProperty;
+  public readonly nanometersStringProperty: StringProperty;
+  public readonly electronMassStringProperty: StringProperty;
 
   // Time display
   public readonly timeStringProperty: StringProperty;
@@ -115,6 +123,7 @@ export class StringManager {
     this.wavefunctionStringProperty = new StringProperty("Wavefunction");
     this.probabilityStringProperty = new StringProperty("Probability");
     this.potentialStringProperty = new StringProperty("Potential");
+    this.potentialEnergyStringProperty = new StringProperty("Potential Energy");
 
     // Controls
     this.playStringProperty = new StringProperty("Play");
@@ -183,6 +192,13 @@ export class StringManager {
     this.energyEvStringProperty = new StringProperty("Energy (eV)");
     this.positionNmStringProperty = new StringProperty("Position (nm)");
     this.totalEnergyStringProperty = new StringProperty("Total Energy");
+    this.waveFunctionMagnitudeStringProperty = new StringProperty("Wave Function Magnitude");
+    this.energyLevelLabelStringProperty = new StringProperty("E{{level}} = {{value}} eV");
+
+    // Units
+    this.electronVoltsStringProperty = new StringProperty("eV");
+    this.nanometersStringProperty = new StringProperty("nm");
+    this.electronMassStringProperty = new StringProperty("m_e");
 
     // Time display
     this.timeStringProperty = new StringProperty("Time:");

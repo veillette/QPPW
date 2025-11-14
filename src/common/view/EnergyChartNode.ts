@@ -15,6 +15,7 @@ import { PotentialType, BoundStateResult } from "../model/PotentialFunction.js";
 import QuantumConstants from "../model/QuantumConstants.js";
 import QPPWColors from "../../QPPWColors.js";
 import { PhetFont } from "scenerystack/scenery-phet";
+import stringManager from "../../i18n/StringManager.js";
 
 // Chart axis range constants
 const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
@@ -271,7 +272,7 @@ export class EnergyChartNode extends Node {
     axesNode.addChild(xTickLabelsNode);
 
     // Axis labels
-    const yLabelText = new Text("Energy (eV)", {
+    const yLabelText = new Text(stringManager.energyEvStringProperty, {
       font: new PhetFont(14),
       fill: QPPWColors.labelFillProperty,
       rotation: -Math.PI / 2,
@@ -280,7 +281,7 @@ export class EnergyChartNode extends Node {
     });
     axesNode.addChild(yLabelText);
 
-    const xLabelText = new Text("Position (nm)", {
+    const xLabelText = new Text(stringManager.positionNmStringProperty, {
       font: new PhetFont(14),
       fill: QPPWColors.labelFillProperty,
       centerX: this.chartWidth / 2,
@@ -299,13 +300,13 @@ export class EnergyChartNode extends Node {
       spacing: 5,
       align: "left",
       children: [
-        new Checkbox(this.model.showTotalEnergyProperty, new Text("Total Energy", {
+        new Checkbox(this.model.showTotalEnergyProperty, new Text(stringManager.totalEnergyStringProperty, {
           font: "12px sans-serif",
           fill: QPPWColors.textFillProperty,
         }), {
           boxWidth: 15,
         }),
-        new Checkbox(this.model.showPotentialEnergyProperty, new Text("Potential Energy", {
+        new Checkbox(this.model.showPotentialEnergyProperty, new Text(stringManager.potentialEnergyStringProperty, {
           font: "12px sans-serif",
           fill: QPPWColors.textFillProperty,
         }), {
@@ -592,7 +593,12 @@ export class EnergyChartNode extends Node {
       this.plotContentNode.addChild(hitArea); // Add hit area on top
 
       // Add energy label (outside clipped area for visibility)
-      const label = new Text(`E${index + 1} = ${energy.toFixed(3)} eV`, {
+      // Use template string from i18n: "E{{level}} = {{value}} eV"
+      const template = stringManager.energyLevelLabelStringProperty.value;
+      const labelText = template
+        .replace('{{level}}', (index + 1).toString())
+        .replace('{{value}}', energy.toFixed(3));
+      const label = new Text(labelText, {
         font: "10px sans-serif",
         fill: QPPWColors.labelFillProperty,
         left: x2 + 5,

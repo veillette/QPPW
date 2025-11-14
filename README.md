@@ -10,11 +10,23 @@ This simulation allows users to explore the properties of quantum "particles" bo
 
 - **Real-time Quantum Simulation**: Solves the 1D Schrödinger equation numerically in real time with the mass set to the electron mass
 - **Interactive Potential Wells**: Click and drag directly on the potential energy diagram to modify well parameters
-- **Multiple Well Types**: Square wells, double wells, multiple wells, harmonic oscillator, and Coulomb potential
-- **Comprehensive Visualizations**: View wave functions (real and imaginary parts), probability density, magnitude and phase
-- **Energy Level Display**: Observe discrete energy levels and their evolution
-- **Wave Function Superposition**: Explore combinations of quantum states
-- **Parameter Controls**: Adjust well width, depth, height, and offset interactively
+- **Multiple Well Types**: Includes 10 exactly solvable potentials:
+  - Infinite and finite square wells
+  - Harmonic oscillator
+  - Morse potential
+  - Pöschl-Teller potential
+  - Rosen-Morse potential
+  - Eckart potential
+  - Asymmetric triangle potential
+  - Coulomb 1D and 3D potentials
+- **Comprehensive Visualizations**:
+  - Wave functions (real and imaginary parts, magnitude)
+  - Probability density with filled area visualization
+  - Phase-colored visualization showing quantum phase evolution
+  - Interactive energy level selection with hover labels
+- **Energy Level Display**: Observe discrete energy levels with color-coded selection
+- **Time Evolution**: Watch quantum phase evolution in real-time animation
+- **Parameter Controls**: Adjust well width, depth, and offset interactively
 
 ### Learning Objectives
 
@@ -52,9 +64,15 @@ This simulation is designed to help students understand:
 ### Technology Stack
 
 - **SceneryStack**: Framework for interactive physics simulations
+  - Uses Bamboo for chart rendering (ChartTransform, TickMarkSet, TickLabelSet)
+  - Scenery for interactive graphics and user input
+  - Axon for reactive properties
 - **TypeScript**: Type-safe development
 - **Vite**: Fast build tool and development server
 - **Real-time Numerical Solver**: Efficient computation of quantum mechanical solutions
+  - DVR (Discrete Variable Representation) method
+  - Numerov shooting method
+  - Analytical solutions for exactly solvable potentials
 
 ### Installation
 

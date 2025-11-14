@@ -72,6 +72,8 @@
   "energyEv": "Energy (eV)",
   "positionNm": "Position (nm)",
   "totalEnergy": "Total Energy",
+  "waveFunctionMagnitude": "Wave Function Magnitude",
+  "energyLevelLabel": "E{{level}} = {{value}} eV",
   "time": "Time:",
   "oneWellDescription": "Explore quantum mechanics in a single potential well.\nAdjust the well parameters to see how energy levels change.",
   "twoWellsDescription": "Explore quantum tunneling in a double potential well.\nAdjust barrier parameters to see how tunneling probability changes.\nWatch particles tunnel through classically forbidden regions!",

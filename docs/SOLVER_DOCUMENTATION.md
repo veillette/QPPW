@@ -204,12 +204,34 @@ The DVR method uses a basis of delta functions on grid points, making the potent
 3. **Quantum Mechanics**:
    - Griffiths, D. J., & Schroeter, D. F. (2018). *Introduction to Quantum Mechanics* (3rd ed.). Cambridge University Press.
 
+## Visualization Features
+
+The solver is integrated with comprehensive visualization tools:
+
+### Energy Chart
+- Displays potential energy curves for all potential types
+- Shows discrete energy levels as horizontal lines
+- Interactive selection of energy levels
+- Hover to display energy values
+- Color-coded visualization with phase-dependent coloring
+
+### Wavefunction Chart
+The simulation provides three visualization modes:
+1. **Probability Density** (`|ψ|²`): Shows the probability distribution
+2. **Wavefunction Components**: Real part, imaginary part, and magnitude
+3. **Phase Color**: Rainbow-colored visualization where hue represents quantum phase
+
+### Chart Specifications
+- **Energy Chart**: 600×300 pixels with margins (left: 60, right: 20, top: 40, bottom: 50)
+- **Wavefunction Chart**: 600×140 pixels with margins (left: 60, right: 20, top: 10, bottom: 40)
+- Both charts share synchronized x-axis (Position in nm: -4 to +4 nm)
+- Y-axis ranges automatically adjust based on potential type and selected state
+
 ## Future Enhancements
 
 Potential improvements to consider:
 - Support for 2D/3D potentials
-- Time-dependent Schrödinger equation solver
-- More analytical solutions (Morse potential, Coulomb potential, etc.)
+- Time-dependent Schrödinger equation solver (partial implementation exists for phase evolution)
+- More analytical solutions (currently supports 10 potential types)
 - Adaptive grid refinement
 - GPU acceleration for large grids
-- Visualization tools for wavefunctions and probability densities

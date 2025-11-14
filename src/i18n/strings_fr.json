@@ -71,6 +71,8 @@
   "energyEv": "Énergie (eV)",
   "positionNm": "Position (nm)",
   "totalEnergy": "Énergie Totale",
+  "waveFunctionMagnitude": "Amplitude de Fonction d'Onde",
+  "energyLevelLabel": "E{{level}} = {{value}} eV",
   "time": "Temps:",
   "oneWellDescription": "Explorez la mécanique quantique dans un seul puits de potentiel.\nAjustez les paramètres du puits pour voir comment les niveaux d'énergie changent.",
   "twoWellsDescription": "Explorez l'effet tunnel quantique dans un double puits de potentiel.\nAjustez les paramètres de la barrière pour voir comment la probabilité de tunneling change.\nObservez les particules traverser des régions classiquement interdites!",
