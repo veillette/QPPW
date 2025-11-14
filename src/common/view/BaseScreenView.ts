@@ -59,18 +59,19 @@ export abstract class BaseScreenView extends ScreenView {
 
     // Fixed chart dimensions (both charts share the same width and have fixed height)
     const chartsWidth = 600; // Fixed width for consistency
-    const chartHeight = 300; // Fixed height for both charts
+    const energyChartHeight = 300; // Fixed height for energy chart
+    const waveFunctionChartHeight = 180; // Fixed height for wavefunction chart (reduced by 40%)
 
     // Create the energy chart (top plot)
     this.energyChart = new EnergyChartNode(model, {
       width: chartsWidth,
-      height: chartHeight,
+      height: energyChartHeight,
     });
 
     // Create the wave function chart (bottom plot)
     this.waveFunctionChart = new WaveFunctionChartNode(model, {
       width: chartsWidth,
-      height: chartHeight,
+      height: waveFunctionChartHeight,
     });
 
     // Position charts with fixed layout, ensuring x-axes align horizontally
@@ -78,7 +79,7 @@ export abstract class BaseScreenView extends ScreenView {
     this.energyChart.top = 10; // Reduced from margin to move energy chart upward and avoid overlap
 
     this.waveFunctionChart.left = margin; // Same left position to align x-axes
-    this.waveFunctionChart.top = margin + chartHeight; // Moved up by 20 pixels
+    this.waveFunctionChart.top = margin + energyChartHeight + 30; // Added extra spacing between charts
 
     // Create container for charts
     this.chartsContainer = new Node({

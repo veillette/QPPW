@@ -42,7 +42,6 @@ export class SimulationControlBar extends Node {
     this.timeText = new Text("0.00 fs", {
       font: new PhetFont({ size: 16, weight: "bold" }),
       fill: QPPWColors.textFillProperty,
-      minWidth: 80, // Fixed width to prevent layout shift as time increases
     });
 
     this.model.timeProperty.link((time) => {

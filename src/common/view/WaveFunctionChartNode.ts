@@ -22,7 +22,7 @@ export class WaveFunctionChartNode extends Node {
   private readonly model: OneWellModel;
   private readonly chartWidth: number;
   private readonly chartHeight: number;
-  private readonly chartMargins = { left: 60, right: 20, top: 40, bottom: 50 };
+  private readonly chartMargins = { left: 60, right: 20, top: 10, bottom: 40 };
 
   // Chart bounds in view coordinates
   private readonly plotWidth: number;
@@ -49,6 +49,7 @@ export class WaveFunctionChartNode extends Node {
   private readonly zeroLine: Line;
   private readonly axesNode: Node;
   private yAxisLabel!: Text;
+  private readonly stateLabelNode: Text; // Label showing which wavefunction is displayed
 
   // Guard flag to prevent reentry during updates
   private isUpdating: boolean = false;
@@ -58,7 +59,7 @@ export class WaveFunctionChartNode extends Node {
 
     this.model = model;
     this.chartWidth = options?.width ?? 600;
-    this.chartHeight = options?.height ?? 250;
+    this.chartHeight = options?.height ?? 140;
 
     this.plotWidth = this.chartWidth - this.chartMargins.left - this.chartMargins.right;
     this.plotHeight = this.chartHeight - this.chartMargins.top - this.chartMargins.bottom;
@@ -147,6 +148,15 @@ export class WaveFunctionChartNode extends Node {
 
     // Initialize rectangle pool for phase color visualization (will be populated on first use)
     this.phaseColorStrips = [];
+
+    // Create state label in upper right corner (outside clipped area)
+    this.stateLabelNode = new Text("", {
+      font: new PhetFont({ size: 16, style: "italic" }),
+      fill: QPPWColors.labelFillProperty,
+      right: this.chartWidth - this.chartMargins.right - 55,
+      top: this.chartMargins.top + 5,
+    });
+    this.addChild(this.stateLabelNode);
 
     // Ensure axes are on top of the clipped plot content
     this.axesNode.moveToFront();
@@ -252,9 +262,13 @@ export class WaveFunctionChartNode extends Node {
     this.model.wellDepthProperty.link(() => this.update());
     this.model.wellOffsetProperty.link(() => this.update());
     this.model.particleMassProperty.link(() => this.update());
-    this.model.selectedEnergyLevelIndexProperty.link(() => this.update());
+    this.model.selectedEnergyLevelIndexProperty.link(() => {
+      this.updateStateLabel();
+      this.update();
+    });
     this.model.displayModeProperty.link(() => {
       this.updateYAxisLabel();
+      this.updateStateLabel();
       this.update();
     });
     this.model.timeProperty.link(() => this.updateTimeEvolution());
@@ -286,6 +300,42 @@ export class WaveFunctionChartNode extends Node {
   }
 
   /**
+   * Updates the state label showing which wavefunction is displayed.
+   */
+  private updateStateLabel(): void {
+    const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
+    const displayMode = this.model.displayModeProperty.value;
+
+    if (selectedIndex < 0) {
+      this.stateLabelNode.string = "";
+      return;
+    }
+
+    // Convert index to subscript (n starts from 1 for display)
+    const n = selectedIndex + 1;
+    const subscript = this.toSubscript(n);
+
+    if (displayMode === "probabilityDensity") {
+      // Probability density: |ψ_n|²
+      this.stateLabelNode.string = `|ψ${subscript}|²`;
+    } else if (displayMode === "phaseColor") {
+      // Magnitude: |ψ_n|
+      this.stateLabelNode.string = `|ψ${subscript}|`;
+    } else {
+      // Wavefunction: ψ_n
+      this.stateLabelNode.string = `ψ${subscript}`;
+    }
+  }
+
+  /**
+   * Converts a number to Unicode subscript characters.
+   */
+  private toSubscript(num: number): string {
+    const subscriptDigits = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
+    return num.toString().split('').map(digit => subscriptDigits[parseInt(digit)]).join('');
+  }
+
+  /**
    * Main update method - recalculates and redraws everything.
    */
   private update(): void {
@@ -309,6 +359,7 @@ export class WaveFunctionChartNode extends Node {
       this.updateViewRange(boundStates);
       this.updateZeroLine();
       this.updateWaveFunction(boundStates, selectedIndex);
+      this.updateStateLabel();
     } finally {
       this.isUpdating = false;
     }

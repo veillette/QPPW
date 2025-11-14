@@ -72,7 +72,7 @@ export class EnergyChartNode extends Node {
   private readonly plotContentNode: Node; // Clipped container for plot content
   private readonly potentialPath: Path;
   private readonly energyLevelNodes: Map<number, Line>;
-  // private readonly energyLabelNodes: Map<number, Text>;
+  private readonly energyLabelNodes: Map<number, Text>;
   private readonly totalEnergyLine: Line;
   private readonly zeroLine: Line;
   private axesNode: Node;
@@ -148,7 +148,7 @@ export class EnergyChartNode extends Node {
 
     // Create energy level lines and labels containers
     this.energyLevelNodes = new Map();
-    // this.energyLabelNodes = new Map();
+    this.energyLabelNodes = new Map();
 
     // Create total energy line
     this.totalEnergyLine = new Line(0, 0, 0, 0, {
@@ -540,10 +540,10 @@ export class EnergyChartNode extends Node {
     this.energyLevelNodes.clear();
 
     // Remove old energy label nodes
-    // this.energyLabelNodes.forEach((label) => {
-    //   this.removeChild(label);
-    // });
-    // this.energyLabelNodes.clear();
+    this.energyLabelNodes.forEach((label) => {
+      this.removeChild(label);
+    });
+    this.energyLabelNodes.clear();
 
     // Create new energy level lines
     const energies = boundStates.energies.map((e) => e * QuantumConstants.JOULES_TO_EV);
@@ -557,13 +557,20 @@ export class EnergyChartNode extends Node {
 
       const line = new Line(x1, y, x2, y, {
         stroke: isSelected ? QPPWColors.energyLevelSelectedProperty : QPPWColors.energyLevelProperty,
-        lineWidth: isSelected ? 3 : (isHovered ? 2 : 1),
+        lineWidth: isSelected ? 4 : (isHovered ? 3 : 2),
         cursor: "pointer",
         opacity: isHovered ? 1 : 0.7,
       });
 
-      // Add click handler
-      line.addInputListener({
+      // Create a wider invisible hit area to make the line easier to grab
+      const hitAreaHeight = 10; // pixels above and below the line
+      const hitArea = new Rectangle(x1, y - hitAreaHeight, x2 - x1, hitAreaHeight * 2, {
+        fill: "transparent",
+        cursor: "pointer",
+      });
+
+      // Add click handler to hit area
+      hitArea.addInputListener({
         down: () => {
           // Only set if index is within valid range
           if (index >= 0 && index < boundStates.energies.length) {
@@ -582,16 +589,18 @@ export class EnergyChartNode extends Node {
 
       this.energyLevelNodes.set(index, line);
       this.plotContentNode.addChild(line); // Add to clipped content
+      this.plotContentNode.addChild(hitArea); // Add hit area on top
 
       // Add energy label (outside clipped area for visibility)
-      // const label = new Text(`E${index + 1} = ${energy.toFixed(3)} eV`, {
-      //   font: "10px sans-serif",
-      //   fill: QPPWColors.labelFillProperty,
-      //   left: x2 + 5,
-      //   centerY: y,
-      // });
-      // this.energyLabelNodes.set(index, label);
-      // this.addChild(label);
+      const label = new Text(`E${index + 1} = ${energy.toFixed(3)} eV`, {
+        font: "10px sans-serif",
+        fill: QPPWColors.labelFillProperty,
+        left: x2 + 5,
+        centerY: y,
+        visible: isHovered, // Only show when hovering
+      });
+      this.energyLabelNodes.set(index, label);
+      this.addChild(label);
     });
 
     // Ensure total energy line and legend are on top

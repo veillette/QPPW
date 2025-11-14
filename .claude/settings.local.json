@@ -3,7 +3,10 @@
     "allow": [
       "Bash(npm run check:*)",
       "Bash(npm run lint)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(npm start)"
     ],
     "deny": [],
     "ask": []
