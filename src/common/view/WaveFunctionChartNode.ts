@@ -152,13 +152,13 @@ export class WaveFunctionChartNode extends Node {
     for (let pos = -X_AXIS_RANGE_NM; pos <= X_AXIS_RANGE_NM; pos += 2) {
       if (pos !== -X_AXIS_RANGE_NM) {
         const x = this.chartMargins.left + this.chartTransform.modelToViewX(pos);
-        const gridLineNode = new Line(
+        const gridLine = new Line(
           x, this.chartMargins.top,
           x, this.chartMargins.top + this.plotHeight, {
           stroke: QPPWColors.gridLineProperty,
           lineWidth: 1,
         });
-        axesNode.addChild(gridLineNode);
+        axesNode.addChild(gridLine);
       }
     }
 
@@ -214,13 +214,13 @@ export class WaveFunctionChartNode extends Node {
     axesNode.addChild(this.yAxisLabel);
 
     // X-axis label
-    const xLabelNode = new Text("Position (nm)", {
+    const xLabelText = new Text("Position (nm)", {
       font: new PhetFont(14),
       fill: QPPWColors.labelFillProperty,
       centerX: this.chartWidth / 2,
       centerY: this.chartHeight - 15,
     });
-    axesNode.addChild(xLabelNode);
+    axesNode.addChild(xLabelText);
 
     return axesNode;
   }
