@@ -3,12 +3,14 @@
  * This includes potential selection, display options, particle mass, and well parameters.
  */
 
-import { Node, Text, VBox, HBox, HSeparator } from "scenerystack/scenery";
+import { Node, Text, VBox, HBox, HSeparator, RichText } from "scenerystack/scenery";
 import { Panel, Checkbox, VerticalAquaRadioButtonGroup, ComboBox, HSlider } from "scenerystack/sun";
 import { Dimension2 } from "scenerystack/dot";
 import { OneWellModel } from "../../one-well/model/OneWellModel.js";
 import { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
 import { PotentialType } from "../model/PotentialFunction.js";
+import { SuperpositionType } from "../model/SuperpositionType.js";
+import { SuperpositionDialog } from "./SuperpositionDialog.js";
 import QPPWColors from "../../QPPWColors.js";
 import { PhetFont } from "scenerystack/scenery-phet";
 import stringManager from "../../i18n/StringManager.js";
@@ -182,17 +184,86 @@ export class ControlPanelNode extends Node {
       children: [potentialLabelText, potentialComboBox],
     });
 
-    // Note: Configure Potential and Superposition State buttons would open dialogs
-    // For now, we'll add placeholders
-    // const configurePotentialButton = new RectangularPushButton({
-    //   content: new Text("Configure Potential...", { font: new PhetFont(12) }),
-    //   listener: () => { /* Open dialog */ },
-    // });
+    // Superposition State dropdown
+    const superpositionItems: ComboBoxItem<SuperpositionType>[] = [
+      {
+        value: SuperpositionType.PSI_I_PSI_J,
+        createNode: () =>
+          new RichText(stringManager.psiIPsiJStringProperty, {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
+      },
+      {
+        value: SuperpositionType.PSI_K,
+        createNode: () =>
+          new RichText(stringManager.psiKStringProperty, {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
+      },
+      {
+        value: SuperpositionType.LOCALIZED_NARROW,
+        createNode: () =>
+          new Text(stringManager.localizedNarrowStringProperty, {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
+      },
+      {
+        value: SuperpositionType.LOCALIZED_WIDE,
+        createNode: () =>
+          new Text(stringManager.localizedWideStringProperty, {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
+      },
+      {
+        value: SuperpositionType.CUSTOM,
+        createNode: () =>
+          new Text(stringManager.customStringProperty, {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
+      },
+    ];
 
-    // const superpositionButton = new RectangularPushButton({
-    //   content: new Text("Superposition State...", { font: new PhetFont(12) }),
-    //   listener: () => { /* Open dialog */ },
-    // });
+    const superpositionComboBox = new ComboBox(
+      this.model.superpositionTypeProperty,
+      superpositionItems,
+      listBoxParent,
+      {
+        xMargin: 8,
+        yMargin: 6,
+        cornerRadius: 4,
+        buttonFill: QPPWColors.controlPanelBackgroundColorProperty,
+        buttonStroke: QPPWColors.controlPanelStrokeColorProperty,
+        listFill: QPPWColors.controlPanelBackgroundColorProperty,
+        listStroke: QPPWColors.controlPanelStrokeColorProperty,
+        highlightFill: QPPWColors.controlPanelStrokeColorProperty,
+      },
+    );
+
+    const superpositionLabelText = new Text(stringManager.superpositionStringProperty, {
+      font: new PhetFont(14),
+      fill: QPPWColors.textFillProperty,
+    });
+
+    const superpositionRowNode = new HBox({
+      spacing: 10,
+      children: [superpositionLabelText, superpositionComboBox],
+    });
+
+    // Open dialog when "Custom..." is selected
+    this.model.superpositionTypeProperty.link((type) => {
+      if (type === SuperpositionType.CUSTOM) {
+        const dialog = new SuperpositionDialog(
+          this.model.superpositionConfigProperty,
+          this.model.getBoundStates(),
+        );
+        dialog.show();
+      }
+    });
 
     return new VBox({
       spacing: 8,
@@ -200,8 +271,7 @@ export class ControlPanelNode extends Node {
       children: [
         titleText,
         potentialRowNode,
-        // configurePotentialButton,
-        // superpositionButton,
+        superpositionRowNode,
       ],
     });
   }

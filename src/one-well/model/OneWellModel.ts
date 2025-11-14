@@ -9,6 +9,7 @@ import { BaseModel } from "../../common/model/BaseModel.js";
 import Schrodinger1DSolver, { WellParameters, NumericalMethod } from "../../common/model/Schrodinger1DSolver.js";
 import { PotentialType, BoundStateResult } from "../../common/model/PotentialFunction.js";
 import QuantumConstants from "../../common/model/QuantumConstants.js";
+import { SuperpositionType, SuperpositionConfig } from "../../common/model/SuperpositionType.js";
 
 export type DisplayMode = "probabilityDensity" | "waveFunction" | "phaseColor";
 
@@ -38,6 +39,10 @@ export class OneWellModel extends BaseModel {
   // Chart visibility
   public readonly showTotalEnergyProperty: Property<boolean>;
   public readonly showPotentialEnergyProperty: Property<boolean>;
+
+  // Superposition state
+  public readonly superpositionTypeProperty: Property<SuperpositionType>;
+  public readonly superpositionConfigProperty: Property<SuperpositionConfig>;
 
   // Cached bound state results
   protected boundStateResult: BoundStateResult | null = null;
@@ -70,6 +75,14 @@ export class OneWellModel extends BaseModel {
     // Initialize chart visibility
     this.showTotalEnergyProperty = new Property<boolean>(true);
     this.showPotentialEnergyProperty = new Property<boolean>(true);
+
+    // Initialize superposition state
+    this.superpositionTypeProperty = new Property<SuperpositionType>(SuperpositionType.PSI_I_PSI_J);
+    this.superpositionConfigProperty = new Property<SuperpositionConfig>({
+      type: SuperpositionType.PSI_I_PSI_J,
+      amplitudes: [0.7, 0.7], // Default to equal superposition of first two states (normalized)
+      phases: [0, 0],
+    });
 
     // Recalculate bound states when parameters change
     const invalidateCache = () => {
@@ -121,6 +134,8 @@ export class OneWellModel extends BaseModel {
     this.showPhaseProperty.reset();
     this.showTotalEnergyProperty.reset();
     this.showPotentialEnergyProperty.reset();
+    this.superpositionTypeProperty.reset();
+    this.superpositionConfigProperty.reset();
   }
 
   /**
