@@ -176,11 +176,6 @@ export class ControlPanelNode extends Node {
    * Creates the Bottom Chart control group.
    */
   private createBottomChartGroup(): Node {
-    const titleText = new Text(stringManager.bottomChartStringProperty, {
-      font: new PhetFont({ size: 16, weight: "bold" }),
-      fill: QPPWColors.textFillProperty,
-    });
-
     // Display mode radio buttons
     const displayModeItems = [
       {
@@ -292,7 +287,6 @@ export class ControlPanelNode extends Node {
       spacing: 8,
       align: "left",
       children: [
-        titleText,
         displayLabel,
         displayModeRadioButtonGroup,
         waveFunctionViewsLabel,

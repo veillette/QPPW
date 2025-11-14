@@ -204,12 +204,12 @@ export class OneWellModel extends BaseModel {
       numStates = 30; // Use more states for other potentials (increased from 20)
     }
 
-    // Grid configuration with buffer on sides for finite potentials
-    // For centered potentials (infinite well, harmonic oscillator), use symmetric grid
-    const bufferFactor = 2.0; // Extra space on each side
+    // Grid configuration spans the full chart display range (-4 nm to +4 nm)
+    // This ensures wavefunctions are calculated across the entire visible area
+    const CHART_DISPLAY_RANGE_NM = 4; // Match the chart x-axis range
     const gridConfig = {
-      xMin: -wellWidth * (1 + bufferFactor) / 2,
-      xMax: wellWidth * (1 + bufferFactor) / 2,
+      xMin: -CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
+      xMax: CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
       numPoints: 1000, // Increased from 400 for smoother wavefunction rendering
     };
 

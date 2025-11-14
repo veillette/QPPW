@@ -80,7 +80,7 @@ export class WaveFunctionChartNode extends Node {
     // Create background using ChartRectangle
     this.backgroundRect = new ChartRectangle(this.chartTransform, {
       fill: QPPWColors.backgroundColorProperty,
-      stroke: QPPWColors.gridLineProperty,
+      stroke: null, // Remove border to avoid line appearing below energy chart
       lineWidth: 1,
     });
     this.backgroundRect.x = this.chartMargins.left;
@@ -147,6 +147,9 @@ export class WaveFunctionChartNode extends Node {
 
     // Initialize rectangle pool for phase color visualization (will be populated on first use)
     this.phaseColorStrips = [];
+
+    // Ensure axes are on top of the clipped plot content
+    this.axesNode.moveToFront();
 
     // Link to model properties
     this.linkToModel();

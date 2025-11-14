@@ -109,7 +109,7 @@ export class EnergyChartNode extends Node {
     // Create background using ChartRectangle
     this.backgroundRect = new ChartRectangle(this.chartTransform, {
       fill: QPPWColors.backgroundColorProperty,
-      stroke: QPPWColors.gridLineProperty,
+      stroke: null, // Remove border to avoid visual clutter
       lineWidth: 1,
     });
     this.backgroundRect.x = this.chartMargins.left;
@@ -315,7 +315,7 @@ export class EnergyChartNode extends Node {
     });
 
     const legendPanelNode = new Rectangle(0, 0, legendContentNode.width + 20, legendContentNode.height + 15, 5, 5, {
-      fill: "rgba(255, 255, 255, 0.85)",
+      fill: QPPWColors.panelFillProperty,
       stroke: QPPWColors.gridLineProperty,
       lineWidth: 1,
     });
@@ -608,6 +608,10 @@ export class EnergyChartNode extends Node {
     this.zeroLine.y1 = y;
     this.zeroLine.x2 = this.chartWidth - this.chartMargins.right;
     this.zeroLine.y2 = y;
+
+    // Hide zero line for Coulomb potentials to reduce clutter
+    const potentialType = this.model.potentialTypeProperty.value;
+    this.zeroLine.visible = potentialType !== PotentialType.COULOMB_1D && potentialType !== PotentialType.COULOMB_3D;
   }
 
   /**
