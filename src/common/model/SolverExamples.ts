@@ -23,8 +23,9 @@ export function exampleInfiniteWellAnalytical(): void {
   const mass = QuantumConstants.ELECTRON_MASS;
   const numStates = 5;
 
+  // Grid centered at x=0 for infinite well from -wellWidth/2 to +wellWidth/2
   const gridConfig = {
-    xMin: 0,
+    xMin: -wellWidth,
     xMax: wellWidth,
     numPoints: 100,
   };
@@ -62,11 +63,12 @@ export function exampleInfiniteWellDVR(): void {
   const mass = QuantumConstants.ELECTRON_MASS;
   const numStates = 5;
 
-  // Create potential function
+  // Create potential function (centered at x=0)
   const potential = Schrodinger1DSolver.createInfiniteWellPotential(wellWidth);
 
+  // Grid centered at x=0 for infinite well from -wellWidth/2 to +wellWidth/2
   const gridConfig = {
-    xMin: 0,
+    xMin: -wellWidth,
     xMax: wellWidth,
     numPoints: 100,
   };

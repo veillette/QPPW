@@ -20,7 +20,7 @@ import { PhetFont } from "scenerystack/scenery-phet";
 const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
 
 // Energy axis ranges depend on potential type
-// For potentials with V=0 at center (e.g., Harmonic Oscillator): -5 to 15 eV
+// For potentials with V=0 at center (e.g., Harmonic Oscillator, Infinite Well): -5 to 15 eV
 // For potentials with V=0 at infinity (e.g., Finite Well, Coulomb): -15 to 5 eV
 // For Asymmetric Triangle: -5 to 15 eV (special case with shifted potential)
 function getEnergyAxisRange(potentialType: PotentialType): { min: number; max: number } {
@@ -32,6 +32,8 @@ function getEnergyAxisRange(potentialType: PotentialType): { min: number; max: n
       // Special case: V=10eV at infinity, V=0 at x=0
       return { min: -5, max: 15 };
     case PotentialType.INFINITE_WELL:
+      // V=0 inside well (centered at x=0), V=∞ outside (displayed as 15 eV)
+      return { min: -5, max: 15 };
     case PotentialType.FINITE_WELL:
     case PotentialType.MORSE:
     case PotentialType.POSCHL_TELLER:
@@ -402,32 +404,29 @@ export class EnergyChartNode extends Node {
     const xCenter = ((xGrid[0] + xGrid[xGrid.length - 1]) / 2) * QuantumConstants.M_TO_NM;
 
     if (potentialType === PotentialType.INFINITE_WELL) {
-      // Draw square well centered at xCenter
-      const x1 = this.dataToViewX(xCenter - wellWidth / 2);
-      const x2 = this.dataToViewX(xCenter + wellWidth / 2);
-      const y1 = this.dataToViewY(0);
-      const yTop = this.chartMargins.top;
-      const yBottom = this.chartHeight - this.chartMargins.bottom;
+      // Draw square well centered at x=0 (xCenter should be 0)
+      // Well extends from -wellWidth/2 to +wellWidth/2
+      // V=0 inside, V=15 eV outside (representing infinity)
+      const x1 = this.dataToViewX(-wellWidth / 2);
+      const x2 = this.dataToViewX(wellWidth / 2);
+      const y0 = this.dataToViewY(0);
+      const y15 = this.dataToViewY(15); // Display infinity as 15 eV
 
-      // Left wall
-      shape.moveTo(x1, yBottom);
-      shape.lineTo(x1, yTop);
+      // Left region (x < -wellWidth/2): horizontal line at 15 eV
+      shape.moveTo(this.chartMargins.left, y15);
+      shape.lineTo(x1, y15);
 
-      // Top (outside well)
-      shape.moveTo(this.chartMargins.left, yTop);
-      shape.lineTo(x1, yTop);
+      // Left wall: vertical line from 15 eV down to 0 eV
+      shape.lineTo(x1, y0);
 
-      // Bottom (inside well)
-      shape.moveTo(x1, y1);
-      shape.lineTo(x2, y1);
+      // Bottom (inside well): horizontal line at 0 eV
+      shape.lineTo(x2, y0);
 
-      // Right wall
-      shape.moveTo(x2, yTop);
-      shape.lineTo(x2, yBottom);
+      // Right wall: vertical line from 0 eV up to 15 eV
+      shape.lineTo(x2, y15);
 
-      // Top right
-      shape.moveTo(x2, yTop);
-      shape.lineTo(this.chartWidth - this.chartMargins.right, yTop);
+      // Right region (x > wellWidth/2): horizontal line at 15 eV
+      shape.lineTo(this.chartWidth - this.chartMargins.right, y15);
     } else if (potentialType === PotentialType.FINITE_WELL) {
       // Draw finite square well centered at xCenter
       // Invert the Y-axis: use +wellDepth instead of -wellDepth to create a valley

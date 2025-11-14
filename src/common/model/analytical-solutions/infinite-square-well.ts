@@ -1,6 +1,7 @@
 /**
  * Analytical solution for an infinite square well (particle in a box).
- * V(x) = 0 for 0 < x < L, V(x) = ∞ otherwise
+ * V(x) = 0 for -L/2 < x < L/2, V(x) = ∞ otherwise
+ * The well is centered at x=0.
  */
 
 import QuantumConstants from "../QuantumConstants.js";
@@ -8,7 +9,8 @@ import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
 
 /**
  * Analytical solution for an infinite square well (particle in a box).
- * V(x) = 0 for 0 < x < L, V(x) = ∞ otherwise
+ * V(x) = 0 for -L/2 < x < L/2, V(x) = ∞ otherwise
+ * The well is centered at x=0.
  *
  * @param wellWidth - Width of the well (L) in meters
  * @param mass - Particle mass in kg
@@ -41,16 +43,19 @@ export function solveInfiniteWell(
     xGrid.push(gridConfig.xMin + i * dx);
   }
 
-  // Calculate wavefunctions: ψ_n(x) = sqrt(2/L) * sin(n * π * x / L)
+  // Calculate wavefunctions for centered well: ψ_n(x) = sqrt(2/L) * sin(n * π * (x + L/2) / L)
+  // Well extends from -L/2 to +L/2
   const wavefunctions: number[][] = [];
+  const halfWidth = L / 2;
   for (let n = 1; n <= numStates; n++) {
     const wavefunction: number[] = [];
     const normalization = Math.sqrt(2 / L);
 
     for (const x of xGrid) {
-      // Well is centered, so shift x coordinate
-      const xShifted = x - gridConfig.xMin;
-      if (xShifted >= 0 && xShifted <= L) {
+      // Check if x is inside the well [-L/2, L/2]
+      if (x >= -halfWidth && x <= halfWidth) {
+        // Shift coordinate to [0, L] range for standard sine formula
+        const xShifted = x + halfWidth;
         const value = normalization * Math.sin((n * Math.PI * xShifted) / L);
         wavefunction.push(value);
       } else {

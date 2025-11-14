@@ -323,6 +323,7 @@ export class Schrodinger1DSolver {
 
   /**
    * Create a potential function for an infinite square well.
+   * Centered at x=0, extending from -wellWidth/2 to +wellWidth/2.
    * @param wellWidth - Width of the well in meters
    * @param wellDepth - Depth of the well in Joules (0 inside, depth outside)
    * @returns Potential function V(x)
@@ -331,8 +332,9 @@ export class Schrodinger1DSolver {
     wellWidth: number,
     wellDepth = 1e100,
   ): PotentialFunction {
+    const halfWidth = wellWidth / 2;
     return (x: number) => {
-      if (x >= 0 && x <= wellWidth) {
+      if (x >= -halfWidth && x <= halfWidth) {
         return 0;
       } else {
         return wellDepth; // Very large value to approximate infinity
