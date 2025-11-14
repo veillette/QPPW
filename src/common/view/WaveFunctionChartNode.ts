@@ -10,6 +10,7 @@ import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
 import { ChartTransform, ChartRectangle, AxisLine, TickMarkSet, TickLabelSet } from "scenerystack/bamboo";
 import { OneWellModel } from "../../one-well/model/OneWellModel.js";
+import { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
 import { BoundStateResult } from "../model/PotentialFunction.js";
 import QuantumConstants from "../model/QuantumConstants.js";
 import QPPWColors from "../../QPPWColors.js";
@@ -19,7 +20,7 @@ import { PhetFont } from "scenerystack/scenery-phet";
 const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
 
 export class WaveFunctionChartNode extends Node {
-  private readonly model: OneWellModel;
+  private readonly model: OneWellModel | TwoWellsModel;
   private readonly chartWidth: number;
   private readonly chartHeight: number;
   private readonly chartMargins = { left: 60, right: 20, top: 10, bottom: 40 };
@@ -54,7 +55,7 @@ export class WaveFunctionChartNode extends Node {
   // Guard flag to prevent reentry during updates
   private isUpdating: boolean = false;
 
-  public constructor(model: OneWellModel, options?: { width?: number; height?: number }) {
+  public constructor(model: OneWellModel | TwoWellsModel, options?: { width?: number; height?: number }) {
     super();
 
     this.model = model;

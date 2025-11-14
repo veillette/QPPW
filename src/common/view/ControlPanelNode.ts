@@ -25,9 +25,14 @@ export interface ControlPanelNodeOptions {
   allowedPotentialTypes?: PotentialType[];
 }
 
+interface ResolvedControlPanelNodeOptions {
+  showParticleMass: boolean;
+  allowedPotentialTypes: PotentialType[] | undefined;
+}
+
 export class ControlPanelNode extends Node {
   private readonly model: OneWellModel | TwoWellsModel;
-  private readonly options: Required<ControlPanelNodeOptions>;
+  private readonly options: ResolvedControlPanelNodeOptions;
 
   public constructor(
     model: OneWellModel | TwoWellsModel,
