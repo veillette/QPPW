@@ -101,12 +101,12 @@ export class TwoWellsModel extends BaseModel {
     } else {
       // Quantum tunneling regime
       const hbar = 1.054571817e-34; // Reduced Planck constant (J·s)
-      const m = 9.10938356e-31; // Electron mass (kg)
+      const electronMass = 9.10938356e-31; // Electron mass (kg)
       const eV = 1.602176634e-19; // Electron volt in joules
 
       const V0 = barrierHeight * eV;
       const E = energy * eV;
-      const kappa = Math.sqrt((2 * m * (V0 - E)) / (hbar * hbar));
+      const kappa = Math.sqrt((2 * electronMass * (V0 - E)) / (hbar * hbar));
       const transmissionCoeff = Math.exp(-2 * kappa * barrierWidth);
 
       this.tunnelingProbabilityProperty.value = transmissionCoeff;

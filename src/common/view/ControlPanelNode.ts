@@ -122,7 +122,7 @@ export class ControlPanelNode extends Node {
       },
     ];
 
-    const potentialComboBox = new ComboBox(
+    const potentialComboBoxNode = new ComboBox(
       this.model.potentialTypeProperty,
       potentialItems,
       listBoxParent,
@@ -138,14 +138,14 @@ export class ControlPanelNode extends Node {
       },
     );
 
-    const potentialLabel = new Text(stringManager.potentialWellStringProperty, {
+    const potentialLabelNode = new Text(stringManager.potentialWellStringProperty, {
       font: new PhetFont(14),
       fill: QPPWColors.textFillProperty,
     });
 
-    const potentialRow = new HBox({
+    const potentialRowNode = new HBox({
       spacing: 10,
-      children: [potentialLabel, potentialComboBox],
+      children: [potentialLabelNode, potentialComboBoxNode],
     });
 
     // Note: Configure Potential and Superposition State buttons would open dialogs
@@ -165,7 +165,7 @@ export class ControlPanelNode extends Node {
       align: "left",
       children: [
         titleText,
-        potentialRow,
+        potentialRowNode,
         // configurePotentialButton,
         // superpositionButton,
       ],
@@ -201,7 +201,7 @@ export class ControlPanelNode extends Node {
       },
     ];
 
-    const displayModeGroup = new VerticalAquaRadioButtonGroup(
+    const displayModeGroupNode = new VerticalAquaRadioButtonGroup(
       this.model.displayModeProperty,
       displayModeItems,
       {
@@ -223,7 +223,7 @@ export class ControlPanelNode extends Node {
       fill: QPPWColors.textFillProperty,
     });
 
-    const realPartCheckbox = new Checkbox(
+    const realPartCheckboxNode = new Checkbox(
       this.model.showRealPartProperty,
       new Text(stringManager.realPartStringProperty, {
         font: new PhetFont(12),
@@ -232,7 +232,7 @@ export class ControlPanelNode extends Node {
       { boxWidth: 16 },
     );
 
-    const imaginaryPartCheckbox = new Checkbox(
+    const imaginaryPartCheckboxNode = new Checkbox(
       this.model.showImaginaryPartProperty,
       new Text(stringManager.imaginaryPartStringProperty, {
         font: new PhetFont(12),
@@ -241,7 +241,7 @@ export class ControlPanelNode extends Node {
       { boxWidth: 16 },
     );
 
-    const magnitudeCheckbox = new Checkbox(
+    const magnitudeCheckboxNode = new Checkbox(
       this.model.showMagnitudeProperty,
       new Text(stringManager.magnitudeStringProperty, {
         font: new PhetFont(12),
@@ -250,7 +250,7 @@ export class ControlPanelNode extends Node {
       { boxWidth: 16 },
     );
 
-    const phaseCheckbox = new Checkbox(
+    const phaseCheckboxNode = new Checkbox(
       this.model.showPhaseProperty,
       new Text(stringManager.phaseStringProperty, {
         font: new PhetFont(12),
@@ -263,10 +263,10 @@ export class ControlPanelNode extends Node {
       spacing: 6,
       align: "left",
       children: [
-        realPartCheckbox,
-        imaginaryPartCheckbox,
-        magnitudeCheckbox,
-        phaseCheckbox,
+        realPartCheckboxNode,
+        imaginaryPartCheckboxNode,
+        magnitudeCheckboxNode,
+        phaseCheckboxNode,
       ],
       leftMargin: 20,
     });
@@ -274,10 +274,10 @@ export class ControlPanelNode extends Node {
     // Enable/disable wave function views based on display mode
     this.model.displayModeProperty.link((mode) => {
       const enabled = mode === "waveFunction";
-      realPartCheckbox.enabled = enabled;
-      imaginaryPartCheckbox.enabled = enabled;
-      magnitudeCheckbox.enabled = enabled;
-      phaseCheckbox.enabled = enabled;
+      realPartCheckboxNode.enabled = enabled;
+      imaginaryPartCheckboxNode.enabled = enabled;
+      magnitudeCheckboxNode.enabled = enabled;
+      phaseCheckboxNode.enabled = enabled;
     });
 
     return new VBox({
@@ -286,7 +286,7 @@ export class ControlPanelNode extends Node {
       children: [
         titleText,
         displayLabel,
-        displayModeGroup,
+        displayModeGroupNode,
         waveFunctionViewsLabel,
         waveFunctionCheckboxes,
       ],
@@ -302,17 +302,17 @@ export class ControlPanelNode extends Node {
       fill: QPPWColors.textFillProperty,
     });
 
-    const massValueText = new Text("", {
+    const massValueTextNode = new Text("", {
       font: new PhetFont(14),
       fill: QPPWColors.textFillProperty,
     });
 
     // Update text when mass changes
     this.model.particleMassProperty.link((mass) => {
-      massValueText.string = `${mass.toFixed(2)} mₑ`;
+      massValueTextNode.string = `${mass.toFixed(2)} mₑ`;
     });
 
-    const massSlider = new HSlider(
+    const massSliderNode = new HSlider(
       this.model.particleMassProperty,
       this.model.particleMassProperty.range!,
       {
@@ -328,7 +328,7 @@ export class ControlPanelNode extends Node {
         titleText,
         new HBox({
           spacing: 10,
-          children: [massSlider, massValueText],
+          children: [massSliderNode, massValueTextNode],
         }),
       ],
     });
@@ -344,16 +344,16 @@ export class ControlPanelNode extends Node {
     });
 
     // Well Width slider
-    const widthValueText = new Text("", {
+    const widthValueTextNode = new Text("", {
       font: new PhetFont(12),
       fill: QPPWColors.textFillProperty,
     });
 
     this.model.wellWidthProperty.link((width) => {
-      widthValueText.string = `${width.toFixed(2)} nm`;
+      widthValueTextNode.string = `${width.toFixed(2)} nm`;
     });
 
-    const widthSlider = new HSlider(
+    const widthSliderNode = new HSlider(
       this.model.wellWidthProperty,
       this.model.wellWidthProperty.range!,
       {
@@ -372,22 +372,22 @@ export class ControlPanelNode extends Node {
         }),
         new HBox({
           spacing: 10,
-          children: [widthSlider, widthValueText],
+          children: [widthSliderNode, widthValueTextNode],
         }),
       ],
     });
 
     // Well Depth slider (only for finite wells)
-    const depthValueText = new Text("", {
+    const depthValueTextNode = new Text("", {
       font: new PhetFont(12),
       fill: QPPWColors.textFillProperty,
     });
 
     this.model.wellDepthProperty.link((depth) => {
-      depthValueText.string = `${depth.toFixed(2)} eV`;
+      depthValueTextNode.string = `${depth.toFixed(2)} eV`;
     });
 
-    const depthSlider = new HSlider(
+    const depthSliderNode = new HSlider(
       this.model.wellDepthProperty,
       this.model.wellDepthProperty.range!,
       {
@@ -406,7 +406,7 @@ export class ControlPanelNode extends Node {
         }),
         new HBox({
           spacing: 10,
-          children: [depthSlider, depthValueText],
+          children: [depthSliderNode, depthValueTextNode],
         }),
       ],
     });

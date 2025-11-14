@@ -205,8 +205,8 @@ export class OneWellModel extends BaseModel {
           // For Coulomb potentials, use coulombStrength parameter α = k*e²
           // where k = 1/(4πε₀) ≈ 8.9875517923e9 N·m²/C²
           // α ≈ 2.307e-28 J·m for electron charge
-          const k = 8.9875517923e9; // Coulomb's constant in N·m²/C²
-          potentialParams.coulombStrength = k * QuantumConstants.ELEMENTARY_CHARGE * QuantumConstants.ELEMENTARY_CHARGE;
+          const coulombConstant = 8.9875517923e9; // Coulomb's constant in N·m²/C²
+          potentialParams.coulombStrength = coulombConstant * QuantumConstants.ELEMENTARY_CHARGE * QuantumConstants.ELEMENTARY_CHARGE;
           break;
         }
         default:

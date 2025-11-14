@@ -152,13 +152,13 @@ export class EnergyChartNode extends Node {
     for (let energy = ENERGY_Y_AXIS_MIN_EV; energy <= ENERGY_Y_AXIS_MAX_EV; energy += 5) {
       if (energy !== ENERGY_Y_AXIS_MIN_EV) {
         const y = this.chartMargins.top + this.chartTransform.modelToViewY(energy);
-        const gridLine = new Line(
+        const gridLineNode = new Line(
           this.chartMargins.left, y,
           this.chartMargins.left + this.plotWidth, y, {
           stroke: QPPWColors.gridLineProperty,
           lineWidth: 1,
         });
-        axesNode.addChild(gridLine);
+        axesNode.addChild(gridLineNode);
       }
     }
 
@@ -166,97 +166,97 @@ export class EnergyChartNode extends Node {
     for (let pos = -X_AXIS_RANGE_NM; pos <= X_AXIS_RANGE_NM; pos += 2) {
       if (pos !== -X_AXIS_RANGE_NM) {
         const x = this.chartMargins.left + this.chartTransform.modelToViewX(pos);
-        const gridLine = new Line(
+        const gridLineNode = new Line(
           x, this.chartMargins.top,
           x, this.chartMargins.top + this.plotHeight, {
           stroke: QPPWColors.gridLineProperty,
           lineWidth: 1,
         });
-        axesNode.addChild(gridLine);
+        axesNode.addChild(gridLineNode);
       }
     }
 
     // Y-axis using bamboo AxisLine
-    const yAxis = new AxisLine(this.chartTransform, Orientation.VERTICAL, {
+    const yAxisNode = new AxisLine(this.chartTransform, Orientation.VERTICAL, {
       stroke: QPPWColors.axisProperty,
       lineWidth: 2,
     });
-    yAxis.x = this.chartMargins.left;
-    yAxis.y = this.chartMargins.top;
-    axesNode.addChild(yAxis);
+    yAxisNode.x = this.chartMargins.left;
+    yAxisNode.y = this.chartMargins.top;
+    axesNode.addChild(yAxisNode);
 
     // X-axis using bamboo AxisLine
-    const xAxis = new AxisLine(this.chartTransform, Orientation.HORIZONTAL, {
+    const xAxisNode = new AxisLine(this.chartTransform, Orientation.HORIZONTAL, {
       stroke: QPPWColors.axisProperty,
       lineWidth: 2,
     });
-    xAxis.x = this.chartMargins.left;
-    xAxis.y = this.chartMargins.top + this.plotHeight;
-    axesNode.addChild(xAxis);
+    xAxisNode.x = this.chartMargins.left;
+    xAxisNode.y = this.chartMargins.top + this.plotHeight;
+    axesNode.addChild(xAxisNode);
 
     // Y-axis tick marks using bamboo TickMarkSet
-    const yTickMarks = new TickMarkSet(this.chartTransform, Orientation.VERTICAL, 5, {
+    const yTickMarksNode = new TickMarkSet(this.chartTransform, Orientation.VERTICAL, 5, {
       edge: "min",
       extent: 8,
       stroke: QPPWColors.axisProperty,
       lineWidth: 1,
     });
-    yTickMarks.x = this.chartMargins.left;
-    yTickMarks.y = this.chartMargins.top;
-    axesNode.addChild(yTickMarks);
+    yTickMarksNode.x = this.chartMargins.left;
+    yTickMarksNode.y = this.chartMargins.top;
+    axesNode.addChild(yTickMarksNode);
 
     // X-axis tick marks using bamboo TickMarkSet
-    const xTickMarks = new TickMarkSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
+    const xTickMarksNode = new TickMarkSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
       edge: "min",
       extent: 8,
       stroke: QPPWColors.axisProperty,
       lineWidth: 1,
     });
-    xTickMarks.x = this.chartMargins.left;
-    xTickMarks.y = this.chartMargins.top + this.plotHeight;
-    axesNode.addChild(xTickMarks);
+    xTickMarksNode.x = this.chartMargins.left;
+    xTickMarksNode.y = this.chartMargins.top + this.plotHeight;
+    axesNode.addChild(xTickMarksNode);
 
     // Y-axis tick labels using bamboo TickLabelSet
-    const yTickLabels = new TickLabelSet(this.chartTransform, Orientation.VERTICAL, 5, {
+    const yTickLabelsNode = new TickLabelSet(this.chartTransform, Orientation.VERTICAL, 5, {
       edge: "min",
       createLabel: (value: number) => new Text(value.toFixed(0), {
         font: new PhetFont(12),
         fill: QPPWColors.labelFillProperty,
       }),
     });
-    yTickLabels.x = this.chartMargins.left;
-    yTickLabels.y = this.chartMargins.top;
-    axesNode.addChild(yTickLabels);
+    yTickLabelsNode.x = this.chartMargins.left;
+    yTickLabelsNode.y = this.chartMargins.top;
+    axesNode.addChild(yTickLabelsNode);
 
     // X-axis tick labels using bamboo TickLabelSet
-    const xTickLabels = new TickLabelSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
+    const xTickLabelsNode = new TickLabelSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
       edge: "min",
       createLabel: (value: number) => new Text(value.toFixed(0), {
         font: new PhetFont(12),
         fill: QPPWColors.labelFillProperty,
       }),
     });
-    xTickLabels.x = this.chartMargins.left;
-    xTickLabels.y = this.chartMargins.top + this.plotHeight;
-    axesNode.addChild(xTickLabels);
+    xTickLabelsNode.x = this.chartMargins.left;
+    xTickLabelsNode.y = this.chartMargins.top + this.plotHeight;
+    axesNode.addChild(xTickLabelsNode);
 
     // Axis labels
-    const yLabel = new Text("Energy (eV)", {
+    const yLabelNode = new Text("Energy (eV)", {
       font: new PhetFont(14),
       fill: QPPWColors.labelFillProperty,
       rotation: -Math.PI / 2,
       centerX: this.chartMargins.left - 40,
       centerY: this.chartHeight / 2,
     });
-    axesNode.addChild(yLabel);
+    axesNode.addChild(yLabelNode);
 
-    const xLabel = new Text("Position (nm)", {
+    const xLabelNode = new Text("Position (nm)", {
       font: new PhetFont(14),
       fill: QPPWColors.labelFillProperty,
       centerX: this.chartWidth / 2,
       centerY: this.chartHeight - 15,
     });
-    axesNode.addChild(xLabel);
+    axesNode.addChild(xLabelNode);
 
     return axesNode;
   }
@@ -265,7 +265,7 @@ export class EnergyChartNode extends Node {
    * Creates the legend for toggling visibility of elements.
    */
   private createLegend(): Node {
-    const legendContent = new VBox({
+    const legendContentNode = new VBox({
       spacing: 5,
       align: "left",
       children: [
@@ -284,20 +284,20 @@ export class EnergyChartNode extends Node {
       ],
     });
 
-    const legendPanel = new Rectangle(0, 0, legendContent.width + 20, legendContent.height + 15, 5, 5, {
+    const legendPanelNode = new Rectangle(0, 0, legendContentNode.width + 20, legendContentNode.height + 15, 5, 5, {
       fill: "rgba(255, 255, 255, 0.85)",
       stroke: QPPWColors.gridLineProperty,
       lineWidth: 1,
     });
 
     const legendNode = new Node({
-      children: [legendPanel, legendContent],
+      children: [legendPanelNode, legendContentNode],
       left: this.chartMargins.left + 10,
       top: this.chartMargins.top + 10,
     });
 
-    legendContent.left = 10;
-    legendContent.top = 8;
+    legendContentNode.left = 10;
+    legendContentNode.top = 8;
 
     return legendNode;
   }

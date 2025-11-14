@@ -152,56 +152,56 @@ export class WaveFunctionChartNode extends Node {
     for (let pos = -X_AXIS_RANGE_NM; pos <= X_AXIS_RANGE_NM; pos += 2) {
       if (pos !== -X_AXIS_RANGE_NM) {
         const x = this.chartMargins.left + this.chartTransform.modelToViewX(pos);
-        const gridLine = new Line(
+        const gridLineNode = new Line(
           x, this.chartMargins.top,
           x, this.chartMargins.top + this.plotHeight, {
           stroke: QPPWColors.gridLineProperty,
           lineWidth: 1,
         });
-        axesNode.addChild(gridLine);
+        axesNode.addChild(gridLineNode);
       }
     }
 
     // Y-axis using bamboo AxisLine
-    const yAxis = new AxisLine(this.chartTransform, Orientation.VERTICAL, {
+    const yAxisNode = new AxisLine(this.chartTransform, Orientation.VERTICAL, {
       stroke: QPPWColors.axisProperty,
       lineWidth: 2,
     });
-    yAxis.x = this.chartMargins.left;
-    yAxis.y = this.chartMargins.top;
-    axesNode.addChild(yAxis);
+    yAxisNode.x = this.chartMargins.left;
+    yAxisNode.y = this.chartMargins.top;
+    axesNode.addChild(yAxisNode);
 
     // X-axis using bamboo AxisLine
-    const xAxis = new AxisLine(this.chartTransform, Orientation.HORIZONTAL, {
+    const xAxisNode = new AxisLine(this.chartTransform, Orientation.HORIZONTAL, {
       stroke: QPPWColors.axisProperty,
       lineWidth: 2,
     });
-    xAxis.x = this.chartMargins.left;
-    xAxis.y = this.chartMargins.top + this.plotHeight;
-    axesNode.addChild(xAxis);
+    xAxisNode.x = this.chartMargins.left;
+    xAxisNode.y = this.chartMargins.top + this.plotHeight;
+    axesNode.addChild(xAxisNode);
 
     // X-axis tick marks using bamboo TickMarkSet
-    const xTickMarks = new TickMarkSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
+    const xTickMarksNode = new TickMarkSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
       edge: "min",
       extent: 8,
       stroke: QPPWColors.axisProperty,
       lineWidth: 1,
     });
-    xTickMarks.x = this.chartMargins.left;
-    xTickMarks.y = this.chartMargins.top + this.plotHeight;
-    axesNode.addChild(xTickMarks);
+    xTickMarksNode.x = this.chartMargins.left;
+    xTickMarksNode.y = this.chartMargins.top + this.plotHeight;
+    axesNode.addChild(xTickMarksNode);
 
     // X-axis tick labels using bamboo TickLabelSet
-    const xTickLabels = new TickLabelSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
+    const xTickLabelsNode = new TickLabelSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
       edge: "min",
       createLabel: (value: number) => new Text(value.toFixed(0), {
         font: new PhetFont(12),
         fill: QPPWColors.labelFillProperty,
       }),
     });
-    xTickLabels.x = this.chartMargins.left;
-    xTickLabels.y = this.chartMargins.top + this.plotHeight;
-    axesNode.addChild(xTickLabels);
+    xTickLabelsNode.x = this.chartMargins.left;
+    xTickLabelsNode.y = this.chartMargins.top + this.plotHeight;
+    axesNode.addChild(xTickLabelsNode);
 
     // Y-axis label (will be updated based on display mode)
     this.yAxisLabel = new Text("Probability Density", {
@@ -214,13 +214,13 @@ export class WaveFunctionChartNode extends Node {
     axesNode.addChild(this.yAxisLabel);
 
     // X-axis label
-    const xLabel = new Text("Position (nm)", {
+    const xLabelNode = new Text("Position (nm)", {
       font: new PhetFont(14),
       fill: QPPWColors.labelFillProperty,
       centerX: this.chartWidth / 2,
       centerY: this.chartHeight - 15,
     });
-    axesNode.addChild(xLabel);
+    axesNode.addChild(xLabelNode);
 
     return axesNode;
   }
