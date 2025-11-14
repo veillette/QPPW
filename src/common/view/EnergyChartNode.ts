@@ -18,8 +18,33 @@ import { PhetFont } from "scenerystack/scenery-phet";
 
 // Chart axis range constants
 const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
-const ENERGY_Y_AXIS_MIN_EV = -5; // Minimum energy in eV
-const ENERGY_Y_AXIS_MAX_EV = 15; // Maximum energy in eV
+
+// Energy axis ranges depend on potential type
+// For potentials with V=0 at center (e.g., Harmonic Oscillator): -5 to 15 eV
+// For potentials with V=0 at infinity (e.g., Finite Well, Coulomb): -15 to 5 eV
+// For Asymmetric Triangle: -5 to 15 eV (special case with shifted potential)
+function getEnergyAxisRange(potentialType: PotentialType): { min: number; max: number } {
+  switch (potentialType) {
+    case PotentialType.HARMONIC_OSCILLATOR:
+      // V=0 at center, grows outward
+      return { min: -5, max: 15 };
+    case PotentialType.ASYMMETRIC_TRIANGLE:
+      // Special case: V=10eV at infinity, V=0 at x=0
+      return { min: -5, max: 15 };
+    case PotentialType.INFINITE_WELL:
+    case PotentialType.FINITE_WELL:
+    case PotentialType.MORSE:
+    case PotentialType.POSCHL_TELLER:
+    case PotentialType.ROSEN_MORSE:
+    case PotentialType.ECKART:
+    case PotentialType.COULOMB_1D:
+    case PotentialType.COULOMB_3D:
+    case PotentialType.CUSTOM:
+    default:
+      // V=0 at infinity (wells with negative energy states)
+      return { min: -15, max: 5 };
+  }
+}
 
 export class EnergyChartNode extends Node {
   private readonly model: OneWellModel;
@@ -64,11 +89,12 @@ export class EnergyChartNode extends Node {
     this.plotWidth = this.chartWidth - this.chartMargins.left - this.chartMargins.right;
     this.plotHeight = this.chartHeight - this.chartMargins.top - this.chartMargins.bottom;
 
-    // Initialize view range with fixed values
+    // Initialize view range with values based on initial potential type
+    const initialEnergyRange = getEnergyAxisRange(model.potentialTypeProperty.value);
     this.xMinProperty = new NumberProperty(-X_AXIS_RANGE_NM);
     this.xMaxProperty = new NumberProperty(X_AXIS_RANGE_NM);
-    this.yMinProperty = new NumberProperty(ENERGY_Y_AXIS_MIN_EV);
-    this.yMaxProperty = new NumberProperty(ENERGY_Y_AXIS_MAX_EV);
+    this.yMinProperty = new NumberProperty(initialEnergyRange.min);
+    this.yMaxProperty = new NumberProperty(initialEnergyRange.max);
 
     // Create ChartTransform for model-to-view coordinate conversion
     this.chartTransform = new ChartTransform({
@@ -149,8 +175,10 @@ export class EnergyChartNode extends Node {
     const axesNode = new Node();
 
     // Manual Y-axis grid lines (GridLineSet causes hang)
-    for (let energy = ENERGY_Y_AXIS_MIN_EV; energy <= ENERGY_Y_AXIS_MAX_EV; energy += 5) {
-      if (energy !== ENERGY_Y_AXIS_MIN_EV) {
+    const yMin = this.yMinProperty.value;
+    const yMax = this.yMaxProperty.value;
+    for (let energy = yMin; energy <= yMax; energy += 5) {
+      if (energy !== yMin) {
         const y = this.chartMargins.top + this.chartTransform.modelToViewY(energy);
         const gridLine = new Line(
           this.chartMargins.left, y,
@@ -307,7 +335,10 @@ export class EnergyChartNode extends Node {
    */
   private linkToModel(): void {
     // Update when any parameter changes
-    this.model.potentialTypeProperty.link(() => this.update());
+    this.model.potentialTypeProperty.link(() => {
+      this.updateEnergyAxisRange();
+      this.update();
+    });
     this.model.wellWidthProperty.link(() => this.update());
     this.model.wellDepthProperty.link(() => this.update());
     this.model.wellOffsetProperty.link(() => this.update());
@@ -319,6 +350,25 @@ export class EnergyChartNode extends Node {
     this.model.showPotentialEnergyProperty.link((show) => {
       this.potentialPath.visible = show;
     });
+  }
+
+  /**
+   * Updates the energy axis range based on the current potential type.
+   */
+  private updateEnergyAxisRange(): void {
+    const energyRange = getEnergyAxisRange(this.model.potentialTypeProperty.value);
+    this.yMinProperty.value = energyRange.min;
+    this.yMaxProperty.value = energyRange.max;
+
+    // Update the chart transform with new Y range
+    this.chartTransform.setModelYRange(new Range(energyRange.min, energyRange.max));
+
+    // Recreate axes with new range
+    this.removeChild(this.axesNode);
+    this.axesNode = this.createAxes();
+    this.addChild(this.axesNode);
+    this.axesNode.moveToBack();
+    this.backgroundRect.moveToBack();
   }
 
   /**
@@ -414,6 +464,34 @@ export class EnergyChartNode extends Node {
           shape.lineTo(viewX, viewY);
         }
       }
+    } else if (potentialType === PotentialType.ASYMMETRIC_TRIANGLE) {
+      // Draw asymmetric triangle potential: V(∞) = 10 eV, V(0) = 0, V(a) = 10 eV
+      // V(x) = 10 eV for x < 0
+      // V(x) = 10 - ba + bx for 0 < x < a (linear ramp from 0 to 10 eV)
+      // V(x) = 10 eV for x > a
+      const centerX = xCenter;
+      const a = wellWidth; // well width in nm
+      const POTENTIAL_AT_INFINITY = 10; // eV
+
+      // Calculate slope b from wellDepth
+      // ba = wellDepth, so b = wellDepth / a
+      const b = wellDepth / a;
+
+      const y10eV = this.dataToViewY(POTENTIAL_AT_INFINITY);
+      const y0eV = this.dataToViewY(0);
+
+      // Left region (x < 0): horizontal line at 10 eV
+      shape.moveTo(this.chartMargins.left, y10eV);
+      shape.lineTo(this.dataToViewX(centerX - wellWidth / 2), y10eV);
+
+      // Triangle region (0 < x < a): linear ramp from 0 to 10 eV
+      const x0 = centerX - wellWidth / 2;
+      const xa = centerX + wellWidth / 2;
+      shape.lineTo(this.dataToViewX(x0), y0eV);
+      shape.lineTo(this.dataToViewX(xa), y10eV);
+
+      // Right region (x > a): horizontal line at 10 eV
+      shape.lineTo(this.chartWidth - this.chartMargins.right, y10eV);
     } else {
       // For other potential types, draw a placeholder
       const y0 = this.dataToViewY(0);
