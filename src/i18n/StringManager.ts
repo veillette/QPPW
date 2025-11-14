@@ -108,6 +108,18 @@ export class StringManager {
   public readonly twoWellsSummaryStringProperty: StringProperty;
   public readonly manyWellsSummaryStringProperty: StringProperty;
 
+  // Superposition strings
+  public readonly superpositionStringProperty: StringProperty;
+  public readonly psiIPsiJStringProperty: StringProperty;
+  public readonly psiKStringProperty: StringProperty;
+  public readonly localizedNarrowStringProperty: StringProperty;
+  public readonly localizedWideStringProperty: StringProperty;
+  public readonly customStringProperty: StringProperty;
+  public readonly configureSuperpositionStringProperty: StringProperty;
+  public readonly amplitudeStringProperty: StringProperty;
+  public readonly superpositionDialogTitleStringProperty: StringProperty;
+  public readonly closeStringProperty: StringProperty;
+
   public constructor() {
     // Initialize all string properties with English defaults
     this.titleStringProperty = new StringProperty("Quantum Physics: Potential Wells");
@@ -216,6 +228,18 @@ export class StringManager {
     this.oneWellSummaryStringProperty = new StringProperty("One Well screen shows a single quantum potential well with adjustable parameters.");
     this.twoWellsSummaryStringProperty = new StringProperty("Two Wells screen demonstrates quantum tunneling between two potential wells.");
     this.manyWellsSummaryStringProperty = new StringProperty("Many Wells screen demonstrates energy band formation in periodic potentials.");
+
+    // Superposition strings
+    this.superpositionStringProperty = new StringProperty("Superposition:");
+    this.psiIPsiJStringProperty = new StringProperty("ψₙ, ψₘ");
+    this.psiKStringProperty = new StringProperty("ψₖ");
+    this.localizedNarrowStringProperty = new StringProperty("Localized narrow");
+    this.localizedWideStringProperty = new StringProperty("Localized wide");
+    this.customStringProperty = new StringProperty("Custom...");
+    this.configureSuperpositionStringProperty = new StringProperty("Configure Superposition");
+    this.amplitudeStringProperty = new StringProperty("Amplitude");
+    this.superpositionDialogTitleStringProperty = new StringProperty("Superposition Configuration");
+    this.closeStringProperty = new StringProperty("Close");
   }
 
   /**
