@@ -18,6 +18,7 @@ export enum PotentialType {
   ASYMMETRIC_TRIANGLE = "asymmetricTriangle",
   COULOMB_1D = "coulomb1D",
   COULOMB_3D = "coulomb3D",
+  DOUBLE_SQUARE_WELL = "doubleSquareWell",
   CUSTOM = "custom",
 }
 

@@ -61,10 +61,10 @@ export class TwoWellsModel extends BaseModel {
     this.potentialTypeProperty = new Property<PotentialType>(PotentialType.INFINITE_WELL);
 
     // Initialize well parameters with default values
-    this.wellWidthProperty = new NumberProperty(1.0, { range: new Range(0.1, 6.0) }); // in nanometers (max 6 nm)
-    this.wellDepthProperty = new NumberProperty(5.0, { range: new Range(0.1, 15.0) }); // in eV (within energy graph bounds)
+    this.wellWidthProperty = new NumberProperty(1.0, { range: new Range(0.1, 3.0) }); // in nanometers (0.1-3 nm for double square well)
+    this.wellDepthProperty = new NumberProperty(5.0, { range: new Range(0.1, 15.0) }); // in eV (0.1-15 eV for double square well)
     this.wellOffsetProperty = new NumberProperty(0.5, { range: new Range(0.0, 1.0) }); // normalized position
-    this.wellSeparationProperty = new NumberProperty(5.0, { range: new Range(0.1, 10.0) }); // in nanometers
+    this.wellSeparationProperty = new NumberProperty(0.2, { range: new Range(0.05, 0.7) }); // in nanometers (0.05-0.7 nm for double square well)
 
     // Initialize barrier parameters
     this.barrierHeightProperty = new NumberProperty(3); // in eV
@@ -109,6 +109,7 @@ export class TwoWellsModel extends BaseModel {
     this.wellWidthProperty.link(invalidateCache);
     this.wellDepthProperty.link(invalidateCache);
     this.wellOffsetProperty.link(invalidateCache);
+    this.wellSeparationProperty.link(invalidateCache);
     this.particleMassProperty.link(invalidateCache);
   }
 
@@ -284,6 +285,12 @@ export class TwoWellsModel extends BaseModel {
           // α ≈ 2.307e-28 J·m for electron charge
           const coulombConstant = 8.9875517923e9; // Coulomb's constant in N·m²/C²
           potentialParams.coulombStrength = coulombConstant * QuantumConstants.ELEMENTARY_CHARGE * QuantumConstants.ELEMENTARY_CHARGE;
+          break;
+        }
+        case PotentialType.DOUBLE_SQUARE_WELL: {
+          // For double square well, we need width, depth, and separation
+          potentialParams.wellDepth = this.wellDepthProperty.value * QuantumConstants.EV_TO_JOULES;
+          potentialParams.wellSeparation = this.wellSeparationProperty.value * QuantumConstants.NM_TO_M;
           break;
         }
         default:

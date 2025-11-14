@@ -151,6 +151,14 @@ export class ControlPanelNode extends Node {
             fill: QPPWColors.textFillProperty,
           }),
       },
+      {
+        value: PotentialType.DOUBLE_SQUARE_WELL,
+        createNode: () =>
+          new Text(stringManager.doubleSquareWellStringProperty, {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
+      },
     ];
 
     // Filter potential types if specified in options
@@ -517,6 +525,46 @@ export class ControlPanelNode extends Node {
       ],
     });
 
+    // Well Separation slider (only for double square well)
+    const separationValueText = new Text("", {
+      font: new PhetFont(12),
+      fill: QPPWColors.textFillProperty,
+    });
+
+    // Check if the model has wellSeparationProperty (TwoWellsModel)
+    let separationRow: Node | null = null;
+    if ("wellSeparationProperty" in this.model) {
+      const twoWellsModel = this.model as any; // Type assertion for TwoWellsModel
+
+      twoWellsModel.wellSeparationProperty.link((separation: number) => {
+        separationValueText.string = `${separation.toFixed(2)} nm`;
+      });
+
+      const separationSlider = new HSlider(
+        twoWellsModel.wellSeparationProperty,
+        twoWellsModel.wellSeparationProperty.range!,
+        {
+          trackSize: new Dimension2(150, 4),
+          thumbSize: new Dimension2(15, 30),
+        },
+      );
+
+      separationRow = new VBox({
+        spacing: 4,
+        align: "left",
+        children: [
+          new Text(stringManager.wellSeparationStringProperty, {
+            font: new PhetFont(12),
+            fill: QPPWColors.textFillProperty,
+          }),
+          new HBox({
+            spacing: 10,
+            children: [separationSlider, separationValueText],
+          }),
+        ],
+      });
+    }
+
     // Enable/disable width slider based on potential type
     // Coulomb potentials have fixed spatial extent and don't use well width
     this.model.potentialTypeProperty.link((type) => {
@@ -531,14 +579,28 @@ export class ControlPanelNode extends Node {
       const needsDepth =
         type === PotentialType.FINITE_WELL ||
         type === PotentialType.HARMONIC_OSCILLATOR ||
-        type === PotentialType.ASYMMETRIC_TRIANGLE;
+        type === PotentialType.ASYMMETRIC_TRIANGLE ||
+        type === PotentialType.DOUBLE_SQUARE_WELL;
       depthRow.visible = needsDepth;
     });
+
+    // Enable/disable separation slider based on potential type (only for double square well)
+    if (separationRow) {
+      this.model.potentialTypeProperty.link((type) => {
+        const needsSeparation = type === PotentialType.DOUBLE_SQUARE_WELL;
+        separationRow!.visible = needsSeparation;
+      });
+    }
+
+    const children: Node[] = [titleText, widthRow, depthRow];
+    if (separationRow) {
+      children.push(separationRow);
+    }
 
     return new VBox({
       spacing: 10,
       align: "left",
-      children: [titleText, widthRow, depthRow],
+      children: children,
     });
   }
 }
