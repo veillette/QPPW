@@ -40,19 +40,19 @@ export function solveDVR(
   const N = numPoints;
 
   // Construct potential energy matrix V (diagonal)
-  const V = createDiagonalMatrix(N);
+  const potentialEnergyMatrix = createDiagonalMatrix(N);
   for (let i = 0; i < N; i++) {
-    V[i][i] = potential(xGrid[i]);
+    potentialEnergyMatrix[i][i] = potential(xGrid[i]);
   }
 
   // Construct kinetic energy matrix T using Colbert-Miller formula
-  const T = createKineticEnergyMatrix(N, dx, mass);
+  const kineticEnergyMatrix = createKineticEnergyMatrix(N, dx, mass);
 
   // Construct Hamiltonian H = T + V
-  const H = addMatrices(T, V);
+  const hamiltonianMatrix = addMatrices(kineticEnergyMatrix, potentialEnergyMatrix);
 
   // Diagonalize Hamiltonian to get eigenvalues (energies) and eigenvectors (wavefunctions)
-  const eigen = diagonalize(H);
+  const eigen = diagonalize(hamiltonianMatrix);
 
   // Sort eigenvalues and eigenvectors by energy
   const sortedIndices = eigen.eigenvalues

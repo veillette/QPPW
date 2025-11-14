@@ -50,7 +50,7 @@ export class ControlPanelNode extends Node {
       ],
     });
 
-    const panel = new Panel(content, {
+    const controlPanel = new Panel(content, {
       fill: QPPWColors.panelFillProperty,
       stroke: QPPWColors.panelStrokeProperty,
       xMargin: 15,
@@ -58,7 +58,7 @@ export class ControlPanelNode extends Node {
       cornerRadius: 5,
     });
 
-    this.addChild(panel);
+    this.addChild(controlPanel);
   }
 
   /**
@@ -138,14 +138,14 @@ export class ControlPanelNode extends Node {
       },
     );
 
-    const potentialLabel = new Text(stringManager.potentialWellStringProperty, {
+    const potentialLabelText = new Text(stringManager.potentialWellStringProperty, {
       font: new PhetFont(14),
       fill: QPPWColors.textFillProperty,
     });
 
-    const potentialRow = new HBox({
+    const potentialRowNode = new HBox({
       spacing: 10,
-      children: [potentialLabel, potentialComboBox],
+      children: [potentialLabelText, potentialComboBox],
     });
 
     // Note: Configure Potential and Superposition State buttons would open dialogs
@@ -165,7 +165,7 @@ export class ControlPanelNode extends Node {
       align: "left",
       children: [
         titleText,
-        potentialRow,
+        potentialRowNode,
         // configurePotentialButton,
         // superpositionButton,
       ],
@@ -201,7 +201,7 @@ export class ControlPanelNode extends Node {
       },
     ];
 
-    const displayModeGroup = new VerticalAquaRadioButtonGroup(
+    const displayModeRadioButtonGroup = new VerticalAquaRadioButtonGroup(
       this.model.displayModeProperty,
       displayModeItems,
       {
@@ -286,7 +286,7 @@ export class ControlPanelNode extends Node {
       children: [
         titleText,
         displayLabel,
-        displayModeGroup,
+        displayModeRadioButtonGroup,
         waveFunctionViewsLabel,
         waveFunctionCheckboxes,
       ],

@@ -51,11 +51,11 @@ export function solveFGH(
   }
 
   // Generate momentum space grid
-  const k = fftFreq(N, dx);
+  const waveNumberGrid = fftFreq(N, dx);
 
   // Kinetic energy in momentum space: T_k = ℏ²k²/(2m)
   const { HBAR } = QuantumConstants;
-  const T_k = k.map((ki) => (HBAR * HBAR * ki * ki) / (2 * mass));
+  const T_k = waveNumberGrid.map((waveNumber) => (HBAR * HBAR * waveNumber * waveNumber) / (2 * mass));
 
   // Potential energy in position space
   const V_x = xGrid.map(potential);
@@ -164,18 +164,18 @@ function buildFGHHamiltonian(N: number, T_k: number[], V_x: number[]): number[][
  * @returns Array of wave numbers k
  */
 function fftFreq(N: number, dx: number): number[] {
-  const k: number[] = [];
+  const waveNumberArray: number[] = [];
   const dk = (2 * Math.PI) / (N * dx);
 
   for (let i = 0; i < N; i++) {
     if (i < N / 2) {
-      k.push(i * dk);
+      waveNumberArray.push(i * dk);
     } else {
-      k.push((i - N) * dk);
+      waveNumberArray.push((i - N) * dk);
     }
   }
 
-  return k;
+  return waveNumberArray;
 }
 
 /**
@@ -210,16 +210,16 @@ function fft(x: Complex[]): Complex[] {
 
   // Combine
   const result: Complex[] = new Array(N);
-  for (let k = 0; k < N / 2; k++) {
-    const angle = (-2 * Math.PI * k) / N;
+  for (let frequencyIndex = 0; frequencyIndex < N / 2; frequencyIndex++) {
+    const angle = (-2 * Math.PI * frequencyIndex) / N;
     const twiddle: Complex = {
       real: Math.cos(angle),
       imag: Math.sin(angle),
     };
 
-    const temp = complexMultiply(twiddle, fftOdd[k]);
-    result[k] = complexAdd(fftEven[k], temp);
-    result[k + N / 2] = complexSubtract(fftEven[k], temp);
+    const temp = complexMultiply(twiddle, fftOdd[frequencyIndex]);
+    result[frequencyIndex] = complexAdd(fftEven[frequencyIndex], temp);
+    result[frequencyIndex + N / 2] = complexSubtract(fftEven[frequencyIndex], temp);
   }
 
   return result;
@@ -307,15 +307,15 @@ function diagonalize(matrix: number[][]): {
   for (let iter = 0; iter < maxIterations; iter++) {
     // Find largest off-diagonal element
     let maxVal = 0;
-    let p = 0;
-    let q = 1;
+    let rowIndex = 0;
+    let colIndex = 1;
 
     for (let i = 0; i < N; i++) {
       for (let j = i + 1; j < N; j++) {
         if (Math.abs(A[i][j]) > maxVal) {
           maxVal = Math.abs(A[i][j]);
-          p = i;
-          q = j;
+          rowIndex = i;
+          colIndex = j;
         }
       }
     }
@@ -326,37 +326,37 @@ function diagonalize(matrix: number[][]): {
     }
 
     // Calculate rotation angle
-    const theta = 0.5 * Math.atan2(2 * A[p][q], A[q][q] - A[p][p]);
-    const c = Math.cos(theta);
-    const s = Math.sin(theta);
+    const theta = 0.5 * Math.atan2(2 * A[rowIndex][colIndex], A[colIndex][colIndex] - A[rowIndex][rowIndex]);
+    const cosineTheta = Math.cos(theta);
+    const sineTheta = Math.sin(theta);
 
     // Apply Jacobi rotation
-    const App = c * c * A[p][p] - 2 * s * c * A[p][q] + s * s * A[q][q];
-    const Aqq = s * s * A[p][p] + 2 * s * c * A[p][q] + c * c * A[q][q];
+    const App = cosineTheta * cosineTheta * A[rowIndex][rowIndex] - 2 * sineTheta * cosineTheta * A[rowIndex][colIndex] + sineTheta * sineTheta * A[colIndex][colIndex];
+    const Aqq = sineTheta * sineTheta * A[rowIndex][rowIndex] + 2 * sineTheta * cosineTheta * A[rowIndex][colIndex] + cosineTheta * cosineTheta * A[colIndex][colIndex];
     const Apq = 0;
 
-    A[p][p] = App;
-    A[q][q] = Aqq;
-    A[p][q] = Apq;
-    A[q][p] = Apq;
+    A[rowIndex][rowIndex] = App;
+    A[colIndex][colIndex] = Aqq;
+    A[rowIndex][colIndex] = Apq;
+    A[colIndex][rowIndex] = Apq;
 
     for (let i = 0; i < N; i++) {
-      if (i !== p && i !== q) {
-        const Aip = c * A[i][p] - s * A[i][q];
-        const Aiq = s * A[i][p] + c * A[i][q];
-        A[i][p] = Aip;
-        A[p][i] = Aip;
-        A[i][q] = Aiq;
-        A[q][i] = Aiq;
+      if (i !== rowIndex && i !== colIndex) {
+        const Aip = cosineTheta * A[i][rowIndex] - sineTheta * A[i][colIndex];
+        const Aiq = sineTheta * A[i][rowIndex] + cosineTheta * A[i][colIndex];
+        A[i][rowIndex] = Aip;
+        A[rowIndex][i] = Aip;
+        A[i][colIndex] = Aiq;
+        A[colIndex][i] = Aiq;
       }
     }
 
     // Apply rotation to eigenvectors
     for (let i = 0; i < N; i++) {
-      const Vip = c * V[i][p] - s * V[i][q];
-      const Viq = s * V[i][p] + c * V[i][q];
-      V[i][p] = Vip;
-      V[i][q] = Viq;
+      const Vip = cosineTheta * V[i][rowIndex] - sineTheta * V[i][colIndex];
+      const Viq = sineTheta * V[i][rowIndex] + cosineTheta * V[i][colIndex];
+      V[i][rowIndex] = Vip;
+      V[i][colIndex] = Viq;
     }
   }
 

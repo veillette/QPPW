@@ -40,20 +40,20 @@ export function solveSpectral(
   }
 
   // Map to physical domain [xMin, xMax]
-  const a = xMin;
-  const b = xMax;
-  const xGrid = xiGrid.map((xi) => ((b - a) * xi + (b + a)) / 2);
+  const domainMin = xMin;
+  const domainMax = xMax;
+  const xGrid = xiGrid.map((xi) => ((domainMax - domainMin) * xi + (domainMax + domainMin)) / 2);
 
   // Chebyshev differentiation matrix in [-1, 1]
-  const D_xi = chebyshevDifferentiationMatrix(N);
+  const chebyshevDiffMatrix = chebyshevDifferentiationMatrix(N);
 
   // Scale for physical domain: d/dx = (2/(b-a)) * d/dξ
   // Second derivative: d²/dx² = (2/(b-a))² * d²/dξ²
-  const scale = 2 / (b - a);
-  const D2_x = matrixMultiply(D_xi, D_xi);
+  const domainScalingFactor = 2 / (domainMax - domainMin);
+  const secondDerivativeMatrix = matrixMultiply(chebyshevDiffMatrix, chebyshevDiffMatrix);
   for (let i = 0; i < N; i++) {
     for (let j = 0; j < N; j++) {
-      D2_x[i][j] *= scale * scale;
+      secondDerivativeMatrix[i][j] *= domainScalingFactor * domainScalingFactor;
     }
   }
 
@@ -62,22 +62,22 @@ export function solveSpectral(
   const { HBAR } = QuantumConstants;
   const kineticPrefactor = -(HBAR * HBAR) / (2 * mass);
 
-  const H: number[][] = [];
+  const hamiltonianMatrix: number[][] = [];
   for (let i = 0; i < N; i++) {
-    H[i] = [];
+    hamiltonianMatrix[i] = [];
     for (let j = 0; j < N; j++) {
-      H[i][j] = kineticPrefactor * D2_x[i][j];
+      hamiltonianMatrix[i][j] = kineticPrefactor * secondDerivativeMatrix[i][j];
     }
   }
 
   // Add potential energy (diagonal)
   for (let i = 0; i < N; i++) {
-    H[i][i] += potential(xGrid[i]);
+    hamiltonianMatrix[i][i] += potential(xGrid[i]);
   }
 
   // Apply boundary conditions: ψ(xMin) = ψ(xMax) = 0
   // Remove first and last rows/columns
-  const H_interior = extractInteriorMatrix(H);
+  const H_interior = extractInteriorMatrix(hamiltonianMatrix);
 
   // Diagonalize interior Hamiltonian
   const eigen = diagonalize(H_interior);

@@ -100,17 +100,17 @@ export class ManyWellsModel extends BaseModel {
    */
   public getEnergyBand(bandIndex: number, k: number): number {
     const hbar = 1.054571817e-34; // Reduced Planck constant (J·s)
-    const m = 9.10938356e-31; // Electron mass (kg)
-    const a = this.latticeConstantProperty.value * 1e-9; // Lattice constant in meters
+    const electronMass = 9.10938356e-31; // Electron mass (kg)
+    const latticeConstantMeters = this.latticeConstantProperty.value * 1e-9; // Lattice constant in meters
     const eV = 1.602176634e-19; // Electron volt in joules
 
     // Simplified dispersion relation for a periodic potential
     // E(k) = E_0 + (hbar^2 * k^2) / (2m) + V_0 * cos(k * a)
     const E0 = (bandIndex + 1) * 2; // Base energy for this band
     const kineticEnergy =
-      (hbar * hbar * k * k) / (2 * m * eV);
+      (hbar * hbar * k * k) / (2 * electronMass * eV);
     const periodicTerm =
-      (this.wellDepthProperty.value / 4) * Math.cos(k * a);
+      (this.wellDepthProperty.value / 4) * Math.cos(k * latticeConstantMeters);
 
     return E0 + kineticEnergy + periodicTerm;
   }
