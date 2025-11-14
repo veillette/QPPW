@@ -29,6 +29,7 @@ import { solveNumerov } from "./NumerovSolver.js";
 import { solveDVR } from "./DVRSolver.js";
 import { solveFGH } from "./FGHSolver.js";
 import { solveSpectral } from "./SpectralSolver.js";
+import { solveDoubleWellNumerov } from "./DoubleWellNumerovSolver.js";
 import QuantumConstants from "./QuantumConstants.js";
 import qppw from "../../QPPWNamespace.js";
 
@@ -260,7 +261,20 @@ export class Schrodinger1DSolver {
           wellParams.wellDepth !== undefined &&
           wellParams.wellSeparation !== undefined
         ) {
-          // Create the double square well potential function
+          // Use specialized double well solver for Numerov method
+          // This provides much better energy search by using single well approximation
+          if (this.numericalMethod === NumericalMethod.NUMEROV) {
+            return solveDoubleWellNumerov(
+              wellParams.wellWidth,
+              wellParams.wellDepth,
+              wellParams.wellSeparation,
+              mass,
+              numStates,
+              gridConfig,
+            );
+          }
+
+          // For other methods (DVR, FGH, Spectral), use generic potential
           const wellWidth = wellParams.wellWidth;
           const wellDepth = wellParams.wellDepth;
           const separation = wellParams.wellSeparation;
