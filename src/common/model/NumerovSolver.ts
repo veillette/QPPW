@@ -137,12 +137,13 @@ export function integrateNumerov(
 }
 
 /**
- * Integrate from boundaries inward for symmetric double well potentials.
- * Uses Numerov method with proper boundary conditions to avoid exponential growth.
+ * Integrate for symmetric double well potentials using standard shooting method.
+ * For symmetric potentials, use parity to integrate only half the domain.
  *
- * Key insight: For double wells, integrating from the center (in the barrier)
- * outward causes exponential growth. Instead, integrate from the boundaries
- * (where ψ=0) inward to the center, then match using parity conditions.
+ * Due to symmetry, we can integrate from x=0 to x_max and use parity to fill the left half.
+ * - Symmetric states: ψ(-x) = ψ(x), so ψ'(0) = 0
+ * - Antisymmetric states: ψ(-x) = -ψ(x), so ψ(0) = 0
+ * - Shooting parameter: ψ(x_max) should be zero for bound states
  *
  * @param E - Energy eigenvalue
  * @param V - Potential array
@@ -181,30 +182,35 @@ export function integrateNumerovFromCenter(
   // Calculate f_j = (h²/12) * k²(x_j)
   const f = k2.map((k) => (dx * dx / 12) * k);
 
-  // NEW APPROACH: Integrate from RIGHT boundary inward to center
-  // Boundary condition: ψ(x_max) = 0, ψ(x_max - dx) = small value  // Use a larger initial value to avoid numerical issues with tiny numbers
-  psi[N - 1] = 0;
-  psi[N - 2] = 1e-3; // Small but not too tiny
+  // Initial conditions at x=0 based on parity
+  // Start with two small values to define the slope
+  if (parity === "symmetric") {
+    // Symmetric: ψ'(0) = 0, so ψ starts flat
+    psi[centerIdx] = 1.0;
+    psi[centerIdx + 1] = 1.0; // Flat start (zero derivative)
+  } else {
+    // Antisymmetric: ψ(0) = 0, ψ'(0) ≠ 0
+    psi[centerIdx] = 0.0;
+    psi[centerIdx + 1] = dx; // Linear start from zero
+  }
 
-  // Integrate leftward from right boundary to center
-  for (let j = N - 2; j > centerIdx; j--) {
-    const numerator = (12 - 10 * f[j]) * psi[j] - (1 + f[j + 1]) * psi[j + 1];
-    const denominator = 1 + f[j - 1];
-    psi[j - 1] = numerator / denominator;
+  // Integrate from center (x=0) to right boundary (x_max)
+  for (let j = centerIdx + 1; j < N - 1; j++) {
+    const numerator = (12 - 10 * f[j]) * psi[j] - (1 + f[j - 1]) * psi[j - 1];
+    const denominator = 1 + f[j + 1];
+    psi[j + 1] = numerator / denominator;
 
-    // Check for divergence - but be more lenient
-    if (!isFinite(psi[j - 1]) || Math.abs(psi[j - 1]) > 1e15) {
-      // Mark as divergent
-      for (let k = 0; k <= j - 1; k++) {
-        psi[k] = psi[j - 1];
+    // Stop on catastrophic numerical failure
+    if (!isFinite(psi[j + 1])) {
+      for (let k = j + 1; k < N; k++) {
+        psi[k] = 1e100;
       }
-      return psi;
+      break;
     }
   }
 
-  // Now use parity to fill the left half
+  // Use parity to fill left half
   if (parity === "symmetric") {
-    // Symmetric: ψ(-x) = ψ(x)
     for (let i = 0; i < centerIdx; i++) {
       const mirrorIdx = 2 * centerIdx - i;
       if (mirrorIdx < N) {
@@ -212,7 +218,6 @@ export function integrateNumerovFromCenter(
       }
     }
   } else {
-    // Antisymmetric: ψ(-x) = -ψ(x)
     for (let i = 0; i < centerIdx; i++) {
       const mirrorIdx = 2 * centerIdx - i;
       if (mirrorIdx < N) {

@@ -386,35 +386,13 @@ function findEnergyNearEstimate(
   let prevEnergy = energyMin;
   let signChangesFound = 0;
 
-  // Find center index
-  let centerIdx = Math.floor(xGrid.length / 2);
-  let minDist = Math.abs(xGrid[centerIdx]);
-  for (let i = 0; i < xGrid.length; i++) {
-    const dist = Math.abs(xGrid[i]);
-    if (dist < minDist) {
-      minDist = dist;
-      centerIdx = i;
-    }
-  }
-
   for (let i = 0; i <= numScanPoints; i++) {
     const E = energyMin + i * scanStep;
     const psi = integrateNumerovFromCenter(E, V, xGrid, dx, mass, parity);
 
-    // For symmetric states: check ψ'(0) by estimating derivative at center
-    // For antisymmetric states: check ψ(0)
-    let shootingValue: number;
-    if (parity === "symmetric") {
-      // Check derivative at center: ψ'(0) ≈ [ψ(dx) - ψ(-dx)] / (2dx)
-      // For perfect symmetry, this should be zero
-      const psiRight = centerIdx + 1 < xGrid.length ? psi[centerIdx + 1] : psi[centerIdx];
-      const psiLeft = centerIdx - 1 >= 0 ? psi[centerIdx - 1] : psi[centerIdx];
-      shootingValue = (psiRight - psiLeft) / (2 * dx);
-    } else {
-      // Check value at center: ψ(0) should be zero for antisymmetric
-      shootingValue = psi[centerIdx];
-    }
-
+    // Shooting parameter: wavefunction value at right boundary
+    // For a bound state, this should be zero
+    const shootingValue = psi[xGrid.length - 1];
     const currentSign = Math.sign(shootingValue);
 
     // Detect sign change
@@ -463,28 +441,10 @@ function refineEnergy(
   let Elow = E1;
   let Ehigh = E2;
 
-  // Find center index
-  let centerIdx = Math.floor(N / 2);
-  let minDist = Math.abs(xGrid[centerIdx]);
-  for (let i = 0; i < N; i++) {
-    const dist = Math.abs(xGrid[i]);
-    if (dist < minDist) {
-      minDist = dist;
-      centerIdx = i;
-    }
-  }
-
   // Helper function to compute shooting parameter
+  // For bound states, the wavefunction should vanish at the boundaries
   const getShootingValue = (psi: number[]): number => {
-    if (parity === "symmetric") {
-      // Check derivative at center
-      const psiRight = centerIdx + 1 < N ? psi[centerIdx + 1] : psi[centerIdx];
-      const psiLeft = centerIdx - 1 >= 0 ? psi[centerIdx - 1] : psi[centerIdx];
-      return (psiRight - psiLeft) / (2 * dx);
-    } else {
-      // Check value at center
-      return psi[centerIdx];
-    }
+    return psi[N - 1]; // Value at right boundary
   };
 
   let iterations = 0;
