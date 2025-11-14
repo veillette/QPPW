@@ -3,8 +3,9 @@
  */
 
 import { Node, Text, VBox, HBox, RichText } from "scenerystack/scenery";
-import { Dialog, HSlider, RectangularPushButton } from "scenerystack/sun";
-import { Dimension2 } from "scenerystack/dot";
+import { HSlider, RectangularPushButton } from "scenerystack/sun";
+import { Dialog } from "scenerystack/sim";
+import { Dimension2, Range } from "scenerystack/dot";
 import { Property, NumberProperty } from "scenerystack/axon";
 import { PhetFont } from "scenerystack/scenery-phet";
 import QPPWColors from "../../QPPWColors.js";
@@ -16,12 +17,29 @@ export class SuperpositionDialog {
   private readonly dialog: Dialog;
   private readonly configProperty: Property<SuperpositionConfig>;
   private readonly amplitudeProperties: NumberProperty[];
+  private readonly originalConfig: SuperpositionConfig;
+  private readonly onOK: () => void;
+  private readonly onCancel: () => void;
 
   public constructor(
     configProperty: Property<SuperpositionConfig>,
     boundStateResult: BoundStateResult | null,
+    onOK: () => void,
+    onCancel: () => void,
   ) {
-    const content = SuperpositionDialog.createContent(configProperty, boundStateResult);
+    // Store the original config to revert if cancelled
+    this.originalConfig = {
+      type: configProperty.value.type,
+      amplitudes: [...configProperty.value.amplitudes],
+      phases: [...configProperty.value.phases],
+    };
+
+    this.configProperty = configProperty;
+    this.amplitudeProperties = [];
+    this.onOK = onOK;
+    this.onCancel = onCancel;
+
+    const content = this.createContent(configProperty, boundStateResult);
 
     this.dialog = new Dialog(content, {
       xSpacing: 20,
@@ -30,10 +48,10 @@ export class SuperpositionDialog {
       fill: QPPWColors.panelFillProperty,
       stroke: QPPWColors.panelStrokeProperty,
       closeButtonColor: QPPWColors.textFillProperty,
+      closeButtonListener: () => {
+        this.handleCancel();
+      },
     });
-
-    this.configProperty = configProperty;
-    this.amplitudeProperties = [];
   }
 
   /**
@@ -51,9 +69,27 @@ export class SuperpositionDialog {
   }
 
   /**
+   * Handles OK button press - confirms the changes and closes the dialog.
+   */
+  private handleOK(): void {
+    this.dialog.hide();
+    this.onOK();
+  }
+
+  /**
+   * Handles Cancel button press or close button - reverts changes and closes the dialog.
+   */
+  private handleCancel(): void {
+    // Revert to original config
+    this.configProperty.value = this.originalConfig;
+    this.dialog.hide();
+    this.onCancel();
+  }
+
+  /**
    * Creates the content for the dialog.
    */
-  private static createContent(
+  private createContent(
     configProperty: Property<SuperpositionConfig>,
     boundStateResult: BoundStateResult | null,
   ): Node {
@@ -77,24 +113,22 @@ export class SuperpositionDialog {
 
     // Create sliders for each amplitude
     const sliderNodes: Node[] = [];
-    const amplitudeProperties: NumberProperty[] = [];
 
     for (let i = 0; i < numStates; i++) {
       const amplitude = config.amplitudes[i] || 0;
       const amplitudeProperty = new NumberProperty(amplitude, {
-        range: { min: 0, max: 1 },
+        range: new Range(0, 1),
       });
-      amplitudeProperties.push(amplitudeProperty);
+      this.amplitudeProperties.push(amplitudeProperty);
 
       const stateLabel = new RichText(`ψ<sub>${i}</sub>:`, {
         font: new PhetFont(14),
         fill: QPPWColors.textFillProperty,
       });
 
-      const valueText = new Text("", {
+      const valueText = new Text("0.00", {
         font: new PhetFont(12),
         fill: QPPWColors.textFillProperty,
-        minWidth: 40,
       });
 
       amplitudeProperty.link((value) => {
@@ -116,7 +150,7 @@ export class SuperpositionDialog {
 
     // Update config when amplitudes change
     const updateConfig = () => {
-      const amplitudes = amplitudeProperties.map((prop) => prop.value);
+      const amplitudes = this.amplitudeProperties.map((prop) => prop.value);
       const phases = config.phases.slice(0, numStates);
 
       // Extend phases array if needed
@@ -131,7 +165,7 @@ export class SuperpositionDialog {
       };
     };
 
-    amplitudeProperties.forEach((prop) => {
+    this.amplitudeProperties.forEach((prop) => {
       prop.link(updateConfig);
     });
 
@@ -148,7 +182,7 @@ export class SuperpositionDialog {
     });
 
     const updateNormalization = () => {
-      const sumSquared = amplitudeProperties.reduce((sum, prop) => sum + prop.value * prop.value, 0);
+      const sumSquared = this.amplitudeProperties.reduce((sum, prop) => sum + prop.value * prop.value, 0);
       normalizationText.string = `Sum of |cᵢ|² = ${sumSquared.toFixed(3)}`;
 
       // Change color if not normalized
@@ -159,7 +193,7 @@ export class SuperpositionDialog {
       }
     };
 
-    amplitudeProperties.forEach((prop) => {
+    this.amplitudeProperties.forEach((prop) => {
       prop.link(updateNormalization);
     });
 
@@ -170,11 +204,11 @@ export class SuperpositionDialog {
         fill: QPPWColors.textFillProperty,
       }),
       listener: () => {
-        const sumSquared = amplitudeProperties.reduce((sum, prop) => sum + prop.value * prop.value, 0);
+        const sumSquared = this.amplitudeProperties.reduce((sum, prop) => sum + prop.value * prop.value, 0);
         const normFactor = Math.sqrt(sumSquared);
 
         if (normFactor > 0) {
-          amplitudeProperties.forEach((prop) => {
+          this.amplitudeProperties.forEach((prop) => {
             prop.value = prop.value / normFactor;
           });
         }
@@ -187,10 +221,41 @@ export class SuperpositionDialog {
       children: [normalizationText, normalizeButton],
     });
 
+    // OK and Cancel buttons
+    const okButton = new RectangularPushButton({
+      content: new Text("OK", {
+        font: new PhetFont({ size: 14, weight: "bold" }),
+        fill: QPPWColors.textFillProperty,
+      }),
+      listener: () => {
+        this.handleOK();
+      },
+      baseColor: QPPWColors.controlPanelBackgroundColorProperty,
+      minWidth: 80,
+    });
+
+    const cancelButton = new RectangularPushButton({
+      content: new Text("Cancel", {
+        font: new PhetFont(14),
+        fill: QPPWColors.textFillProperty,
+      }),
+      listener: () => {
+        this.handleCancel();
+      },
+      baseColor: QPPWColors.controlPanelBackgroundColorProperty,
+      minWidth: 80,
+    });
+
+    const buttonRow = new HBox({
+      spacing: 15,
+      children: [okButton, cancelButton],
+      align: "center",
+    });
+
     return new VBox({
       spacing: 15,
       align: "left",
-      children: [titleText, descriptionText, slidersVBox, normalizationRow],
+      children: [titleText, descriptionText, slidersVBox, normalizationRow, buttonRow],
     });
   }
 }

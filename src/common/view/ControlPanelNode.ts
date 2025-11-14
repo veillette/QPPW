@@ -262,14 +262,38 @@ export class ControlPanelNode extends Node {
       children: [superpositionLabelText, superpositionComboBox],
     });
 
+    // Track the previous superposition type to revert if dialog is cancelled
+    let previousSuperpositionType: SuperpositionType = this.model.superpositionTypeProperty.value;
+    let isHandlingDialogResult = false;
+
     // Open dialog when "Custom..." is selected
     this.model.superpositionTypeProperty.link((type) => {
+      // Skip if we're handling dialog result to avoid recursion
+      if (isHandlingDialogResult) {
+        return;
+      }
+
       if (type === SuperpositionType.CUSTOM) {
         const dialog = new SuperpositionDialog(
           this.model.superpositionConfigProperty,
           this.model.getBoundStates(),
+          () => {
+            // OK button pressed - keep CUSTOM selection
+            isHandlingDialogResult = true;
+            previousSuperpositionType = SuperpositionType.CUSTOM;
+            isHandlingDialogResult = false;
+          },
+          () => {
+            // Cancel button pressed - revert to previous selection
+            isHandlingDialogResult = true;
+            this.model.superpositionTypeProperty.value = previousSuperpositionType;
+            isHandlingDialogResult = false;
+          },
         );
         dialog.show();
+      } else {
+        // Update previous type when user selects a non-CUSTOM option
+        previousSuperpositionType = type;
       }
     });
 
