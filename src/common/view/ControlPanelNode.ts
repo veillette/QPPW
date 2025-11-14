@@ -558,7 +558,7 @@ export class ControlPanelNode extends Node {
     // Check if the model has wellSeparationProperty (TwoWellsModel)
     let separationRow: Node | null = null;
     if ("wellSeparationProperty" in this.model) {
-      const twoWellsModel = this.model as any; // Type assertion for TwoWellsModel
+      const twoWellsModel = this.model as TwoWellsModel;
 
       twoWellsModel.wellSeparationProperty.link((separation: number) => {
         separationValueText.string = `${separation.toFixed(2)} nm`;

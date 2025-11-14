@@ -324,7 +324,7 @@ function estimateEnergySplitting(
  * @param dx - Grid spacing (meters)
  * @param mass - Particle mass (kg)
  * @param leftCenter - Left well center position (meters)
- * @param rightCenter - Right well center position (meters)
+ * @param rightCenter - Right well center position (meters) - reserved for future use
  * @returns Refined energy eigenvalue or null if not found
  */
 function findEnergyNearEstimate(
@@ -335,7 +335,9 @@ function findEnergyNearEstimate(
   xGrid: number[],
   dx: number,
   mass: number,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _leftCenter: number,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _rightCenter: number,
 ): number | null {
   const energyMin = energyEstimate - searchWindow;
