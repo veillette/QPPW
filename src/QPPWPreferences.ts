@@ -22,7 +22,7 @@ const QPPWPreferences = {
    * Numerical method for solving the Schrödinger equation
    * Options: 'numerov', 'dvr', 'fgh', 'spectral'
    */
-  numericalMethodProperty: new Property<NumericalMethod>(NumericalMethod.DVR, {
+  numericalMethodProperty: new Property<NumericalMethod>(NumericalMethod.NUMEROV, {
     tandem: Tandem.PREFERENCES.createTandem("numericalMethodProperty"),
     phetioFeatured: true,
     phetioValueType: StringIO,

@@ -296,7 +296,9 @@ export class Schrodinger1DSolver {
             }
           };
 
-          return this.solveNumerical(potential, mass, numStates, gridConfig);
+          const result = this.solveNumerical(potential, mass, numStates, gridConfig);
+          console.log(`Double square well (${this.numericalMethod}, ${gridConfig.numPoints} points): found ${result.energies.length} states`, result.energies.slice(0, 10).map(e => (e/1.6e-19).toFixed(3) + ' eV'));
+          return result;
         }
         break;
 

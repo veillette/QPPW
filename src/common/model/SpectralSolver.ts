@@ -92,12 +92,13 @@ export function solveSpectral(
   const energies: number[] = [];
   const wavefunctions: number[][] = [];
 
+  const V_boundary = Math.max(potential(xMin), potential(xMax));
+
   for (let i = 0; i < Math.min(numStates, H_interior.length); i++) {
     const idx = sortedIndices[i];
     const energy = eigen.eigenvalues[idx];
 
     // Only include bound states
-    const V_boundary = Math.max(potential(xMin), potential(xMax));
     if (energy < V_boundary) {
       energies.push(energy);
 

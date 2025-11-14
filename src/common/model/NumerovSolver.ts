@@ -137,6 +137,91 @@ export function integrateNumerov(
 }
 
 /**
+ * Integrate from center outward for symmetric double well potentials.
+ * Uses Numerov method starting from x=0 and integrating in both directions.
+ *
+ * @param E - Energy eigenvalue
+ * @param V - Potential array
+ * @param xGrid - Spatial grid (must be symmetric around x=0)
+ * @param dx - Grid spacing
+ * @param mass - Particle mass
+ * @param parity - "symmetric" or "antisymmetric"
+ * @returns Wavefunction array
+ */
+export function integrateNumerovFromCenter(
+  E: number,
+  V: number[],
+  xGrid: number[],
+  dx: number,
+  mass: number,
+  parity: "symmetric" | "antisymmetric",
+): number[] {
+  const { HBAR } = QuantumConstants;
+  const N = xGrid.length;
+  const psi = new Array(N).fill(0);
+
+  // Find center index (closest to x=0)
+  let centerIdx = 0;
+  let minDist = Math.abs(xGrid[0]);
+  for (let i = 1; i < N; i++) {
+    const dist = Math.abs(xGrid[i]);
+    if (dist < minDist) {
+      minDist = dist;
+      centerIdx = i;
+    }
+  }
+
+  // Calculate k²(x) = 2m(E - V(x))/ℏ²
+  const k2 = V.map((v) => (2 * mass * (E - v)) / (HBAR * HBAR));
+
+  // Calculate f_j = (h²/12) * k²(x_j)
+  const f = k2.map((k) => (dx * dx / 12) * k);
+
+  // Initial conditions at center
+  if (parity === "symmetric") {
+    // Symmetric: ψ'(0) = 0, so ψ(-dx) ≈ ψ(dx)
+    psi[centerIdx] = 1.0;
+    if (centerIdx > 0) psi[centerIdx - 1] = 1.0;
+    if (centerIdx < N - 1) psi[centerIdx + 1] = 1.0;
+  } else {
+    // Antisymmetric: ψ(0) = 0, ψ'(0) ≠ 0, so ψ(-dx) = -ψ(dx)
+    psi[centerIdx] = 0.0;
+    if (centerIdx > 0) psi[centerIdx - 1] = -dx;
+    if (centerIdx < N - 1) psi[centerIdx + 1] = dx;
+  }
+
+  // Integrate rightward from center
+  for (let j = centerIdx + 1; j < N - 1; j++) {
+    const numerator = (12 - 10 * f[j]) * psi[j] - (1 + f[j - 1]) * psi[j - 1];
+    const denominator = 1 + f[j + 1];
+    psi[j + 1] = numerator / denominator;
+
+    if (Math.abs(psi[j + 1]) > 1e10) {
+      for (let k = j + 1; k < N; k++) {
+        psi[k] = psi[j + 1];
+      }
+      break;
+    }
+  }
+
+  // Integrate leftward from center
+  for (let j = centerIdx - 1; j > 0; j--) {
+    const numerator = (12 - 10 * f[j]) * psi[j] - (1 + f[j + 1]) * psi[j + 1];
+    const denominator = 1 + f[j - 1];
+    psi[j - 1] = numerator / denominator;
+
+    if (Math.abs(psi[j - 1]) > 1e10) {
+      for (let k = j - 1; k >= 0; k--) {
+        psi[k] = psi[j - 1];
+      }
+      break;
+    }
+  }
+
+  return psi;
+}
+
+/**
  * Refine energy eigenvalue using bisection method.
  *
  * @param E1 - Lower energy bound (Joules)

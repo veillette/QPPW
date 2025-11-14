@@ -14,7 +14,7 @@
 
 import QuantumConstants from "./QuantumConstants.js";
 import { BoundStateResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
-import { integrateNumerov, normalizeWavefunction } from "./NumerovSolver.js";
+import { integrateNumerovFromCenter, normalizeWavefunction } from "./NumerovSolver.js";
 import qppw from "../../QPPWNamespace.js";
 
 /**
@@ -48,9 +48,9 @@ export function solveDoubleWellNumerov(
     const inRightWell = Math.abs(x - rightWellCenter) <= halfWidth;
 
     if (inLeftWell || inRightWell) {
-      return wellDepth; // Energy zero at bottom of wells
+      return 0; // Bottom of wells at zero energy
     } else {
-      return 0; // Barrier at zero energy
+      return wellDepth; // Barrier at wellDepth energy
     }
   };
 
@@ -95,7 +95,7 @@ export function solveDoubleWellNumerov(
     const E_single = singleWellEnergies[i];
 
     // Skip if energy is above the barrier (not bound)
-    if (E_single >= 0) {
+    if (E_single >= wellDepth) {
       continue;
     }
 
@@ -112,7 +112,8 @@ export function solveDoubleWellNumerov(
     const E_antisym_estimate = E_single + splitting / 2;
 
     // Define search windows around estimates
-    const searchWindow = Math.max(splitting * 2, wellDepth * 0.01); // At least 1% of well depth
+    // Use a reasonable window: 10x the splitting, or at least 0.1% of well depth
+    const searchWindow = Math.max(splitting * 10, wellDepth * 0.001);
 
     // Search for symmetric state
     const E_sym = findEnergyNearEstimate(
@@ -123,13 +124,14 @@ export function solveDoubleWellNumerov(
       xGrid,
       dx,
       mass,
+      wellDepth,
       leftWellCenter,
       rightWellCenter,
     );
 
     if (E_sym !== null && energies.length < numStates) {
       energies.push(E_sym);
-      const psi_sym = integrateNumerov(E_sym, V, xGrid, dx, mass);
+      const psi_sym = integrateNumerovFromCenter(E_sym, V, xGrid, dx, mass, "symmetric");
       const normalized_psi_sym = normalizeWavefunction(psi_sym, dx);
       wavefunctions.push(normalized_psi_sym);
       parities.push("symmetric");
@@ -144,13 +146,14 @@ export function solveDoubleWellNumerov(
       xGrid,
       dx,
       mass,
+      wellDepth,
       leftWellCenter,
       rightWellCenter,
     );
 
     if (E_antisym !== null && energies.length < numStates) {
       energies.push(E_antisym);
-      const psi_antisym = integrateNumerov(E_antisym, V, xGrid, dx, mass);
+      const psi_antisym = integrateNumerovFromCenter(E_antisym, V, xGrid, dx, mass, "antisymmetric");
       const normalized_psi_antisym = normalizeWavefunction(psi_antisym, dx);
       wavefunctions.push(normalized_psi_antisym);
       parities.push("antisymmetric");
@@ -216,8 +219,9 @@ function estimateSingleWellEnergies(
     }
 
     if (xi !== null) {
-      // Convert ξ to energy: E = (ℏξ/L/2)² / (2m) - V₀
-      const E = (HBAR * HBAR * xi * xi) / (2 * mass * halfL * halfL) - V0;
+      // Convert ξ to energy: E = (ℏξ/L/2)² / (2m)
+      // Energy measured from bottom of well (V=0) up to barrier (V=wellDepth)
+      const E = (HBAR * HBAR * xi * xi) / (2 * mass * halfL * halfL);
       energies.push(E);
     }
   }
@@ -272,8 +276,8 @@ function findOddParityXi(xi0: number, stateIndex: number): number | null {
  * ΔE ≈ (ℏω) * exp(-∫√(2m(V-E))/ℏ dx)
  * where the integral is over the barrier region.
  *
- * @param energy - Single well energy estimate (Joules, negative)
- * @param wellDepth - Well depth (Joules, positive)
+ * @param energy - Single well energy estimate (Joules, between 0 and wellDepth)
+ * @param wellDepth - Well depth (Joules, positive) - barrier height above well bottom
  * @param barrierWidth - Barrier width (meters)
  * @param mass - Particle mass (kg)
  * @returns Estimated energy splitting (Joules, positive)
@@ -286,29 +290,31 @@ function estimateEnergySplitting(
 ): number {
   const { HBAR } = QuantumConstants;
 
-  // Energy relative to barrier top (negative in classical forbidden region)
-  const E_rel = energy; // E is already negative (below V=0 barrier)
-  const V_barrier = 0; // Barrier at zero
+  // Energy measured from bottom of well (V=0)
+  // Barrier is at V=wellDepth
+  const V_barrier = wellDepth;
 
-  if (E_rel >= V_barrier) {
+  if (energy >= V_barrier) {
     // Classical region - large splitting
     return wellDepth * 0.1;
   }
 
-  // WKB tunneling factor
-  const kappa = Math.sqrt(2 * mass * (V_barrier - E_rel)) / HBAR;
-  const tunneling = Math.exp(-kappa * barrierWidth);
+  // WKB tunneling factor through the barrier
+  const kappa = Math.sqrt(2 * mass * (V_barrier - energy)) / HBAR;
+  const tunneling = Math.exp(-2 * kappa * barrierWidth); // Factor of 2 for barrier traversal
 
-  // Characteristic energy scale
-  const E_scale = Math.abs(energy);
+  // Energy scale for splitting: use the level spacing in a single well
+  // For a square well: ΔE ≈ (ℏ²π²/2mL²) * (2n+1)
+  // Use a simple estimate: splitting ~ tunneling * (energy scale)
+  // The energy scale should be much smaller - use 1% of the state energy
+  const E_scale = energy * 0.01;
 
-  // Splitting proportional to tunneling probability and energy scale
-  // Factor of 2 accounts for symmetric/antisymmetric splitting
-  const splitting = 2 * E_scale * tunneling;
+  // Splitting due to tunneling coupling between wells
+  const splitting = E_scale * tunneling;
 
   // Ensure splitting is reasonable (not too small or too large)
-  const minSplitting = wellDepth * 1e-6;
-  const maxSplitting = wellDepth * 0.5;
+  const minSplitting = wellDepth * 1e-9; // Down to nano-eV scale
+  const maxSplitting = wellDepth * 0.1;
 
   return Math.max(minSplitting, Math.min(splitting, maxSplitting));
 }
@@ -323,6 +329,7 @@ function estimateEnergySplitting(
  * @param xGrid - Spatial grid (meters)
  * @param dx - Grid spacing (meters)
  * @param mass - Particle mass (kg)
+ * @param wellDepth - Well depth/barrier height (Joules)
  * @param leftCenter - Left well center position (meters)
  * @param rightCenter - Right well center position (meters) - reserved for future use
  * @returns Refined energy eigenvalue or null if not found
@@ -335,16 +342,17 @@ function findEnergyNearEstimate(
   xGrid: number[],
   dx: number,
   mass: number,
+  wellDepth: number,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _leftCenter: number,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _rightCenter: number,
 ): number | null {
-  const energyMin = energyEstimate - searchWindow;
+  const energyMin = Math.max(0, energyEstimate - searchWindow); // Energy must be >= 0 (well bottom)
   const energyMax = energyEstimate + searchWindow;
 
-  // Ensure we're searching for bound states (E < 0)
-  const actualEnergyMax = Math.min(energyMax, -1e-20); // Must be below barrier
+  // Ensure we're searching for bound states (0 <= E < wellDepth)
+  const actualEnergyMax = Math.min(energyMax, wellDepth - 1e-20); // Must be below barrier
 
   if (energyMin >= actualEnergyMax) {
     return null;
@@ -356,10 +364,11 @@ function findEnergyNearEstimate(
 
   let prevSign = 0;
   let prevEnergy = energyMin;
+  let signChangeCount = 0;
 
   for (let i = 0; i <= numScanPoints; i++) {
     const E = energyMin + i * scanStep;
-    const psi = integrateNumerov(E, V, xGrid, dx, mass);
+    const psi = integrateNumerovFromCenter(E, V, xGrid, dx, mass, parity);
 
     // Check boundary condition: wavefunction should decay at boundaries
     const endValue = psi[xGrid.length - 1];
@@ -372,6 +381,7 @@ function findEnergyNearEstimate(
 
     // Detect sign change
     if (prevSign !== 0 && currentSign !== 0 && currentSign !== prevSign) {
+      signChangeCount++;
       // Refine using bisection
       const refinedEnergy = refineEnergy(
         prevEnergy,
@@ -417,10 +427,10 @@ function refineEnergy(
 
   while (Ehigh - Elow > tolerance && iterations < maxIterations) {
     const Emid = (Elow + Ehigh) / 2;
-    const psi = integrateNumerov(Emid, V, xGrid, dx, mass);
+    const psi = integrateNumerovFromCenter(Emid, V, xGrid, dx, mass, parity);
     const endValue = psi[N - 1];
 
-    const psiLow = integrateNumerov(Elow, V, xGrid, dx, mass);
+    const psiLow = integrateNumerovFromCenter(Elow, V, xGrid, dx, mass, parity);
     const endValueLow = psiLow[N - 1];
 
     if (Math.sign(endValue) === Math.sign(endValueLow)) {
@@ -434,7 +444,7 @@ function refineEnergy(
 
   // Verify the solution has the correct parity
   const finalE = (Elow + Ehigh) / 2;
-  const finalPsi = integrateNumerov(finalE, V, xGrid, dx, mass);
+  const finalPsi = integrateNumerovFromCenter(finalE, V, xGrid, dx, mass, parity);
 
   if (!verifyParity(finalPsi, xGrid, parity)) {
     return null; // Wrong parity, reject
