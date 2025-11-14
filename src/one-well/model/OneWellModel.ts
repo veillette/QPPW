@@ -49,11 +49,11 @@ export class OneWellModel extends BaseModel {
 
     // Initialize well parameters with default values
     this.wellWidthProperty = new NumberProperty(1.0, { range: new Range(0.1, 10.0) }); // in nanometers
-    this.wellDepthProperty = new NumberProperty(5.0, { range: new Range(0.1, 20.0) }); // in eV
+    this.wellDepthProperty = new NumberProperty(5.0, { range: new Range(0.1, 15.0) }); // in eV (within energy graph bounds)
     this.wellOffsetProperty = new NumberProperty(0.5, { range: new Range(0.0, 1.0) }); // normalized position
 
     // Initialize particle mass (1.0 = electron mass)
-    this.particleMassProperty = new NumberProperty(1.0, { range: new Range(0.1, 10.0) });
+    this.particleMassProperty = new NumberProperty(1.0, { range: new Range(0.5, 1.1) }); // 0.5 to 1.1 times electron mass
 
     // Initialize energy level selection (ground state by default)
     this.selectedEnergyLevelIndexProperty = new NumberProperty(0, { range: new Range(0, 9) });
