@@ -11,6 +11,9 @@ import QPPWPreferences from "../../QPPWPreferences.js";
 export type SimulationSpeed = "normal" | "fast";
 
 export abstract class BaseModel {
+  // Default time step for manual stepping (in seconds, ~1 frame at 60 FPS)
+  public static readonly MANUAL_STEP_SIZE = 0.016;
+
   // Simulation state properties
   public readonly isPlayingProperty: Property<boolean>;
   public readonly timeProperty: NumberProperty; // In femtoseconds
