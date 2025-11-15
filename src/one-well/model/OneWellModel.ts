@@ -10,6 +10,7 @@ import Schrodinger1DSolver, { WellParameters, NumericalMethod } from "../../comm
 import { PotentialType, BoundStateResult } from "../../common/model/PotentialFunction.js";
 import QuantumConstants from "../../common/model/QuantumConstants.js";
 import { SuperpositionType, SuperpositionConfig } from "../../common/model/SuperpositionType.js";
+import { calculateCoherentStateCoefficients } from "../../common/model/analytical-solutions/harmonic-oscillator.js";
 
 export type DisplayMode = "probabilityDensity" | "waveFunction" | "phaseColor";
 
@@ -43,6 +44,9 @@ export class OneWellModel extends BaseModel {
   // Superposition state
   public readonly superpositionTypeProperty: Property<SuperpositionType>;
   public readonly superpositionConfigProperty: Property<SuperpositionConfig>;
+
+  // Coherent state parameter
+  public readonly coherentDisplacementProperty: NumberProperty; // Displacement in nm
 
   // Cached bound state results
   protected boundStateResult: BoundStateResult | null = null;
@@ -84,9 +88,14 @@ export class OneWellModel extends BaseModel {
       phases: [0, 0],
     });
 
+    // Initialize coherent state displacement (0.5 nm default, range 0 to 2 nm)
+    this.coherentDisplacementProperty = new NumberProperty(0.5, { range: new Range(0.0, 2.0) });
+
     // Recalculate bound states when parameters change
     const invalidateCache = () => {
       this.boundStateResult = null;
+      // Also update superposition coefficients when bound states change
+      this.updateSuperpositionCoefficients();
     };
 
     this.potentialTypeProperty.link(invalidateCache);
@@ -94,6 +103,14 @@ export class OneWellModel extends BaseModel {
     this.wellDepthProperty.link(invalidateCache);
     this.wellOffsetProperty.link(invalidateCache);
     this.particleMassProperty.link(invalidateCache);
+
+    // Update superposition coefficients when superposition type or coherent displacement changes
+    this.superpositionTypeProperty.link(() => this.updateSuperpositionCoefficients());
+    this.coherentDisplacementProperty.link(() => {
+      if (this.superpositionTypeProperty.value === SuperpositionType.COHERENT) {
+        this.updateSuperpositionCoefficients();
+      }
+    });
   }
 
   /**
@@ -136,6 +153,7 @@ export class OneWellModel extends BaseModel {
     this.showPotentialEnergyProperty.reset();
     this.superpositionTypeProperty.reset();
     this.superpositionConfigProperty.reset();
+    this.coherentDisplacementProperty.reset();
   }
 
   /**
@@ -327,5 +345,167 @@ export class OneWellModel extends BaseModel {
     }
 
     return null;
+  }
+
+  /**
+   * Get the superposition wavefunction based on current superposition config.
+   * Returns the real-space wavefunction: ψ(x) = Σ c_n * e^(iφ_n) * ψ_n(x)
+   * Since we're returning real values for display, this returns the real part at t=0.
+   *
+   * @returns Object with wavefunction array and energy (weighted average), or null
+   */
+  public getSuperpositionWavefunction(): { wavefunction: number[]; energy: number } | null {
+    if (!this.boundStateResult) {
+      this.calculateBoundStates();
+    }
+
+    if (!this.boundStateResult) {
+      return null;
+    }
+
+    const config = this.superpositionConfigProperty.value;
+    const numPoints = this.boundStateResult.xGrid.length;
+    const wavefunction = new Array(numPoints).fill(0);
+    let weightedEnergy = 0;
+
+    // Compute superposition: ψ(x) = Σ c_n * e^(iφ_n) * ψ_n(x)
+    // At t=0, this is: ψ(x) = Σ c_n * (cos(φ_n) + i*sin(φ_n)) * ψ_n(x)
+    // We return the real part: Σ c_n * cos(φ_n) * ψ_n(x)
+    for (let n = 0; n < config.amplitudes.length; n++) {
+      const amplitude = config.amplitudes[n];
+      const phase = config.phases[n];
+
+      if (amplitude === 0) {
+        continue;
+      }
+
+      if (n < this.boundStateResult.wavefunctions.length) {
+        const eigenfunction = this.boundStateResult.wavefunctions[n];
+        const coeff = amplitude * Math.cos(phase);
+
+        for (let i = 0; i < numPoints; i++) {
+          wavefunction[i] += coeff * eigenfunction[i];
+        }
+
+        // Add weighted energy contribution
+        weightedEnergy += amplitude * amplitude * this.boundStateResult.energies[n];
+      }
+    }
+
+    return {
+      wavefunction,
+      energy: weightedEnergy,
+    };
+  }
+
+  /**
+   * Updates the superposition coefficients based on the selected superposition type.
+   * This method computes the amplitudes and phases for predefined superposition types.
+   */
+  public updateSuperpositionCoefficients(): void {
+    const type = this.superpositionTypeProperty.value;
+
+    // Skip CUSTOM type - coefficients are set manually by the user
+    if (type === SuperpositionType.CUSTOM) {
+      return;
+    }
+
+    // Ensure we have bound states
+    if (!this.boundStateResult) {
+      this.calculateBoundStates();
+    }
+
+    if (!this.boundStateResult) {
+      return;
+    }
+
+    const numStates = this.boundStateResult.energies.length;
+    let amplitudes: number[];
+    let phases: number[];
+
+    switch (type) {
+      case SuperpositionType.PSI_I_PSI_J:
+        // Equal superposition of first two states: (|0⟩ + |1⟩)/√2
+        amplitudes = new Array(numStates).fill(0);
+        phases = new Array(numStates).fill(0);
+        if (numStates >= 2) {
+          amplitudes[0] = 1 / Math.sqrt(2);
+          amplitudes[1] = 1 / Math.sqrt(2);
+        }
+        break;
+
+      case SuperpositionType.PSI_K:
+        // Single eigenstate (ground state)
+        amplitudes = new Array(numStates).fill(0);
+        phases = new Array(numStates).fill(0);
+        amplitudes[0] = 1;
+        break;
+
+      case SuperpositionType.LOCALIZED_NARROW:
+        // Narrow localized state: superposition of first few states
+        amplitudes = new Array(numStates).fill(0);
+        phases = new Array(numStates).fill(0);
+        const numStatesNarrow = Math.min(5, numStates);
+        for (let i = 0; i < numStatesNarrow; i++) {
+          amplitudes[i] = 1;
+        }
+        // Normalize
+        const normNarrow = Math.sqrt(amplitudes.reduce((sum, a) => sum + a * a, 0));
+        amplitudes = amplitudes.map((a) => a / normNarrow);
+        break;
+
+      case SuperpositionType.LOCALIZED_WIDE:
+        // Wide localized state: superposition of more states
+        amplitudes = new Array(numStates).fill(0);
+        phases = new Array(numStates).fill(0);
+        const numStatesWide = Math.min(10, numStates);
+        for (let i = 0; i < numStatesWide; i++) {
+          amplitudes[i] = 1;
+        }
+        // Normalize
+        const normWide = Math.sqrt(amplitudes.reduce((sum, a) => sum + a * a, 0));
+        amplitudes = amplitudes.map((a) => a / normWide);
+        break;
+
+      case SuperpositionType.COHERENT:
+        // Coherent state - only valid for harmonic oscillator
+        if (this.potentialTypeProperty.value === PotentialType.HARMONIC_OSCILLATOR) {
+          const wellWidth = this.wellWidthProperty.value * QuantumConstants.NM_TO_M;
+          const wellDepth = this.wellDepthProperty.value * QuantumConstants.EV_TO_JOULES;
+          const mass = this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
+          const springConstant = (4 * wellDepth) / (wellWidth * wellWidth);
+          const displacement = this.coherentDisplacementProperty.value * QuantumConstants.NM_TO_M;
+
+          const result = calculateCoherentStateCoefficients(
+            displacement,
+            springConstant,
+            mass,
+            numStates
+          );
+          amplitudes = result.amplitudes;
+          phases = result.phases;
+        } else {
+          // Fall back to ground state for non-harmonic potentials
+          amplitudes = new Array(numStates).fill(0);
+          phases = new Array(numStates).fill(0);
+          amplitudes[0] = 1;
+        }
+        break;
+
+      default:
+        // Default to ground state
+        amplitudes = new Array(numStates).fill(0);
+        phases = new Array(numStates).fill(0);
+        amplitudes[0] = 1;
+        break;
+    }
+
+    // Update the superposition config
+    this.superpositionConfigProperty.value = {
+      type,
+      amplitudes,
+      phases,
+      displacement: type === SuperpositionType.COHERENT ? this.coherentDisplacementProperty.value : undefined,
+    };
   }
 }

@@ -12,6 +12,7 @@ export enum SuperpositionType {
   PSI_K = "psiK",
   LOCALIZED_NARROW = "localizedNarrow",
   LOCALIZED_WIDE = "localizedWide",
+  COHERENT = "coherent",
   CUSTOM = "custom",
 }
 
@@ -25,6 +26,8 @@ export interface SuperpositionConfig {
   amplitudes: number[];
   /** Phases for each eigenstate (in radians) */
   phases: number[];
+  /** Displacement from equilibrium in nm (for coherent states) */
+  displacement?: number;
 }
 
 qppw.register("SuperpositionType", { SuperpositionType });
