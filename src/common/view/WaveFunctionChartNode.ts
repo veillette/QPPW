@@ -15,6 +15,7 @@ import { BoundStateResult } from "../model/PotentialFunction.js";
 import QuantumConstants from "../model/QuantumConstants.js";
 import QPPWColors from "../../QPPWColors.js";
 import { PhetFont } from "scenerystack/scenery-phet";
+import { SuperpositionType } from "../model/SuperpositionType.js";
 
 // Chart axis range constant (shared with EnergyChartNode)
 const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
@@ -274,6 +275,15 @@ export class WaveFunctionChartNode extends Node {
     });
     this.model.timeProperty.link(() => this.updateTimeEvolution());
 
+    // Update when superposition configuration changes
+    this.model.superpositionTypeProperty.link(() => {
+      this.updateStateLabel();
+      this.update();
+    });
+    this.model.superpositionConfigProperty.link(() => {
+      this.update();
+    });
+
     // Update visibility of wave function components
     this.model.showRealPartProperty.link((show: boolean) => {
       this.realPartPath.visible = show && this.model.displayModeProperty.value === "waveFunction";
@@ -304,27 +314,65 @@ export class WaveFunctionChartNode extends Node {
    * Updates the state label showing which wavefunction is displayed.
    */
   private updateStateLabel(): void {
-    const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
     const displayMode = this.model.displayModeProperty.value;
+    const superpositionType = this.model.superpositionTypeProperty.value;
 
-    if (selectedIndex < 0) {
-      this.stateLabelNode.string = "";
-      return;
-    }
+    // Check if we're in a superposition state (not PSI_K which is single eigenstate)
+    const isSuperposition = superpositionType !== SuperpositionType.PSI_K;
 
-    // Convert index to subscript (n starts from 1 for display)
-    const n = selectedIndex + 1;
-    const subscript = this.toSubscript(n);
+    if (isSuperposition) {
+      // Display superposition label
+      let label = "";
+      switch (superpositionType) {
+        case SuperpositionType.PSI_I_PSI_J:
+          label = "ψ₀+ψ₁";
+          break;
+        case SuperpositionType.LOCALIZED_NARROW:
+          label = "Localized";
+          break;
+        case SuperpositionType.LOCALIZED_WIDE:
+          label = "Localized";
+          break;
+        case SuperpositionType.COHERENT:
+          label = "Coherent";
+          break;
+        case SuperpositionType.CUSTOM:
+          label = "Custom";
+          break;
+        default:
+          label = "Superposition";
+      }
 
-    if (displayMode === "probabilityDensity") {
-      // Probability density: |ψ_n|²
-      this.stateLabelNode.string = `|ψ${subscript}|²`;
-    } else if (displayMode === "phaseColor") {
-      // Magnitude: |ψ_n|
-      this.stateLabelNode.string = `|ψ${subscript}|`;
+      if (displayMode === "probabilityDensity") {
+        this.stateLabelNode.string = `|${label}|²`;
+      } else if (displayMode === "phaseColor") {
+        this.stateLabelNode.string = `|${label}|`;
+      } else {
+        this.stateLabelNode.string = label;
+      }
     } else {
-      // Wavefunction: ψ_n
-      this.stateLabelNode.string = `ψ${subscript}`;
+      // Display single eigenstate label
+      const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
+
+      if (selectedIndex < 0) {
+        this.stateLabelNode.string = "";
+        return;
+      }
+
+      // Convert index to subscript (n starts from 0 for display)
+      const n = selectedIndex;
+      const subscript = this.toSubscript(n);
+
+      if (displayMode === "probabilityDensity") {
+        // Probability density: |ψ_n|²
+        this.stateLabelNode.string = `|ψ${subscript}|²`;
+      } else if (displayMode === "phaseColor") {
+        // Magnitude: |ψ_n|
+        this.stateLabelNode.string = `|ψ${subscript}|`;
+      } else {
+        // Wavefunction: ψ_n
+        this.stateLabelNode.string = `ψ${subscript}`;
+      }
     }
   }
 
@@ -353,15 +401,33 @@ export class WaveFunctionChartNode extends Node {
         return;
       }
 
-      const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
-      if (selectedIndex < 0 || selectedIndex >= boundStates.wavefunctions.length) {
-        return;
-      }
+      // Check if we're displaying a superposition or a single eigenstate
+      const superpositionType = this.model.superpositionTypeProperty.value;
+      const isSuperposition = superpositionType !== SuperpositionType.PSI_K;
 
-      this.updateViewRange(boundStates);
-      this.updateZeroLine();
-      this.updateWaveFunction(boundStates, selectedIndex);
-      this.updateStateLabel();
+      if (isSuperposition && "getSuperpositionWavefunction" in this.model) {
+        // Display superposition wavefunction
+        const superpositionData = (this.model as OneWellModel).getSuperpositionWavefunction();
+        if (!superpositionData) {
+          return;
+        }
+
+        this.updateViewRangeForSuperposition(boundStates, superpositionData.wavefunction);
+        this.updateZeroLine();
+        this.updateWaveFunctionFromArray(boundStates.xGrid, superpositionData.wavefunction, superpositionData.energy);
+        this.updateStateLabel();
+      } else {
+        // Display single eigenstate
+        const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
+        if (selectedIndex < 0 || selectedIndex >= boundStates.wavefunctions.length) {
+          return;
+        }
+
+        this.updateViewRange(boundStates, selectedIndex);
+        this.updateZeroLine();
+        this.updateWaveFunction(boundStates, selectedIndex);
+        this.updateStateLabel();
+      }
     } finally {
       this.isUpdating = false;
     }
@@ -371,9 +437,8 @@ export class WaveFunctionChartNode extends Node {
    * Updates the view range based on the data and updates the ChartTransform.
    * Note: X-axis range is fixed, only Y-axis is updated dynamically.
    */
-  private updateViewRange(boundStates: BoundStateResult): void {
+  private updateViewRange(boundStates: BoundStateResult, selectedIndex: number): void {
     // Calculate Y range based on wave function values
-    const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
     if (selectedIndex >= 0 && selectedIndex < boundStates.wavefunctions.length) {
       const wavefunction = boundStates.wavefunctions[selectedIndex];
       const maxAbs = Math.max(...wavefunction.map((v) => Math.abs(v)));
@@ -390,6 +455,62 @@ export class WaveFunctionChartNode extends Node {
 
     // Update ChartTransform with new Y range (X range is fixed)
     this.chartTransform.setModelYRange(new Range(this.yMinProperty.value, this.yMaxProperty.value));
+  }
+
+  /**
+   * Updates the view range for superposition wavefunctions.
+   */
+  private updateViewRangeForSuperposition(_boundStates: BoundStateResult, wavefunction: number[]): void {
+    const maxAbs = Math.max(...wavefunction.map((v) => Math.abs(v)));
+    const displayMode = this.model.displayModeProperty.value;
+
+    if (displayMode === "probabilityDensity") {
+      this.yMinProperty.value = 0;
+      this.yMaxProperty.value = maxAbs * maxAbs * 1.2; // 20% margin
+    } else {
+      this.yMinProperty.value = -maxAbs * 1.2;
+      this.yMaxProperty.value = maxAbs * 1.2;
+    }
+
+    // Update ChartTransform with new Y range (X range is fixed)
+    this.chartTransform.setModelYRange(new Range(this.yMinProperty.value, this.yMaxProperty.value));
+  }
+
+  /**
+   * Updates the wavefunction display from a custom wavefunction array (for superpositions).
+   */
+  private updateWaveFunctionFromArray(xGrid: number[], wavefunction: number[], energy: number): void {
+    const displayMode = this.model.displayModeProperty.value;
+    const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
+
+    // Calculate time evolution phase
+    const phase = -(energy * time) / QuantumConstants.HBAR;
+
+    if (displayMode === "probabilityDensity") {
+      // Plot probability density |ψ|²
+      this.plotProbabilityDensity(xGrid, wavefunction);
+      this.probabilityDensityPath.visible = true;
+      this.realPartPath.visible = false;
+      this.imaginaryPartPath.visible = false;
+      this.magnitudePath.visible = false;
+      this.phaseColorNode.visible = false;
+    } else if (displayMode === "phaseColor") {
+      // Plot magnitude with phase-colored fill
+      this.plotPhaseColoredWavefunction(xGrid, wavefunction, phase);
+      this.probabilityDensityPath.visible = false;
+      this.realPartPath.visible = false;
+      this.imaginaryPartPath.visible = false;
+      this.magnitudePath.visible = false;
+      this.phaseColorNode.visible = true;
+    } else {
+      // Plot wave function components
+      this.plotWaveFunctionComponents(xGrid, wavefunction, phase);
+      this.probabilityDensityPath.visible = false;
+      this.realPartPath.visible = this.model.showRealPartProperty.value;
+      this.imaginaryPartPath.visible = this.model.showImaginaryPartProperty.value;
+      this.magnitudePath.visible = this.model.showMagnitudeProperty.value;
+      this.phaseColorNode.visible = false;
+    }
   }
 
   /**

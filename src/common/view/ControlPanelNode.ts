@@ -227,6 +227,14 @@ export class ControlPanelNode extends Node {
           }),
       },
       {
+        value: SuperpositionType.COHERENT,
+        createNode: () =>
+          new Text(stringManager.coherentStateStringProperty, {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
+      },
+      {
         value: SuperpositionType.CUSTOM,
         createNode: () =>
           new Text(stringManager.customStringProperty, {
@@ -261,6 +269,51 @@ export class ControlPanelNode extends Node {
       spacing: 10,
       children: [superpositionLabelText, superpositionComboBox],
     });
+
+    // Coherent state displacement slider (OneWellModel only)
+    let displacementRow: Node | null = null;
+    if ("coherentDisplacementProperty" in this.model) {
+      const oneWellModel = this.model as OneWellModel;
+
+      const displacementValueText = new Text("", {
+        font: new PhetFont(12),
+        fill: QPPWColors.textFillProperty,
+      });
+
+      oneWellModel.coherentDisplacementProperty.link((displacement) => {
+        displacementValueText.string = `${displacement.toFixed(2)} nm`;
+      });
+
+      const displacementSlider = new HSlider(
+        oneWellModel.coherentDisplacementProperty,
+        oneWellModel.coherentDisplacementProperty.range!,
+        {
+          trackSize: new Dimension2(120, 4),
+          thumbSize: new Dimension2(15, 30),
+        },
+      );
+
+      displacementRow = new VBox({
+        spacing: 4,
+        align: "left",
+        children: [
+          new Text(stringManager.displacementStringProperty, {
+            font: new PhetFont(12),
+            fill: QPPWColors.textFillProperty,
+          }),
+          new HBox({
+            spacing: 10,
+            children: [displacementSlider, displacementValueText],
+          }),
+        ],
+        visible: false, // Initially hidden
+      });
+
+      // Show/hide displacement slider based on superposition type
+      this.model.superpositionTypeProperty.link((type) => {
+        displacementRow!.visible = type === SuperpositionType.COHERENT;
+      });
+    }
 
     // Track the previous superposition type to revert if dialog is cancelled
     let previousSuperpositionType: SuperpositionType = this.model.superpositionTypeProperty.value;
@@ -297,14 +350,20 @@ export class ControlPanelNode extends Node {
       }
     });
 
+    const children: Node[] = [
+      titleText,
+      potentialRowNode,
+      superpositionRowNode,
+    ];
+
+    if (displacementRow) {
+      children.push(displacementRow);
+    }
+
     return new VBox({
       spacing: 8,
       align: "left",
-      children: [
-        titleText,
-        potentialRowNode,
-        superpositionRowNode,
-      ],
+      children: children,
     });
   }
 

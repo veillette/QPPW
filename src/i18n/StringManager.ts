@@ -116,11 +116,13 @@ export class StringManager {
   public readonly psiKStringProperty: StringProperty;
   public readonly localizedNarrowStringProperty: StringProperty;
   public readonly localizedWideStringProperty: StringProperty;
+  public readonly coherentStateStringProperty: StringProperty;
   public readonly customStringProperty: StringProperty;
   public readonly configureSuperpositionStringProperty: StringProperty;
   public readonly amplitudeStringProperty: StringProperty;
   public readonly superpositionDialogTitleStringProperty: StringProperty;
   public readonly closeStringProperty: StringProperty;
+  public readonly displacementStringProperty: StringProperty;
 
   public constructor() {
     // Initialize all string properties with English defaults
@@ -239,11 +241,13 @@ export class StringManager {
     this.psiKStringProperty = new StringProperty("ψₖ");
     this.localizedNarrowStringProperty = new StringProperty("Localized narrow");
     this.localizedWideStringProperty = new StringProperty("Localized wide");
+    this.coherentStateStringProperty = new StringProperty("Coherent state");
     this.customStringProperty = new StringProperty("Custom...");
     this.configureSuperpositionStringProperty = new StringProperty("Configure Superposition");
     this.amplitudeStringProperty = new StringProperty("Amplitude");
     this.superpositionDialogTitleStringProperty = new StringProperty("Superposition Configuration");
     this.closeStringProperty = new StringProperty("Close");
+    this.displacementStringProperty = new StringProperty("Displacement");
   }
 
   /**
