@@ -54,18 +54,6 @@ export class SimulationControlBar extends Node {
       children: [timeLabel, this.timeText],
     });
 
-
-    //TODO: hoist this constant to the model.
-     // Default time step for manual stepping (in seconds)
-    const manualStepSize = 0.016; // ~1 frame at 60 FPS
-
-    //TODO: I think there is a simpler way to achieve this
-    // Create derived property: stepper buttons enabled only when paused
-    const stepperEnabledProperty = new DerivedProperty(
-      [this.model.isPlayingProperty],
-      (isPlaying) => !isPlaying,
-    );
-
     // Time controls (play/pause and step buttons)
     const timeControlNode = new TimeControlNode(this.model.isPlayingProperty, {
       timeSpeedProperty: this.model.timeSpeedProperty,
@@ -75,17 +63,17 @@ export class SimulationControlBar extends Node {
         stepForwardButtonOptions: {
           listener: () => {
             // Step forward by one frame (forced even when paused)
-            this.model.step(manualStepSize, true);
+            this.model.step(BaseModel.MANUAL_STEP_SIZE, true);
           },
-          enabledProperty: stepperEnabledProperty,
+          enabledProperty: DerivedProperty.not(this.model.isPlayingProperty),
           radius: 15, // Smaller than play/pause button
         },
         stepBackwardButtonOptions: {
           listener: () => {
             // Step backward by one frame (negative time step, forced even when paused)
-            this.model.step(-manualStepSize, true);
+            this.model.step(-BaseModel.MANUAL_STEP_SIZE, true);
           },
-          enabledProperty: stepperEnabledProperty,
+          enabledProperty: DerivedProperty.not(this.model.isPlayingProperty),
           radius: 15, // Smaller than play/pause button
         },
       },
