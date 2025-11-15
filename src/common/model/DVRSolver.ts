@@ -175,7 +175,12 @@ function diagonalize(matrix: number[][]): {
 
   // Jacobi iteration
   const maxIterations = 50 * N * N;
-  const tolerance = 1e-12;
+
+  // CRITICAL FIX: Use relative tolerance based on matrix scale
+  // For quantum mechanical energies (~1e-20 J), absolute tolerance of 1e-12
+  // causes premature convergence after 1 iteration. Use relative tolerance instead.
+  const matrixScale = Math.max(...matrix.map((row) => Math.max(...row.map(Math.abs))));
+  const tolerance = matrixScale * 1e-12;
 
   for (let iter = 0; iter < maxIterations; iter++) {
     // Find largest off-diagonal element
