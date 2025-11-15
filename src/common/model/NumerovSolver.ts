@@ -183,37 +183,22 @@ export function integrateNumerovFromCenter(
   const f = k2.map((k) => (dx * dx / 12) * k);
 
   // Initial conditions at x=0 based on parity
-  // Use WKB approximation for proper behavior in classically forbidden region
-
-  // Calculate decay constant at center (if in barrier)
-  const V_center = V[centerIdx];
-  const kappa = Math.sqrt(2 * mass * Math.abs(E - V_center)) / HBAR;
+  // For shooting method from center with symmetric potential:
+  // - Symmetric states: ψ(0) = A (constant), ψ'(0) = 0
+  // - Antisymmetric states: ψ(0) = 0, ψ'(0) = B
 
   if (parity === "symmetric") {
-    // Symmetric: in barrier, ψ ∝ cosh(κx), so ψ'(0) = 0
-    // ψ(0) = A, ψ(dx) = A*cosh(κ*dx)
-    const A = 1.0;
-    psi[centerIdx] = A;
-
-    if (E < V_center) {
-      // In classically forbidden region - use hyperbolic
-      psi[centerIdx + 1] = A * Math.cosh(kappa * dx);
-    } else {
-      // In classically allowed region - ψ'(0) = 0 means flat start
-      psi[centerIdx + 1] = A;
-    }
+    // Symmetric state: ψ(-x) = ψ(x)
+    // At x=0: ψ'(0) = 0 (derivative must be zero for symmetry)
+    // So ψ(0) = A and ψ(dx) ≈ A (locally flat)
+    psi[centerIdx] = 1.0;
+    psi[centerIdx + 1] = 1.0; // Flat start since ψ'(0) = 0
   } else {
-    // Antisymmetric: in barrier, ψ ∝ sinh(κx), so ψ(0) = 0
-    // ψ(0) = 0, ψ(dx) = A*sinh(κ*dx)
+    // Antisymmetric state: ψ(-x) = -ψ(x)
+    // At x=0: ψ(0) = 0 (wavefunction must be zero for antisymmetry)
+    // So ψ(0) = 0 and ψ(dx) ≈ ψ'(0)*dx (linear start)
     psi[centerIdx] = 0.0;
-
-    if (E < V_center) {
-      // In classically forbidden region - use hyperbolic
-      psi[centerIdx + 1] = Math.sinh(kappa * dx);
-    } else {
-      // In classically allowed region - linear start
-      psi[centerIdx + 1] = dx;
-    }
+    psi[centerIdx + 1] = dx; // Linear start from zero
   }
 
   // Integrate from center (x=0) to right boundary (x_max)
