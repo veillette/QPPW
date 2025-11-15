@@ -52,7 +52,7 @@ export interface BoundStateResult {
   /** Grid x-positions in meters */
   xGrid: number[];
   /** Whether analytical or numerical solution was used */
-  method: "analytical" | "numerov" | "dvr";
+  method: "analytical" | "numerov" | "dvr" | "spectral";
 }
 
 qppw.register("PotentialFunction", { PotentialType });

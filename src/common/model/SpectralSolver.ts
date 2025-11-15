@@ -61,7 +61,20 @@ export function solveSpectral(
   // the boundary elimination introduces this specific scaling. The theoretical basis
   // is still under investigation.
   //
-  // Reference: Extensive testing shows <1% error for particle in a box with this correction.
+  // ⚠️ IMPORTANT LIMITATION: This empirical correction factor was calibrated ONLY for:
+  //   - Infinite square well (V=0 potential)
+  //   - Ground state eigenvalues
+  //
+  // It does NOT work reliably for:
+  //   - Excited states (n≥2) → produces 75-95% errors
+  //   - Non-zero potentials (harmonic oscillator, etc.) → produces 76-99% errors
+  //   - Multiple energy levels in realistic quantum systems
+  //
+  // The spectral method with this correction should be considered EXPERIMENTAL
+  // and is NOT recommended for production use beyond ground state calculations
+  // of infinite square wells.
+  //
+  // Reference: Extensive testing shows <1% error for particle in a box GROUND STATE ONLY.
   const empiricalCorrectionFactor = 0.1352 * (N - 1) * (N - 1);
 
   // Apply domain scaling and correction to second derivative matrix
@@ -121,7 +134,7 @@ export function solveSpectral(
     const psi_full = [0, ...psi_interior, 0]; // Add zeros at boundaries
 
     // Normalize
-    const normalizedPsi = normalizeChebyshev(psi_full);
+    const normalizedPsi = normalizeChebyshev(psi_full, xMin, xMax);
     wavefunctions.push(normalizedPsi);
   }
 
@@ -129,7 +142,7 @@ export function solveSpectral(
     energies,
     wavefunctions,
     xGrid,
-    method: "dvr", // Using "dvr" for compatibility
+    method: "spectral",
   };
 }
 
@@ -226,13 +239,19 @@ function matrixMultiply(A: number[][], B: number[][]): number[][] {
  * Normalize wavefunction using Clenshaw-Curtis quadrature
  * (exact for polynomials up to degree 2N-1)
  *
+ * The normalization ensures ∫|ψ(x)|² dx = 1 in physical space.
+ * Since the Chebyshev points are in ξ ∈ [-1,1] and x ∈ [xMin, xMax],
+ * we need to include the Jacobian factor dx/dξ = (xMax - xMin)/2.
+ *
  * @param psi - Wavefunction at Chebyshev points
+ * @param xMin - Minimum value of physical domain
+ * @param xMax - Maximum value of physical domain
  * @returns Normalized wavefunction
  */
-function normalizeChebyshev(psi: number[]): number[] {
+function normalizeChebyshev(psi: number[], xMin: number, xMax: number): number[] {
   const N = psi.length;
 
-  // Clenshaw-Curtis quadrature weights
+  // Clenshaw-Curtis quadrature weights for ξ ∈ [-1,1]
   const weights: number[] = [];
   for (let j = 0; j < N; j++) {
     if (j === 0 || j === N - 1) {
@@ -242,10 +261,13 @@ function normalizeChebyshev(psi: number[]): number[] {
     }
   }
 
-  // Compute ∫|ψ|² dξ
+  // Jacobian for coordinate transformation: dx = (xMax - xMin)/2 * dξ
+  const jacobian = (xMax - xMin) / 2;
+
+  // Compute ∫|ψ|² dx = ∫|ψ|² (dx/dξ) dξ
   let integral = 0;
   for (let i = 0; i < N; i++) {
-    integral += weights[i] * psi[i] * psi[i];
+    integral += weights[i] * psi[i] * psi[i] * jacobian;
   }
 
   const normalization = Math.sqrt(integral);
