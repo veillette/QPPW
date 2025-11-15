@@ -137,8 +137,13 @@ export function integrateNumerov(
 }
 
 /**
- * Integrate from center outward for symmetric double well potentials.
- * Uses Numerov method starting from x=0 and integrating in both directions.
+ * Integrate for symmetric double well potentials using standard shooting method.
+ * For symmetric potentials, use parity to integrate only half the domain.
+ *
+ * Due to symmetry, we can integrate from x=0 to x_max and use parity to fill the left half.
+ * - Symmetric states: ψ(-x) = ψ(x), so ψ'(0) = 0
+ * - Antisymmetric states: ψ(-x) = -ψ(x), so ψ(0) = 0
+ * - Shooting parameter: ψ(x_max) should be zero for bound states
  *
  * @param E - Energy eigenvalue
  * @param V - Potential array
@@ -177,44 +182,69 @@ export function integrateNumerovFromCenter(
   // Calculate f_j = (h²/12) * k²(x_j)
   const f = k2.map((k) => (dx * dx / 12) * k);
 
-  // Initial conditions at center
+  // Initial conditions at x=0 based on parity
+  // Use WKB approximation for proper behavior in classically forbidden region
+
+  // Calculate decay constant at center (if in barrier)
+  const V_center = V[centerIdx];
+  const kappa = Math.sqrt(2 * mass * Math.abs(E - V_center)) / HBAR;
+
   if (parity === "symmetric") {
-    // Symmetric: ψ'(0) = 0, so ψ(-dx) ≈ ψ(dx)
-    psi[centerIdx] = 1.0;
-    if (centerIdx > 0) psi[centerIdx - 1] = 1.0;
-    if (centerIdx < N - 1) psi[centerIdx + 1] = 1.0;
+    // Symmetric: in barrier, ψ ∝ cosh(κx), so ψ'(0) = 0
+    // ψ(0) = A, ψ(dx) = A*cosh(κ*dx)
+    const A = 1.0;
+    psi[centerIdx] = A;
+
+    if (E < V_center) {
+      // In classically forbidden region - use hyperbolic
+      psi[centerIdx + 1] = A * Math.cosh(kappa * dx);
+    } else {
+      // In classically allowed region - ψ'(0) = 0 means flat start
+      psi[centerIdx + 1] = A;
+    }
   } else {
-    // Antisymmetric: ψ(0) = 0, ψ'(0) ≠ 0, so ψ(-dx) = -ψ(dx)
+    // Antisymmetric: in barrier, ψ ∝ sinh(κx), so ψ(0) = 0
+    // ψ(0) = 0, ψ(dx) = A*sinh(κ*dx)
     psi[centerIdx] = 0.0;
-    if (centerIdx > 0) psi[centerIdx - 1] = -dx;
-    if (centerIdx < N - 1) psi[centerIdx + 1] = dx;
+
+    if (E < V_center) {
+      // In classically forbidden region - use hyperbolic
+      psi[centerIdx + 1] = Math.sinh(kappa * dx);
+    } else {
+      // In classically allowed region - linear start
+      psi[centerIdx + 1] = dx;
+    }
   }
 
-  // Integrate rightward from center
+  // Integrate from center (x=0) to right boundary (x_max)
   for (let j = centerIdx + 1; j < N - 1; j++) {
     const numerator = (12 - 10 * f[j]) * psi[j] - (1 + f[j - 1]) * psi[j - 1];
     const denominator = 1 + f[j + 1];
     psi[j + 1] = numerator / denominator;
 
-    if (Math.abs(psi[j + 1]) > 1e10) {
+    // Stop on catastrophic numerical failure
+    if (!isFinite(psi[j + 1])) {
       for (let k = j + 1; k < N; k++) {
-        psi[k] = psi[j + 1];
+        psi[k] = 1e100;
       }
       break;
     }
   }
 
-  // Integrate leftward from center
-  for (let j = centerIdx - 1; j > 0; j--) {
-    const numerator = (12 - 10 * f[j]) * psi[j] - (1 + f[j + 1]) * psi[j + 1];
-    const denominator = 1 + f[j - 1];
-    psi[j - 1] = numerator / denominator;
-
-    if (Math.abs(psi[j - 1]) > 1e10) {
-      for (let k = j - 1; k >= 0; k--) {
-        psi[k] = psi[j - 1];
+  // Use parity to fill left half
+  if (parity === "symmetric") {
+    for (let i = 0; i < centerIdx; i++) {
+      const mirrorIdx = 2 * centerIdx - i;
+      if (mirrorIdx < N) {
+        psi[i] = psi[mirrorIdx];
       }
-      break;
+    }
+  } else {
+    for (let i = 0; i < centerIdx; i++) {
+      const mirrorIdx = 2 * centerIdx - i;
+      if (mirrorIdx < N) {
+        psi[i] = -psi[mirrorIdx];
+      }
     }
   }
 

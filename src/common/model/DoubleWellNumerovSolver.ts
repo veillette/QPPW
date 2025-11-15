@@ -87,11 +87,19 @@ export function solveDoubleWellNumerov(
   const energies: number[] = [];
   const wavefunctions: number[][] = [];
 
+  console.log('\n=== DOUBLE WELL NUMEROV SOLVER DEBUG ===');
+  console.log(`Well width: ${wellWidth * 1e9} nm`);
+  console.log(`Well depth: ${wellDepth / 1.6e-19} eV`);
+  console.log(`Well separation: ${wellSeparation * 1e9} nm`);
+  console.log(`Grid: ${numPoints} points, x ∈ [${xMin * 1e9}, ${xMax * 1e9}] nm`);
+  console.log(`Single well energies (eV):`, singleWellEnergies.map(e => (e / 1.6e-19).toFixed(4)));
+
   for (let i = 0; i < singleWellEnergies.length && energies.length < numStates; i++) {
     const E_single = singleWellEnergies[i];
 
     // Skip if energy is above the barrier (not bound)
     if (E_single >= wellDepth) {
+      console.log(`Skipping E_single[${i}] = ${(E_single/1.6e-19).toFixed(4)} eV (above barrier)`);
       continue;
     }
 
@@ -102,6 +110,8 @@ export function solveDoubleWellNumerov(
       wellSeparation,
       mass,
     );
+
+    console.log(`\nLevel ${i}: E_single = ${(E_single/1.6e-19).toFixed(4)} eV, splitting = ${(splitting/1.6e-19).toFixed(6)} eV`);
 
     // Search for symmetric state (lower energy)
     const E_sym_estimate = E_single - splitting / 2;
@@ -130,6 +140,12 @@ export function solveDoubleWellNumerov(
       const psi_sym = integrateNumerovFromCenter(E_sym, V, xGrid, dx, mass, "symmetric");
       const normalized_psi_sym = normalizeWavefunction(psi_sym, dx);
       wavefunctions.push(normalized_psi_sym);
+
+      console.log(`  ✓ Found SYMMETRIC state: E = ${(E_sym/1.6e-19).toFixed(4)} eV`);
+      console.log(`    Boundary values: ψ[0] = ${psi_sym[0].toExponential(3)}, ψ[N-1] = ${psi_sym[psi_sym.length-1].toExponential(3)}`);
+      console.log(`    Max |ψ| = ${Math.max(...psi_sym.map(Math.abs)).toExponential(3)}`);
+    } else {
+      console.log(`  ✗ No symmetric state found`);
     }
 
     // Search for antisymmetric state
@@ -151,8 +167,18 @@ export function solveDoubleWellNumerov(
       const psi_antisym = integrateNumerovFromCenter(E_antisym, V, xGrid, dx, mass, "antisymmetric");
       const normalized_psi_antisym = normalizeWavefunction(psi_antisym, dx);
       wavefunctions.push(normalized_psi_antisym);
+
+      console.log(`  ✓ Found ANTISYMMETRIC state: E = ${(E_antisym/1.6e-19).toFixed(4)} eV`);
+      console.log(`    Boundary values: ψ[0] = ${psi_antisym[0].toExponential(3)}, ψ[N-1] = ${psi_antisym[psi_antisym.length-1].toExponential(3)}`);
+      console.log(`    Max |ψ| = ${Math.max(...psi_antisym.map(Math.abs)).toExponential(3)}`);
+    } else {
+      console.log(`  ✗ No antisymmetric state found`);
     }
   }
+
+  console.log(`\nFinal result: Found ${energies.length} states`);
+  console.log(`Energies (eV):`, energies.map(e => (e/1.6e-19).toFixed(4)));
+  console.log('=== END DEBUG ===\n');
 
   return {
     energies,
@@ -358,17 +384,22 @@ function findEnergyNearEstimate(
 
   let prevSign = 0;
   let prevEnergy = energyMin;
+  let signChangesFound = 0;
 
   for (let i = 0; i <= numScanPoints; i++) {
     const E = energyMin + i * scanStep;
     const psi = integrateNumerovFromCenter(E, V, xGrid, dx, mass, parity);
 
-    // Check boundary condition: wavefunction should decay at boundaries
-    // The sign change in the boundary value indicates a bound state
-    const currentSign = Math.sign(psi[xGrid.length - 1]);
+    // Shooting parameter: wavefunction value at right boundary
+    // For a bound state, this should be zero
+    const shootingValue = psi[xGrid.length - 1];
+    const currentSign = Math.sign(shootingValue);
 
     // Detect sign change
     if (prevSign !== 0 && currentSign !== 0 && currentSign !== prevSign) {
+      signChangesFound++;
+      console.log(`    Sign change #${signChangesFound} at E = ${(E/1.6e-19).toFixed(4)} eV, shooting param: ${prevSign > 0 ? '+' : '-'} → ${currentSign > 0 ? '+' : '-'}`);
+
       // Refine using bisection
       const refinedEnergy = refineEnergy(
         prevEnergy,
@@ -389,6 +420,7 @@ function findEnergyNearEstimate(
     prevEnergy = E;
   }
 
+  console.log(`    No valid ${parity} state found in range [${(energyMin/1.6e-19).toFixed(4)}, ${(actualEnergyMax/1.6e-19).toFixed(4)}] eV (${signChangesFound} sign changes)`);
   return null;
 }
 
@@ -409,18 +441,24 @@ function refineEnergy(
   let Elow = E1;
   let Ehigh = E2;
 
+  // Helper function to compute shooting parameter
+  // For bound states, the wavefunction should vanish at the boundaries
+  const getShootingValue = (psi: number[]): number => {
+    return psi[N - 1]; // Value at right boundary
+  };
+
   let iterations = 0;
   const maxIterations = 100;
 
   while (Ehigh - Elow > tolerance && iterations < maxIterations) {
     const Emid = (Elow + Ehigh) / 2;
     const psi = integrateNumerovFromCenter(Emid, V, xGrid, dx, mass, parity);
-    const endValue = psi[N - 1];
+    const shootingValue = getShootingValue(psi);
 
     const psiLow = integrateNumerovFromCenter(Elow, V, xGrid, dx, mass, parity);
-    const endValueLow = psiLow[N - 1];
+    const shootingValueLow = getShootingValue(psiLow);
 
-    if (Math.sign(endValue) === Math.sign(endValueLow)) {
+    if (Math.sign(shootingValue) === Math.sign(shootingValueLow)) {
       Elow = Emid;
     } else {
       Ehigh = Emid;
