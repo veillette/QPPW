@@ -441,7 +441,7 @@ export class OneWellModel extends BaseModel {
         amplitudes[0] = 1;
         break;
 
-      case SuperpositionType.LOCALIZED_NARROW:
+      case SuperpositionType.LOCALIZED_NARROW: {
         // Narrow localized state: superposition of first few states
         amplitudes = new Array(numStates).fill(0);
         phases = new Array(numStates).fill(0);
@@ -453,8 +453,9 @@ export class OneWellModel extends BaseModel {
         const normNarrow = Math.sqrt(amplitudes.reduce((sum, a) => sum + a * a, 0));
         amplitudes = amplitudes.map((a) => a / normNarrow);
         break;
+      }
 
-      case SuperpositionType.LOCALIZED_WIDE:
+      case SuperpositionType.LOCALIZED_WIDE: {
         // Wide localized state: superposition of more states
         amplitudes = new Array(numStates).fill(0);
         phases = new Array(numStates).fill(0);
@@ -466,6 +467,7 @@ export class OneWellModel extends BaseModel {
         const normWide = Math.sqrt(amplitudes.reduce((sum, a) => sum + a * a, 0));
         amplitudes = amplitudes.map((a) => a / normWide);
         break;
+      }
 
       case SuperpositionType.COHERENT:
         // Coherent state - only valid for harmonic oscillator
