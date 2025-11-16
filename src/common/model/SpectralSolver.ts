@@ -86,8 +86,14 @@ export function solveSpectral(
   // Remove first and last rows/columns
   const H_interior = extractInteriorMatrix(hamiltonianMatrix);
 
+  // Symmetrize the Hamiltonian matrix
+  // The second derivative operator with Dirichlet BCs should be self-adjoint,
+  // so the matrix should be symmetric. Any asymmetry is numerical error.
+  // We enforce symmetry by computing (H + H^T)/2
+  const H_symmetric = symmetrizeMatrix(H_interior);
+
   // Diagonalize interior Hamiltonian
-  const eigen = diagonalize(H_interior);
+  const eigen = diagonalize(H_symmetric);
 
   // Sort eigenvalues and eigenvectors by energy
   const sortedIndices = eigen.eigenvalues
@@ -191,6 +197,25 @@ function extractInteriorMatrix(H: number[][]): number[][] {
   }
 
   return H_interior;
+}
+
+/**
+ * Symmetrize a matrix by computing (M + M^T)/2
+ * This ensures the matrix is exactly symmetric, which is required for
+ * eigenvalue problems involving self-adjoint operators.
+ */
+function symmetrizeMatrix(M: number[][]): number[][] {
+  const N = M.length;
+  const M_sym: number[][] = [];
+
+  for (let i = 0; i < N; i++) {
+    M_sym[i] = [];
+    for (let j = 0; j < N; j++) {
+      M_sym[i][j] = (M[i][j] + M[j][i]) / 2;
+    }
+  }
+
+  return M_sym;
 }
 
 /**
