@@ -52,36 +52,15 @@ export function solveSpectral(
   const domainScalingFactor = 2 / (domainMax - domainMin);
   const secondDerivativeMatrix = matrixMultiply(chebyshevDiffMatrix, chebyshevDiffMatrix);
 
-  // CRITICAL CORRECTION: The Chebyshev differentiation matrix D produces a second
-  // derivative matrix D² whose eigenvalues are too large by a factor of ~0.135*(N-1)².
-  // This has been verified empirically across N=15 to N=201, with the ratio
-  // Ratio/(N-1)² converging to 0.135102-0.135107 for large N.
-  //
-  // Physical interpretation: When we extract the interior matrix for Dirichlet BCs,
-  // the boundary elimination introduces this specific scaling. The theoretical basis
-  // is still under investigation.
-  //
-  // ⚠️ IMPORTANT LIMITATION: This empirical correction factor was calibrated ONLY for:
-  //   - Infinite square well (V=0 potential)
-  //   - Ground state eigenvalues
-  //
-  // It does NOT work reliably for:
-  //   - Excited states (n≥2) → produces 75-95% errors
-  //   - Non-zero potentials (harmonic oscillator, etc.) → produces 76-99% errors
-  //   - Multiple energy levels in realistic quantum systems
-  //
-  // The spectral method with this correction should be considered EXPERIMENTAL
-  // and is NOT recommended for production use beyond ground state calculations
-  // of infinite square wells.
-  //
-  // Reference: Extensive testing shows <1% error for particle in a box GROUND STATE ONLY.
-  const empiricalCorrectionFactor = 0.1352 * (N - 1) * (N - 1);
-
-  // Apply domain scaling and correction to second derivative matrix
+  // Apply domain scaling to second derivative matrix
+  // Standard Chebyshev pseudospectral approach: no empirical corrections needed
+  // References:
+  // - Trefethen, "Spectral Methods in MATLAB" (2000)
+  // - Boyd, "Chebyshev and Fourier Spectral Methods" (2001)
+  // - Driscoll & Hale, "Fundamentals of Numerical Computation"
   for (let i = 0; i < N; i++) {
     for (let j = 0; j < N; j++) {
-      secondDerivativeMatrix[i][j] *=
-        (domainScalingFactor * domainScalingFactor) / empiricalCorrectionFactor;
+      secondDerivativeMatrix[i][j] *= domainScalingFactor * domainScalingFactor;
     }
   }
 
@@ -107,8 +86,14 @@ export function solveSpectral(
   // Remove first and last rows/columns
   const H_interior = extractInteriorMatrix(hamiltonianMatrix);
 
+  // Symmetrize the Hamiltonian matrix
+  // The second derivative operator with Dirichlet BCs should be self-adjoint,
+  // so the matrix should be symmetric. Any asymmetry is numerical error.
+  // We enforce symmetry by computing (H + H^T)/2
+  const H_symmetric = symmetrizeMatrix(H_interior);
+
   // Diagonalize interior Hamiltonian
-  const eigen = diagonalize(H_interior);
+  const eigen = diagonalize(H_symmetric);
 
   // Sort eigenvalues and eigenvectors by energy
   const sortedIndices = eigen.eigenvalues
@@ -212,6 +197,25 @@ function extractInteriorMatrix(H: number[][]): number[][] {
   }
 
   return H_interior;
+}
+
+/**
+ * Symmetrize a matrix by computing (M + M^T)/2
+ * This ensures the matrix is exactly symmetric, which is required for
+ * eigenvalue problems involving self-adjoint operators.
+ */
+function symmetrizeMatrix(M: number[][]): number[][] {
+  const N = M.length;
+  const M_sym: number[][] = [];
+
+  for (let i = 0; i < N; i++) {
+    M_sym[i] = [];
+    for (let j = 0; j < N; j++) {
+      M_sym[i][j] = (M[i][j] + M[j][i]) / 2;
+    }
+  }
+
+  return M_sym;
 }
 
 /**
