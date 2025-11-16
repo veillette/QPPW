@@ -68,7 +68,7 @@ const wellGridConfig = {
   numPoints: 150,
 };
 
-const infiniteWellPotential = (_x: number) => 0;
+const infiniteWellPotential = () => 0;
 
 const spectralISW = solveSpectral(infiniteWellPotential, mass, numStates, wellGridConfig);
 const analyticalISW = solveInfiniteWell(wellWidth, mass, numStates, wellGridConfig);

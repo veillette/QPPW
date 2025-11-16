@@ -221,7 +221,7 @@ function solveSpectral(potential, mass, numStates, xMin, xMax, N) {
   // Extract interior, symmetrize, and diagonalize
   const H_interior = extractInterior(H);
   const H_symmetric = symmetrize(H_interior);
-  const { eigenvalues, eigenvectors } = diagonalize(H_symmetric);
+  const { eigenvalues } = diagonalize(H_symmetric);
 
   // Sort by energy
   const sorted = eigenvalues
@@ -301,7 +301,7 @@ console.log('=== Test 2: Infinite Square Well ===');
 const wellWidth = 1e-9;
 
 const iswNumerical = solveSpectral(
-  x => 0,
+  () => 0,
   ELECTRON_MASS,
   numStates,
   -wellWidth / 2,

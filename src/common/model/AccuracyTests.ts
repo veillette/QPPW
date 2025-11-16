@@ -403,7 +403,7 @@ function testSpectralInfiniteWell(): TestResult {
 
   // Create infinite well potential centered at x=0
   // For spectral method, we use boundary conditions at xMin and xMax
-  const potential: PotentialFunction = (_x: number) => 0;
+  const potential: PotentialFunction = () => 0;
 
   // Get numerical solution using Spectral method
   const numericalResult = solveSpectral(potential, mass, numStates, gridConfig);

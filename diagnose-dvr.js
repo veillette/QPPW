@@ -61,6 +61,7 @@ const E_0_analytical = HBAR * omega * 0.5;
 
 console.log('\n=== Expected Ground State Energy ===\n');
 console.log(`Harmonic oscillator (ω = ${omega.toExponential(2)} rad/s):`);
+console.log(`  Spring constant k = ${springConstant.toExponential(4)} N/m`);
 console.log(`  E_0 = ℏω/2 = ${(E_0_analytical * JOULES_TO_EV).toFixed(6)} eV`);
 
 // Ratio analysis

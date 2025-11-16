@@ -8,21 +8,6 @@ const HBAR = 1.054571817e-34; // Reduced Planck constant (J·s)
 const ELECTRON_MASS = 9.1093837015e-31; // kg
 const JOULES_TO_EV = 6.241509074e18;
 
-type PotentialFunction = (x: number) => number;
-
-interface GridConfig {
-  xMin: number;
-  xMax: number;
-  numPoints: number;
-}
-
-interface BoundStateResult {
-  energies: number[];
-  wavefunctions: number[][];
-  xGrid: number[];
-  method: string;
-}
-
 // Inline the Matrix Numerov solver core logic for testing
 function testMatrixNumerov(): void {
   console.log("========================================");
@@ -35,7 +20,6 @@ function testMatrixNumerov(): void {
 
   const mass = ELECTRON_MASS;
   const omega = 1e15; // rad/s
-  const springConstant = mass * omega * omega;
 
   // Analytical solution for harmonic oscillator: E_n = ℏω(n + 1/2)
   const E0_analytical = HBAR * omega * 0.5;
