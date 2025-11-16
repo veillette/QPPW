@@ -26,6 +26,7 @@ import {
   solveCoulomb3DPotential
 } from "./analytical-solutions";
 import { solveNumerov } from "./NumerovSolver.js";
+import { solveMatrixNumerov } from "./MatrixNumerovSolver.js";
 import { solveDVR } from "./DVRSolver.js";
 import { solveFGH } from "./FGHSolver.js";
 import { solveSpectral } from "./SpectralSolver.js";
@@ -38,6 +39,7 @@ import qppw from "../../QPPWNamespace.js";
  */
 export enum NumericalMethod {
   NUMEROV = "numerov",
+  MATRIX_NUMEROV = "matrix_numerov",
   DVR = "dvr",
   FGH = "fgh",
   SPECTRAL = "spectral",
@@ -359,6 +361,9 @@ export class Schrodinger1DSolver {
         energyRange[0],
         energyRange[1],
       );
+    } else if (this.numericalMethod === NumericalMethod.MATRIX_NUMEROV) {
+      // Matrix Numerov method
+      return solveMatrixNumerov(potential, mass, numStates, gridConfig);
     } else if (this.numericalMethod === NumericalMethod.DVR) {
       // DVR method
       return solveDVR(potential, mass, numStates, gridConfig);

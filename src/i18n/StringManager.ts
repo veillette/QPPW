@@ -52,6 +52,8 @@ export class StringManager {
   public readonly numericalMethodDescriptionStringProperty: StringProperty;
   public readonly numerovStringProperty: StringProperty;
   public readonly numerovDescriptionStringProperty: StringProperty;
+  public readonly matrixNumerovStringProperty: StringProperty;
+  public readonly matrixNumerovDescriptionStringProperty: StringProperty;
   public readonly dvrStringProperty: StringProperty;
   public readonly dvrDescriptionStringProperty: StringProperty;
   public readonly fghStringProperty: StringProperty;
@@ -171,6 +173,8 @@ export class StringManager {
     this.numericalMethodDescriptionStringProperty = new StringProperty("Choose the numerical method for solving the Schrödinger equation.");
     this.numerovStringProperty = new StringProperty("Numerov Method");
     this.numerovDescriptionStringProperty = new StringProperty("Traditional shooting method - accurate and stable for most potentials");
+    this.matrixNumerovStringProperty = new StringProperty("Matrix Numerov");
+    this.matrixNumerovDescriptionStringProperty = new StringProperty("Matrix diagonalization using Numerov formula - combines O(h⁴) accuracy with robustness");
     this.dvrStringProperty = new StringProperty("DVR (Discrete Variable Representation)");
     this.dvrDescriptionStringProperty = new StringProperty("Matrix diagonalization method - faster and more robust for complex potentials");
     this.fghStringProperty = new StringProperty("FGH (Fourier Grid Hamiltonian)");
@@ -287,6 +291,7 @@ export class StringManager {
   public getNumericalMethodNames() {
     return {
       numerovStringProperty: this.numerovStringProperty,
+      matrixNumerovStringProperty: this.matrixNumerovStringProperty,
       dvrStringProperty: this.dvrStringProperty,
       fghStringProperty: this.fghStringProperty,
       spectralStringProperty: this.spectralStringProperty,
@@ -299,6 +304,7 @@ export class StringManager {
   public getNumericalMethodDescriptions() {
     return {
       numerovStringProperty: this.numerovDescriptionStringProperty,
+      matrixNumerovStringProperty: this.matrixNumerovDescriptionStringProperty,
       dvrStringProperty: this.dvrDescriptionStringProperty,
       fghStringProperty: this.fghDescriptionStringProperty,
       spectralStringProperty: this.spectralDescriptionStringProperty,
