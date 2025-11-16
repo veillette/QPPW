@@ -82,6 +82,24 @@ onReadyToLaunch(() => {
                     tandemName: "numerovRadioButton",
                   },
                   {
+                    value: NumericalMethod.MATRIX_NUMEROV,
+                    createNode: () => new VBox({
+                      align: "left",
+                      spacing: 4,
+                      children: [
+                        new Text(numericalMethodNames.matrixNumerovStringProperty, {
+                          font: new PhetFont(14),
+                        }),
+                        new Text(numericalMethodDescriptions.matrixNumerovStringProperty, {
+                          font: new PhetFont(11),
+                          fill: "rgb(80,80,80)",
+                          maxWidth: 550,
+                        }),
+                      ],
+                    }),
+                    tandemName: "matrixNumerovRadioButton",
+                  },
+                  {
                     value: NumericalMethod.DVR,
                     createNode: () => new VBox({
                       align: "left",
