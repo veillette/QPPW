@@ -118,12 +118,15 @@ export class OneWellModel extends BaseModel {
 
   /**
    * Called when the solver method changes.
-   * Invalidates the cached bound state results.
-   * @param _method - The new numerical method (unused but required by interface)
+   * For OneWellModel, we ignore solver method changes because all potentials
+   * in the one-well screen have analytical solutions and don't depend on the
+   * numerical method preference.
+   * @param _method - The new numerical method (unused)
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected onSolverMethodChanged(_method: NumericalMethod): void {
-    this.boundStateResult = null; // Invalidate cache
+    // Do nothing - one well screen always uses analytical solutions
+    // regardless of the solver preference setting
   }
 
   /**
