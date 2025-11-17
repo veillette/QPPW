@@ -1,6 +1,6 @@
 /**
  * Analytical solution for the Rosen-Morse potential.
- * V(x) = -V_0 / cosh²(ax) + V_1 * tanh(ax)
+ * V(x) = -V_0 / cosh²(x/a) + V_1 * tanh(x/a)
  *
  * This potential is useful for modeling molecular interactions and has exact solutions.
  */
@@ -11,13 +11,13 @@ import { jacobiPolynomial, factorial, logGamma } from "./math-utilities.js";
 
 /**
  * Analytical solution for the Rosen-Morse potential.
- * V(x) = -V_0 / cosh²(ax) + V_1 * tanh(ax)
+ * V(x) = -V_0 / cosh²(x/a) + V_1 * tanh(x/a)
  *
  * This potential is useful for modeling molecular interactions and has exact solutions.
  *
  * @param potentialDepth - Potential depth V_0 in Joules (positive value)
  * @param barrierHeight - Barrier height V_1 in Joules
- * @param wellWidth - Width parameter a (inverse meters)
+ * @param wellWidth - Width parameter a in meters
  * @param mass - Particle mass in kg
  * @param numStates - Number of energy levels to calculate
  * @param gridConfig - Grid configuration for wavefunction evaluation
@@ -36,11 +36,11 @@ export function solveRosenMorsePotential(
   const V1 = barrierHeight;
   const a = wellWidth;
 
-  // Calculate dimensionless parameters
-  // λ = sqrt(2*m*V_0) / (a*ℏ)
-  // μ = V_1 / (2*a*ℏ * sqrt(2*m*V_0))
-  const lambda = Math.sqrt(2 * mass * V0) / (a * HBAR);
-  const mu = V1 / (2 * a * HBAR * Math.sqrt(2 * mass * V0));
+  // Calculate dimensionless parameters (with x/a substitution)
+  // λ = a * sqrt(2*m*V_0) / ℏ
+  // μ = V_1 * a / (2*ℏ * sqrt(2*m*V_0))
+  const lambda = (a * Math.sqrt(2 * mass * V0)) / HBAR;
+  const mu = (V1 * a) / (2 * HBAR * Math.sqrt(2 * mass * V0));
 
   // For bound states, we need λ > |μ|
   if (lambda <= Math.abs(mu)) {
@@ -59,9 +59,9 @@ export function solveRosenMorsePotential(
   }
 
   // Calculate energies
-  // E_n = -V_0 + (ℏ²a²/2m) * [(λ_eff - n - 1/2)² + μ²]
+  // E_n = -V_0 + (ℏ²/2ma²) * [(λ_eff - n - 1/2)² + μ²]
   const energies: number[] = [];
-  const energyFactor = (HBAR * HBAR * a * a) / (2 * mass);
+  const energyFactor = (HBAR * HBAR) / (2 * mass * a * a);
 
   for (let n = 0; n < actualNumStates; n++) {
     const term = lambdaEff - n - 0.5;
@@ -78,7 +78,7 @@ export function solveRosenMorsePotential(
   }
 
   // Calculate wavefunctions
-  // ψ_n(x) = N_n * sech^(λ_eff-n-1/2)(ax) * exp(μ*tanh(ax)) * P_n^(α,β)(tanh(ax))
+  // ψ_n(x) = N_n * sech^(λ_eff-n-1/2)(x/a) * exp(μ*tanh(x/a)) * P_n^(α,β)(tanh(x/a))
   // where α = λ_eff - n - 1/2 - μ, β = λ_eff - n - 1/2 + μ
   const wavefunctions: number[][] = [];
 
@@ -88,12 +88,12 @@ export function solveRosenMorsePotential(
     const alpha_jac = s - mu;
     const beta_jac = s + mu;
 
-    // Simplified normalization
-    const normalization = Math.sqrt(a * (2 * s) / (factorial(n) * Math.exp(logGamma(n + alpha_jac + 1) + logGamma(n + beta_jac + 1) - logGamma(n + alpha_jac + beta_jac + 1))));
+    // Normalization (with 1/a factor from variable change)
+    const normalization = Math.sqrt((1 / a) * (2 * s) / (factorial(n) * Math.exp(logGamma(n + alpha_jac + 1) + logGamma(n + beta_jac + 1) - logGamma(n + alpha_jac + beta_jac + 1))));
 
     for (const x of xGrid) {
-      const tanhVal = Math.tanh(a * x);
-      const sechVal = 1.0 / Math.cosh(a * x);
+      const tanhVal = Math.tanh(x / a);
+      const sechVal = 1.0 / Math.cosh(x / a);
 
       // Calculate wavefunction
       const jacobiPoly = jacobiPolynomial(n, alpha_jac, beta_jac, tanhVal);

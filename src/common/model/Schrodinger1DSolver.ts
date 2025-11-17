@@ -438,10 +438,10 @@ export class Schrodinger1DSolver {
 
   /**
    * Create a potential function for a Morse potential.
-   * V(x) = D_e * (1 - exp(-a(x - x_e)))^2
+   * V(x) = D_e * (1 - exp(-(x - x_e)/a))^2
    *
    * @param dissociationEnergy - Dissociation energy D_e in Joules
-   * @param wellWidth - Width parameter a (inverse meters)
+   * @param wellWidth - Width parameter a in meters
    * @param equilibriumPosition - Equilibrium position x_e in meters
    * @returns Potential function V(x)
    */
@@ -451,17 +451,17 @@ export class Schrodinger1DSolver {
     equilibriumPosition: number,
   ): PotentialFunction {
     return (x: number) => {
-      const exponent = Math.exp(-wellWidth * (x - equilibriumPosition));
+      const exponent = Math.exp(-(x - equilibriumPosition) / wellWidth);
       return dissociationEnergy * Math.pow(1 - exponent, 2);
     };
   }
 
   /**
    * Create a potential function for a Pöschl-Teller potential.
-   * V(x) = -V_0 / cosh²(ax)
+   * V(x) = -V_0 / cosh²(x/a)
    *
    * @param potentialDepth - Potential depth V_0 in Joules (positive value)
-   * @param wellWidth - Width parameter a (inverse meters)
+   * @param wellWidth - Width parameter a in meters
    * @returns Potential function V(x)
    */
   public static createPoschlTellerPotential(
@@ -469,18 +469,18 @@ export class Schrodinger1DSolver {
     wellWidth: number,
   ): PotentialFunction {
     return (x: number) => {
-      const coshVal = Math.cosh(wellWidth * x);
+      const coshVal = Math.cosh(x / wellWidth);
       return -potentialDepth / (coshVal * coshVal);
     };
   }
 
   /**
    * Create a potential function for a Rosen-Morse potential.
-   * V(x) = -V_0 / cosh²(ax) + V_1 * tanh(ax)
+   * V(x) = -V_0 / cosh²(x/a) + V_1 * tanh(x/a)
    *
    * @param potentialDepth - Potential depth V_0 in Joules (positive value)
    * @param barrierHeight - Barrier height V_1 in Joules
-   * @param wellWidth - Width parameter a (inverse meters)
+   * @param wellWidth - Width parameter a in meters
    * @returns Potential function V(x)
    */
   public static createRosenMorsePotential(
@@ -489,19 +489,19 @@ export class Schrodinger1DSolver {
     wellWidth: number,
   ): PotentialFunction {
     return (x: number) => {
-      const coshVal = Math.cosh(wellWidth * x);
-      const tanhVal = Math.tanh(wellWidth * x);
+      const coshVal = Math.cosh(x / wellWidth);
+      const tanhVal = Math.tanh(x / wellWidth);
       return -potentialDepth / (coshVal * coshVal) + barrierHeight * tanhVal;
     };
   }
 
   /**
    * Create a potential function for an Eckart potential.
-   * V(x) = V_0 / (1 + exp(ax))² - V_1 / (1 + exp(ax))
+   * V(x) = V_0 / (1 + exp(x/a))² - V_1 / (1 + exp(x/a))
    *
    * @param potentialDepth - Potential depth V_0 in Joules
    * @param barrierHeight - Barrier height V_1 in Joules
-   * @param wellWidth - Width parameter a (inverse meters)
+   * @param wellWidth - Width parameter a in meters
    * @returns Potential function V(x)
    */
   public static createEckartPotential(
@@ -510,7 +510,7 @@ export class Schrodinger1DSolver {
     wellWidth: number,
   ): PotentialFunction {
     return (x: number) => {
-      const expVal = Math.exp(wellWidth * x);
+      const expVal = Math.exp(x / wellWidth);
       const denom = 1 + expVal;
       return potentialDepth / (denom * denom) - barrierHeight / denom;
     };

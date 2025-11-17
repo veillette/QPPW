@@ -62,7 +62,7 @@ export class OneWellModel extends BaseModel {
     this.wellWidthProperty = new NumberProperty(1.0, { range: new Range(0.1, 6.0) }); // in nanometers (max 6 nm)
     this.wellDepthProperty = new NumberProperty(5.0, { range: new Range(0.1, 15.0) }); // in eV (within energy graph bounds)
     this.wellOffsetProperty = new NumberProperty(0.5, { range: new Range(0.0, 1.0) }); // normalized position
-    this.barrierHeightProperty = new NumberProperty(2.0, { range: new Range(0.0, 10.0) }); // in eV (for Rosen-Morse and Eckart)
+    this.barrierHeightProperty = new NumberProperty(0.5, { range: new Range(0.0, 10.0) }); // in eV (for Rosen-Morse and Eckart)
 
     // Initialize particle mass (1.0 = electron mass)
     this.particleMassProperty = new NumberProperty(1.0, { range: new Range(0.5, 1.1) }); // 0.5 to 1.1 times electron mass
@@ -206,7 +206,8 @@ export class OneWellModel extends BaseModel {
    * Results are cached until well parameters change.
    */
   private calculateBoundStates(): void {
-    const wellWidth = this.wellWidthProperty.value * QuantumConstants.NM_TO_M;
+    // All potentials now use wellWidth as a width parameter in nanometers (converted to meters)
+    const wellWidth = this.wellWidthProperty.value * QuantumConstants.NM_TO_M; // width in meters
     const wellDepth = this.wellDepthProperty.value * QuantumConstants.EV_TO_JOULES;
     const mass = this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
 
@@ -274,23 +275,31 @@ export class OneWellModel extends BaseModel {
           potentialParams.springConstant = (4 * wellDepth) / (wellWidth * wellWidth);
           break;
         case PotentialType.MORSE:
-          // Morse potential uses wellDepth as dissociation energy, equilibrium position at 0
+          // Morse potential: V(x) = D_e * (1 - exp(-(x - x_e)/a))^2
+          // wellWidth is the width parameter 'a' in meters
           potentialParams.dissociationEnergy = wellDepth;
           potentialParams.equilibriumPosition = 0; // Center of the well
+          potentialParams.wellWidth = wellWidth; // width in meters
           break;
         case PotentialType.POSCHL_TELLER:
-          // Pöschl-Teller potential uses wellDepth as potential depth
+          // Pöschl-Teller potential: V(x) = -V_0 / cosh²(x/a)
+          // wellWidth is the width parameter 'a' in meters
           potentialParams.potentialDepth = wellDepth;
+          potentialParams.wellWidth = wellWidth; // width in meters
           break;
         case PotentialType.ROSEN_MORSE:
-          // Rosen-Morse potential uses wellDepth as potential depth and barrierHeight
+          // Rosen-Morse potential: V(x) = -V_0 / cosh²(x/a) + V_1 * tanh(x/a)
+          // wellWidth is the width parameter 'a' in meters
           potentialParams.potentialDepth = wellDepth;
           potentialParams.barrierHeight = this.barrierHeightProperty.value * QuantumConstants.EV_TO_JOULES;
+          potentialParams.wellWidth = wellWidth; // width in meters
           break;
         case PotentialType.ECKART:
-          // Eckart potential uses wellDepth as potential depth and barrierHeight
+          // Eckart potential: V(x) = V_0 / (1 + exp(x/a))² - V_1 / (1 + exp(x/a))
+          // wellWidth is the width parameter 'a' in meters
           potentialParams.potentialDepth = wellDepth;
           potentialParams.barrierHeight = this.barrierHeightProperty.value * QuantumConstants.EV_TO_JOULES;
+          potentialParams.wellWidth = wellWidth; // width in meters
           break;
         case PotentialType.ASYMMETRIC_TRIANGLE:
           // Slope is the field strength

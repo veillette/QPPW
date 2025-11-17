@@ -1,6 +1,6 @@
 /**
  * Analytical solution for the Morse potential.
- * V(x) = D_e * (1 - exp(-a(x - x_e)))^2
+ * V(x) = D_e * (1 - exp(-(x - x_e)/a))^2
  *
  * The Morse potential describes molecular vibrations more accurately than the harmonic oscillator
  * by including anharmonic effects and bond dissociation.
@@ -12,13 +12,13 @@ import { associatedLaguerre, factorial, gamma } from "./math-utilities.js";
 
 /**
  * Analytical solution for the Morse potential.
- * V(x) = D_e * (1 - exp(-a(x - x_e)))^2
+ * V(x) = D_e * (1 - exp(-(x - x_e)/a))^2
  *
  * The Morse potential describes molecular vibrations more accurately than the harmonic oscillator
  * by including anharmonic effects and bond dissociation.
  *
  * @param dissociationEnergy - Dissociation energy D_e in Joules
- * @param wellWidth - Width parameter a (inverse meters)
+ * @param wellWidth - Width parameter a in meters
  * @param equilibriumPosition - Equilibrium position x_e in meters
  * @param mass - Particle mass in kg
  * @param numStates - Number of energy levels to calculate
@@ -39,8 +39,10 @@ export function solveMorsePotential(
   const xe = equilibriumPosition;
 
   // Calculate the maximum quantum number
-  // n_max = floor(sqrt(2*m*D_e)/(a*ℏ) - 1/2)
-  const nMax = Math.floor(Math.sqrt(2 * mass * De) / (a * HBAR) - 0.5);
+  // With substitution a_old = 1/a_new:
+  // n_max = floor(a * sqrt(2*m*D_e)/ℏ - 1/2)
+  const lambda = (a * Math.sqrt(2 * mass * De)) / HBAR;
+  const nMax = Math.floor(lambda - 0.5);
   const actualNumStates = Math.min(numStates, nMax + 1);
 
   if (actualNumStates <= 0) {
@@ -48,7 +50,8 @@ export function solveMorsePotential(
   }
 
   // Calculate the characteristic frequency
-  const omega = a * Math.sqrt(2 * De / mass);
+  // ω = sqrt(2*D_e/m) / a
+  const omega = Math.sqrt(2 * De / mass) / a;
 
   // Calculate energies: E_n = ℏω(n + 1/2) - (ℏω)²(n + 1/2)² / (4*D_e)
   // Relative to the bottom of the well
@@ -70,21 +73,20 @@ export function solveMorsePotential(
 
   // Calculate wavefunctions using associated Laguerre polynomials
   // ψ_n(z) = N_n * z^((λ-n-1/2)) * exp(-z/2) * L_n^(2λ-2n-1)(z)
-  // where z = 2λ * exp(-a(x-xe)), λ = sqrt(2*m*D_e)/(a*ℏ)
+  // where z = 2λ * exp(-(x-xe)/a), λ = a * sqrt(2*m*D_e)/ℏ
   const wavefunctions: number[][] = [];
-  const lambda = Math.sqrt(2 * mass * De) / (a * HBAR);
 
   for (let n = 0; n < actualNumStates; n++) {
     const wavefunction: number[] = [];
 
-    // Normalization constant
+    // Normalization constant (includes 1/a factor from variable change)
     const alpha = 2 * lambda - 2 * n - 1;
     const normalization = Math.sqrt(
-      (factorial(n) * a) / (gamma(2 * lambda - n))
+      (factorial(n) / a) / (gamma(2 * lambda - n))
     );
 
     for (const x of xGrid) {
-      const z = 2 * lambda * Math.exp(-a * (x - xe));
+      const z = 2 * lambda * Math.exp(-(x - xe) / a);
 
       // Calculate wavefunction
       const exponent = lambda - n - 0.5;
