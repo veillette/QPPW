@@ -19,7 +19,7 @@ import { solveHarmonicOscillator } from "./analytical-solutions/harmonic-oscilla
 import { solveFiniteSquareWell } from "./analytical-solutions/finite-square-well.js";
 import { solveCoulomb3DPotential } from "./analytical-solutions/coulomb-3d-potential.js";
 import QuantumConstants from "./QuantumConstants.js";
-import { GridConfig, PotentialFunction } from "./PotentialFunction.js";
+import { BoundStateResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
 import Schrodinger1DSolver from "./Schrodinger1DSolver.js";
 import qppw from "../../QPPWNamespace.js";
 
@@ -52,9 +52,9 @@ function percentageError(numerical: number, analytical: number): number {
  */
 function testMethod(
   methodName: string,
-  solver: (pot: PotentialFunction, mass: number, numStates: number, grid: GridConfig) => any,
+  solver: (pot: PotentialFunction, mass: number, numStates: number, grid: GridConfig) => BoundStateResult,
   potential: PotentialFunction,
-  analyticalSolution: any,
+  analyticalSolution: BoundStateResult,
   mass: number,
   numStates: number,
   gridConfig: GridConfig,
@@ -327,8 +327,8 @@ function testDoubleSquareWellsComprehensive(): TestResult[] {
  */
 function compareResults(
   methodName: string,
-  result: any,
-  reference: any,
+  result: BoundStateResult,
+  reference: BoundStateResult,
   testName: string,
   tolerance: number,
   executionTime: number
