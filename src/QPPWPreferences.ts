@@ -32,13 +32,13 @@ const QPPWPreferences = {
 
   /**
    * Number of grid points for numerical solvers
-   * Range: 256-2000 points. Higher values give more accurate results but slower computation.
-   * Default: 1000 points (good balance of accuracy and performance)
+   * Range: 64-2000 points. Higher values give more accurate results but slower computation.
+   * Default: 128 points (fast computation for interactive exploration)
    */
-  gridPointsProperty: new NumberProperty(1000, {
+  gridPointsProperty: new NumberProperty(128, {
     tandem: Tandem.PREFERENCES.createTandem("gridPointsProperty"),
     phetioFeatured: true,
-    range: new Range(256, 2000),
+    range: new Range(64, 2000),
   }),
 
   // Visual Preferences

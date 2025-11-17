@@ -191,17 +191,17 @@ onReadyToLaunch(() => {
               );
 
               // Add major ticks
+              gridPointsSlider.addMajorTick(64, new Text("64", { font: new PhetFont(12) }));
+              gridPointsSlider.addMajorTick(128, new Text("128", { font: new PhetFont(12) }));
               gridPointsSlider.addMajorTick(256, new Text("256", { font: new PhetFont(12) }));
               gridPointsSlider.addMajorTick(512, new Text("512", { font: new PhetFont(12) }));
               gridPointsSlider.addMajorTick(1024, new Text("1024", { font: new PhetFont(12) }));
               gridPointsSlider.addMajorTick(2000, new Text("2000", { font: new PhetFont(12) }));
 
-              // Add minor ticks
-              for (let i = 300; i <= 2000; i += 100) {
-                if (i % 500 !== 0) {
-                  gridPointsSlider.addMinorTick(i);
-                }
-              }
+              // Add minor ticks at powers of 2 and round numbers
+              [96, 192, 384, 768, 1536].forEach(value => {
+                gridPointsSlider.addMinorTick(value);
+              });
 
               const gridPointsValueText = new Text("", {
                 font: new PhetFont({ size: 14, weight: "bold" }),
