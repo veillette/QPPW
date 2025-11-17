@@ -143,22 +143,23 @@ export class ControlPanelNode extends Node {
             fill: QPPWColors.textFillProperty,
           }),
       },
-      {
-        value: PotentialType.ROSEN_MORSE,
-        createNode: () =>
-          new Text(stringManager.rosenMorseStringProperty, {
-            font: new PhetFont(14),
-            fill: QPPWColors.textFillProperty,
-          }),
-      },
-      {
-        value: PotentialType.ECKART,
-        createNode: () =>
-          new Text(stringManager.eckartStringProperty, {
-            font: new PhetFont(14),
-            fill: QPPWColors.textFillProperty,
-          }),
-      },
+      // Temporarily removed - Rosen-Morse and Eckart potentials
+      // {
+      //   value: PotentialType.ROSEN_MORSE,
+      //   createNode: () =>
+      //     new Text(stringManager.rosenMorseStringProperty, {
+      //       font: new PhetFont(14),
+      //       fill: QPPWColors.textFillProperty,
+      //     }),
+      // },
+      // {
+      //   value: PotentialType.ECKART,
+      //   createNode: () =>
+      //     new Text(stringManager.eckartStringProperty, {
+      //       font: new PhetFont(14),
+      //       fill: QPPWColors.textFillProperty,
+      //     }),
+      // },
       {
         value: PotentialType.ASYMMETRIC_TRIANGLE,
         createNode: () =>

@@ -249,10 +249,15 @@ export class OneWellModel extends BaseModel {
     // Grid configuration spans the full chart display range (-4 nm to +4 nm)
     // This ensures wavefunctions are calculated across the entire visible area
     const CHART_DISPLAY_RANGE_NM = 4; // Match the chart x-axis range
+
+    // For analytical solutions, use a fixed high-resolution grid (1000 points)
+    // since we can evaluate them exactly at any point
+    const ANALYTICAL_GRID_POINTS = 1000;
+
     const gridConfig = {
       xMin: -CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
       xMax: CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
-      numPoints: QPPWPreferences.gridPointsProperty.value,
+      numPoints: ANALYTICAL_GRID_POINTS, // Use fixed high-resolution grid for analytical solutions
     };
 
     try {
