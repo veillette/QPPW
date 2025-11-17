@@ -84,9 +84,9 @@ export class OneWellModel extends BaseModel {
 
     // Initialize superposition state
     // Default to PSI_K (single eigenstate) so selecting energy levels works properly
-    this.superpositionTypeProperty = new Property<SuperpositionType>(SuperpositionType.PSI_K);
+    this.superpositionTypeProperty = new Property<SuperpositionType>(SuperpositionType.SINGLE);
     this.superpositionConfigProperty = new Property<SuperpositionConfig>({
-      type: SuperpositionType.PSI_K,
+      type: SuperpositionType.SINGLE,
       amplitudes: [1.0], // Default to ground state
       phases: [0],
     });
@@ -475,7 +475,7 @@ export class OneWellModel extends BaseModel {
         }
         break;
 
-      case SuperpositionType.PSI_K:
+      case SuperpositionType.SINGLE:
         // Single eigenstate (ground state)
         amplitudes = new Array(numStates).fill(0);
         phases = new Array(numStates).fill(0);

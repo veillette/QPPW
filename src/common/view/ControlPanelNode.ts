@@ -236,7 +236,7 @@ export class ControlPanelNode extends Node {
           }),
       },
       {
-        value: SuperpositionType.PSI_K,
+        value: SuperpositionType.SINGLE,
         createNode: () =>
           new RichText(stringManager.psiKStringProperty, {
             font: new PhetFont(14),

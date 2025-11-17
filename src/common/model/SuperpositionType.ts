@@ -9,7 +9,7 @@ import qppw from "../../QPPWNamespace.js";
  */
 export enum SuperpositionType {
   PSI_I_PSI_J = "psiIPsiJ",
-  PSI_K = "psiK",
+  SINGLE = "eigenfunction",
   LOCALIZED_NARROW = "localizedNarrow",
   LOCALIZED_WIDE = "localizedWide",
   COHERENT = "coherent",

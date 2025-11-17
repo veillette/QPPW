@@ -330,7 +330,7 @@ export class WaveFunctionChartNode extends Node {
     const superpositionType = this.model.superpositionTypeProperty.value;
 
     // Check if we're in a superposition state (not PSI_K which is single eigenstate)
-    const isSuperposition = superpositionType !== SuperpositionType.PSI_K;
+    const isSuperposition = superpositionType !== SuperpositionType.SINGLE;
 
     if (isSuperposition) {
       // Display superposition label
@@ -420,7 +420,7 @@ export class WaveFunctionChartNode extends Node {
 
         // Check if we're displaying a superposition or a single eigenstate
         const superpositionType = this.model.superpositionTypeProperty.value;
-        const isSuperposition = superpositionType !== SuperpositionType.PSI_K;
+        const isSuperposition = superpositionType !== SuperpositionType.SINGLE;
 
         if (isSuperposition && "getSuperpositionWavefunction" in this.model) {
           // Display superposition wavefunction
