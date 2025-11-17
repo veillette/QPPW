@@ -202,6 +202,9 @@ export function integrateNumerovFromCenter(
   }
 
   // Integrate from center (x=0) to right boundary (x_max)
+  // Apply periodic renormalization to prevent exponential overflow
+  const renormalizationInterval = 50; // Renormalize every 50 steps
+
   for (let j = centerIdx + 1; j < N - 1; j++) {
     const numerator = (12 - 10 * f[j]) * psi[j] - (1 + f[j - 1]) * psi[j - 1];
     const denominator = 1 + f[j + 1];
@@ -213,6 +216,25 @@ export function integrateNumerovFromCenter(
         psi[k] = 1e100;
       }
       break;
+    }
+
+    // Periodic renormalization to prevent exponential growth
+    // For non-eigenvalue energies, wavefunction grows exponentially in classically forbidden regions
+    // Renormalization preserves the relative behavior (sign changes) while preventing overflow
+    if ((j - centerIdx) % renormalizationInterval === 0) {
+      // Find maximum absolute value in computed region
+      let maxAbs = 0;
+      for (let k = centerIdx; k <= j + 1; k++) {
+        maxAbs = Math.max(maxAbs, Math.abs(psi[k]));
+      }
+
+      // Renormalize if getting too large (but not if too small, which is normal decay)
+      if (maxAbs > 1e10) {
+        const scale = 1.0 / maxAbs;
+        for (let k = centerIdx; k <= j + 1; k++) {
+          psi[k] *= scale;
+        }
+      }
     }
   }
 

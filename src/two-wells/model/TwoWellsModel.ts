@@ -276,7 +276,8 @@ export class TwoWellsModel extends BaseModel {
 
       // Add margin for wavefunction decay (need ~3-4 decay lengths)
       // For bound states, decay length ~ 0.1 nm, so margin ~ 0.4 nm is sufficient
-      const margin = method === 'numerov' ? 0.5 : 1.5; // nm
+      // Increased margins to ensure proper boundary conditions for shooting method
+      const margin = method === 'numerov' ? 2.0 : 2.0; // nm
 
       const gridRange = outerEdge + margin;
 

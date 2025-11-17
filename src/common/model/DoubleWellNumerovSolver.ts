@@ -386,6 +386,9 @@ function findEnergyNearEstimate(
   let prevEnergy = energyMin;
   let signChangesFound = 0;
 
+  // Track shooting values for debugging
+  const shootingValues: number[] = [];
+
   for (let i = 0; i <= numScanPoints; i++) {
     const E = energyMin + i * scanStep;
     const psi = integrateNumerovFromCenter(E, V, xGrid, dx, mass, parity);
@@ -394,6 +397,8 @@ function findEnergyNearEstimate(
     // For a bound state, this should be zero
     const shootingValue = psi[xGrid.length - 1];
     const currentSign = Math.sign(shootingValue);
+
+    shootingValues.push(shootingValue);
 
     // Detect sign change
     if (prevSign !== 0 && currentSign !== 0 && currentSign !== prevSign) {
@@ -418,6 +423,16 @@ function findEnergyNearEstimate(
 
     prevSign = currentSign;
     prevEnergy = E;
+  }
+
+  // Debug: show statistics of shooting values
+  const minShooting = Math.min(...shootingValues.map(Math.abs));
+  const maxShooting = Math.max(...shootingValues.map(Math.abs));
+  const allPositive = shootingValues.every(v => v >= 0);
+  const allNegative = shootingValues.every(v => v <= 0);
+  console.log(`    Shooting values: min=|${minShooting.toExponential(2)}|, max=|${maxShooting.toExponential(2)}|, all ${allPositive ? 'positive' : allNegative ? 'negative' : 'mixed'}`);
+  if (shootingValues.length >= 3) {
+    console.log(`    Sample values: [0]=${shootingValues[0].toExponential(2)}, [50]=${shootingValues[50].toExponential(2)}, [100]=${shootingValues[100].toExponential(2)}`);
   }
 
   console.log(`    No valid ${parity} state found in range [${(energyMin/1.6e-19).toFixed(4)}, ${(actualEnergyMax/1.6e-19).toFixed(4)}] eV (${signChangesFound} sign changes)`);
