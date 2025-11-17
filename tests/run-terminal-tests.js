@@ -6,7 +6,7 @@
  * without requiring a browser.
  *
  * Usage:
- *   npx tsx tests/run-terminal-tests.js
+ *   npx tsx --tsconfig tsconfig.test.json tests/run-terminal-tests.js
  *   npm test
  */
 
@@ -15,10 +15,8 @@ console.log('║     QPPW Quantum Mechanics Accuracy Test Suite            ║')
 console.log('║     Running in Terminal Mode                               ║');
 console.log('╚════════════════════════════════════════════════════════════╝\n');
 
-// Note: This file must be run with tsx to handle TypeScript imports
-// Run with: npx tsx tests/run-terminal-tests.js
-
-import { runAccuracyTests } from '../src/common/model/AccuracyTests.js';
+// Import and run tests
+const { runAccuracyTests } = await import('../src/common/model/AccuracyTests.js');
 
 // Run the full test suite
 runAccuracyTests();
