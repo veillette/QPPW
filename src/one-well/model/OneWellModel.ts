@@ -510,14 +510,15 @@ export class OneWellModel extends BaseModel {
         break;
       }
 
-      case SuperpositionType.COHERENT:
-        // Coherent state - only valid for harmonic oscillator
+      case SuperpositionType.COHERENT: {
+        const wellWidth = this.wellWidthProperty.value * QuantumConstants.NM_TO_M;
+        const displacement = this.coherentDisplacementProperty.value * QuantumConstants.NM_TO_M;
+
         if (this.potentialTypeProperty.value === PotentialType.HARMONIC_OSCILLATOR) {
-          const wellWidth = this.wellWidthProperty.value * QuantumConstants.NM_TO_M;
+          // True coherent state for harmonic oscillator
           const wellDepth = this.wellDepthProperty.value * QuantumConstants.EV_TO_JOULES;
           const mass = this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
           const springConstant = (4 * wellDepth) / (wellWidth * wellWidth);
-          const displacement = this.coherentDisplacementProperty.value * QuantumConstants.NM_TO_M;
 
           const result = calculateCoherentStateCoefficients(
             displacement,
@@ -528,12 +529,55 @@ export class OneWellModel extends BaseModel {
           amplitudes = result.amplitudes;
           phases = result.phases;
         } else {
-          // Fall back to ground state for non-harmonic potentials
+          // Coherent-state-like wavepacket for other potentials
+          // Create a localized superposition centered at the displacement position
+          // using a Gaussian envelope in eigenstate space
           amplitudes = new Array(numStates).fill(0);
           phases = new Array(numStates).fill(0);
-          amplitudes[0] = 1;
+
+          // For each eigenstate, compute its overlap with a position-localized state
+          // We use the eigenfunction values at the displacement position as weights
+          const displacementIndex = Math.round(
+            ((displacement + 4 * QuantumConstants.NM_TO_M) / (8 * QuantumConstants.NM_TO_M)) *
+            (this.boundStateResult!.xGrid.length - 1)
+          );
+          const clampedIndex = Math.max(0, Math.min(displacementIndex, this.boundStateResult!.xGrid.length - 1));
+
+          // Weight each eigenstate by its wavefunction value at the displacement position
+          // and apply a Gaussian envelope in eigenstate index to create localization
+          const sigma = 3.0; // Width of Gaussian in eigenstate space
+          const n0 = Math.min(5, Math.floor(numStates / 2)); // Center around a middle eigenstate
+
+          for (let n = 0; n < numStates; n++) {
+            if (n < this.boundStateResult!.wavefunctions.length) {
+              const psi_n_at_x = this.boundStateResult!.wavefunctions[n][clampedIndex];
+
+              // Gaussian envelope in eigenstate space
+              const gaussianWeight = Math.exp(-Math.pow(n - n0, 2) / (2 * sigma * sigma));
+
+              // Combine position-based and Gaussian weights
+              amplitudes[n] = psi_n_at_x * gaussianWeight;
+            }
+          }
+
+          // Normalize the amplitudes
+          const norm = Math.sqrt(amplitudes.reduce((sum, a) => sum + a * a, 0));
+          if (norm > 0) {
+            amplitudes = amplitudes.map(a => a / norm);
+          } else {
+            // Fallback: if all amplitudes are zero, just use ground state
+            amplitudes[0] = 1;
+          }
+
+          // Set phases based on momentum (for a wavepacket moving toward the center)
+          // Phase increases linearly with eigenstate index to create momentum
+          const momentumDirection = displacement > 0 ? -1 : 1; // Move toward center
+          for (let n = 0; n < numStates; n++) {
+            phases[n] = momentumDirection * n * 0.1; // Small phase gradient
+          }
         }
         break;
+      }
 
       default:
         // Default to ground state
