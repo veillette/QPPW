@@ -227,14 +227,14 @@ export class OneWellModel extends BaseModel {
       // Use generous estimate to ensure we get all states
       const estimatedMax = Math.ceil((1 / Math.PI) * Math.sqrt((2 * mass * wellDepth * wellWidth * wellWidth) / (QuantumConstants.HBAR * QuantumConstants.HBAR)));
       // Request more states than estimated to ensure we capture all bound states
-      numStates = Math.max(10, Math.min(estimatedMax * 2, 80)); // At least 10, cap at 80
+      numStates = Math.max(10, Math.min(estimatedMax * 2, 100)); // At least 10, cap at 100
     }
     // For asymmetric triangle, calculate states that fit in the energy range
     else if (this.potentialTypeProperty.value === PotentialType.ASYMMETRIC_TRIANGLE) {
-      numStates = 50; // Asymmetric triangle may have many states, use larger number
+      numStates = 80; // Asymmetric triangle may have many states, use larger number
     }
     else {
-      numStates = 30; // Use more states for other potentials (increased from 20)
+      numStates = 80; // Use more states for other potentials
     }
 
     // Grid configuration spans the full chart display range (-4 nm to +4 nm)
