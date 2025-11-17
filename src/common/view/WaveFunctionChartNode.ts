@@ -422,16 +422,11 @@ export class WaveFunctionChartNode extends Node {
         const superpositionType = this.model.superpositionTypeProperty.value;
         const isSuperposition = superpositionType !== SuperpositionType.SINGLE;
 
-        if (isSuperposition && "getSuperpositionWavefunction" in this.model) {
-          // Display superposition wavefunction
-          const superpositionData = (this.model as OneWellModel).getSuperpositionWavefunction();
-          if (!superpositionData) {
-            return;
-          }
-
-          this.updateViewRangeForSuperposition(boundStates, superpositionData.wavefunction);
+        if (isSuperposition && "superpositionConfigProperty" in this.model) {
+          // Display superposition wavefunction with proper time evolution
+          this.updateViewRangeForSuperpositionFromModel();
           this.updateZeroLine();
-          this.updateWaveFunctionFromArray(boundStates.xGrid, superpositionData.wavefunction, superpositionData.energy);
+          this.updateSuperpositionWavefunction();
           this.updateStateLabel();
         } else {
           // Display single eigenstate
@@ -477,10 +472,40 @@ export class WaveFunctionChartNode extends Node {
   }
 
   /**
-   * Updates the view range for superposition wavefunctions.
+   * Updates the view range for superposition wavefunctions by computing from model.
    */
-  private updateViewRangeForSuperposition(_boundStates: BoundStateResult, wavefunction: number[]): void {
-    const maxAbs = Math.max(...wavefunction.map((v) => Math.abs(v)));
+  private updateViewRangeForSuperpositionFromModel(): void {
+    const boundStates = this.model.getBoundStates();
+    if (!boundStates || !("superpositionConfigProperty" in this.model)) {
+      return;
+    }
+
+    const config = (this.model as OneWellModel).superpositionConfigProperty.value;
+    const numPoints = boundStates.xGrid.length;
+
+    // Compute the current superposition wavefunction magnitude
+    let maxAbs = 0;
+    for (let i = 0; i < numPoints; i++) {
+      let real = 0;
+      let imag = 0;
+
+      for (let n = 0; n < config.amplitudes.length; n++) {
+        const amplitude = config.amplitudes[n];
+        if (amplitude === 0 || n >= boundStates.wavefunctions.length) {
+          continue;
+        }
+
+        const eigenfunction = boundStates.wavefunctions[n];
+        const phase = config.phases[n];
+
+        real += amplitude * Math.cos(phase) * eigenfunction[i];
+        imag += amplitude * Math.sin(phase) * eigenfunction[i];
+      }
+
+      const magnitude = Math.sqrt(real * real + imag * imag);
+      maxAbs = Math.max(maxAbs, magnitude);
+    }
+
     const displayMode = this.model.displayModeProperty.value;
 
     if (displayMode === "probabilityDensity") {
@@ -496,34 +521,80 @@ export class WaveFunctionChartNode extends Node {
   }
 
   /**
-   * Updates the wavefunction display from a custom wavefunction array (for superpositions).
+   * Updates the wavefunction display for a superposition state with proper time evolution.
+   * Each eigenstate component evolves with its own energy: ψ(x,t) = Σ c_n * ψ_n(x) * e^(-iE_n*t/ℏ)
    */
-  private updateWaveFunctionFromArray(xGrid: number[], wavefunction: number[], energy: number): void {
-    const displayMode = this.model.displayModeProperty.value;
+  private updateSuperpositionWavefunction(): void {
+    const boundStates = this.model.getBoundStates();
+    if (!boundStates || !("superpositionConfigProperty" in this.model)) {
+      return;
+    }
+
+    const config = (this.model as OneWellModel).superpositionConfigProperty.value;
     const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
+    const displayMode = this.model.displayModeProperty.value;
+    const numPoints = boundStates.xGrid.length;
 
-    // Calculate time evolution phase
-    const phase = -(energy * time) / QuantumConstants.HBAR;
+    // Compute time-evolved superposition: ψ(x,t) = Σ c_n * e^(iφ_n) * ψ_n(x) * e^(-iE_n*t/ℏ)
+    const realPart = new Array(numPoints).fill(0);
+    const imagPart = new Array(numPoints).fill(0);
 
+    for (let n = 0; n < config.amplitudes.length; n++) {
+      const amplitude = config.amplitudes[n];
+      const initialPhase = config.phases[n];
+
+      if (amplitude === 0 || n >= boundStates.wavefunctions.length) {
+        continue;
+      }
+
+      const eigenfunction = boundStates.wavefunctions[n];
+      const energy = boundStates.energies[n];
+
+      // Time evolution phase for this eigenstate: -E_n*t/ℏ
+      const timePhase = -(energy * time) / QuantumConstants.HBAR;
+
+      // Total phase: initial phase + time evolution phase
+      const totalPhase = initialPhase + timePhase;
+
+      // Complex coefficient: c_n * e^(i*totalPhase) = c_n * (cos(totalPhase) + i*sin(totalPhase))
+      const realCoeff = amplitude * Math.cos(totalPhase);
+      const imagCoeff = amplitude * Math.sin(totalPhase);
+
+      // Add contribution to superposition
+      for (let i = 0; i < numPoints; i++) {
+        realPart[i] += realCoeff * eigenfunction[i];
+        imagPart[i] += imagCoeff * eigenfunction[i];
+      }
+    }
+
+    // Now display based on display mode
     if (displayMode === "probabilityDensity") {
-      // Plot probability density |ψ|²
-      this.plotProbabilityDensity(xGrid, wavefunction);
+      // |ψ|² = Real² + Imag²
+      const probabilityDensity = new Array(numPoints);
+      for (let i = 0; i < numPoints; i++) {
+        probabilityDensity[i] = realPart[i] * realPart[i] + imagPart[i] * imagPart[i];
+      }
+      this.plotProbabilityDensityFromArray(boundStates.xGrid, probabilityDensity);
       this.probabilityDensityPath.visible = true;
       this.realPartPath.visible = false;
       this.imaginaryPartPath.visible = false;
       this.magnitudePath.visible = false;
       this.phaseColorNode.visible = false;
     } else if (displayMode === "phaseColor") {
-      // Plot magnitude with phase-colored fill
-      this.plotPhaseColoredWavefunction(xGrid, wavefunction, phase);
+      // Magnitude and phase for coloring
+      this.plotPhaseColoredSuperposition(boundStates.xGrid, realPart, imagPart);
       this.probabilityDensityPath.visible = false;
       this.realPartPath.visible = false;
       this.imaginaryPartPath.visible = false;
       this.magnitudePath.visible = false;
       this.phaseColorNode.visible = true;
     } else {
-      // Plot wave function components
-      this.plotWaveFunctionComponents(xGrid, wavefunction, phase);
+      // Display real, imaginary, and magnitude components
+      const magnitude = new Array(numPoints);
+      for (let i = 0; i < numPoints; i++) {
+        magnitude[i] = Math.sqrt(realPart[i] * realPart[i] + imagPart[i] * imagPart[i]);
+      }
+      this.plotSuperpositionComponents(boundStates.xGrid, realPart, imagPart, magnitude);
       this.probabilityDensityPath.visible = false;
       this.realPartPath.visible = this.model.showRealPartProperty.value;
       this.imaginaryPartPath.visible = this.model.showImaginaryPartProperty.value;
@@ -755,6 +826,157 @@ export class WaveFunctionChartNode extends Node {
   }
 
   /**
+   * Plots probability density from a pre-computed array.
+   */
+  private plotProbabilityDensityFromArray(xGrid: number[], probabilityDensity: number[]): void {
+    const shape = new Shape();
+
+    // Start at zero on the left
+    const x0 = this.dataToViewX(xGrid[0] * QuantumConstants.M_TO_NM);
+    const y0 = this.dataToViewY(0);
+    shape.moveTo(x0, y0);
+
+    // Build points array
+    const points: { x: number; y: number }[] = [];
+    for (let i = 0; i < xGrid.length; i++) {
+      const x = this.dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
+      const y = this.dataToViewY(probabilityDensity[i]);
+      points.push({ x, y });
+    }
+
+    // Draw smooth curve using quadratic bezier curves
+    if (points.length > 0) {
+      shape.lineTo(points[0].x, points[0].y);
+
+      for (let i = 0; i < points.length - 1; i++) {
+        const p0 = points[i];
+        const p1 = points[i + 1];
+
+        // Control point is midpoint for simple smoothing
+        const cpX = (p0.x + p1.x) / 2;
+        const cpY = (p0.y + p1.y) / 2;
+
+        shape.quadraticCurveTo(cpX, cpY, p1.x, p1.y);
+      }
+    }
+
+    // Close at zero on the right
+    const xEnd = this.dataToViewX(xGrid[xGrid.length - 1] * QuantumConstants.M_TO_NM);
+    shape.lineTo(xEnd, y0);
+    shape.close();
+
+    this.probabilityDensityPath.shape = shape;
+  }
+
+  /**
+   * Plots superposition components (real, imaginary, magnitude) from arrays.
+   */
+  private plotSuperpositionComponents(xGrid: number[], realPart: number[], imagPart: number[], magnitude: number[]): void {
+    const realShape = new Shape();
+    const imagShape = new Shape();
+    const magShape = new Shape();
+
+    // Build points arrays
+    const realPoints: { x: number; y: number }[] = [];
+    const imagPoints: { x: number; y: number }[] = [];
+    const magPoints: { x: number; y: number }[] = [];
+
+    for (let i = 0; i < xGrid.length; i++) {
+      const x = this.dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
+      const yReal = this.dataToViewY(realPart[i]);
+      const yImag = this.dataToViewY(imagPart[i]);
+      const yMag = this.dataToViewY(magnitude[i]);
+
+      realPoints.push({ x, y: yReal });
+      imagPoints.push({ x, y: yImag });
+      magPoints.push({ x, y: yMag });
+    }
+
+    // Draw smooth curves using quadratic bezier curves
+    const drawSmoothCurve = (shape: Shape, points: { x: number; y: number }[]) => {
+      if (points.length > 0) {
+        shape.moveTo(points[0].x, points[0].y);
+
+        for (let i = 0; i < points.length - 1; i++) {
+          const p0 = points[i];
+          const p1 = points[i + 1];
+
+          // Control point is midpoint for simple smoothing
+          const cpX = (p0.x + p1.x) / 2;
+          const cpY = (p0.y + p1.y) / 2;
+
+          shape.quadraticCurveTo(cpX, cpY, p1.x, p1.y);
+        }
+      }
+    };
+
+    drawSmoothCurve(realShape, realPoints);
+    drawSmoothCurve(imagShape, imagPoints);
+    drawSmoothCurve(magShape, magPoints);
+
+    this.realPartPath.shape = realShape;
+    this.imaginaryPartPath.shape = imagShape;
+    this.magnitudePath.shape = magShape;
+  }
+
+  /**
+   * Plots phase-colored superposition from real and imaginary parts.
+   */
+  private plotPhaseColoredSuperposition(xGrid: number[], realPart: number[], imagPart: number[]): void {
+    const y0 = this.dataToViewY(0);
+    const numStrips = xGrid.length - 1;
+
+    // Ensure we have enough rectangles in the pool
+    while (this.phaseColorStrips.length < numStrips) {
+      const rect = new Rectangle(0, 0, 1, 1, {
+        fill: 'white',
+        stroke: null,
+      });
+      this.phaseColorStrips.push(rect);
+      this.phaseColorNode.addChild(rect);
+    }
+
+    // Update each strip
+    for (let i = 0; i < numStrips; i++) {
+      const x1 = this.dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
+      const x2 = this.dataToViewX(xGrid[i + 1] * QuantumConstants.M_TO_NM);
+      const stripWidth = x2 - x1;
+
+      const real = realPart[i];
+      const imag = imagPart[i];
+      const magnitude = Math.sqrt(real * real + imag * imag);
+
+      // Calculate local phase: arg(ψ) = atan2(Im(ψ), Re(ψ))
+      const localPhase = Math.atan2(imag, real);
+
+      // Normalize phase to [0, 1] for hue (0 to 360 degrees)
+      // phase ranges from -π to π, so we normalize to 0 to 1
+      const normalizedPhase = (localPhase + Math.PI) / (2 * Math.PI);
+      const hue = Math.round(normalizedPhase * 360); // 0 to 360 degrees (must be integer for CSS)
+
+      // Create color using HSL: hue varies with phase, saturation and lightness are fixed
+      const saturation = 80; // 80% saturation for vibrant colors
+      const lightness = 60; // 60% lightness for good visibility
+      const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+
+      // Height of the strip is proportional to magnitude
+      const yTop = this.dataToViewY(magnitude);
+      const stripHeight = Math.abs(y0 - yTop);
+
+      // Update the rectangle from the pool
+      const strip = this.phaseColorStrips[i];
+      strip.setRect(x1, Math.min(y0, yTop), stripWidth, stripHeight);
+      strip.fill = color;
+      strip.visible = stripHeight > 0.1; // Only show if visible
+    }
+
+    // Hide any extra strips we're not using
+    for (let i = numStrips; i < this.phaseColorStrips.length; i++) {
+      this.phaseColorStrips[i].visible = false;
+    }
+  }
+
+  /**
    * Updates only the time evolution (for animation).
    */
   private updateTimeEvolution(): void {
@@ -769,9 +991,19 @@ export class WaveFunctionChartNode extends Node {
       if (this.model.isPlayingProperty.value) {
         const boundStates = this.model.getBoundStates();
         if (boundStates) {
-          const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
-          if (selectedIndex >= 0 && selectedIndex < boundStates.wavefunctions.length) {
-            this.updateWaveFunction(boundStates, selectedIndex);
+          // Check if we're displaying a superposition or a single eigenstate
+          const superpositionType = this.model.superpositionTypeProperty.value;
+          const isSuperposition = superpositionType !== SuperpositionType.SINGLE;
+
+          if (isSuperposition && "superpositionConfigProperty" in this.model) {
+            // Display superposition wavefunction with proper time evolution
+            this.updateSuperpositionWavefunction();
+          } else {
+            // Display single eigenstate
+            const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
+            if (selectedIndex >= 0 && selectedIndex < boundStates.wavefunctions.length) {
+              this.updateWaveFunction(boundStates, selectedIndex);
+            }
           }
         }
       }
