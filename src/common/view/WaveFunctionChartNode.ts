@@ -57,6 +57,8 @@ export class WaveFunctionChartNode extends Node {
 
   // Guard flag to prevent reentry during updates
   private isUpdating: boolean = false;
+  // Flag to indicate if an update was requested while another update was in progress
+  private updatePending: boolean = false;
 
   public constructor(model: OneWellModel | TwoWellsModel, options?: { width?: number; height?: number }) {
     super();
@@ -399,47 +401,54 @@ export class WaveFunctionChartNode extends Node {
    * Called automatically when model properties change, but can also be called explicitly (e.g., during reset).
    */
   public update(): void {
-    // Prevent reentry
+    // Prevent reentry - if an update is in progress, mark that another update is pending
     if (this.isUpdating) {
+      this.updatePending = true;
       return;
     }
 
     this.isUpdating = true;
     try {
-      const boundStates = this.model.getBoundStates();
-      if (!boundStates) {
-        return;
-      }
+      // Keep updating until no more updates are pending
+      do {
+        this.updatePending = false;
 
-      // Check if we're displaying a superposition or a single eigenstate
-      const superpositionType = this.model.superpositionTypeProperty.value;
-      const isSuperposition = superpositionType !== SuperpositionType.PSI_K;
-
-      if (isSuperposition && "getSuperpositionWavefunction" in this.model) {
-        // Display superposition wavefunction
-        const superpositionData = (this.model as OneWellModel).getSuperpositionWavefunction();
-        if (!superpositionData) {
+        const boundStates = this.model.getBoundStates();
+        if (!boundStates) {
           return;
         }
 
-        this.updateViewRangeForSuperposition(boundStates, superpositionData.wavefunction);
-        this.updateZeroLine();
-        this.updateWaveFunctionFromArray(boundStates.xGrid, superpositionData.wavefunction, superpositionData.energy);
-        this.updateStateLabel();
-      } else {
-        // Display single eigenstate
-        const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
-        if (selectedIndex < 0 || selectedIndex >= boundStates.wavefunctions.length) {
-          return;
-        }
+        // Check if we're displaying a superposition or a single eigenstate
+        const superpositionType = this.model.superpositionTypeProperty.value;
+        const isSuperposition = superpositionType !== SuperpositionType.PSI_K;
 
-        this.updateViewRange(boundStates, selectedIndex);
-        this.updateZeroLine();
-        this.updateWaveFunction(boundStates, selectedIndex);
-        this.updateStateLabel();
-      }
+        if (isSuperposition && "getSuperpositionWavefunction" in this.model) {
+          // Display superposition wavefunction
+          const superpositionData = (this.model as OneWellModel).getSuperpositionWavefunction();
+          if (!superpositionData) {
+            return;
+          }
+
+          this.updateViewRangeForSuperposition(boundStates, superpositionData.wavefunction);
+          this.updateZeroLine();
+          this.updateWaveFunctionFromArray(boundStates.xGrid, superpositionData.wavefunction, superpositionData.energy);
+          this.updateStateLabel();
+        } else {
+          // Display single eigenstate
+          const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
+          if (selectedIndex < 0 || selectedIndex >= boundStates.wavefunctions.length) {
+            return;
+          }
+
+          this.updateViewRange(boundStates, selectedIndex);
+          this.updateZeroLine();
+          this.updateWaveFunction(boundStates, selectedIndex);
+          this.updateStateLabel();
+        }
+      } while (this.updatePending);
     } finally {
       this.isUpdating = false;
+      this.updatePending = false;
     }
   }
 
@@ -749,8 +758,9 @@ export class WaveFunctionChartNode extends Node {
    * Updates only the time evolution (for animation).
    */
   private updateTimeEvolution(): void {
-    // Prevent reentry
+    // Prevent reentry - if an update is in progress, mark that another update is pending
     if (this.isUpdating) {
+      this.updatePending = true;
       return;
     }
 

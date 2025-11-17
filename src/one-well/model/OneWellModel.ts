@@ -11,7 +11,6 @@ import { PotentialType, BoundStateResult } from "../../common/model/PotentialFun
 import QuantumConstants from "../../common/model/QuantumConstants.js";
 import { SuperpositionType, SuperpositionConfig } from "../../common/model/SuperpositionType.js";
 import { calculateCoherentStateCoefficients } from "../../common/model/analytical-solutions/harmonic-oscillator.js";
-import QPPWPreferences from "../../QPPWPreferences.js";
 
 export type DisplayMode = "probabilityDensity" | "waveFunction" | "phaseColor";
 
@@ -84,11 +83,12 @@ export class OneWellModel extends BaseModel {
     this.showPotentialEnergyProperty = new Property<boolean>(true);
 
     // Initialize superposition state
-    this.superpositionTypeProperty = new Property<SuperpositionType>(SuperpositionType.PSI_I_PSI_J);
+    // Default to PSI_K (single eigenstate) so selecting energy levels works properly
+    this.superpositionTypeProperty = new Property<SuperpositionType>(SuperpositionType.PSI_K);
     this.superpositionConfigProperty = new Property<SuperpositionConfig>({
-      type: SuperpositionType.PSI_I_PSI_J,
-      amplitudes: [0.7, 0.7], // Default to equal superposition of first two states (normalized)
-      phases: [0, 0],
+      type: SuperpositionType.PSI_K,
+      amplitudes: [1.0], // Default to ground state
+      phases: [0],
     });
 
     // Initialize coherent state displacement (0.5 nm default, range 0 to 2 nm)
