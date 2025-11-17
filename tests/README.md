@@ -8,7 +8,8 @@ The test directory has been simplified to include only essential files:
 
 - **AccuracyTests.ts** - Comprehensive test suite in `src/common/model/`
 - **accuracy-tests.html** - Browser-based test runner with visual interface
-- **run-tests.js** - Simple command-line test runner
+- **run-terminal-tests.js** - Terminal-based test runner (used by `npm test`)
+- **run-tests.js** - Legacy test runner (imports from built JS files, deprecated)
 - **docs/** - Test documentation
 
 ## Test Coverage
@@ -47,18 +48,20 @@ The comprehensive test suite (`AccuracyTests.ts`) validates all numerical method
 
 ## Running Tests
 
-### Method 1: Browser-Based Tests (Recommended)
+### Method 1: Browser-Based Tests
 
-This is the easiest way to run tests with a visual interface.
+This provides a visual interface for running tests.
 
-1. **Build the project** from the root directory:
+1. **Start the development server** from the root directory:
    ```bash
-   npm run build
+   npm start
    ```
 
 2. **Open the test runner** in a web browser:
    ```bash
-   # Open tests/accuracy-tests.html in your browser
+   # The dev server typically runs on http://localhost:5173
+   # Navigate to: http://localhost:5173/tests/accuracy-tests.html
+   # Or open tests/accuracy-tests.html directly in your browser
    # On macOS:
    open tests/accuracy-tests.html
    # On Linux:
@@ -71,13 +74,13 @@ This is the easiest way to run tests with a visual interface.
    - **"Run Full Tests"** - Runs comprehensive test suite (~60+ tests)
    - **"Run Quick Check"** - Runs a subset for rapid validation
 
-### Method 2: Command-Line Tests
+### Method 2: Command-Line Tests (Recommended)
 
-Run tests directly from the command line.
+Run tests directly from the command line using npm test.
 
 ```bash
 # From the root directory
-node tests/run-tests.js
+npm test
 ```
 
 This will execute the comprehensive test suite and display results in the terminal, including:
@@ -107,17 +110,19 @@ Useful during active development.
    import('./common/model/AccuracyTests.js').then(m => m.runQuickAccuracyCheck());
    ```
 
-### Method 4: Direct TypeScript Execution (For Development)
+### Method 4: Direct TypeScript Execution (Advanced)
 
-If you have `tsx` installed, you can run tests directly on the TypeScript source:
+You can also run the terminal test runner directly using tsx:
 
 ```bash
-# Install tsx if needed
-npm install -g tsx
+# Run with tsx (this is what npm test does)
+npx tsx --tsconfig tsconfig.test.json tests/run-terminal-tests.js
 
-# Run tests directly
-npx tsx src/common/model/AccuracyTests.ts
+# Or run the TypeScript source directly (requires mock setup)
+npx tsx --tsconfig tsconfig.test.json src/common/model/AccuracyTests.ts
 ```
+
+**Note**: The project uses tsx (TypeScript executor) rather than building to JavaScript files.
 
 ## Test Functions
 
@@ -191,9 +196,27 @@ To add new test cases:
 
 See `docs/ACCURACY_TESTS.md` for more details on test design.
 
+## Troubleshooting
+
+### Error: Cannot find module 'AccuracyTests.js'
+
+If you see an error like:
+```
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/home/.../src/common/model/AccuracyTests.js'
+```
+
+This occurs when trying to run `node tests/run-terminal-tests.js` directly. The project uses **TypeScript with tsx**, not compiled JavaScript files.
+
+**Solution**: Use `npm test` instead, which correctly runs the TypeScript files with tsx.
+
+### Legacy run-tests.js File
+
+The `run-tests.js` file is deprecated and expects compiled JavaScript files in a build directory, which this project doesn't generate. Use `npm test` or `run-terminal-tests.js` instead.
+
 ## Notes
 
 - These tests ensure that numerical methods produce accurate results within acceptable error tolerances
 - Tests validate correctness across different grid sizes to ensure robustness
 - The comprehensive test suite now covers all major quantum potential types
+- The project uses **tsx** to run TypeScript directly without a separate build step for tests
 - All debug and redundant test files have been removed to simplify maintenance
