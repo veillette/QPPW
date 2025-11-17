@@ -126,7 +126,7 @@ function testHarmonicOscillatorComprehensive(): TestResult[] {
   const mass = QuantumConstants.ELECTRON_MASS;
   const omega = 1e15;
   const springConstant = mass * omega * omega;
-  const numStates = 5;
+  const numStates = 10;
 
   for (const numPoints of GRID_SIZES) {
     const gridConfig: GridConfig = {
@@ -158,7 +158,7 @@ function testHarmonicOscillatorComprehensive(): TestResult[] {
 function testFiniteSquareWellsComprehensive(): TestResult[] {
   const results: TestResult[] = [];
   const mass = QuantumConstants.ELECTRON_MASS;
-  const numStates = 3;
+  const numStates = 10;
 
   // Different well configurations: [width in nm, depth in eV]
   const configurations = [
@@ -211,7 +211,7 @@ function testFiniteSquareWellsComprehensive(): TestResult[] {
 function testCoulomb3DComprehensive(): TestResult[] {
   const results: TestResult[] = [];
   const mass = QuantumConstants.ELECTRON_MASS;
-  const numStates = 3;
+  const numStates = 10;
 
   // Coulomb strength for hydrogen atom: α = e²/(4πε₀)
   const e = 1.602176634e-19; // Elementary charge (C)
@@ -252,7 +252,7 @@ function testCoulomb3DComprehensive(): TestResult[] {
 function testDoubleSquareWellsComprehensive(): TestResult[] {
   const results: TestResult[] = [];
   const mass = QuantumConstants.ELECTRON_MASS;
-  const numStates = 4;
+  const numStates = 10;
 
   // Double well configurations: [well width, barrier width, well depth, barrier height]
   const configurations = [
@@ -482,10 +482,10 @@ export function runQuickAccuracyCheck(): void {
   const springConstant = mass * omega * omega;
   const gridConfig: GridConfig = { xMin: -5e-9, xMax: 5e-9, numPoints: 128 };
   const potential: PotentialFunction = (x: number) => 0.5 * springConstant * x * x;
-  const analytical = solveHarmonicOscillator(springConstant, mass, 3, gridConfig);
+  const analytical = solveHarmonicOscillator(springConstant, mass, 10, gridConfig);
 
-  results.push(testMethod("DVR", solveDVR, potential, analytical, mass, 3, gridConfig, "Harmonic Oscillator", 0.1));
-  results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, 3, gridConfig, "Harmonic Oscillator", 0.1));
+  results.push(testMethod("DVR", solveDVR, potential, analytical, mass, 10, gridConfig, "Harmonic Oscillator", 0.1));
+  results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, 10, gridConfig, "Harmonic Oscillator", 0.1));
 
   // 2. Finite square well
   const wellWidth = 1e-9;
@@ -495,10 +495,10 @@ export function runQuickAccuracyCheck(): void {
     const halfWidth = wellWidth / 2;
     return (x >= -halfWidth && x <= halfWidth) ? -wellDepth : 0;
   };
-  const analytical2 = solveFiniteSquareWell(wellWidth, wellDepth, mass, 3, gridConfig2);
+  const analytical2 = solveFiniteSquareWell(wellWidth, wellDepth, mass, 10, gridConfig2);
 
   if (analytical2.energies.length > 0) {
-    results.push(testMethod("DVR", solveDVR, potential2, analytical2, mass, 3, gridConfig2, "Finite Square Well", 0.5));
+    results.push(testMethod("DVR", solveDVR, potential2, analytical2, mass, 10, gridConfig2, "Finite Square Well", 0.5));
   }
 
   // Print results
