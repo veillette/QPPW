@@ -55,7 +55,7 @@ where:
    npm run build
    ```
 
-2. Open `accuracy-tests.html` in a web browser
+2. Open `../accuracy-tests.html` in a web browser
 
 3. Click "Run Full Tests" to run all tests or "Run Quick Check" for a fast validation
 
@@ -151,7 +151,7 @@ Both DVR and Spectral methods produce results within 1% of analytical solutions.
 
 - **Source:** `src/common/model/AccuracyTests.ts`
 - **Compiled:** `dist/common/model/AccuracyTests.js`
-- **Test Runner:** `accuracy-tests.html`
+- **Test Runner:** `../accuracy-tests.html`
 
 ### Methods Tested
 
