@@ -7,7 +7,8 @@ import { Tandem } from "scenerystack/tandem";
 import { VBox, Text, HStrut, HBox } from "scenerystack/scenery";
 import { Checkbox, VerticalAquaRadioButtonGroup, HSlider } from "scenerystack/sun";
 import { PhetFont } from "scenerystack/scenery-phet";
-import { Dimension2 } from "scenerystack";
+import { Dimension2, Range } from "scenerystack";
+import { NumberProperty } from "scenerystack/axon";
 import stringManager from "./i18n/StringManager.js";
 import QPPWColors from "./QPPWColors.js";
 import QPPWPreferences from "./QPPWPreferences.js";
@@ -178,30 +179,46 @@ onReadyToLaunch(() => {
                 ],
               });
 
-              // Grid points slider section
+              // Grid points slider section - uses exponent (6-11) for powers of 2
+              // Create a NumberProperty for the exponent that derives from gridPointsProperty
+              const exponentProperty = new NumberProperty(Math.log2(QPPWPreferences.gridPointsProperty.value), {
+                range: new Range(6, 11),
+              });
+
+              // Bidirectional sync between exponent and grid points
+              exponentProperty.link((exponent) => {
+                const gridPoints = Math.pow(2, Math.round(exponent));
+                if (QPPWPreferences.gridPointsProperty.value !== gridPoints) {
+                  QPPWPreferences.gridPointsProperty.value = gridPoints;
+                }
+              });
+
+              QPPWPreferences.gridPointsProperty.link((gridPoints) => {
+                const exponent = Math.log2(gridPoints);
+                if (exponentProperty.value !== exponent) {
+                  exponentProperty.value = exponent;
+                }
+              });
+
               const gridPointsSlider = new HSlider(
-                QPPWPreferences.gridPointsProperty,
-                QPPWPreferences.gridPointsProperty.range,
+                exponentProperty,
+                exponentProperty.range,
                 {
                   trackSize: new Dimension2(400, 5),
                   thumbSize: new Dimension2(20, 40),
                   majorTickLength: 15,
                   minorTickLength: 10,
+                  constrainValue: (value: number) => Math.round(value),
                 },
               );
 
-              // Add major ticks
-              gridPointsSlider.addMajorTick(64, new Text("64", { font: new PhetFont(12) }));
-              gridPointsSlider.addMajorTick(128, new Text("128", { font: new PhetFont(12) }));
-              gridPointsSlider.addMajorTick(256, new Text("256", { font: new PhetFont(12) }));
-              gridPointsSlider.addMajorTick(512, new Text("512", { font: new PhetFont(12) }));
-              gridPointsSlider.addMajorTick(1024, new Text("1024", { font: new PhetFont(12) }));
-              gridPointsSlider.addMajorTick(2000, new Text("2000", { font: new PhetFont(12) }));
-
-              // Add minor ticks at powers of 2 and round numbers
-              [96, 192, 384, 768, 1536].forEach(value => {
-                gridPointsSlider.addMinorTick(value);
-              });
+              // Add major ticks with actual grid point values
+              gridPointsSlider.addMajorTick(6, new Text("64", { font: new PhetFont(12) }));
+              gridPointsSlider.addMajorTick(7, new Text("128", { font: new PhetFont(12) }));
+              gridPointsSlider.addMajorTick(8, new Text("256", { font: new PhetFont(12) }));
+              gridPointsSlider.addMajorTick(9, new Text("512", { font: new PhetFont(12) }));
+              gridPointsSlider.addMajorTick(10, new Text("1024", { font: new PhetFont(12) }));
+              gridPointsSlider.addMajorTick(11, new Text("2048", { font: new PhetFont(12) }));
 
               const gridPointsValueText = new Text("", {
                 font: new PhetFont({ size: 14, weight: "bold" }),

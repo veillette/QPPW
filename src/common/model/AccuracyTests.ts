@@ -36,9 +36,9 @@ interface TestResult {
 }
 
 /**
- * Test configuration for different grid sizes
+ * Test configuration for different grid sizes (all powers of 2)
  */
-const GRID_SIZES = [100, 150, 200, 256]; // Including 256 for FGH (power of 2)
+const GRID_SIZES = [64, 128, 256, 512];
 
 /**
  * Calculate percentage error between numerical and analytical values
@@ -172,7 +172,7 @@ function testFiniteSquareWellsComprehensive(): TestResult[] {
     const wellWidth = config.width;
     const wellDepth = config.depth * QuantumConstants.EV_TO_JOULES;
 
-    for (const numPoints of [150, 200]) { // Use moderate grid sizes for finite wells
+    for (const numPoints of [128, 256]) { // Use moderate grid sizes for finite wells (powers of 2)
       const gridConfig: GridConfig = {
         xMin: -2 * wellWidth,
         xMax: 2 * wellWidth,
@@ -218,7 +218,7 @@ function testCoulomb3DComprehensive(): TestResult[] {
   const epsilon0 = 8.8541878128e-12; // Vacuum permittivity (F/m)
   const coulombStrength = (e * e) / (4 * Math.PI * epsilon0);
 
-  for (const numPoints of [150, 200, 256]) {
+  for (const numPoints of [128, 256, 512]) {
     // Use appropriate grid for Coulomb potential (r > 0)
     const gridConfig: GridConfig = {
       xMin: 1e-12, // Small positive value to avoid singularity
@@ -262,7 +262,7 @@ function testDoubleSquareWellsComprehensive(): TestResult[] {
   ];
 
   for (const config of configurations) {
-    for (const numPoints of [200, 256]) {
+    for (const numPoints of [256, 512]) {
       const totalWidth = 2 * config.wellWidth + config.barrierWidth;
       const gridConfig: GridConfig = {
         xMin: -totalWidth,
@@ -480,7 +480,7 @@ export function runQuickAccuracyCheck(): void {
   // 1. Harmonic oscillator
   const omega = 1e15;
   const springConstant = mass * omega * omega;
-  const gridConfig: GridConfig = { xMin: -5e-9, xMax: 5e-9, numPoints: 150 };
+  const gridConfig: GridConfig = { xMin: -5e-9, xMax: 5e-9, numPoints: 128 };
   const potential: PotentialFunction = (x: number) => 0.5 * springConstant * x * x;
   const analytical = solveHarmonicOscillator(springConstant, mass, 3, gridConfig);
 
@@ -490,7 +490,7 @@ export function runQuickAccuracyCheck(): void {
   // 2. Finite square well
   const wellWidth = 1e-9;
   const wellDepth = 30 * QuantumConstants.EV_TO_JOULES;
-  const gridConfig2: GridConfig = { xMin: -2e-9, xMax: 2e-9, numPoints: 150 };
+  const gridConfig2: GridConfig = { xMin: -2e-9, xMax: 2e-9, numPoints: 128 };
   const potential2: PotentialFunction = (x: number) => {
     const halfWidth = wellWidth / 2;
     return (x >= -halfWidth && x <= halfWidth) ? -wellDepth : 0;
