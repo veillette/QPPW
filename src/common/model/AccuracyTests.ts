@@ -138,14 +138,14 @@ function testHarmonicOscillatorComprehensive(): TestResult[] {
     const potential: PotentialFunction = (x: number) => 0.5 * springConstant * x * x;
     const analytical = solveHarmonicOscillator(springConstant, mass, numStates, gridConfig);
 
-    // Test all methods
-    results.push(testMethod("DVR", solveDVR, potential, analytical, mass, numStates, gridConfig, `Harmonic Oscillator (N=${numPoints})`));
-    results.push(testMethod("Spectral", solveSpectral, potential, analytical, mass, numStates, gridConfig, `Harmonic Oscillator (N=${numPoints})`));
-    results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, numStates, gridConfig, `Harmonic Oscillator (N=${numPoints})`));
+    // Test all methods - Harmonic oscillator should be very accurate (0.1% tolerance)
+    results.push(testMethod("DVR", solveDVR, potential, analytical, mass, numStates, gridConfig, `Harmonic Oscillator (N=${numPoints})`, 0.1));
+    results.push(testMethod("Spectral", solveSpectral, potential, analytical, mass, numStates, gridConfig, `Harmonic Oscillator (N=${numPoints})`, 0.1));
+    results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, numStates, gridConfig, `Harmonic Oscillator (N=${numPoints})`, 0.1));
 
     // FGH requires power of 2
     if (isPowerOfTwo(numPoints)) {
-      results.push(testMethod("FGH", solveFGH, potential, analytical, mass, numStates, gridConfig, `Harmonic Oscillator (N=${numPoints})`));
+      results.push(testMethod("FGH", solveFGH, potential, analytical, mass, numStates, gridConfig, `Harmonic Oscillator (N=${numPoints})`, 0.1));
     }
   }
 
@@ -190,12 +190,13 @@ function testFiniteSquareWellsComprehensive(): TestResult[] {
       if (analytical.energies.length > 0) {
         const testName = `Finite Well (W=${(wellWidth * 1e9).toFixed(1)}nm, D=${config.depth}eV, N=${numPoints})`;
 
-        results.push(testMethod("DVR", solveDVR, potential, analytical, mass, numStates, gridConfig, testName, 2.0));
-        results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, numStates, gridConfig, testName, 2.0));
+        // Finite wells should achieve 0.5% accuracy despite discontinuities
+        results.push(testMethod("DVR", solveDVR, potential, analytical, mass, numStates, gridConfig, testName, 0.5));
+        results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, numStates, gridConfig, testName, 0.5));
 
         // FGH for power-of-2 grids
         if (isPowerOfTwo(numPoints)) {
-          results.push(testMethod("FGH", solveFGH, potential, analytical, mass, numStates, gridConfig, testName, 2.0));
+          results.push(testMethod("FGH", solveFGH, potential, analytical, mass, numStates, gridConfig, testName, 0.5));
         }
       }
     }
@@ -233,11 +234,12 @@ function testCoulomb3DComprehensive(): TestResult[] {
     const analytical = solveCoulomb3DPotential(coulombStrength, mass, numStates, gridConfig);
     const testName = `3D Coulomb (Hydrogen, N=${numPoints})`;
 
-    results.push(testMethod("DVR", solveDVR, potential, analytical, mass, numStates, gridConfig, testName, 3.0));
-    results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, numStates, gridConfig, testName, 3.0));
+    // Coulomb potential has singularity, but should still achieve 1% accuracy
+    results.push(testMethod("DVR", solveDVR, potential, analytical, mass, numStates, gridConfig, testName, 1.0));
+    results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, numStates, gridConfig, testName, 1.0));
 
     if (isPowerOfTwo(numPoints)) {
-      results.push(testMethod("FGH", solveFGH, potential, analytical, mass, numStates, gridConfig, testName, 3.0));
+      results.push(testMethod("FGH", solveFGH, potential, analytical, mass, numStates, gridConfig, testName, 1.0));
     }
   }
 
@@ -292,17 +294,17 @@ function testDoubleSquareWellsComprehensive(): TestResult[] {
       try {
         const reference = solveDVR(potential, mass, numStates, gridConfig);
 
-        // Test other methods against DVR (with timing)
+        // Test other methods against DVR (with timing) - methods should agree within 1%
         const numerovStart = performance.now();
         const numerovResult = solveMatrixNumerov(potential, mass, numStates, gridConfig);
         const numerovTime = performance.now() - numerovStart;
-        results.push(compareResults("MatrixNumerov", numerovResult, reference, testName, 5.0, numerovTime));
+        results.push(compareResults("MatrixNumerov", numerovResult, reference, testName, 1.0, numerovTime));
 
         if (isPowerOfTwo(numPoints)) {
           const fghStart = performance.now();
           const fghResult = solveFGH(potential, mass, numStates, gridConfig);
           const fghTime = performance.now() - fghStart;
-          results.push(compareResults("FGH", fghResult, reference, testName, 5.0, fghTime));
+          results.push(compareResults("FGH", fghResult, reference, testName, 1.0, fghTime));
         }
       } catch (error) {
         results.push({
@@ -482,8 +484,8 @@ export function runQuickAccuracyCheck(): void {
   const potential: PotentialFunction = (x: number) => 0.5 * springConstant * x * x;
   const analytical = solveHarmonicOscillator(springConstant, mass, 3, gridConfig);
 
-  results.push(testMethod("DVR", solveDVR, potential, analytical, mass, 3, gridConfig, "Harmonic Oscillator"));
-  results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, 3, gridConfig, "Harmonic Oscillator"));
+  results.push(testMethod("DVR", solveDVR, potential, analytical, mass, 3, gridConfig, "Harmonic Oscillator", 0.1));
+  results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, 3, gridConfig, "Harmonic Oscillator", 0.1));
 
   // 2. Finite square well
   const wellWidth = 1e-9;
@@ -496,7 +498,7 @@ export function runQuickAccuracyCheck(): void {
   const analytical2 = solveFiniteSquareWell(wellWidth, wellDepth, mass, 3, gridConfig2);
 
   if (analytical2.energies.length > 0) {
-    results.push(testMethod("DVR", solveDVR, potential2, analytical2, mass, 3, gridConfig2, "Finite Square Well", 2.0));
+    results.push(testMethod("DVR", solveDVR, potential2, analytical2, mass, 3, gridConfig2, "Finite Square Well", 0.5));
   }
 
   // Print results

@@ -18,7 +18,7 @@ The comprehensive test suite (`AccuracyTests.ts`) validates all numerical method
 ### 1. Harmonic Oscillator
 - Tests across grid sizes: 100, 150, 200, 256 points
 - All 4 methods tested
-- 1% error tolerance
+- **0.1% error tolerance**
 
 ### 2. Finite Square Wells
 - **4 configurations tested:**
@@ -28,13 +28,13 @@ The comprehensive test suite (`AccuracyTests.ts`) validates all numerical method
   - Narrow medium well: 0.5nm width, 30eV depth
 - Grid sizes: 150, 200 points
 - DVR, Matrix Numerov, and FGH methods
-- 2% error tolerance
+- **0.5% error tolerance**
 
 ### 3. 3D Coulomb Potential (Hydrogen Atom)
 - Tests the radial Schrödinger equation for s-waves
 - Grid sizes: 150, 200, 256 points
 - DVR, Matrix Numerov, and FGH methods
-- 3% error tolerance
+- **1.0% error tolerance**
 
 ### 4. Double Square Wells
 - **3 configurations tested:**
@@ -43,7 +43,7 @@ The comprehensive test suite (`AccuracyTests.ts`) validates all numerical method
   - Wide wells, low barrier: 0.6nm wells, 0.4nm barrier, 35eV depth, 5eV barrier
 - Grid sizes: 200, 256 points
 - Methods compared against DVR as reference
-- 5% error tolerance
+- **1.0% error tolerance**
 
 ## Running Tests
 
@@ -174,11 +174,11 @@ This allows you to:
 
 ### Error Tolerances
 
-Different potentials have different error tolerances based on their complexity:
-- **Harmonic Oscillator**: 1% - Very well-behaved, high accuracy expected
-- **Finite Square Wells**: 2% - Moderate complexity with discontinuous potential
-- **3D Coulomb**: 3% - Singular potential requires careful handling
-- **Double Square Wells**: 5% - Compared against DVR reference (no analytical solution)
+All tests now use stringent tolerances with maximum 1% error:
+- **Harmonic Oscillator**: **0.1%** - Very well-behaved smooth potential, extremely high accuracy expected
+- **Finite Square Wells**: **0.5%** - Despite discontinuous potential, accurate methods achieve sub-1% error
+- **3D Coulomb**: **1.0%** - Singular potential at r=0, still achieves 1% accuracy with proper grid
+- **Double Square Wells**: **1.0%** - Inter-method comparison (vs DVR reference, no analytical solution)
 
 ## Adding New Tests
 

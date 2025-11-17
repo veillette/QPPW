@@ -36,7 +36,7 @@ where:
 - Grid range: -5 nm to +5 nm
 - States tested: 5 states (n = 0, 1, 2, 3, 4)
 - Methods tested: DVR, Spectral, Matrix Numerov, FGH
-- Error tolerance: **1%**
+- Error tolerance: **0.1%** (extremely high accuracy for smooth potentials)
 
 ### 2. Finite Square Wells
 
@@ -54,7 +54,7 @@ Multiple configurations test various well depths and widths:
 - Grid range: -2L to +2L (where L = well width)
 - States tested: 3 bound states
 - Methods tested: DVR, Matrix Numerov, FGH (power-of-2 grids)
-- Error tolerance: **2%**
+- Error tolerance: **0.5%** (stringent despite discontinuous potential)
 
 ### 3. 3D Coulomb Potential (Hydrogen Atom, L=0)
 
@@ -73,7 +73,7 @@ where α = e²/(4πε₀) is the Coulomb strength.
 - Grid range: 1 pm to 10 nm (r > 0)
 - States tested: 3 states (n = 1, 2, 3)
 - Methods tested: DVR, Matrix Numerov, FGH
-- Error tolerance: **3%**
+- Error tolerance: **1.0%** (stringent even for singular potential)
 
 ### 4. Double Square Wells
 
@@ -89,7 +89,7 @@ Tests symmetric double wells with central barrier (no analytical solution):
 - Grid sizes: **200, 256 points**
 - States tested: 4 states
 - Methods tested: Matrix Numerov, FGH (compared to DVR reference)
-- Error tolerance: **5%** (inter-method comparison)
+- Error tolerance: **1.0%** (stringent inter-method agreement required)
 
 ## Running the Tests
 
@@ -134,18 +134,25 @@ This outputs results to the terminal with full details including timing informat
 
 ## Success Criteria
 
-Each test is considered **PASSED** if the numerical result is within the tolerance for that potential type:
+Each test is considered **PASSED** if the numerical result is within the stringent tolerance for that potential type. All tolerances are **≤ 1%**, with most tests requiring much better accuracy:
 
-**Tolerance Levels:**
-- Harmonic Oscillator: **1%** error
-- Finite Square Wells: **2%** error
-- 3D Coulomb Potential: **3%** error
-- Double Square Wells: **5%** error (inter-method comparison)
+**Tolerance Levels (Maximum Allowed Error):**
+- Harmonic Oscillator: **0.1%** - Extremely high accuracy required for smooth potentials
+- Finite Square Wells: **0.5%** - High accuracy despite discontinuities
+- 3D Coulomb Potential: **1.0%** - Maximum 1% error even with singularity
+- Double Square Wells: **1.0%** - Maximum 1% inter-method agreement required
 
-For example, for harmonic oscillator with analytical ground state energy of 0.412967 eV:
-- ✓ Numerical result of 0.412500 eV is acceptable (0.11% error < 1%)
-- ✓ Numerical result of 0.408000 eV is acceptable (0.90% error < 1%)
-- ✗ Numerical result of 0.405000 eV would fail (1.93% error > 1%)
+**Examples:**
+
+For harmonic oscillator (0.1% tolerance) with analytical ground state energy of 0.412967 eV:
+- ✓ Numerical result of 0.412900 eV is acceptable (0.016% error < 0.1%)
+- ✓ Numerical result of 0.412550 eV is acceptable (0.101% error ≈ 0.1%)
+- ✗ Numerical result of 0.412000 eV would fail (0.234% error > 0.1%)
+
+For finite square well (0.5% tolerance) with analytical energy of 10.000 eV:
+- ✓ Numerical result of 9.980 eV is acceptable (0.20% error < 0.5%)
+- ✓ Numerical result of 9.950 eV is acceptable (0.50% error = 0.5%)
+- ✗ Numerical result of 9.900 eV would fail (1.00% error > 0.5%)
 
 ## Test Output
 
