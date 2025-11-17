@@ -39,13 +39,13 @@ export class SimulationControlBar extends Node {
       fill: QPPWColors.textFillProperty,
     });
 
-    this.timeText = new Text("0.00 fs", {
+    this.timeText = new Text(stringManager.timeFormatStringProperty.value.replace("{{time}}", "0.00"), {
       font: new PhetFont({ size: 16, weight: "bold" }),
       fill: QPPWColors.textFillProperty,
     });
 
     this.model.timeProperty.link((time) => {
-      this.timeText.string = `${time.toFixed(2)} fs`;
+      this.timeText.string = stringManager.timeFormatStringProperty.value.replace("{{time}}", time.toFixed(2));
     });
 
     const timeDisplay = new VBox({

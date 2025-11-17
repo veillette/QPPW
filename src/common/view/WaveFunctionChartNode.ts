@@ -16,6 +16,7 @@ import QuantumConstants from "../model/QuantumConstants.js";
 import QPPWColors from "../../QPPWColors.js";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { SuperpositionType } from "../model/SuperpositionType.js";
+import stringManager from "../../i18n/StringManager.js";
 
 // Chart axis range constant (shared with EnergyChartNode)
 const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
@@ -129,7 +130,7 @@ export class WaveFunctionChartNode extends Node {
     this.plotContentNode.addChild(this.imaginaryPartPath);
 
     this.magnitudePath = new Path(null, {
-      stroke: "purple",
+      stroke: QPPWColors.wavefunctionMagnitudeProperty,
       lineWidth: 2,
       visible: false,
     });
@@ -138,7 +139,7 @@ export class WaveFunctionChartNode extends Node {
     this.probabilityDensityPath = new Path(null, {
       stroke: QPPWColors.wavefunctionProbabilityProperty,
       lineWidth: 2,
-      fill: "rgba(255, 215, 0, 0.2)", // Semi-transparent fill
+      fill: QPPWColors.wavefunctionProbabilityFillProperty, // Semi-transparent fill
     });
     this.plotContentNode.addChild(this.probabilityDensityPath);
 
@@ -233,7 +234,7 @@ export class WaveFunctionChartNode extends Node {
     axesNode.addChild(xTickLabelsNode);
 
     // Y-axis label (will be updated based on display mode)
-    this.yAxisLabel = new Text("Probability Density", {
+    this.yAxisLabel = new Text(stringManager.probabilityDensityAxisStringProperty, {
       font: new PhetFont(14),
       fill: QPPWColors.labelFillProperty,
       rotation: -Math.PI / 2,
@@ -243,7 +244,7 @@ export class WaveFunctionChartNode extends Node {
     axesNode.addChild(this.yAxisLabel);
 
     // X-axis label
-    const xLabelText = new Text("Position (nm)", {
+    const xLabelText = new Text(stringManager.positionNmAxisStringProperty, {
       font: new PhetFont(14),
       fill: QPPWColors.labelFillProperty,
       centerX: this.chartWidth / 2,

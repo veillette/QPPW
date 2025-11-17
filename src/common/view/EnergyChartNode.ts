@@ -138,7 +138,7 @@ export class EnergyChartNode extends Node {
 
     // Create zero line
     this.zeroLine = new Line(0, 0, 0, 0, {
-      stroke: "red",
+      stroke: QPPWColors.potentialBarrierProperty,
       lineWidth: 1,
       lineDash: [5, 5],
     });

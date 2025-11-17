@@ -99,7 +99,7 @@ export class SuperpositionDialog {
     });
 
     const descriptionText = new RichText(
-      "Adjust the amplitude of each eigenstate in the superposition.<br>The sum of squared amplitudes should equal 1.",
+      stringManager.superpositionInstructionsStringProperty,
       {
         font: new PhetFont(12),
         fill: QPPWColors.textFillProperty,
@@ -183,11 +183,11 @@ export class SuperpositionDialog {
 
     const updateNormalization = () => {
       const sumSquared = this.amplitudeProperties.reduce((sum, prop) => sum + prop.value * prop.value, 0);
-      normalizationText.string = `Sum of |cᵢ|² = ${sumSquared.toFixed(3)}`;
+      normalizationText.string = stringManager.normalizationSumStringProperty.value + sumSquared.toFixed(3);
 
       // Change color if not normalized
       if (Math.abs(sumSquared - 1.0) > 0.01) {
-        normalizationText.fill = "orange";
+        normalizationText.fill = QPPWColors.warningColorProperty.value;
       } else {
         normalizationText.fill = QPPWColors.textFillProperty.value;
       }
@@ -199,7 +199,7 @@ export class SuperpositionDialog {
 
     // Normalize button
     const normalizeButton = new RectangularPushButton({
-      content: new Text("Normalize", {
+      content: new Text(stringManager.normalizeButtonStringProperty, {
         font: new PhetFont(12),
         fill: QPPWColors.textFillProperty,
       }),
@@ -223,7 +223,7 @@ export class SuperpositionDialog {
 
     // OK and Cancel buttons
     const okButton = new RectangularPushButton({
-      content: new Text("OK", {
+      content: new Text(stringManager.okButtonStringProperty, {
         font: new PhetFont({ size: 14, weight: "bold" }),
         fill: QPPWColors.textFillProperty,
       }),
@@ -235,7 +235,7 @@ export class SuperpositionDialog {
     });
 
     const cancelButton = new RectangularPushButton({
-      content: new Text("Cancel", {
+      content: new Text(stringManager.cancelButtonStringProperty, {
         font: new PhetFont(14),
         fill: QPPWColors.textFillProperty,
       }),

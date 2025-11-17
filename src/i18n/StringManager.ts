@@ -129,6 +129,35 @@ export class StringManager {
   public readonly superpositionDialogTitleStringProperty: StringProperty;
   public readonly closeStringProperty: StringProperty;
   public readonly displacementStringProperty: StringProperty;
+  public readonly superpositionInstructionsStringProperty: StringProperty;
+  public readonly normalizationSumStringProperty: StringProperty;
+  public readonly normalizeButtonStringProperty: StringProperty;
+  public readonly okButtonStringProperty: StringProperty;
+  public readonly cancelButtonStringProperty: StringProperty;
+
+  // Educational content strings for One Well screen
+  public readonly keyConceptsTitleStringProperty: StringProperty;
+  public readonly oneWellKeyConceptsStringProperty: StringProperty;
+  public readonly interactionsTitleStringProperty: StringProperty;
+  public readonly oneWellInteractionsStringProperty: StringProperty;
+  public readonly oneWellEducationalContentStringProperty: StringProperty;
+
+  // Educational content strings for Two Wells screen
+  public readonly twoWellsKeyConceptsStringProperty: StringProperty;
+  public readonly twoWellsInteractionsStringProperty: StringProperty;
+  public readonly twoWellsEducationalContentStringProperty: StringProperty;
+
+  // Educational content strings for Many Wells screen
+  public readonly manyWellsKeyConceptsStringProperty: StringProperty;
+  public readonly manyWellsInteractionsStringProperty: StringProperty;
+  public readonly manyWellsEducationalContentStringProperty: StringProperty;
+
+  // Chart axis labels
+  public readonly probabilityDensityAxisStringProperty: StringProperty;
+  public readonly positionNmAxisStringProperty: StringProperty;
+
+  // Time format
+  public readonly timeFormatStringProperty: StringProperty;
 
   public constructor() {
     // Initialize all string properties with English defaults
@@ -260,6 +289,106 @@ export class StringManager {
     this.superpositionDialogTitleStringProperty = new StringProperty("Superposition Configuration");
     this.closeStringProperty = new StringProperty("Close");
     this.displacementStringProperty = new StringProperty("Displacement");
+    this.superpositionInstructionsStringProperty = new StringProperty("Adjust the amplitude of each eigenstate in the superposition.\nThe sum of squared amplitudes should equal 1.");
+    this.normalizationSumStringProperty = new StringProperty("Sum of |cᵢ|² = ");
+    this.normalizeButtonStringProperty = new StringProperty("Normalize");
+    this.okButtonStringProperty = new StringProperty("OK");
+    this.cancelButtonStringProperty = new StringProperty("Cancel");
+
+    // Educational content strings for One Well screen
+    this.keyConceptsTitleStringProperty = new StringProperty("Key Concepts:");
+    this.oneWellKeyConceptsStringProperty = new StringProperty(
+      "• Quantum confinement in a single potential well\n" +
+      "• Discrete energy levels (eigenstates)\n" +
+      "• Wave-particle duality\n" +
+      "• Probability density |ψ|²\n" +
+      "• Heisenberg Uncertainty Principle"
+    );
+    this.interactionsTitleStringProperty = new StringProperty("Interactions:");
+    this.oneWellInteractionsStringProperty = new StringProperty(
+      "• Click energy levels to see eigenstates\n" +
+      "• Adjust potential well parameters\n" +
+      "• Try different potential types\n" +
+      "• Create wavepackets from superpositions\n" +
+      "• Watch time evolution of superposition states"
+    );
+    this.oneWellEducationalContentStringProperty = new StringProperty(
+      "Screen Overview:\n" +
+      "This screen demonstrates quantum confinement in a single potential well. Energy levels are quantized and the particle's wave function is described by standing wave patterns (eigenstates).\n\n" +
+      "Available Controls:\n" +
+      "• Potential Well Type: Select different quantum potential configurations\n" +
+      "• Energy Levels: Click on energy levels to view corresponding eigenstates\n" +
+      "• Superposition: Create wave packets by combining multiple eigenstates\n\n" +
+      "Learning Objectives:\n" +
+      "• Understand how quantum confinement leads to discrete energy levels\n" +
+      "• Explore the relationship between well parameters and eigenstate properties\n" +
+      "• Observe how uncertainty principle manifests in confined quantum systems"
+    );
+
+    // Educational content strings for Two Wells screen
+    this.twoWellsKeyConceptsStringProperty = new StringProperty(
+      "• Quantum tunneling through barriers\n" +
+      "• Energy level splitting\n" +
+      "• Symmetric and antisymmetric states\n" +
+      "• Tunneling probability\n" +
+      "• Time-dependent oscillations between wells"
+    );
+    this.twoWellsInteractionsStringProperty = new StringProperty(
+      "• Adjust barrier height and width\n" +
+      "• Change well separation distance\n" +
+      "• Select energy levels to see tunneling states\n" +
+      "• Create superpositions to watch tunneling dynamics\n" +
+      "• Observe how barrier parameters affect tunneling probability"
+    );
+    this.twoWellsEducationalContentStringProperty = new StringProperty(
+      "Screen Overview:\n" +
+      "This screen demonstrates quantum tunneling in a double potential well. Particles can tunnel through classically forbidden barrier regions, leading to energy level splitting and oscillatory behavior.\n\n" +
+      "Available Controls:\n" +
+      "• Barrier Parameters: Adjust height and width to control tunneling probability\n" +
+      "• Well Separation: Change the distance between wells\n" +
+      "• Energy Levels: Click on split energy levels to view symmetric/antisymmetric states\n\n" +
+      "Learning Objectives:\n" +
+      "• Understand quantum tunneling and its dependence on barrier properties\n" +
+      "• Explore energy level splitting due to quantum coupling between wells\n" +
+      "• Observe time-dependent tunneling dynamics in superposition states"
+    );
+
+    // Educational content strings for Many Wells screen
+    this.manyWellsKeyConceptsStringProperty = new StringProperty(
+      "• Energy band formation\n" +
+      "• Allowed and forbidden energy bands\n" +
+      "• Band gap in periodic potentials\n" +
+      "• Bloch waves and crystal momentum\n" +
+      "• Foundation of solid-state physics\n" +
+      "• Conductors, semiconductors, and insulators"
+    );
+    this.manyWellsInteractionsStringProperty = new StringProperty(
+      "• Adjust number of potential wells\n" +
+      "• Change lattice constant (well spacing)\n" +
+      "• Modify well and barrier parameters\n" +
+      "• Select different energy bands\n" +
+      "• Observe band structure formation\n" +
+      "• Watch Bloch wave propagation"
+    );
+    this.manyWellsEducationalContentStringProperty = new StringProperty(
+      "Screen Overview:\n" +
+      "This screen demonstrates energy band formation in periodic potentials, the foundation of solid-state physics. As you add more wells, discrete energy levels spread into continuous bands separated by gaps.\n\n" +
+      "Available Controls:\n" +
+      "• Number of Wells: Add or remove wells to see band structure emerge\n" +
+      "• Lattice Constant: Adjust the periodic spacing of the potential\n" +
+      "• Band Selection: Select different energy bands to view Bloch states\n\n" +
+      "Learning Objectives:\n" +
+      "• Understand how periodic potentials create energy band structure\n" +
+      "• Explore the relationship between number of wells and band formation\n" +
+      "• Connect quantum mechanics to properties of solids (metals, semiconductors, insulators)"
+    );
+
+    // Chart axis labels
+    this.probabilityDensityAxisStringProperty = new StringProperty("Probability Density");
+    this.positionNmAxisStringProperty = new StringProperty("Position (nm)");
+
+    // Time format
+    this.timeFormatStringProperty = new StringProperty("{{time}} fs");
   }
 
   /**
