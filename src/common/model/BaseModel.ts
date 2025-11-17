@@ -41,7 +41,8 @@ export abstract class BaseModel {
     });
 
     // Invalidate caches when grid points preference changes
-    QPPWPreferences.gridPointsProperty.link(() => {
+    // Use lazyLink to avoid triggering during initialization
+    QPPWPreferences.gridPointsProperty.lazyLink(() => {
       this.onSolverMethodChanged(this.solver.getNumericalMethod());
     });
   }

@@ -118,16 +118,16 @@ export class OneWellModel extends BaseModel {
   }
 
   /**
-   * Called when the solver method changes.
-   * For OneWellModel, we ignore solver method changes because all potentials
-   * in the one-well screen have analytical solutions and don't depend on the
-   * numerical method preference.
+   * Called when the solver method or grid points changes.
+   * For OneWellModel, solver method changes don't matter since we always use analytical solutions,
+   * but grid points changes do matter because they affect the wavefunction grid.
    * @param _method - The new numerical method (unused)
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected onSolverMethodChanged(_method: NumericalMethod): void {
-    // Do nothing - one well screen always uses analytical solutions
-    // regardless of the solver preference setting
+    // Invalidate the cached bound state result so wavefunctions are recalculated
+    // with the new grid configuration
+    this.boundStateResult = null;
   }
 
   /**

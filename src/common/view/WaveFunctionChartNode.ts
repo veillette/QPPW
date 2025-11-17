@@ -17,6 +17,7 @@ import QPPWColors from "../../QPPWColors.js";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { SuperpositionType } from "../model/SuperpositionType.js";
 import stringManager from "../../i18n/StringManager.js";
+import QPPWPreferences from "../../QPPWPreferences.js";
 
 // Chart axis range constant (shared with EnergyChartNode)
 const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
@@ -265,6 +266,14 @@ export class WaveFunctionChartNode extends Node {
     this.model.wellDepthProperty.link(() => this.update());
     this.model.wellOffsetProperty.link(() => this.update());
     this.model.particleMassProperty.link(() => this.update());
+
+    // Update when grid points preference changes (affects wavefunction resolution)
+    QPPWPreferences.gridPointsProperty.link(() => {
+      // Force model to invalidate its cache by notifying it of the change
+      // The BaseModel listener will handle cache invalidation
+      this.update();
+    });
+
     this.model.selectedEnergyLevelIndexProperty.link(() => {
       this.updateStateLabel();
       this.update();
