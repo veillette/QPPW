@@ -40,17 +40,13 @@ export class TwoWellsScreenView extends BaseScreenView {
       maxWidth: 500,
     });
 
-    const keyConceptsTitle = new Text("Key Concepts:", {
+    const keyConceptsTitle = new Text(stringManager.keyConceptsTitleStringProperty, {
       font: new PhetFont({ size: 14, weight: "bold" }),
       fill: QPPWColors.textFillProperty,
     });
 
     const keyConceptsList = new RichText(
-      "• Quantum tunneling through potential barriers<br>" +
-      "• Symmetric and antisymmetric states in double wells<br>" +
-      "• Energy level splitting due to coupling<br>" +
-      "• Barrier penetration and transmission probability<br>" +
-      "• Bonding and antibonding states",
+      stringManager.twoWellsKeyConceptsStringProperty,
       {
         font: new PhetFont(13),
         fill: QPPWColors.textFillProperty,
@@ -58,17 +54,13 @@ export class TwoWellsScreenView extends BaseScreenView {
       }
     );
 
-    const interactionTitle = new Text("Interactions:", {
+    const interactionTitle = new Text(stringManager.interactionsTitleStringProperty, {
       font: new PhetFont({ size: 14, weight: "bold" }),
       fill: QPPWColors.textFillProperty,
     });
 
     const interactionsList = new RichText(
-      "• Adjust barrier height to control tunneling rate<br>" +
-      "• Change barrier width to see its effect on coupling<br>" +
-      "• Modify well separation to observe state splitting<br>" +
-      "• Compare energy levels of coupled vs. isolated wells<br>" +
-      "• Observe wave function localization and delocalization",
+      stringManager.twoWellsInteractionsStringProperty,
       {
         font: new PhetFont(13),
         fill: QPPWColors.textFillProperty,
@@ -95,24 +87,7 @@ export class TwoWellsScreenView extends BaseScreenView {
    */
   public createScreenSummaryContent(): Node {
     const summaryText = new RichText(
-      stringManager.twoWellsSummaryStringProperty.value +
-      "<br><br>" +
-      "<strong>Screen Overview:</strong><br>" +
-      "This screen demonstrates quantum tunneling in a double potential well system. " +
-      "Two quantum wells are separated by a tunable potential barrier, allowing particles to tunnel between them. " +
-      "The visualization shows how barrier properties affect energy level splitting and wave function coupling.<br><br>" +
-      "<strong>Available Controls:</strong><br>" +
-      "• Barrier Height slider: Controls the energy barrier between wells<br>" +
-      "• Barrier Width slider: Adjusts the thickness of the potential barrier<br>" +
-      "• Well Separation slider: Changes the distance between the two wells<br>" +
-      "• Quantum State selector: Choose different energy eigenstates<br>" +
-      "• Play/Pause/Step controls: Control time evolution<br>" +
-      "• Reset button: Returns all parameters to initial values<br><br>" +
-      "<strong>Learning Objectives:</strong><br>" +
-      "Understand quantum tunneling as a uniquely quantum mechanical phenomenon. " +
-      "Observe how barrier properties affect tunneling probability and coupling strength. " +
-      "Learn about bonding and antibonding states in coupled quantum systems. " +
-      "Explore the relationship between well separation and energy level splitting.",
+      stringManager.twoWellsEducationalContentStringProperty,
       {
         font: new PhetFont(13),
         fill: QPPWColors.textFillProperty,

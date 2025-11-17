@@ -41,6 +41,16 @@ const QPPWColors = {
     projector: new Color(200, 150, 0), // Darker yellow for projector
   }),
 
+  wavefunctionMagnitudeProperty: new ProfileColorProperty(qppw, "wavefunctionMagnitude", {
+    default: new Color(160, 32, 240), // Purple
+    projector: new Color(128, 0, 128), // Darker purple for projector
+  }),
+
+  wavefunctionProbabilityFillProperty: new ProfileColorProperty(qppw, "wavefunctionProbabilityFill", {
+    default: new Color(255, 215, 0, 0.2), // Semi-transparent gold
+    projector: new Color(200, 150, 0, 0.3), // Semi-transparent darker gold for projector
+  }),
+
   // Potential well colors
   potentialWellProperty: new ProfileColorProperty(qppw, "potentialWell", {
     default: new Color(150, 150, 200), // Light purple
@@ -83,6 +93,12 @@ const QPPWColors = {
   labelFillProperty: new ProfileColorProperty(qppw, "labelFill", {
     default: new Color(200, 200, 220),
     projector: new Color(40, 40, 60), // Dark gray for projector mode
+  }),
+
+  // Warning and notification colors
+  warningColorProperty: new ProfileColorProperty(qppw, "warning", {
+    default: new Color(255, 165, 0), // Orange
+    projector: new Color(200, 100, 0), // Darker orange for projector
   }),
 
   // Control panel specific colors (for ComboBox, buttons, etc.)
