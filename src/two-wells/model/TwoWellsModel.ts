@@ -254,10 +254,10 @@ export class TwoWellsModel extends BaseModel {
       numStates = Math.max(1, Math.min(maxN, 100)); // Cap at 100 for safety
     }
     else if (this.potentialTypeProperty.value === PotentialType.COULOMB_1D) {
-      numStates = 30; // Use more states for Coulomb potential
+      numStates = 80; // Use more states for Coulomb potential
     }
     else if (this.potentialTypeProperty.value === PotentialType.DOUBLE_SQUARE_WELL) {
-      numStates = 20; // Use more states for double well to capture splitting
+      numStates = 80; // Use more states for double well to capture splitting
     }
 
     // Grid configuration
@@ -281,44 +281,46 @@ export class TwoWellsModel extends BaseModel {
       const gridRange = outerEdge + margin;
 
       if (method === 'dvr') {
-        // DVR: use minimal points to keep kinetic energy low
+        // DVR: increase points for smoother wavefunction rendering
         gridConfig = {
           xMin: -gridRange * QuantumConstants.NM_TO_M,
           xMax: gridRange * QuantumConstants.NM_TO_M,
-          numPoints: 20,
+          numPoints: 1000,
         };
       } else if (method === 'spectral') {
-        // Spectral: use more points than DVR for smooth wavefunctions
+        // Spectral: increase points for smoother wavefunction rendering
         gridConfig = {
           xMin: -gridRange * QuantumConstants.NM_TO_M,
           xMax: gridRange * QuantumConstants.NM_TO_M,
-          numPoints: 60,
+          numPoints: 1000,
         };
       } else if (method === 'fgh') {
-        // FGH: use power-of-2 points
+        // FGH: use power-of-2 points for FFT efficiency
         gridConfig = {
           xMin: -gridRange * QuantumConstants.NM_TO_M,
           xMax: gridRange * QuantumConstants.NM_TO_M,
-          numPoints: 64,
+          numPoints: 1024,
         };
       } else {
-        // Numerov: use focused grid with fewer points to avoid numerical instability
+        // Numerov: increase points for smoother wavefunction rendering
         gridConfig = {
           xMin: -gridRange * QuantumConstants.NM_TO_M,
           xMax: gridRange * QuantumConstants.NM_TO_M,
-          numPoints: 200,
+          numPoints: 1000,
         };
       }
     } else {
       // For other potentials, span the full chart display range (-4 nm to +4 nm)
       const CHART_DISPLAY_RANGE_NM = 4;
       const method = this.solver.getNumericalMethod();
-      let numGridPoints = 100;
+      let numGridPoints = 1000;
 
       if (method === 'numerov') {
         numGridPoints = 1000;
-      } else if (method === 'spectral' || method === 'fgh') {
-        numGridPoints = 100; // Keep moderate for spectral methods
+      } else if (method === 'spectral') {
+        numGridPoints = 1000; // Increase for smoother wavefunction rendering
+      } else if (method === 'fgh') {
+        numGridPoints = 1024; // Power-of-2 for FFT efficiency
       }
 
       gridConfig = {
