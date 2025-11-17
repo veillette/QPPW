@@ -128,6 +128,38 @@ export class ControlPanelNode extends Node {
           }),
       },
       {
+        value: PotentialType.MORSE,
+        createNode: () =>
+          new Text(stringManager.morseStringProperty, {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
+      },
+      {
+        value: PotentialType.POSCHL_TELLER,
+        createNode: () =>
+          new Text(stringManager.poschlTellerStringProperty, {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
+      },
+      {
+        value: PotentialType.ROSEN_MORSE,
+        createNode: () =>
+          new Text(stringManager.rosenMorseStringProperty, {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
+      },
+      {
+        value: PotentialType.ECKART,
+        createNode: () =>
+          new Text(stringManager.eckartStringProperty, {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
+      },
+      {
         value: PotentialType.ASYMMETRIC_TRIANGLE,
         createNode: () =>
           new Text(stringManager.asymmetricTriangleStringProperty, {

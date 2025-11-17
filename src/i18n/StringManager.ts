@@ -76,6 +76,10 @@ export class StringManager {
   public readonly squareInfiniteStringProperty: StringProperty;
   public readonly squareFiniteStringProperty: StringProperty;
   public readonly harmonicOscillatorStringProperty: StringProperty;
+  public readonly morseStringProperty: StringProperty;
+  public readonly poschlTellerStringProperty: StringProperty;
+  public readonly rosenMorseStringProperty: StringProperty;
+  public readonly eckartStringProperty: StringProperty;
   public readonly asymmetricTriangleStringProperty: StringProperty;
   public readonly coulomb1DStringProperty: StringProperty;
   public readonly coulomb3DStringProperty: StringProperty;
@@ -197,6 +201,10 @@ export class StringManager {
     this.squareInfiniteStringProperty = new StringProperty("Square (Infinite)");
     this.squareFiniteStringProperty = new StringProperty("Square (Finite)");
     this.harmonicOscillatorStringProperty = new StringProperty("Harmonic Oscillator");
+    this.morseStringProperty = new StringProperty("Morse");
+    this.poschlTellerStringProperty = new StringProperty("Pöschl-Teller");
+    this.rosenMorseStringProperty = new StringProperty("Rosen-Morse");
+    this.eckartStringProperty = new StringProperty("Eckart");
     this.asymmetricTriangleStringProperty = new StringProperty("Asymmetric Triangle");
     this.coulomb1DStringProperty = new StringProperty("1D Coulomb");
     this.coulomb3DStringProperty = new StringProperty("3D Coulomb");
