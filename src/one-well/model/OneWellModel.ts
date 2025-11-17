@@ -22,6 +22,7 @@ export class OneWellModel extends BaseModel {
   public readonly wellWidthProperty: NumberProperty;
   public readonly wellDepthProperty: NumberProperty;
   public readonly wellOffsetProperty: NumberProperty; // For asymmetric wells
+  public readonly barrierHeightProperty: NumberProperty; // For Rosen-Morse and Eckart potentials
 
   // Particle properties
   public readonly particleMassProperty: NumberProperty; // In units of electron mass
@@ -60,6 +61,7 @@ export class OneWellModel extends BaseModel {
     this.wellWidthProperty = new NumberProperty(1.0, { range: new Range(0.1, 6.0) }); // in nanometers (max 6 nm)
     this.wellDepthProperty = new NumberProperty(5.0, { range: new Range(0.1, 15.0) }); // in eV (within energy graph bounds)
     this.wellOffsetProperty = new NumberProperty(0.5, { range: new Range(0.0, 1.0) }); // normalized position
+    this.barrierHeightProperty = new NumberProperty(2.0, { range: new Range(0.0, 10.0) }); // in eV (for Rosen-Morse and Eckart)
 
     // Initialize particle mass (1.0 = electron mass)
     this.particleMassProperty = new NumberProperty(1.0, { range: new Range(0.5, 1.1) }); // 0.5 to 1.1 times electron mass
@@ -102,6 +104,7 @@ export class OneWellModel extends BaseModel {
     this.wellWidthProperty.link(invalidateCache);
     this.wellDepthProperty.link(invalidateCache);
     this.wellOffsetProperty.link(invalidateCache);
+    this.barrierHeightProperty.link(invalidateCache);
     this.particleMassProperty.link(invalidateCache);
 
     // Update superposition coefficients when superposition type or coherent displacement changes
@@ -141,6 +144,7 @@ export class OneWellModel extends BaseModel {
     this.wellWidthProperty.reset();
     this.wellDepthProperty.reset();
     this.wellOffsetProperty.reset();
+    this.barrierHeightProperty.reset();
     this.particleMassProperty.reset();
     this.selectedEnergyLevelIndexProperty.reset();
     this.energyLevelProperty.reset();
@@ -264,6 +268,25 @@ export class OneWellModel extends BaseModel {
         case PotentialType.HARMONIC_OSCILLATOR:
           // Convert well depth to spring constant: k = mω² = m(4V₀/mL²) = 4V₀/L²
           potentialParams.springConstant = (4 * wellDepth) / (wellWidth * wellWidth);
+          break;
+        case PotentialType.MORSE:
+          // Morse potential uses wellDepth as dissociation energy, equilibrium position at 0
+          potentialParams.dissociationEnergy = wellDepth;
+          potentialParams.equilibriumPosition = 0; // Center of the well
+          break;
+        case PotentialType.POSCHL_TELLER:
+          // Pöschl-Teller potential uses wellDepth as potential depth
+          potentialParams.potentialDepth = wellDepth;
+          break;
+        case PotentialType.ROSEN_MORSE:
+          // Rosen-Morse potential uses wellDepth as potential depth and barrierHeight
+          potentialParams.potentialDepth = wellDepth;
+          potentialParams.barrierHeight = this.barrierHeightProperty.value * QuantumConstants.EV_TO_JOULES;
+          break;
+        case PotentialType.ECKART:
+          // Eckart potential uses wellDepth as potential depth and barrierHeight
+          potentialParams.potentialDepth = wellDepth;
+          potentialParams.barrierHeight = this.barrierHeightProperty.value * QuantumConstants.EV_TO_JOULES;
           break;
         case PotentialType.ASYMMETRIC_TRIANGLE:
           // Slope is the field strength

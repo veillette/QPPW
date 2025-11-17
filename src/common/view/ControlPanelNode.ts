@@ -640,6 +640,45 @@ export class ControlPanelNode extends Node {
       ],
     });
 
+    // Barrier Height slider (only for Rosen-Morse and Eckart potentials)
+    const barrierHeightValueText = new Text("", {
+      font: new PhetFont(12),
+      fill: QPPWColors.textFillProperty,
+    });
+
+    let barrierHeightRow: Node | null = null;
+    if ("barrierHeightProperty" in this.model) {
+      const oneWellModel = this.model as OneWellModel;
+
+      oneWellModel.barrierHeightProperty.link((height: number) => {
+        barrierHeightValueText.string = `${height.toFixed(2)} eV`;
+      });
+
+      const barrierHeightSlider = new HSlider(
+        oneWellModel.barrierHeightProperty,
+        oneWellModel.barrierHeightProperty.range!,
+        {
+          trackSize: new Dimension2(150, 4),
+          thumbSize: new Dimension2(15, 30),
+        },
+      );
+
+      barrierHeightRow = new VBox({
+        spacing: 4,
+        align: "left",
+        children: [
+          new Text(stringManager.barrierHeightStringProperty, {
+            font: new PhetFont(12),
+            fill: QPPWColors.textFillProperty,
+          }),
+          new HBox({
+            spacing: 10,
+            children: [barrierHeightSlider, barrierHeightValueText],
+          }),
+        ],
+      });
+    }
+
     // Well Separation slider (only for double square well)
     const separationValueText = new Text("", {
       font: new PhetFont(12),
@@ -694,10 +733,24 @@ export class ControlPanelNode extends Node {
       const needsDepth =
         type === PotentialType.FINITE_WELL ||
         type === PotentialType.HARMONIC_OSCILLATOR ||
+        type === PotentialType.MORSE ||
+        type === PotentialType.POSCHL_TELLER ||
+        type === PotentialType.ROSEN_MORSE ||
+        type === PotentialType.ECKART ||
         type === PotentialType.ASYMMETRIC_TRIANGLE ||
         type === PotentialType.DOUBLE_SQUARE_WELL;
       depthRow.visible = needsDepth;
     });
+
+    // Enable/disable barrier height slider based on potential type (only for Rosen-Morse and Eckart)
+    if (barrierHeightRow) {
+      this.model.potentialTypeProperty.link((type) => {
+        const needsBarrierHeight =
+          type === PotentialType.ROSEN_MORSE ||
+          type === PotentialType.ECKART;
+        barrierHeightRow!.visible = needsBarrierHeight;
+      });
+    }
 
     // Enable/disable separation slider based on potential type (only for double square well)
     if (separationRow) {
@@ -708,6 +761,9 @@ export class ControlPanelNode extends Node {
     }
 
     const children: Node[] = [titleText, widthRow, depthRow];
+    if (barrierHeightRow) {
+      children.push(barrierHeightRow);
+    }
     if (separationRow) {
       children.push(separationRow);
     }
