@@ -40,8 +40,8 @@ function getEnergyAxisRange(potentialType: PotentialType): { min: number; max: n
       // Double square well with barrier between wells
       return { min: 0, max: 20 };
     case PotentialType.MORSE:
-      // Morse potential: V=0 at center, De at dissociation limit
-      return { min: -5, max: 15 };
+      // Morse potential: V=0 at dissociation limit (infinity), V=-De at bottom
+      return { min: -15, max: 5 };
     case PotentialType.FINITE_WELL:
     case PotentialType.POSCHL_TELLER:
     case PotentialType.ROSEN_MORSE:
@@ -571,6 +571,103 @@ export class EnergyChartNode extends Node {
 
       // Right outside region (at barrier height)
       shape.lineTo(this.chartWidth - this.chartMargins.right, yBarrier);
+    } else if (potentialType === PotentialType.MORSE) {
+      // Draw Morse potential: V(x) = D_e * (1 - exp(-(x-x_e)/a))^2 - D_e
+      // With x_e = 0 (centered), D_e = wellDepth, a = wellWidth
+      // V=0 at dissociation (x→∞), V=-D_e at bottom of well (x=x_e)
+      const centerX = xCenter;
+      const numPoints = 200;
+      let firstPoint = true;
+
+      for (let i = 0; i < numPoints; i++) {
+        const x = (xGrid[0] + (xGrid[xGrid.length - 1] - xGrid[0]) * i / (numPoints - 1)) * QuantumConstants.M_TO_NM;
+        const dx = x - centerX;
+        const exponent = Math.exp(-dx / wellWidth);
+        // V(x) = D_e * (1 - e^(-dx/a))^2 - D_e
+        // At x=x_e (dx=0): V = D_e * (1-1)^2 - D_e = -D_e (bottom of well)
+        // At x→∞: V = D_e * (1-0)^2 - D_e = 0 (dissociation limit)
+        const V = wellDepth * Math.pow(1 - exponent, 2) - wellDepth;
+
+        const viewX = this.dataToViewX(x);
+        const viewY = this.dataToViewY(V);
+
+        if (firstPoint) {
+          shape.moveTo(viewX, viewY);
+          firstPoint = false;
+        } else {
+          shape.lineTo(viewX, viewY);
+        }
+      }
+    } else if (potentialType === PotentialType.POSCHL_TELLER) {
+      // Draw Pöschl-Teller potential: V(x) = -V_0 / cosh²(x/a)
+      const centerX = xCenter;
+      const numPoints = 200;
+      let firstPoint = true;
+
+      for (let i = 0; i < numPoints; i++) {
+        const x = (xGrid[0] + (xGrid[xGrid.length - 1] - xGrid[0]) * i / (numPoints - 1)) * QuantumConstants.M_TO_NM;
+        const dx = x - centerX;
+        const coshVal = Math.cosh(dx / wellWidth);
+        const V = -wellDepth / (coshVal * coshVal);
+
+        const viewX = this.dataToViewX(x);
+        const viewY = this.dataToViewY(V);
+
+        if (firstPoint) {
+          shape.moveTo(viewX, viewY);
+          firstPoint = false;
+        } else {
+          shape.lineTo(viewX, viewY);
+        }
+      }
+    } else if (potentialType === PotentialType.ROSEN_MORSE) {
+      // Draw Rosen-Morse potential: V(x) = -V_0 / cosh²(x/a) + V_1 * tanh(x/a)
+      const centerX = xCenter;
+      const barrierHeight = this.model.barrierHeightProperty.value;
+      const numPoints = 200;
+      let firstPoint = true;
+
+      for (let i = 0; i < numPoints; i++) {
+        const x = (xGrid[0] + (xGrid[xGrid.length - 1] - xGrid[0]) * i / (numPoints - 1)) * QuantumConstants.M_TO_NM;
+        const dx = x - centerX;
+        const coshVal = Math.cosh(dx / wellWidth);
+        const tanhVal = Math.tanh(dx / wellWidth);
+        const V = -wellDepth / (coshVal * coshVal) + barrierHeight * tanhVal;
+
+        const viewX = this.dataToViewX(x);
+        const viewY = this.dataToViewY(V);
+
+        if (firstPoint) {
+          shape.moveTo(viewX, viewY);
+          firstPoint = false;
+        } else {
+          shape.lineTo(viewX, viewY);
+        }
+      }
+    } else if (potentialType === PotentialType.ECKART) {
+      // Draw Eckart potential: V(x) = V_0 / (1 + exp(x/a))² - V_1 / (1 + exp(x/a))
+      const centerX = xCenter;
+      const barrierHeight = this.model.barrierHeightProperty.value;
+      const numPoints = 200;
+      let firstPoint = true;
+
+      for (let i = 0; i < numPoints; i++) {
+        const x = (xGrid[0] + (xGrid[xGrid.length - 1] - xGrid[0]) * i / (numPoints - 1)) * QuantumConstants.M_TO_NM;
+        const dx = x - centerX;
+        const expVal = Math.exp(dx / wellWidth);
+        const denom = 1 + expVal;
+        const V = wellDepth / (denom * denom) - barrierHeight / denom;
+
+        const viewX = this.dataToViewX(x);
+        const viewY = this.dataToViewY(V);
+
+        if (firstPoint) {
+          shape.moveTo(viewX, viewY);
+          firstPoint = false;
+        } else {
+          shape.lineTo(viewX, viewY);
+        }
+      }
     } else {
       // For other potential types, draw a placeholder
       const y0 = this.dataToViewY(0);
