@@ -39,6 +39,11 @@ export abstract class BaseModel {
       this.solver.setNumericalMethod(method);
       this.onSolverMethodChanged(method);
     });
+
+    // Invalidate caches when grid points preference changes
+    QPPWPreferences.gridPointsProperty.link(() => {
+      this.onSolverMethodChanged(this.solver.getNumericalMethod());
+    });
   }
 
   /**

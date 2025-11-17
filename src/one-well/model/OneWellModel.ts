@@ -11,6 +11,7 @@ import { PotentialType, BoundStateResult } from "../../common/model/PotentialFun
 import QuantumConstants from "../../common/model/QuantumConstants.js";
 import { SuperpositionType, SuperpositionConfig } from "../../common/model/SuperpositionType.js";
 import { calculateCoherentStateCoefficients } from "../../common/model/analytical-solutions/harmonic-oscillator.js";
+import QPPWPreferences from "../../QPPWPreferences.js";
 
 export type DisplayMode = "probabilityDensity" | "waveFunction" | "phaseColor";
 
@@ -250,7 +251,7 @@ export class OneWellModel extends BaseModel {
     const gridConfig = {
       xMin: -CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
       xMax: CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
-      numPoints: 1000, // Increased from 400 for smoother wavefunction rendering
+      numPoints: QPPWPreferences.gridPointsProperty.value,
     };
 
     try {

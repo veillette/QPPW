@@ -2,7 +2,8 @@
  * Preferences for the Quantum Bound States (QPPW) Simulation
  */
 
-import { BooleanProperty, Property } from "scenerystack/axon";
+import { BooleanProperty, NumberProperty, Property } from "scenerystack/axon";
+import { Range } from "scenerystack";
 import { Tandem, StringIO } from "scenerystack/tandem";
 import qppw from "./QPPWNamespace.js";
 import { NumericalMethod } from "./common/model/Schrodinger1DSolver.js";
@@ -22,11 +23,22 @@ const QPPWPreferences = {
    * Numerical method for solving the Schrödinger equation
    * Options: 'numerov', 'matrix_numerov', 'dvr', 'fgh', 'spectral'
    */
-  numericalMethodProperty: new Property<NumericalMethod>(NumericalMethod.NUMEROV, {
+  numericalMethodProperty: new Property<NumericalMethod>(NumericalMethod.FGH, {
     tandem: Tandem.PREFERENCES.createTandem("numericalMethodProperty"),
     phetioFeatured: true,
     phetioValueType: StringIO,
     validValues: [NumericalMethod.NUMEROV, NumericalMethod.MATRIX_NUMEROV, NumericalMethod.DVR, NumericalMethod.FGH, NumericalMethod.SPECTRAL],
+  }),
+
+  /**
+   * Number of grid points for numerical solvers
+   * Range: 256-2000 points. Higher values give more accurate results but slower computation.
+   * Default: 1000 points (good balance of accuracy and performance)
+   */
+  gridPointsProperty: new NumberProperty(1000, {
+    tandem: Tandem.PREFERENCES.createTandem("gridPointsProperty"),
+    phetioFeatured: true,
+    range: new Range(256, 2000),
   }),
 
   // Visual Preferences

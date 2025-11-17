@@ -4,9 +4,10 @@ import "./brand.js";
 
 import { onReadyToLaunch, Sim, PreferencesModel } from "scenerystack/sim";
 import { Tandem } from "scenerystack/tandem";
-import { VBox, Text, HStrut } from "scenerystack/scenery";
-import { Checkbox, VerticalAquaRadioButtonGroup } from "scenerystack/sun";
+import { VBox, Text, HStrut, HBox } from "scenerystack/scenery";
+import { Checkbox, VerticalAquaRadioButtonGroup, HSlider } from "scenerystack/sun";
 import { PhetFont } from "scenerystack/scenery-phet";
+import { Dimension2 } from "scenerystack";
 import stringManager from "./i18n/StringManager.js";
 import QPPWColors from "./QPPWColors.js";
 import QPPWPreferences from "./QPPWPreferences.js";
@@ -177,6 +178,57 @@ onReadyToLaunch(() => {
                 ],
               });
 
+              // Grid points slider section
+              const gridPointsSlider = new HSlider(
+                QPPWPreferences.gridPointsProperty,
+                QPPWPreferences.gridPointsProperty.range,
+                {
+                  trackSize: new Dimension2(400, 5),
+                  thumbSize: new Dimension2(20, 40),
+                  majorTickLength: 15,
+                  minorTickLength: 10,
+                },
+              );
+
+              // Add major ticks
+              gridPointsSlider.addMajorTick(256, new Text("256", { font: new PhetFont(12) }));
+              gridPointsSlider.addMajorTick(512, new Text("512", { font: new PhetFont(12) }));
+              gridPointsSlider.addMajorTick(1024, new Text("1024", { font: new PhetFont(12) }));
+              gridPointsSlider.addMajorTick(2000, new Text("2000", { font: new PhetFont(12) }));
+
+              // Add minor ticks
+              for (let i = 300; i <= 2000; i += 100) {
+                if (i % 500 !== 0) {
+                  gridPointsSlider.addMinorTick(i);
+                }
+              }
+
+              const gridPointsValueText = new Text("", {
+                font: new PhetFont({ size: 14, weight: "bold" }),
+              });
+
+              QPPWPreferences.gridPointsProperty.link((value) => {
+                gridPointsValueText.string = `${value} points`;
+              });
+
+              const gridPointsSection = new VBox({
+                align: "left",
+                spacing: 12,
+                children: [
+                  new Text(preferencesLabels.gridPointsStringProperty, {
+                    font: new PhetFont({ size: 16, weight: "bold" }),
+                  }),
+                  new Text(preferencesLabels.gridPointsDescriptionStringProperty, {
+                    font: new PhetFont(12),
+                    maxWidth: 600,
+                  }),
+                  new HBox({
+                    spacing: 15,
+                    children: [gridPointsSlider, gridPointsValueText],
+                  }),
+                ],
+              });
+
               return new VBox({
                 align: "left",
                 spacing: 20,
@@ -184,6 +236,7 @@ onReadyToLaunch(() => {
                   autoPauseSection,
                   new HStrut(650), // Set minimum width
                   numericalMethodSection,
+                  gridPointsSection,
                 ],
               });
             },

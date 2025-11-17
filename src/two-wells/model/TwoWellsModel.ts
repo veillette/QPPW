@@ -10,6 +10,7 @@ import Schrodinger1DSolver, { WellParameters, NumericalMethod } from "../../comm
 import { PotentialType, BoundStateResult } from "../../common/model/PotentialFunction.js";
 import QuantumConstants from "../../common/model/QuantumConstants.js";
 import { SuperpositionType, SuperpositionConfig } from "../../common/model/SuperpositionType.js";
+import QPPWPreferences from "../../QPPWPreferences.js";
 
 export type DisplayMode = "probabilityDensity" | "waveFunction" | "phaseColor";
 
@@ -67,8 +68,8 @@ export class TwoWellsModel extends BaseModel {
     this.wellSeparationProperty = new NumberProperty(0.2, { range: new Range(0.05, 0.7) }); // in nanometers (0.05-0.7 nm for double square well)
 
     // Initialize barrier parameters
-    this.barrierHeightProperty = new NumberProperty(3); // in eV
-    this.barrierWidthProperty = new NumberProperty(2); // in nanometers
+    this.barrierHeightProperty = new NumberProperty(3, { range: new Range(0.1, 15.0) }); // in eV
+    this.barrierWidthProperty = new NumberProperty(2, { range: new Range(0.1, 5.0) }); // in nanometers
 
     // Initialize particle mass (1.0 = electron mass)
     this.particleMassProperty = new NumberProperty(1.0, { range: new Range(0.5, 1.1) }); // 0.5 to 1.1 times electron mass
@@ -282,46 +283,45 @@ export class TwoWellsModel extends BaseModel {
       const gridRange = outerEdge + margin;
 
       if (method === 'dvr') {
-        // DVR: increase points for smoother wavefunction rendering
+        // DVR: use user-configured grid points
         gridConfig = {
           xMin: -gridRange * QuantumConstants.NM_TO_M,
           xMax: gridRange * QuantumConstants.NM_TO_M,
-          numPoints: 1000,
+          numPoints: QPPWPreferences.gridPointsProperty.value,
         };
       } else if (method === 'spectral') {
-        // Spectral: increase points for smoother wavefunction rendering
+        // Spectral: use user-configured grid points
         gridConfig = {
           xMin: -gridRange * QuantumConstants.NM_TO_M,
           xMax: gridRange * QuantumConstants.NM_TO_M,
-          numPoints: 1000,
+          numPoints: QPPWPreferences.gridPointsProperty.value,
         };
       } else if (method === 'fgh') {
-        // FGH: use power-of-2 points for FFT efficiency
+        // FGH: round to nearest power of 2 for FFT efficiency
+        const userPoints = QPPWPreferences.gridPointsProperty.value;
+        const powerOf2 = Math.pow(2, Math.round(Math.log2(userPoints)));
         gridConfig = {
           xMin: -gridRange * QuantumConstants.NM_TO_M,
           xMax: gridRange * QuantumConstants.NM_TO_M,
-          numPoints: 1024,
+          numPoints: powerOf2,
         };
       } else {
-        // Numerov: increase points for smoother wavefunction rendering
+        // Numerov/Matrix Numerov: use user-configured grid points
         gridConfig = {
           xMin: -gridRange * QuantumConstants.NM_TO_M,
           xMax: gridRange * QuantumConstants.NM_TO_M,
-          numPoints: 1000,
+          numPoints: QPPWPreferences.gridPointsProperty.value,
         };
       }
     } else {
       // For other potentials, span the full chart display range (-4 nm to +4 nm)
       const CHART_DISPLAY_RANGE_NM = 4;
       const method = this.solver.getNumericalMethod();
-      let numGridPoints = 1000;
+      let numGridPoints = QPPWPreferences.gridPointsProperty.value;
 
-      if (method === 'numerov') {
-        numGridPoints = 1000;
-      } else if (method === 'spectral') {
-        numGridPoints = 1000; // Increase for smoother wavefunction rendering
-      } else if (method === 'fgh') {
-        numGridPoints = 1024; // Power-of-2 for FFT efficiency
+      if (method === 'fgh') {
+        // FGH: round to nearest power of 2 for FFT efficiency
+        numGridPoints = Math.pow(2, Math.round(Math.log2(numGridPoints)));
       }
 
       gridConfig = {

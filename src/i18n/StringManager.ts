@@ -62,6 +62,8 @@ export class StringManager {
   public readonly spectralDescriptionStringProperty: StringProperty;
   public readonly autoPauseWhenTabHiddenStringProperty: StringProperty;
   public readonly autoPauseDescriptionStringProperty: StringProperty;
+  public readonly gridPointsStringProperty: StringProperty;
+  public readonly gridPointsDescriptionStringProperty: StringProperty;
 
   // Control Panel strings
   public readonly energyChartStringProperty: StringProperty;
@@ -216,6 +218,8 @@ export class StringManager {
     this.spectralDescriptionStringProperty = new StringProperty("Chebyshev polynomial method - exponential convergence for smooth functions");
     this.autoPauseWhenTabHiddenStringProperty = new StringProperty("Auto-pause when tab is hidden");
     this.autoPauseDescriptionStringProperty = new StringProperty("Automatically pause the simulation when the browser tab is not visible");
+    this.gridPointsStringProperty = new StringProperty("Grid Points");
+    this.gridPointsDescriptionStringProperty = new StringProperty("Number of grid points for numerical solvers. Higher values give more accurate results but slower computation.");
 
     // Control Panel strings
     this.energyChartStringProperty = new StringProperty("Energy Chart");
@@ -419,6 +423,8 @@ export class StringManager {
       numericalMethodDescriptionStringProperty: this.numericalMethodDescriptionStringProperty,
       autoPauseWhenTabHiddenStringProperty: this.autoPauseWhenTabHiddenStringProperty,
       autoPauseDescriptionStringProperty: this.autoPauseDescriptionStringProperty,
+      gridPointsStringProperty: this.gridPointsStringProperty,
+      gridPointsDescriptionStringProperty: this.gridPointsDescriptionStringProperty,
     };
   }
 
