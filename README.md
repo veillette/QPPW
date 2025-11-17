@@ -10,22 +10,28 @@ This simulation allows users to explore the properties of quantum "particles" bo
 
 - **Real-time Quantum Simulation**: Solves the 1D Schrödinger equation numerically in real time with the mass set to the electron mass
 - **Interactive Potential Wells**: Click and drag directly on the potential energy diagram to modify well parameters
-- **Multiple Well Types**: Includes 10 exactly solvable potentials:
+- **Multiple Well Types**: Includes 9 analytically solvable potentials:
   - Infinite and finite square wells
   - Harmonic oscillator
-  - Morse potential
-  - Pöschl-Teller potential
-  - Rosen-Morse potential
-  - Eckart potential
+  - Morse potential (with width parameterization)
+  - Pöschl-Teller potential (with width parameterization)
   - Asymmetric triangle potential
   - Coulomb 1D and 3D potentials
+  - Double square well (for Two Wells screen)
 - **Comprehensive Visualizations**:
   - Wave functions (real and imaginary parts, magnitude)
   - Probability density with filled area visualization
   - Phase-colored visualization showing quantum phase evolution
   - Interactive energy level selection with hover labels
+  - High-resolution wavefunction display (1000 points for analytical solutions)
 - **Energy Level Display**: Observe discrete energy levels with color-coded selection
-- **Time Evolution**: Watch quantum phase evolution in real-time animation
+- **Time Evolution**: Watch quantum phase evolution in real-time animation with proper eigenstate evolution
+- **Superposition States**: Create and visualize quantum superpositions:
+  - Single eigenstate (ψₖ)
+  - Two-state superposition (ψ₀ + ψ₁)
+  - Localized wavepackets (narrow and wide)
+  - Coherent states (true coherent states for harmonic oscillator, coherent-like wavepackets for other potentials)
+  - Custom superpositions
 - **Parameter Controls**: Adjust well width, depth, and offset interactively
 
 ### Learning Objectives
@@ -66,13 +72,24 @@ This simulation is designed to help students understand:
 - **SceneryStack**: Framework for interactive physics simulations
   - Uses Bamboo for chart rendering (ChartTransform, TickMarkSet, TickLabelSet)
   - Scenery for interactive graphics and user input
-  - Axon for reactive properties
+  - Axon for reactive properties and data binding
 - **TypeScript**: Type-safe development
 - **Vite**: Fast build tool and development server
-- **Real-time Numerical Solver**: Efficient computation of quantum mechanical solutions
-  - DVR (Discrete Variable Representation) method
-  - Numerov shooting method
-  - Analytical solutions for exactly solvable potentials
+- **Quantum Solvers**: Multiple numerical methods with analytical solutions
+  - **Analytical Solutions**: Exact solutions for 9 potentials evaluated at 1000 grid points
+    - Infinite/finite square wells
+    - Harmonic oscillator
+    - Morse potential (width-parameterized)
+    - Pöschl-Teller potential (width-parameterized)
+    - Coulomb 1D and 3D
+    - Asymmetric triangle
+    - Double square well
+  - **Numerical Methods**: For validation and extension
+    - DVR (Discrete Variable Representation)
+    - Spectral method
+    - Matrix Numerov
+    - FGH (Fourier Grid Hamiltonian)
+- **Time Evolution**: Proper quantum dynamics with individual eigenstate phase evolution for superpositions
 
 ### Installation
 
@@ -193,12 +210,12 @@ import('/src/common/model/AccuracyTests.ts').then(m => m.runQuickAccuracyCheck()
 
 The comprehensive test suite (`tests/accuracy-tests.html`) validates:
 
-1. **Harmonic Oscillator** - 0.1% error tolerance
-2. **Finite Square Wells** (4 configurations) - 0.5% error tolerance
-3. **3D Coulomb/Hydrogen Atom** - 1.0% error tolerance
-4. **Double Square Wells** (3 configurations) - 1.0% error tolerance
+1. **Harmonic Oscillator** - Tests first 10 energy levels with 0.1% error tolerance
+2. **Finite Square Wells** (4 configurations) - Tests first 10 energy levels with 0.5% error tolerance
+3. **3D Coulomb/Hydrogen Atom** - Tests first 10 energy levels with 1.0% error tolerance
+4. **Double Square Wells** (3 configurations) - Tests first 10 energy levels with 1.0% error tolerance
 
-All four numerical methods are tested (DVR, Spectral, Matrix Numerov, FGH) across multiple grid sizes to ensure accuracy and robustness.
+All four numerical methods are tested (DVR, Spectral, Matrix Numerov, FGH) across multiple grid sizes to ensure accuracy and robustness. The tests verify that numerical methods match analytical solutions within specified tolerances.
 
 For more details, see [`tests/README.md`](tests/README.md).
 

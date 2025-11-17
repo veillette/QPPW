@@ -10,6 +10,12 @@ Analytical solutions provide exact mathematical expressions for energy eigenvalu
 - Providing benchmarks for computational methods
 - Educational purposes
 
+### Implementation Details
+
+All analytical solutions are evaluated at **1000 grid points** for high-resolution visualization, independent of the user's grid preference setting. This ensures smooth, accurate wavefunction displays while numerical methods can use user-configurable grid sizes.
+
+**Note**: Rosen-Morse and Eckart potentials have been temporarily removed from the UI but remain available in the codebase for future use.
+
 ---
 
 ## 1. Infinite Square Well
@@ -165,14 +171,16 @@ Describes:
 ### Description
 The Morse potential provides a realistic model for molecular vibrations, including anharmonicity and bond dissociation effects that the harmonic oscillator cannot capture.
 
-### Potential
+### Potential (Width-Parameterized)
 ```
-V(x) = D_e[1 - exp(-a(x - x_e))]²
+V(x) = D_e[1 - exp(-(x - x_e)/a)]² - D_e
 ```
+
+**Note**: The potential has been reformulated to use width parameter `a` in meters instead of inverse meters, making it more intuitive. The energy is measured relative to dissociation (V → 0 as x → ±∞).
 
 ### Parameters
 - `dissociationEnergy` (D_e): Dissociation energy in Joules
-- `wellWidth` (a): Width parameter (inverse meters) - controls steepness
+- `wellWidth` (a): Width parameter in meters (typical values ~10⁻¹⁰ m)
 - `equilibriumPosition` (x_e): Equilibrium bond length in meters
 - `mass` (m): Reduced mass in kg
 - `numStates`: Number of energy levels to calculate
@@ -180,13 +188,14 @@ V(x) = D_e[1 - exp(-a(x - x_e))]²
 
 ### Energy Eigenvalues
 ```
-E_n = ℏω(n + 1/2) - (ℏω)²(n + 1/2)² / (4D_e)
+E_n = ℏω(n + 1/2) - (ℏω)²(n + 1/2)² / (4D_e) - D_e
 ```
 
 where:
-- `ω = a√(2D_e/m)` is the characteristic frequency
-- Maximum quantum number: `n_max = ⌊√(2mD_e)/(aℏ) - 1/2⌋`
-- Energy is measured relative to dissociation limit
+- `ω = √(2D_e/m) / a` is the characteristic frequency (note: a in denominator for width parameterization)
+- `λ = (a√(2mD_e)) / ℏ` is the dimensionless parameter
+- Maximum quantum number: `n_max = ⌊λ - 1/2⌋`
+- Energy is measured from the dissociation limit (V = 0)
 
 ### Wavefunctions
 ```
@@ -194,8 +203,9 @@ where:
 ```
 
 where:
-- `z = 2λ exp(-a(x-x_e))`
-- `λ = √(2mD_e)/(aℏ)`
+- `z = 2λ exp(-(x-x_e)/a)` (note: division by a for width parameterization)
+- `λ = (a√(2mD_e)) / ℏ`
+- `N_n = √[(n! / a) / Γ(2λ - n)]` is the normalization (includes 1/a factor)
 - `L_n^α(z)` are associated Laguerre polynomials
 
 ### Physical Significance
@@ -213,34 +223,37 @@ where:
 ### Description
 The Pöschl-Teller potential is a hyperbolic well with exact solutions, useful for modeling quantum wells and barriers in various physical systems.
 
-### Potential
+### Potential (Width-Parameterized)
 ```
-V(x) = -V_0 / cosh²(ax) = -V_0 sech²(ax)
+V(x) = -V_0 / cosh²(x/a) = -V_0 sech²(x/a)
 ```
+
+**Note**: The potential has been reformulated to use width parameter `a` in meters instead of inverse meters.
 
 ### Parameters
 - `potentialDepth` (V_0): Potential depth in Joules (positive value)
-- `wellWidth` (a): Width parameter (inverse meters)
+- `wellWidth` (a): Width parameter in meters (typical values ~10⁻¹⁰ m)
 - `mass` (m): Particle mass in kg
 - `numStates`: Number of energy levels to calculate
 - `gridConfig`: Grid configuration for wavefunction evaluation
 
 ### Energy Eigenvalues
 ```
-E_n = -V_0 + (V_0/λ²)(λ - n - 1/2)²
+E_n = -V_0 + (ℏ²/(2ma²))(λ - n - 1/2)²
 ```
 
 where:
-- `λ = √(2mV_0)/(aℏ)`
+- `λ = (a√(2mV_0)) / ℏ` is the dimensionless parameter
 - Maximum quantum number: `n_max = ⌊λ - 1/2⌋`
 
 ### Wavefunctions
 ```
-ψ_n(x) = N_n sech^(λ-n-1/2)(ax) P_n^(α,α)(tanh(ax))
+ψ_n(x) = N_n sech^α(x/a) P_n^(α,α)(tanh(x/a))
 ```
 
 where:
 - `α = λ - n - 1/2`
+- `N_n = √[(2α / a) n! / n!]` (includes 1/a normalization factor)
 - `P_n^(α,β)(x)` are Jacobi polynomials
 
 ### Numerical Methods
@@ -260,41 +273,44 @@ Jacobi polynomials are calculated using the recurrence relation:
 
 **File**: `rosen-morse-potential.ts`
 
+**Status**: Currently hidden from UI but fully implemented and available in codebase.
+
 ### Description
 The Rosen-Morse potential is a generalization of the Pöschl-Teller potential with an additional tanh term, providing more flexibility in modeling molecular interactions.
 
-### Potential
+### Potential (Width-Parameterized)
 ```
-V(x) = -V_0/cosh²(ax) + V_1 tanh(ax)
+V(x) = -V_0/cosh²(x/a) + V_1 tanh(x/a)
 ```
 
 ### Parameters
 - `potentialDepth` (V_0): Potential depth in Joules (positive value)
 - `barrierHeight` (V_1): Barrier height in Joules (can be positive or negative)
-- `wellWidth` (a): Width parameter (inverse meters)
+- `wellWidth` (a): Width parameter in meters (typical values ~10⁻¹⁰ m)
 - `mass` (m): Particle mass in kg
 - `numStates`: Number of energy levels to calculate
 - `gridConfig`: Grid configuration for wavefunction evaluation
 
 ### Energy Eigenvalues
 ```
-E_n = -V_0 + (ℏ²a²/2m)[(λ_eff - n - 1/2)² + μ²]
+E_n = -V_0 + (ℏ²/(2ma²))[(λ_eff - n - 1/2)² + μ²]
 ```
 
 where:
-- `λ = √(2mV_0)/(aℏ)`
-- `μ = V_1/(2aℏ√(2mV_0))`
-- `λ_eff = √(λ² - μ²)`
+- `λ = (a√(2mV_0)) / ℏ` is the dimensionless depth parameter
+- `μ = (V_1 · a) / (2ℏ√(2mV_0))` is the dimensionless asymmetry parameter
+- `λ_eff = √(λ² - μ²)` is the effective parameter
 - Requires `λ > |μ|` for bound states
 
 ### Wavefunctions
 ```
-ψ_n(x) = N_n sech^s(ax) exp(μ tanh(ax)) P_n^(α,β)(tanh(ax))
+ψ_n(x) = N_n sech^s(x/a) exp(μ tanh(x/a)) P_n^(α,β)(tanh(x/a))
 ```
 
 where:
 - `s = λ_eff - n - 1/2`
 - `α = s - μ`, `β = s + μ`
+- Normalization includes 1/a factor
 
 ### Physical Significance
 - Models molecular potentials with asymmetry
@@ -307,39 +323,43 @@ where:
 
 **File**: `eckart-potential.ts`
 
+**Status**: Currently hidden from UI but fully implemented and available in codebase.
+
 ### Description
 The Eckart potential models molecular barriers and chemical reaction pathways, particularly relevant for activation barriers in chemical reactions.
 
-### Potential
+### Potential (Width-Parameterized)
 ```
-V(x) = V_0/(1 + exp(ax))² - V_1/(1 + exp(ax))
+V(x) = V_0/(1 + exp(x/a))² - V_1/(1 + exp(x/a))
 ```
 
 ### Parameters
 - `potentialDepth` (V_0): Potential depth in Joules
 - `barrierHeight` (V_1): Barrier height in Joules
-- `wellWidth` (a): Width parameter (inverse meters)
+- `wellWidth` (a): Width parameter in meters (typical values ~10⁻¹⁰ m)
 - `mass` (m): Particle mass in kg
 - `numStates`: Number of energy levels to calculate
 - `gridConfig`: Grid configuration for wavefunction evaluation
 
 ### Energy Eigenvalues
 ```
-E_n = -(ℏ²a²/2m)(s_2 - n)²
+E_n = -(ℏ²/(2ma²))(s_2 - n)²
 ```
 
 where:
-- `α = √(2mV_0)/(aℏ)`
-- `β = V_1√(2m)/(2aℏ√(V_0))`
-- `s_1 = -1/2 + √(1/4 + α)`
-- `s_2 = -1/2 + √(1/4 + α - β)`
+- `α_param = (a√(2mV_0)) / ℏ` is the dimensionless depth parameter
+- `β_param = (V_1·a√(2m)) / (2ℏ√(V_0))` is the dimensionless barrier parameter
+- `s_1 = -1/2 + √(1/4 + α_param)`
+- `s_2 = -1/2 + √(1/4 + α_param - β_param)`
 
 ### Wavefunctions
 ```
 ψ_n(ξ) = N_n ξ^(s_2-n) (1+ξ)^(-s_1-s_2+n) P_n^(α,β)(1-2ξ/(1+ξ))
 ```
 
-where `ξ = exp(ax)`
+where:
+- `ξ = exp(x/a)` (note: division by a for width parameterization)
+- Normalization includes 1/a factor
 
 ### Physical Significance
 - Models activation barriers in chemical reactions
