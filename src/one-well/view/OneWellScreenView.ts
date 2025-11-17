@@ -10,13 +10,28 @@ import { Node, Text, VBox, RichText } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import QPPWColors from "../../QPPWColors.js";
 import stringManager from "../../i18n/StringManager.js";
+import { PotentialType } from "../../common/model/PotentialFunction.js";
 
 export class OneWellScreenView extends BaseScreenView {
   public constructor(model: OneWellModel, options?: ScreenViewOptions) {
     super(model, options);
 
-    // Create the standard quantum well layout
-    this.createStandardLayout(model);
+    // Create the standard quantum well layout, excluding Double Square Well
+    // which is meant for the Two Wells screen
+    const allowedPotentials = [
+      PotentialType.INFINITE_WELL,
+      PotentialType.FINITE_WELL,
+      PotentialType.HARMONIC_OSCILLATOR,
+      PotentialType.MORSE,
+      PotentialType.POSCHL_TELLER,
+      PotentialType.ROSEN_MORSE,
+      PotentialType.ECKART,
+      PotentialType.ASYMMETRIC_TRIANGLE,
+      PotentialType.COULOMB_1D,
+      PotentialType.COULOMB_3D,
+    ];
+
+    this.createStandardLayout(model, { allowedPotentialTypes: allowedPotentials });
   }
 
   /**
