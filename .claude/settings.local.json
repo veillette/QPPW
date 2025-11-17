@@ -9,7 +9,13 @@
       "Bash(npm start)",
       "Bash(lsof:*)",
       "Bash(xargs kill:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(node tests/run-tests.js:*)",
+      "Bash(npx tsx:*)",
+      "Bash(npx ts-node:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(npm test:*)"
     ],
     "deny": [],
     "ask": []

@@ -112,6 +112,96 @@ npm run build
 # Build generates a single HTML file for easy deployment
 ```
 
+### Testing
+
+The project includes comprehensive test suites to verify the accuracy of quantum mechanical calculations across all numerical methods and potential types.
+
+#### Method 1: Terminal-Based Tests (Fastest)
+
+Run the complete test suite directly in your terminal:
+
+```bash
+npm test
+```
+
+This command:
+- Runs all 45+ accuracy tests across 4 numerical methods (DVR, Spectral, Matrix Numerov, FGH)
+- Tests harmonic oscillator, finite square wells, Coulomb potential, and double wells
+- Displays detailed pass/fail results with error percentages
+- Shows performance metrics (execution times) for each method
+- Provides a summary of passed/failed tests
+
+**Output includes:**
+- ✓/✗ Pass/fail indicators for each test
+- Numerical vs analytical energy comparisons
+- Error percentages for each energy level
+- Performance summary with timing statistics
+
+#### Method 2: Browser-Based Tests with Visual Interface
+
+The easiest way to run the comprehensive test suite:
+
+```bash
+# 1. Build the project (required)
+npm run build
+
+# 2. Open the test runner in your browser
+# On macOS:
+open tests/accuracy-tests.html
+# On Linux:
+xdg-open tests/accuracy-tests.html
+# On Windows:
+start tests/accuracy-tests.html
+```
+
+The browser test interface provides:
+- **Run Full Tests** button - Comprehensive test suite (60+ tests)
+- **Run Quick Check** button - Rapid validation subset
+- Visual pass/fail indicators with color coding
+- Detailed error percentages and performance metrics
+- Side-by-side comparison of numerical vs analytical solutions
+
+Results are displayed in the browser console with formatted output.
+
+#### Method 3: Development Server with Interactive Console
+
+Run tests interactively through the development server:
+
+```bash
+# 1. Start the development server
+npm start
+
+# 2. Open your browser to: http://localhost:5173/tests/accuracy-tests.html
+#    (If port 5173 is in use, Vite will use the next available port)
+
+# 3. Click "Run Full Tests" or "Run Quick Check" buttons
+```
+
+The test page displays results in a formatted console with color-coded pass/fail indicators.
+
+**Alternative**: Run tests via browser developer console:
+
+```javascript
+# From http://localhost:5173 open the console (F12) and run:
+import('/src/common/model/AccuracyTests.ts').then(m => m.runAccuracyTests());
+
+# Or for a quick validation:
+import('/src/common/model/AccuracyTests.ts').then(m => m.runQuickAccuracyCheck());
+```
+
+#### Test Coverage
+
+The comprehensive test suite (`tests/accuracy-tests.html`) validates:
+
+1. **Harmonic Oscillator** - 0.1% error tolerance
+2. **Finite Square Wells** (4 configurations) - 0.5% error tolerance
+3. **3D Coulomb/Hydrogen Atom** - 1.0% error tolerance
+4. **Double Square Wells** (3 configurations) - 1.0% error tolerance
+
+All four numerical methods are tested (DVR, Spectral, Matrix Numerov, FGH) across multiple grid sizes to ensure accuracy and robustness.
+
+For more details, see [`tests/README.md`](tests/README.md).
+
 ## Deployment
 
 The simulation is designed to be deployed as a single HTML file, making it easy to:

@@ -25,6 +25,7 @@
     "start": "npx vite",
     "build": "npx tsc --noEmit && npx vite build",
     "preview": "npx vite preview",
+    "test": "npx tsx tests/run-terminal-tests.js",
     "lint": "npx eslint .",
     "format": "npx prettier --write .",
     "fix": "npx eslint --fix . && npx prettier --write .",
