@@ -1,10 +1,18 @@
-# DVR and Spectral Method Accuracy Tests
+# Comprehensive Accuracy Tests for Numerical Quantum Solvers
 
-This document describes the accuracy validation tests for the DVR (Discrete Variable Representation) and Spectral methods used in the QPPW quantum physics simulation.
+This document describes the comprehensive accuracy validation tests for all numerical methods used in the QPPW quantum physics simulation: **DVR**, **Spectral**, **Matrix Numerov**, and **FGH**.
 
 ## Overview
 
-The accuracy tests verify that the numerical methods (DVR and Spectral) produce results within **1% error** of known analytical solutions. This ensures the numerical solvers are working correctly and provide reliable results.
+The accuracy tests verify that all numerical methods produce results within acceptable error tolerances when compared to known analytical solutions or reference implementations. Tests also measure and report execution times for performance comparison.
+
+## Test Coverage
+
+The comprehensive test suite validates methods across:
+- **Multiple potential types**: Harmonic oscillator, finite square wells, 3D Coulomb, double wells
+- **Various grid sizes**: 100, 150, 200, 256 points
+- **Different parameters**: Well depths, widths, barrier heights
+- **Performance metrics**: Execution time, average/min/max timing per method
 
 ## Test Cases
 
@@ -18,33 +26,70 @@ E_n = ℏω(n + 1/2)
 
 where:
 - `n` = quantum number (0, 1, 2, ...)
-- `ℏ` = reduced Planck constant
+- `ℏ` = reduced Planck constant (1.054571817 × 10⁻³⁴ J·s)
 - `ω` = angular frequency
 
 **Test Parameters:**
 - Mass: Electron mass (9.109 × 10⁻³¹ kg)
 - Angular frequency: 10¹⁵ rad/s
-- Grid: -5 nm to +5 nm with 200 points
-- States tested: Ground state + 4 excited states
+- Grid sizes: **100, 150, 200, 256 points**
+- Grid range: -5 nm to +5 nm
+- States tested: 5 states (n = 0, 1, 2, 3, 4)
+- Methods tested: DVR, Spectral, Matrix Numerov, FGH
+- Error tolerance: **1%**
 
-### 2. Infinite Square Well
+### 2. Finite Square Wells
 
-The infinite square well (particle in a box) has an exact analytical solution:
+Multiple configurations test various well depths and widths:
 
-```
-E_n = (n²π²ℏ²) / (2mL²)
-```
-
-where:
-- `n` = quantum number (1, 2, 3, ...)
-- `m` = particle mass
-- `L` = well width
+**Configurations:**
+1. Shallow well: 1 nm width, 10 eV depth
+2. Deep well: 1 nm width, 50 eV depth
+3. Wide shallow: 2 nm width, 10 eV depth
+4. Narrow medium: 0.5 nm width, 30 eV depth
 
 **Test Parameters:**
-- Mass: Electron mass (9.109 × 10⁻³¹ kg)
-- Well width: 1 nm
-- Grid: Various configurations for DVR vs Spectral
-- States tested: Ground state + 4 excited states
+- Mass: Electron mass
+- Grid sizes: **150, 200 points**
+- Grid range: -2L to +2L (where L = well width)
+- States tested: 3 bound states
+- Methods tested: DVR, Matrix Numerov, FGH (power-of-2 grids)
+- Error tolerance: **2%**
+
+### 3. 3D Coulomb Potential (Hydrogen Atom, L=0)
+
+Tests the radial Schrödinger equation for s-waves:
+
+```
+E_n = -mα²/(2ℏ²n²)
+```
+
+where α = e²/(4πε₀) is the Coulomb strength.
+
+**Test Parameters:**
+- Mass: Electron mass
+- Coulomb strength: e²/(4πε₀) = 2.307 × 10⁻²⁸ J·m
+- Grid sizes: **150, 200, 256 points**
+- Grid range: 1 pm to 10 nm (r > 0)
+- States tested: 3 states (n = 1, 2, 3)
+- Methods tested: DVR, Matrix Numerov, FGH
+- Error tolerance: **3%**
+
+### 4. Double Square Wells
+
+Tests symmetric double wells with central barrier (no analytical solution):
+
+**Configurations:**
+1. Low barrier: 0.5 nm wells, 0.3 nm barrier, 30 eV depth, 10 eV barrier
+2. Medium barrier: 0.5 nm wells, 0.5 nm barrier, 40 eV depth, 20 eV barrier
+3. Wide wells: 0.6 nm wells, 0.4 nm barrier, 35 eV depth, 5 eV barrier
+
+**Test Parameters:**
+- Mass: Electron mass
+- Grid sizes: **200, 256 points**
+- States tested: 4 states
+- Methods tested: Matrix Numerov, FGH (compared to DVR reference)
+- Error tolerance: **5%** (inter-method comparison)
 
 ## Running the Tests
 
@@ -61,19 +106,15 @@ where:
 
 The results will be displayed in the browser console with color-coded pass/fail indicators.
 
-### Option 2: Programmatic Testing
+### Option 2: Command-Line Testing
 
-Import and run the tests in your code:
+Run tests directly from the command line:
 
-```typescript
-import { runAccuracyTests, runQuickAccuracyCheck } from './common/model/AccuracyTests.js';
-
-// Run all tests
-runAccuracyTests();
-
-// Or run quick check
-runQuickAccuracyCheck();
+```bash
+node tests/run-tests.js
 ```
+
+This outputs results to the terminal with full details including timing information.
 
 ### Option 3: Development Server
 
@@ -84,29 +125,44 @@ runQuickAccuracyCheck();
 
 2. Open the browser console and run:
    ```javascript
+   // Full comprehensive test suite
    import('./common/model/AccuracyTests.js').then(m => m.runAccuracyTests());
+
+   // Quick validation check
+   import('./common/model/AccuracyTests.js').then(m => m.runQuickAccuracyCheck());
    ```
 
 ## Success Criteria
 
-Each test is considered **PASSED** if the numerical result is within **1% error** of the analytical solution.
+Each test is considered **PASSED** if the numerical result is within the tolerance for that potential type:
 
-For example, if the analytical ground state energy is 0.412967 eV:
-- ✓ Numerical result of 0.412500 eV is acceptable (0.11% error)
-- ✓ Numerical result of 0.408000 eV is acceptable (0.90% error)
-- ✗ Numerical result of 0.408000 eV would fail if error > 1%
+**Tolerance Levels:**
+- Harmonic Oscillator: **1%** error
+- Finite Square Wells: **2%** error
+- 3D Coulomb Potential: **3%** error
+- Double Square Wells: **5%** error (inter-method comparison)
+
+For example, for harmonic oscillator with analytical ground state energy of 0.412967 eV:
+- ✓ Numerical result of 0.412500 eV is acceptable (0.11% error < 1%)
+- ✓ Numerical result of 0.408000 eV is acceptable (0.90% error < 1%)
+- ✗ Numerical result of 0.405000 eV would fail (1.93% error > 1%)
 
 ## Test Output
 
-The test output includes:
+The test output includes detailed information for each test and performance metrics:
 
 1. **Individual test results** for each method and potential:
-   - Test name (e.g., "DVR - Harmonic Oscillator")
+   - Test name (e.g., "DVR - Harmonic Oscillator (N=150)")
    - Pass/fail status
    - Maximum error percentage
+   - **Execution time in milliseconds**
    - Detailed energy level comparisons
 
-2. **Summary statistics**:
+2. **Performance summary**:
+   - Average, min, max, and total execution times per method
+   - Allows performance comparison across methods
+
+3. **Overall summary statistics**:
    - Total tests run
    - Number passed
    - Number failed
@@ -116,32 +172,44 @@ The test output includes:
 
 ```
 ========================================
-DVR and Spectral Method Accuracy Tests
+Comprehensive Numerical Method Tests
 ========================================
-Tolerance: 1% error from analytical solutions
+Testing: DVR, Spectral, Matrix Numerov, and FGH
+Across multiple potentials and grid sizes
 
-=== DVR - Harmonic Oscillator ===
+=== DVR - Harmonic Oscillator (N=150) ===
 Status: ✓ PASSED
 Maximum error: 0.0234%
 
-Testing 5 energy levels:
-  E_0: ✓ PASS - Numerical: 0.412967 eV, Analytical: 0.412967 eV, Error: 0.0001%
-  E_1: ✓ PASS - Numerical: 1.238902 eV, Analytical: 1.238902 eV, Error: 0.0002%
-  E_2: ✓ PASS - Numerical: 2.064836 eV, Analytical: 2.064837 eV, Error: 0.0003%
-  E_3: ✓ PASS - Numerical: 2.890771 eV, Analytical: 2.890771 eV, Error: 0.0004%
-  E_4: ✓ PASS - Numerical: 3.716705 eV, Analytical: 3.716706 eV, Error: 0.0005%
+Testing 5 energy levels with 150 grid points:
+Execution time: 12.45 ms
+  E_0: ✓ Num: 0.412967 eV, Ana: 0.412967 eV, Err: 0.0001%
+  E_1: ✓ Num: 1.238902 eV, Ana: 1.238902 eV, Err: 0.0002%
+  E_2: ✓ Num: 2.064836 eV, Ana: 2.064837 eV, Err: 0.0003%
+  E_3: ✓ Num: 2.890771 eV, Ana: 2.890771 eV, Err: 0.0004%
+  E_4: ✓ Num: 3.716705 eV, Ana: 3.716706 eV, Err: 0.0005%
 
 ...
 
 ========================================
 Test Summary
 ========================================
-Total tests: 4
-Passed: 4
+Total tests: 62
+Passed: 62
 Failed: 0
 
+--- Performance Summary ---
+DVR:
+  Average: 15.34 ms | Min: 8.21 ms | Max: 45.67 ms | Total: 245.44 ms
+MatrixNumerov:
+  Average: 12.89 ms | Min: 7.45 ms | Max: 38.23 ms | Total: 206.24 ms
+Spectral:
+  Average: 18.76 ms | Min: 10.34 ms | Max: 52.11 ms | Total: 300.16 ms
+FGH:
+  Average: 22.14 ms | Min: 11.56 ms | Max: 68.92 ms | Total: 354.24 ms
+
 ✓ All tests passed!
-Both DVR and Spectral methods produce results within 1% of analytical solutions.
+All numerical methods produce consistent results across different potentials and grid sizes.
 ========================================
 ```
 
@@ -159,17 +227,33 @@ Both DVR and Spectral methods produce results within 1% of analytical solutions.
    - File: `src/common/model/DVRSolver.ts`
    - Uses Colbert-Miller formula for kinetic energy
    - Matrix diagonalization approach
+   - Generally fast and accurate
 
 2. **Spectral (Chebyshev)**
    - File: `src/common/model/SpectralSolver.ts`
    - Uses Chebyshev polynomial expansion
    - Provides spectral (exponential) convergence
+   - Excellent for smooth potentials
+
+3. **Matrix Numerov**
+   - File: `src/common/model/MatrixNumerovSolver.ts`
+   - Matrix formulation of Numerov method
+   - Fourth-order accurate
+   - Often fastest for moderate grid sizes
+
+4. **FGH (Fourier Grid Hamiltonian)**
+   - File: `src/common/model/FGHSolver.ts`
+   - Uses Fast Fourier Transform (FFT)
+   - Requires power-of-2 grid points
+   - Good for periodic or extended systems
 
 ### Analytical Solutions
 
 The analytical solutions are implemented in:
 - `src/common/model/analytical-solutions/harmonic-oscillator.ts`
 - `src/common/model/analytical-solutions/infinite-square-well.ts`
+- `src/common/model/analytical-solutions/finite-square-well.ts`
+- `src/common/model/analytical-solutions/coulomb-3d-potential.ts`
 
 ## Troubleshooting
 

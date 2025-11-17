@@ -31,6 +31,7 @@ interface TestResult {
   method: string;
   passed: boolean;
   maxError: number;
+  executionTime: number; // in milliseconds
   details: string[];
 }
 
@@ -63,12 +64,17 @@ function testMethod(
   const details: string[] = [];
 
   try {
+    // Measure execution time
+    const startTime = performance.now();
     const numericalResult = solver(potential, mass, numStates, gridConfig);
+    const endTime = performance.now();
+    const executionTime = endTime - startTime;
 
     let maxError = 0;
     let allPassed = true;
 
     details.push(`Testing ${numStates} energy levels with ${gridConfig.numPoints} grid points:`);
+    details.push(`Execution time: ${executionTime.toFixed(2)} ms`);
 
     const numToTest = Math.min(numStates, numericalResult.energies.length, analyticalSolution.energies.length);
 
@@ -96,6 +102,7 @@ function testMethod(
       method: methodName,
       passed: allPassed,
       maxError,
+      executionTime,
       details,
     };
   } catch (error) {
@@ -105,6 +112,7 @@ function testMethod(
       method: methodName,
       passed: false,
       maxError: Infinity,
+      executionTime: 0,
       details,
     };
   }
@@ -284,13 +292,17 @@ function testDoubleSquareWellsComprehensive(): TestResult[] {
       try {
         const reference = solveDVR(potential, mass, numStates, gridConfig);
 
-        // Test other methods against DVR
+        // Test other methods against DVR (with timing)
+        const numerovStart = performance.now();
         const numerovResult = solveMatrixNumerov(potential, mass, numStates, gridConfig);
-        results.push(compareResults("MatrixNumerov", numerovResult, reference, testName, 5.0));
+        const numerovTime = performance.now() - numerovStart;
+        results.push(compareResults("MatrixNumerov", numerovResult, reference, testName, 5.0, numerovTime));
 
         if (isPowerOfTwo(numPoints)) {
+          const fghStart = performance.now();
           const fghResult = solveFGH(potential, mass, numStates, gridConfig);
-          results.push(compareResults("FGH", fghResult, reference, testName, 5.0));
+          const fghTime = performance.now() - fghStart;
+          results.push(compareResults("FGH", fghResult, reference, testName, 5.0, fghTime));
         }
       } catch (error) {
         results.push({
@@ -298,6 +310,7 @@ function testDoubleSquareWellsComprehensive(): TestResult[] {
           method: "Comparison",
           passed: false,
           maxError: Infinity,
+          executionTime: 0,
           details: [`ERROR: ${error}`],
         });
       }
@@ -315,7 +328,8 @@ function compareResults(
   result: any,
   reference: any,
   testName: string,
-  tolerance: number
+  tolerance: number,
+  executionTime: number
 ): TestResult {
   const details: string[] = [];
   let maxError = 0;
@@ -323,6 +337,7 @@ function compareResults(
 
   const numToTest = Math.min(result.energies.length, reference.energies.length);
   details.push(`Comparing ${numToTest} energy levels vs DVR reference:`);
+  details.push(`Execution time: ${executionTime.toFixed(2)} ms`);
 
   for (let n = 0; n < numToTest; n++) {
     const E_test = result.energies[n];
@@ -348,6 +363,7 @@ function compareResults(
     method: methodName,
     passed: allPassed,
     maxError,
+    executionTime,
     details,
   };
 }
@@ -416,6 +432,27 @@ export function runAccuracyTests(): void {
   console.log(`Total tests: ${totalTests}`);
   console.log(`Passed: ${passedTests}`);
   console.log(`Failed: ${failedTests}`);
+
+  // Timing statistics by method
+  console.log("\n--- Performance Summary ---");
+  const methodStats = new Map<string, { total: number; count: number; min: number; max: number }>();
+
+  results.forEach(result => {
+    if (!methodStats.has(result.method)) {
+      methodStats.set(result.method, { total: 0, count: 0, min: Infinity, max: 0 });
+    }
+    const stats = methodStats.get(result.method)!;
+    stats.total += result.executionTime;
+    stats.count++;
+    stats.min = Math.min(stats.min, result.executionTime);
+    stats.max = Math.max(stats.max, result.executionTime);
+  });
+
+  methodStats.forEach((stats, method) => {
+    const avg = stats.total / stats.count;
+    console.log(`${method}:`);
+    console.log(`  Average: ${avg.toFixed(2)} ms | Min: ${stats.min.toFixed(2)} ms | Max: ${stats.max.toFixed(2)} ms | Total: ${stats.total.toFixed(2)} ms`);
+  });
 
   if (failedTests === 0) {
     console.log("\n✓ All tests passed!");
