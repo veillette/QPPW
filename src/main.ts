@@ -180,24 +180,44 @@ onReadyToLaunch(() => {
               });
 
               // Grid points slider section - uses exponent (6-11) for powers of 2
+              // Ensure initial value is a power of 2
+              const initialGridPoints = QPPWPreferences.gridPointsProperty.value;
+              const initialExponent = Math.round(Math.log2(initialGridPoints));
+              const correctedGridPoints = Math.pow(2, Math.max(6, Math.min(11, initialExponent)));
+
+              // Update gridPointsProperty if it wasn't a power of 2
+              if (QPPWPreferences.gridPointsProperty.value !== correctedGridPoints) {
+                QPPWPreferences.gridPointsProperty.value = correctedGridPoints;
+              }
+
               // Create a NumberProperty for the exponent that derives from gridPointsProperty
-              const exponentProperty = new NumberProperty(Math.log2(QPPWPreferences.gridPointsProperty.value), {
+              const exponentProperty = new NumberProperty(Math.log2(correctedGridPoints), {
                 range: new Range(6, 11),
               });
 
+              // Track whether we're in the middle of updating to prevent infinite loops
+              let isUpdating = false;
+
               // Bidirectional sync between exponent and grid points
-              exponentProperty.link((exponent) => {
+              // Use lazyLink to avoid firing during initialization
+              exponentProperty.lazyLink((exponent) => {
+                if (isUpdating) return;
+                isUpdating = true;
                 const gridPoints = Math.pow(2, Math.round(exponent));
                 if (QPPWPreferences.gridPointsProperty.value !== gridPoints) {
                   QPPWPreferences.gridPointsProperty.value = gridPoints;
                 }
+                isUpdating = false;
               });
 
-              QPPWPreferences.gridPointsProperty.link((gridPoints) => {
+              QPPWPreferences.gridPointsProperty.lazyLink((gridPoints) => {
+                if (isUpdating) return;
+                isUpdating = true;
                 const exponent = Math.log2(gridPoints);
-                if (exponentProperty.value !== exponent) {
+                if (!isNaN(exponent) && exponentProperty.value !== exponent) {
                   exponentProperty.value = exponent;
                 }
+                isUpdating = false;
               });
 
               const gridPointsSlider = new HSlider(
