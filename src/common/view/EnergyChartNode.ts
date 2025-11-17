@@ -39,8 +39,10 @@ function getEnergyAxisRange(potentialType: PotentialType): { min: number; max: n
     case PotentialType.DOUBLE_SQUARE_WELL:
       // Double square well with barrier between wells
       return { min: 0, max: 20 };
-    case PotentialType.FINITE_WELL:
     case PotentialType.MORSE:
+      // Morse potential: V=0 at center, De at dissociation limit
+      return { min: -5, max: 15 };
+    case PotentialType.FINITE_WELL:
     case PotentialType.POSCHL_TELLER:
     case PotentialType.ROSEN_MORSE:
     case PotentialType.ECKART:
