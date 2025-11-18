@@ -5,7 +5,7 @@
  * The TISE is: -ℏ²/(2m) d²ψ/dx² + V(x)ψ = Eψ
  * Rearranged as: d²ψ/dx² = -k²(x)ψ where k²(x) = 2m(E - V(x))/ℏ²
  *
- * Numerov formula: ψ_(j+1) = [(12 - 10f_j)ψ_j - (1+f_(j-1))ψ_(j-1)] / (1+f_(j+1))
+ * Numerov formula: ψ_(j+1) = [(2 - 10f_j)ψ_j - (1+f_(j-1))ψ_(j-1)] / (1+f_(j+1))
  * where f_j = (h²/12) k²(x_j)
  */
 
@@ -119,7 +119,7 @@ export function integrateNumerov(
 
   // Numerov forward integration
   for (let j = 1; j < N - 1; j++) {
-    const numerator = (12 - 10 * f[j]) * psi[j] - (1 + f[j - 1]) * psi[j - 1];
+    const numerator = (2 - 10 * f[j]) * psi[j] - (1 + f[j - 1]) * psi[j - 1];
     const denominator = 1 + f[j + 1];
     psi[j + 1] = numerator / denominator;
 
@@ -206,7 +206,7 @@ export function integrateNumerovFromCenter(
   const renormalizationInterval = 50; // Renormalize every 50 steps
 
   for (let j = centerIdx + 1; j < N - 1; j++) {
-    const numerator = (12 - 10 * f[j]) * psi[j] - (1 + f[j - 1]) * psi[j - 1];
+    const numerator = (2 - 10 * f[j]) * psi[j] - (1 + f[j - 1]) * psi[j - 1];
     const denominator = 1 + f[j + 1];
     psi[j + 1] = numerator / denominator;
 
