@@ -18,6 +18,7 @@ export { solveEckartPotential } from "./eckart-potential.js";
 export { solveAsymmetricTrianglePotential } from "./asymmetric-triangle-potential.js";
 export { solveCoulomb1DPotential } from "./coulomb-1d-potential.js";
 export { solveCoulomb3DPotential } from "./coulomb-3d-potential.js";
+export { solveTriangularPotential } from "./triangular-potential.js";
 
 // Export utility functions that may be useful externally
 export * from "./math-utilities.js";
@@ -33,6 +34,7 @@ import { solveEckartPotential } from "./eckart-potential.js";
 import { solveAsymmetricTrianglePotential } from "./asymmetric-triangle-potential.js";
 import { solveCoulomb1DPotential } from "./coulomb-1d-potential.js";
 import { solveCoulomb3DPotential } from "./coulomb-3d-potential.js";
+import { solveTriangularPotential } from "./triangular-potential.js";
 
 // Register all solutions with the QPPW namespace
 qppw.register("AnalyticalSolutions", {
@@ -45,5 +47,6 @@ qppw.register("AnalyticalSolutions", {
   solveEckartPotential,
   solveAsymmetricTrianglePotential,
   solveCoulomb1DPotential,
-  solveCoulomb3DPotential
+  solveCoulomb3DPotential,
+  solveTriangularPotential
 });

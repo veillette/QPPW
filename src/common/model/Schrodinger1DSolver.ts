@@ -23,7 +23,8 @@ import {
   solveEckartPotential,
   solveAsymmetricTrianglePotential,
   solveCoulomb1DPotential,
-  solveCoulomb3DPotential
+  solveCoulomb3DPotential,
+  solveTriangularPotential
 } from "./analytical-solutions";
 import { solveNumerov } from "./NumerovSolver.js";
 import { solveMatrixNumerov } from "./MatrixNumerovSolver.js";
@@ -71,6 +72,8 @@ export interface WellParameters {
   coulombStrength?: number;
   /** Well separation for double square well (meters) */
   wellSeparation?: number;
+  /** Energy offset for triangular potential (Joules) */
+  energyOffset?: number;
 }
 
 /**
@@ -250,6 +253,23 @@ export class Schrodinger1DSolver {
         if (wellParams.coulombStrength !== undefined) {
           return solveCoulomb3DPotential(
             wellParams.coulombStrength,
+            mass,
+            numStates,
+            gridConfig,
+          );
+        }
+        break;
+
+      case PotentialType.TRIANGULAR:
+        if (
+          wellParams.potentialDepth !== undefined &&
+          wellParams.wellWidth !== undefined &&
+          wellParams.energyOffset !== undefined
+        ) {
+          return solveTriangularPotential(
+            wellParams.potentialDepth,
+            wellParams.wellWidth,
+            wellParams.energyOffset,
             mass,
             numStates,
             gridConfig,

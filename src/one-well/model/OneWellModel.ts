@@ -23,6 +23,7 @@ export class OneWellModel extends BaseModel {
   public readonly wellDepthProperty: NumberProperty;
   public readonly wellOffsetProperty: NumberProperty; // For asymmetric wells
   public readonly barrierHeightProperty: NumberProperty; // For Rosen-Morse and Eckart potentials
+  public readonly potentialOffsetProperty: NumberProperty; // For triangular potential
 
   // Particle properties
   public readonly particleMassProperty: NumberProperty; // In units of electron mass
@@ -62,6 +63,7 @@ export class OneWellModel extends BaseModel {
     this.wellDepthProperty = new NumberProperty(5.0, { range: new Range(0.1, 15.0) }); // in eV (within energy graph bounds)
     this.wellOffsetProperty = new NumberProperty(0.5, { range: new Range(0.0, 1.0) }); // normalized position
     this.barrierHeightProperty = new NumberProperty(0.5, { range: new Range(0.0, 10.0) }); // in eV (for Rosen-Morse and Eckart)
+    this.potentialOffsetProperty = new NumberProperty(0.0, { range: new Range(-5.0, 15.0) }); // in eV (for triangular potential)
 
     // Initialize particle mass (1.0 = electron mass)
     this.particleMassProperty = new NumberProperty(1.0, { range: new Range(0.5, 1.1) }); // 0.5 to 1.1 times electron mass
@@ -106,6 +108,7 @@ export class OneWellModel extends BaseModel {
     this.wellDepthProperty.link(invalidateCache);
     this.wellOffsetProperty.link(invalidateCache);
     this.barrierHeightProperty.link(invalidateCache);
+    this.potentialOffsetProperty.link(invalidateCache);
     this.particleMassProperty.link(invalidateCache);
 
     // Update superposition coefficients when superposition type or coherent displacement changes
@@ -149,6 +152,7 @@ export class OneWellModel extends BaseModel {
     this.wellDepthProperty.reset();
     this.wellOffsetProperty.reset();
     this.barrierHeightProperty.reset();
+    this.potentialOffsetProperty.reset();
     this.particleMassProperty.reset();
     this.selectedEnergyLevelIndexProperty.reset();
     this.energyLevelProperty.reset();
@@ -242,6 +246,10 @@ export class OneWellModel extends BaseModel {
     else if (this.potentialTypeProperty.value === PotentialType.ASYMMETRIC_TRIANGLE) {
       numStates = 80; // Asymmetric triangle may have many states, use larger number
     }
+    // For triangular potential, calculate states based on well depth
+    else if (this.potentialTypeProperty.value === PotentialType.TRIANGULAR) {
+      numStates = 50; // Triangular well typically has fewer states than asymmetric
+    }
     else {
       numStates = 80; // Use more states for other potentials
     }
@@ -309,6 +317,16 @@ export class OneWellModel extends BaseModel {
         case PotentialType.ASYMMETRIC_TRIANGLE:
           // Slope is the field strength
           potentialParams.slope = wellDepth / wellWidth;
+          break;
+        case PotentialType.TRIANGULAR:
+          // Triangular potential:
+          // V(x) = height + offset for x < 0
+          // V(x) = offset at x = 0
+          // V(x) = offset + (height/width) * x for 0 < x < width
+          // V(x) = height + offset for x > width
+          potentialParams.potentialDepth = wellDepth; // height in Joules
+          potentialParams.wellWidth = wellWidth; // width in meters
+          potentialParams.energyOffset = this.potentialOffsetProperty.value * QuantumConstants.EV_TO_JOULES; // offset in Joules
           break;
         case PotentialType.COULOMB_1D: {
           // For 1D Coulomb potential: E_0 = -2mα²/ℏ² = -13.6 eV
