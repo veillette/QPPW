@@ -183,7 +183,7 @@ onReadyToLaunch(() => {
               // Ensure initial value is a power of 2
               const initialGridPoints = QPPWPreferences.gridPointsProperty.value;
               const initialExponent = Math.round(Math.log2(initialGridPoints));
-              const correctedGridPoints = Math.pow(2, Math.max(6, Math.min(11, initialExponent)));
+              const correctedGridPoints = Math.pow(2, Math.max(5, Math.min(9, initialExponent)));
 
               // Update gridPointsProperty if it wasn't a power of 2
               if (QPPWPreferences.gridPointsProperty.value !== correctedGridPoints) {
@@ -192,7 +192,7 @@ onReadyToLaunch(() => {
 
               // Create a NumberProperty for the exponent that derives from gridPointsProperty
               const exponentProperty = new NumberProperty(Math.log2(correctedGridPoints), {
-                range: new Range(6, 11),
+                range: new Range(5, 9),
               });
 
               // Track whether we're in the middle of updating to prevent infinite loops
@@ -233,12 +233,11 @@ onReadyToLaunch(() => {
               );
 
               // Add major ticks with actual grid point values
+              gridPointsSlider.addMajorTick(5, new Text("32", { font: new PhetFont(12) }));
               gridPointsSlider.addMajorTick(6, new Text("64", { font: new PhetFont(12) }));
               gridPointsSlider.addMajorTick(7, new Text("128", { font: new PhetFont(12) }));
               gridPointsSlider.addMajorTick(8, new Text("256", { font: new PhetFont(12) }));
               gridPointsSlider.addMajorTick(9, new Text("512", { font: new PhetFont(12) }));
-              gridPointsSlider.addMajorTick(10, new Text("1024", { font: new PhetFont(12) }));
-              gridPointsSlider.addMajorTick(11, new Text("2048", { font: new PhetFont(12) }));
 
               const gridPointsValueText = new Text("", {
                 font: new PhetFont({ size: 14, weight: "bold" }),
