@@ -10,11 +10,13 @@ This simulation allows users to explore the properties of quantum "particles" bo
 
 - **Real-time Quantum Simulation**: Solves the 1D Schrödinger equation numerically in real time with the mass set to the electron mass
 - **Interactive Potential Wells**: Click and drag directly on the potential energy diagram to modify well parameters
-- **Multiple Well Types**: Includes 9 analytically solvable potentials:
+- **Multiple Well Types**: Includes 10 analytically solvable potentials:
   - Infinite and finite square wells
   - Harmonic oscillator
   - Morse potential (with width parameterization)
   - Pöschl-Teller potential (with width parameterization)
+  - Rosen-Morse potential (available in codebase)
+  - Eckart potential (available in codebase)
   - Asymmetric triangle potential
   - Coulomb 1D and 3D potentials
   - Double square well (for Two Wells screen)
@@ -76,11 +78,12 @@ This simulation is designed to help students understand:
 - **TypeScript**: Type-safe development
 - **Vite**: Fast build tool and development server
 - **Quantum Solvers**: Multiple numerical methods with analytical solutions
-  - **Analytical Solutions**: Exact solutions for 9 potentials evaluated at 1000 grid points
+  - **Analytical Solutions**: Exact solutions for 10 potentials evaluated at 1000 grid points
     - Infinite/finite square wells
     - Harmonic oscillator
     - Morse potential (width-parameterized)
     - Pöschl-Teller potential (width-parameterized)
+    - Rosen-Morse and Eckart potentials
     - Coulomb 1D and 3D
     - Asymmetric triangle
     - Double square well
@@ -142,8 +145,9 @@ npm test
 ```
 
 This command:
-- Runs all 45+ accuracy tests across 4 numerical methods (DVR, Spectral, Matrix Numerov, FGH)
+- Runs all 60+ accuracy tests across 4 numerical methods (DVR, Spectral, Matrix Numerov, FGH)
 - Tests harmonic oscillator, finite square wells, Coulomb potential, and double wells
+- Uses grid sizes of 64, 128, 256, and 512 points
 - Displays detailed pass/fail results with error percentages
 - Shows performance metrics (execution times) for each method
 - Provides a summary of passed/failed tests
@@ -210,12 +214,12 @@ import('/src/common/model/AccuracyTests.ts').then(m => m.runQuickAccuracyCheck()
 
 The comprehensive test suite (`tests/accuracy-tests.html`) validates:
 
-1. **Harmonic Oscillator** - Tests first 10 energy levels with 0.1% error tolerance
-2. **Finite Square Wells** (4 configurations) - Tests first 10 energy levels with 0.5% error tolerance
-3. **3D Coulomb/Hydrogen Atom** - Tests first 10 energy levels with 1.0% error tolerance
-4. **Double Square Wells** (3 configurations) - Tests first 10 energy levels with 1.0% error tolerance
+1. **Harmonic Oscillator** - Tests first 10 energy levels across grid sizes (64, 128, 256, 512) with 0.1% error tolerance
+2. **Finite Square Wells** (4 configurations) - Tests bound states with 0.5% error tolerance
+3. **3D Coulomb/Hydrogen Atom** - Tests first few energy levels with 1.0% error tolerance
+4. **Double Square Wells** (3 configurations) - Tests energy level pairs with 1.0% error tolerance
 
-All four numerical methods are tested (DVR, Spectral, Matrix Numerov, FGH) across multiple grid sizes to ensure accuracy and robustness. The tests verify that numerical methods match analytical solutions within specified tolerances.
+All four numerical methods are tested (DVR, Spectral, Matrix Numerov, FGH) across multiple grid sizes (all powers of 2) to ensure accuracy and robustness. The tests verify that numerical methods match analytical solutions within specified tolerances.
 
 For more details, see [`tests/README.md`](tests/README.md).
 

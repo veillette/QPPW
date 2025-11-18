@@ -32,9 +32,9 @@ where:
 **Test Parameters:**
 - Mass: Electron mass (9.109 × 10⁻³¹ kg)
 - Angular frequency: 10¹⁵ rad/s
-- Grid sizes: **100, 150, 200, 256 points**
+- Grid sizes: **64, 128, 256, 512 points** (powers of 2)
 - Grid range: -5 nm to +5 nm
-- States tested: 5 states (n = 0, 1, 2, 3, 4)
+- States tested: 10 states (n = 0, 1, 2, ..., 9)
 - Methods tested: DVR, Spectral, Matrix Numerov, FGH
 - Error tolerance: **0.1%** (extremely high accuracy for smooth potentials)
 
@@ -50,10 +50,10 @@ Multiple configurations test various well depths and widths:
 
 **Test Parameters:**
 - Mass: Electron mass
-- Grid sizes: **150, 200 points**
+- Grid sizes: **64, 128, 256, 512 points** (powers of 2)
 - Grid range: -2L to +2L (where L = well width)
-- States tested: 3 bound states
-- Methods tested: DVR, Matrix Numerov, FGH (power-of-2 grids)
+- States tested: Bound states
+- Methods tested: DVR, Spectral, Matrix Numerov, FGH
 - Error tolerance: **0.5%** (stringent despite discontinuous potential)
 
 ### 3. 3D Coulomb Potential (Hydrogen Atom, L=0)
@@ -69,10 +69,10 @@ where α = e²/(4πε₀) is the Coulomb strength.
 **Test Parameters:**
 - Mass: Electron mass
 - Coulomb strength: e²/(4πε₀) = 2.307 × 10⁻²⁸ J·m
-- Grid sizes: **150, 200, 256 points**
+- Grid sizes: **64, 128, 256, 512 points** (powers of 2)
 - Grid range: 1 pm to 10 nm (r > 0)
-- States tested: 3 states (n = 1, 2, 3)
-- Methods tested: DVR, Matrix Numerov, FGH
+- States tested: First few states
+- Methods tested: DVR, Spectral, Matrix Numerov, FGH
 - Error tolerance: **1.0%** (stringent even for singular potential)
 
 ### 4. Double Square Wells
@@ -86,9 +86,9 @@ Tests symmetric double wells with central barrier (no analytical solution):
 
 **Test Parameters:**
 - Mass: Electron mass
-- Grid sizes: **200, 256 points**
-- States tested: 4 states
-- Methods tested: Matrix Numerov, FGH (compared to DVR reference)
+- Grid sizes: **64, 128, 256, 512 points** (powers of 2)
+- States tested: Energy level pairs
+- Methods tested: DVR, Spectral, Matrix Numerov, FGH (compared to DVR reference)
 - Error tolerance: **1.0%** (stringent inter-method agreement required)
 
 ## Running the Tests
@@ -106,15 +106,15 @@ Tests symmetric double wells with central barrier (no analytical solution):
 
 The results will be displayed in the browser console with color-coded pass/fail indicators.
 
-### Option 2: Command-Line Testing
+### Option 2: Command-Line Testing (Recommended)
 
-Run tests directly from the command line:
+Run tests directly from the command line using npm:
 
 ```bash
-node tests/run-tests.js
+npm test
 ```
 
-This outputs results to the terminal with full details including timing information.
+This outputs results to the terminal with full details including timing information, performance summary, and pass/fail status for all tests.
 
 ### Option 3: Development Server
 
