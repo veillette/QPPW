@@ -45,11 +45,12 @@ export function solvePoschlTellerPotential(
     throw new Error("Pöschl-Teller potential too shallow to support bound states");
   }
 
-  // Calculate energies: E_n = -V_0 + (V_0/λ²)(λ - n - 1/2)²
+  // Calculate energies: E_n = -V_0 * [(λ - n - 1/2)/λ]²
+  // Ground state (n=0) has lowest energy, excited states have higher energy
   const energies: number[] = [];
   for (let n = 0; n < actualNumStates; n++) {
     const term = lambda - n - 0.5;
-    const energy = -V0 + (V0 / (lambda * lambda)) * term * term;
+    const energy = -V0 * (term * term) / (lambda * lambda);
     energies.push(energy);
   }
 

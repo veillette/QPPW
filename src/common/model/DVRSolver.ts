@@ -11,6 +11,7 @@
 
 import QuantumConstants from "./QuantumConstants.js";
 import { BoundStateResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
+import { Matrix, diagonalize, normalizeWavefunction, matrixToArray } from "./LinearAlgebraUtils.js";
 import qppw from "../../QPPWNamespace.js";
 
 /**
@@ -39,20 +40,23 @@ export function solveDVR(
 
   const N = numPoints;
 
-  // Construct potential energy matrix V (diagonal)
-  const potentialEnergyMatrix = createDiagonalMatrix(N);
-  for (let i = 0; i < N; i++) {
-    potentialEnergyMatrix[i][i] = potential(xGrid[i]);
-  }
+  // Create potential energy values for diagonal matrix
+  const potentialValues: number[] = xGrid.map(potential);
+
+  // Create potential energy matrix V (diagonal) using dot's Matrix
+  const V = Matrix.diagonalMatrix(potentialValues);
 
   // Construct kinetic energy matrix T using Colbert-Miller formula
-  const kineticEnergyMatrix = createKineticEnergyMatrix(N, dx, mass);
+  const T = createKineticEnergyMatrix(N, dx, mass);
 
-  // Construct Hamiltonian H = T + V
-  const hamiltonianMatrix = addMatrices(kineticEnergyMatrix, potentialEnergyMatrix);
+  // Construct Hamiltonian H = T + V using dot's Matrix.plus()
+  const H = T.plus(V);
+
+  // Convert to array for diagonalization
+  const hamiltonianArray = matrixToArray(H);
 
   // Diagonalize Hamiltonian to get eigenvalues (energies) and eigenvectors (wavefunctions)
-  const eigen = diagonalize(hamiltonianMatrix);
+  const eigen = diagonalize(hamiltonianArray);
 
   // Sort eigenvalues and eigenvectors by energy
   const sortedIndices = eigen.eigenvalues
@@ -76,7 +80,7 @@ export function solveDVR(
 
       // Normalize wavefunction
       const wavefunction = eigen.eigenvectors[idx];
-      const normalizedPsi = normalize(wavefunction, dx);
+      const normalizedPsi = normalizeWavefunction(wavefunction, dx);
       wavefunctions.push(normalizedPsi);
     }
   }
@@ -98,180 +102,26 @@ export function solveDVR(
  * @param mass - Particle mass (kg)
  * @returns N×N kinetic energy matrix
  */
-function createKineticEnergyMatrix(N: number, dx: number, mass: number): number[][] {
+function createKineticEnergyMatrix(N: number, dx: number, mass: number): Matrix {
   const { HBAR } = QuantumConstants;
   const prefactor = (HBAR * HBAR) / (2 * mass * dx * dx);
 
-  const T: number[][] = [];
+  const T = new Matrix(N, N);
   for (let i = 0; i < N; i++) {
-    T[i] = [];
     for (let j = 0; j < N; j++) {
       if (i === j) {
         // Diagonal elements
-        T[i][j] = prefactor * (Math.PI * Math.PI) / 3;
+        T.set(i, j, prefactor * (Math.PI * Math.PI) / 3);
       } else {
         // Off-diagonal elements
         const diff = i - j;
         const sign = Math.pow(-1, diff);
-        T[i][j] = prefactor * (2 * sign) / (diff * diff);
+        T.set(i, j, prefactor * (2 * sign) / (diff * diff));
       }
     }
   }
 
   return T;
-}
-
-/**
- * Create a diagonal matrix of size N×N initialized to zero.
- */
-function createDiagonalMatrix(N: number): number[][] {
-  const matrix: number[][] = [];
-  for (let i = 0; i < N; i++) {
-    matrix[i] = new Array(N).fill(0);
-  }
-  return matrix;
-}
-
-/**
- * Add two matrices element-wise.
- */
-function addMatrices(A: number[][], B: number[][]): number[][] {
-  const N = A.length;
-  const C: number[][] = [];
-  for (let i = 0; i < N; i++) {
-    C[i] = [];
-    for (let j = 0; j < N; j++) {
-      C[i][j] = A[i][j] + B[i][j];
-    }
-  }
-  return C;
-}
-
-/**
- * Diagonalize a symmetric matrix using Jacobi eigenvalue algorithm.
- * Returns eigenvalues and eigenvectors.
- *
- * Note: For production code, consider using a more robust library like numeric.js or ml-matrix.
- * This implementation is sufficient for moderate matrix sizes.
- *
- * @param matrix - Symmetric N×N matrix
- * @returns Object with eigenvalues array and eigenvectors (array of column vectors)
- */
-function diagonalize(matrix: number[][]): {
-  eigenvalues: number[];
-  eigenvectors: number[][];
-} {
-  const N = matrix.length;
-
-  // Copy matrix (we'll modify it)
-  const A: number[][] = matrix.map((row) => [...row]);
-
-  // Initialize eigenvectors as identity matrix
-  const V: number[][] = [];
-  for (let i = 0; i < N; i++) {
-    V[i] = new Array(N).fill(0);
-    V[i][i] = 1;
-  }
-
-  // Jacobi iteration
-  const maxIterations = 50 * N * N;
-
-  // CRITICAL FIX: Use relative tolerance based on matrix scale
-  // For quantum mechanical energies (~1e-20 J), absolute tolerance of 1e-12
-  // causes premature convergence after 1 iteration. Use relative tolerance instead.
-  const matrixScale = Math.max(...matrix.map((row) => Math.max(...row.map(Math.abs))));
-  const tolerance = matrixScale * 1e-12;
-
-  for (let iter = 0; iter < maxIterations; iter++) {
-    // Find largest off-diagonal element
-    let maxVal = 0;
-    let p = 0;
-    let q = 1;
-
-    for (let i = 0; i < N; i++) {
-      for (let j = i + 1; j < N; j++) {
-        if (Math.abs(A[i][j]) > maxVal) {
-          maxVal = Math.abs(A[i][j]);
-          p = i;
-          q = j;
-        }
-      }
-    }
-
-    // Check convergence
-    if (maxVal < tolerance) {
-      break;
-    }
-
-    // Calculate rotation angle
-    const theta =
-      0.5 * Math.atan2(2 * A[p][q], A[q][q] - A[p][p]);
-    const c = Math.cos(theta);
-    const s = Math.sin(theta);
-
-    // Apply Jacobi rotation to A
-    const App = c * c * A[p][p] - 2 * s * c * A[p][q] + s * s * A[q][q];
-    const Aqq = s * s * A[p][p] + 2 * s * c * A[p][q] + c * c * A[q][q];
-    const Apq = 0;
-
-    A[p][p] = App;
-    A[q][q] = Aqq;
-    A[p][q] = Apq;
-    A[q][p] = Apq;
-
-    for (let i = 0; i < N; i++) {
-      if (i !== p && i !== q) {
-        const Aip = c * A[i][p] - s * A[i][q];
-        const Aiq = s * A[i][p] + c * A[i][q];
-        A[i][p] = Aip;
-        A[p][i] = Aip;
-        A[i][q] = Aiq;
-        A[q][i] = Aiq;
-      }
-    }
-
-    // Apply rotation to eigenvectors
-    for (let i = 0; i < N; i++) {
-      const Vip = c * V[i][p] - s * V[i][q];
-      const Viq = s * V[i][p] + c * V[i][q];
-      V[i][p] = Vip;
-      V[i][q] = Viq;
-    }
-  }
-
-  // Extract eigenvalues (diagonal of A)
-  const eigenvalues = A.map((row, i) => row[i]);
-
-  // Extract eigenvectors (columns of V)
-  const eigenvectors: number[][] = [];
-  for (let j = 0; j < N; j++) {
-    const eigenvector: number[] = [];
-    for (let i = 0; i < N; i++) {
-      eigenvector.push(V[i][j]);
-    }
-    eigenvectors.push(eigenvector);
-  }
-
-  return { eigenvalues, eigenvectors };
-}
-
-/**
- * Normalize a wavefunction using trapezoidal rule.
- *
- * @param psi - Wavefunction array
- * @param dx - Grid spacing (meters)
- * @returns Normalized wavefunction
- */
-function normalize(psi: number[], dx: number): number[] {
-  // Calculate ∫|ψ|² dx using trapezoidal rule
-  let integral = 0;
-  for (let i = 0; i < psi.length - 1; i++) {
-    integral += (psi[i] * psi[i] + psi[i + 1] * psi[i + 1]) / 2;
-  }
-  integral *= dx;
-
-  const normalization = Math.sqrt(integral);
-  return psi.map((val) => val / normalization);
 }
 
 qppw.register("DVRSolver", { solveDVR });
