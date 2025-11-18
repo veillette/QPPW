@@ -27,6 +27,7 @@ export class OneWellScreenView extends BaseScreenView {
       PotentialType.ROSEN_MORSE,
       PotentialType.ECKART,
       PotentialType.ASYMMETRIC_TRIANGLE,
+      PotentialType.TRIANGULAR,
       PotentialType.COULOMB_1D,
       PotentialType.COULOMB_3D,
     ];

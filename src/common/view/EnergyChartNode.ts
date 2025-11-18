@@ -390,6 +390,14 @@ export class EnergyChartNode extends Node {
     if ("wellSeparationProperty" in this.model) {
       (this.model as TwoWellsModel).wellSeparationProperty.link(() => this.update());
     }
+
+    // Link to barrierHeightProperty and potentialOffsetProperty if available (OneWellModel only)
+    if ("barrierHeightProperty" in this.model) {
+      (this.model as OneWellModel).barrierHeightProperty.link(() => this.update());
+    }
+    if ("potentialOffsetProperty" in this.model) {
+      (this.model as OneWellModel).potentialOffsetProperty.link(() => this.update());
+    }
   }
 
   /**

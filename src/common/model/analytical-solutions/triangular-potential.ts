@@ -179,22 +179,27 @@ export function solveTriangularPotential(
     const leftAi = kappa * Ai0 - alpha * AiPrime0;
     const leftBi = kappa * Bi0 - alpha * BiPrime0;
 
-    // Choose normalization: set B = 1, A = -leftBi / leftAi
+    // Get Airy functions at right boundary
+    const AiW = airyAi(zW);
+    const BiW = airyBi(zW);
+    const AiPrimeW = airyAiPrime(zW);
+    const BiPrimeW = airyBiPrime(zW);
+    const rightAi = kappa * AiW + alpha * AiPrimeW;
+    const rightBi = kappa * BiW + alpha * BiPrimeW;
+
+    // Choose normalization based on which boundary gives better numerical stability
+    // Use the boundary condition with larger magnitude to avoid division by small numbers
     let A: number, B: number;
-    if (Math.abs(leftAi) > 1e-10) {
+    if (Math.abs(leftAi) > Math.abs(rightAi) && Math.abs(leftAi) > 1e-10) {
       B = 1;
       A = -leftBi / leftAi;
-    } else {
-      // If leftAi is too small, use right boundary instead
-      const AiW = airyAi(zW);
-      const BiW = airyBi(zW);
-      const AiPrimeW = airyAiPrime(zW);
-      const BiPrimeW = airyBiPrime(zW);
-      const rightAi = kappa * AiW + alpha * AiPrimeW;
-      const rightBi = kappa * BiW + alpha * BiPrimeW;
-
+    } else if (Math.abs(rightAi) > 1e-10) {
       B = 1;
       A = -rightBi / rightAi;
+    } else {
+      // Fallback: use simple ratio
+      B = 1;
+      A = Math.abs(leftAi) > 1e-15 ? -leftBi / leftAi : 0;
     }
 
     // Compute unnormalized wavefunction
@@ -218,10 +223,21 @@ export function solveTriangularPotential(
         // Region III: exponential decay to the right
         // ψ = D * exp(-κ(x - width))
         // D is determined by continuity at x = width
-        const AiW = airyAi(zW);
-        const BiW = airyBi(zW);
         const psiAtW = A * AiW + B * BiW;
-        psi = psiAtW * Math.exp(-kappa * (x - width));
+
+        // For numerical stability, ensure the decay is smooth
+        // If psiAtW is anomalously large due to Bi overflow, use the value
+        // just inside the linear region as reference
+        const distanceFromWidth = x - width;
+        if (Math.abs(psiAtW) > 1e6) {
+          // Evaluate wavefunction just before the boundary
+          const xNearW = width - 1e-12;
+          const zNear = alpha * (xNearW - x0);
+          const psiNearW = A * airyAi(zNear) + B * airyBi(zNear);
+          psi = psiNearW * Math.exp(-kappa * distanceFromWidth);
+        } else {
+          psi = psiAtW * Math.exp(-kappa * distanceFromWidth);
+        }
       }
 
       psiRaw.push(psi);
