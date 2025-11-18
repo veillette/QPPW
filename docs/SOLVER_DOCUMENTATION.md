@@ -64,7 +64,6 @@ src/common/model/
 ├── SpectralSolver.ts            # Chebyshev spectral method
 ├── DoubleWellNumerovSolver.ts   # Specialized double well solver
 ├── Schrodinger1DSolver.ts       # Main solver class
-├── SolverExamples.ts            # Usage examples and tests
 ├── AccuracyTests.ts             # Accuracy verification tests
 ├── BaseModel.ts                 # Base model class
 └── SuperpositionType.ts         # Superposition type definitions
@@ -137,15 +136,7 @@ The `Schrodinger1DSolver` class provides static helper methods:
 ```typescript
 // Create common potential functions
 const infiniteWell = Schrodinger1DSolver.createInfiniteWellPotential(1e-9);
-const harmonicOsc = Schrodinger1DSolver.createHarmonicOscillatorPotential(1000);
 const finiteWell = Schrodinger1DSolver.createFiniteWellPotential(1e-9, 5e-19);
-const morse = Schrodinger1DSolver.createMorsePotential(1e-19, 1e-10, 0);
-const poschlTeller = Schrodinger1DSolver.createPoschlTellerPotential(1e-19, 1e-10);
-const rosenMorse = Schrodinger1DSolver.createRosenMorsePotential(1e-19, 5e-20, 1e-10);
-const eckart = Schrodinger1DSolver.createEckartPotential(1e-19, 5e-20, 1e-10);
-const triangle = Schrodinger1DSolver.createAsymmetricTrianglePotential(1e-9, 1e-9);
-const coulomb1D = Schrodinger1DSolver.createCoulomb1DPotential(1e-28);
-const coulomb3D = Schrodinger1DSolver.createCoulomb3DPotential(1e-28);
 
 // Unit conversions
 const energyJoules = Schrodinger1DSolver.eVToJoules(1.0);
@@ -184,24 +175,6 @@ const xGrid = oneWellModel.getXGrid();  // x values in nm
 // Get all bound states
 const boundStates = oneWellModel.getBoundStates();
 ```
-
-## Running Examples
-
-To test the solver implementation:
-
-```typescript
-import { runAllExamples } from './common/model/SolverExamples.js';
-
-// Run all examples in console
-runAllExamples();
-```
-
-This will execute examples demonstrating:
-1. Infinite well with analytical solution
-2. Infinite well with DVR method
-3. Harmonic oscillator with analytical solution
-4. Finite well with DVR method
-5. Comparison of Numerov vs DVR methods
 
 ## Performance Considerations
 
