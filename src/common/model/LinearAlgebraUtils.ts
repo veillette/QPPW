@@ -406,73 +406,97 @@ export function diagonalize(
     }
   }
 
-  // Jacobi rotation parameters
-  const maxIterations = 50;
-  const tolerance = 1e-12;
+  // Cyclic Jacobi method parameters
+  // Each sweep processes all N(N-1)/2 off-diagonal elements
+  // Typically converges in O(N) sweeps
+  const maxSweeps = Math.max(50, 5 * N);
 
-  for (let iter = 0; iter < maxIterations; iter++) {
-    // Find largest off-diagonal element
-    let maxOffDiag = 0;
-    let p = 0;
-    let q = 1;
-
+  // Calculate sum of squares of off-diagonal elements for convergence check
+  const computeOffDiagNorm = (): number => {
+    let sum = 0;
     for (let i = 0; i < N; i++) {
       for (let j = i + 1; j < N; j++) {
-        const absVal = Math.abs(A[i][j]);
-        if (absVal > maxOffDiag) {
-          maxOffDiag = absVal;
-          p = i;
-          q = j;
-        }
+        sum += A[i][j] * A[i][j];
       }
     }
+    return Math.sqrt(2 * sum); // Factor of 2 for symmetry
+  };
 
-    // Check convergence
-    if (maxOffDiag < tolerance) {
+  // Calculate the Frobenius norm for relative tolerance
+  let frobeniusNorm = 0;
+  for (let i = 0; i < N; i++) {
+    for (let j = 0; j < N; j++) {
+      frobeniusNorm += A[i][j] * A[i][j];
+    }
+  }
+  frobeniusNorm = Math.sqrt(frobeniusNorm);
+
+  // Use relative tolerance based on matrix norm
+  // For small matrices (norm < 1), use absolute tolerance of 1e-30 as floor
+  const tolerance = Math.max(1e-30, 1e-10 * frobeniusNorm);
+
+  for (let sweep = 0; sweep < maxSweeps; sweep++) {
+    // Check convergence at start of each sweep
+    const offDiagNorm = computeOffDiagNorm();
+    if (offDiagNorm < tolerance) {
       break;
     }
 
-    // Compute rotation angle
-    const App = A[p][p];
-    const Aqq = A[q][q];
-    const Apq = A[p][q];
+    // Sweep through all off-diagonal elements in order
+    for (let p = 0; p < N - 1; p++) {
+      for (let q = p + 1; q < N; q++) {
+        const Apq = A[p][q];
 
-    let theta: number;
-    if (Math.abs(App - Aqq) < 1e-30) {
-      theta = Math.PI / 4;
-    } else {
-      theta = 0.5 * Math.atan2(2 * Apq, Aqq - App);
-    }
+        // Skip if element is already very small
+        if (Math.abs(Apq) < 1e-40) {
+          continue;
+        }
 
-    const c = Math.cos(theta);
-    const s = Math.sin(theta);
+        // Compute rotation angle
+        const App = A[p][p];
+        const Aqq = A[q][q];
 
-    // Apply rotation to A
-    const newApp = c * c * App - 2 * s * c * Apq + s * s * Aqq;
-    const newAqq = s * s * App + 2 * s * c * Apq + c * c * Aqq;
+        let c: number, s: number;
+        const diff = Aqq - App;
+        if (Math.abs(diff) < 1e-40) {
+          c = Math.SQRT1_2;
+          s = Apq > 0 ? Math.SQRT1_2 : -Math.SQRT1_2;
+        } else {
+          const phi = diff / (2 * Apq);
+          const t = 1.0 / (Math.abs(phi) + Math.sqrt(phi * phi + 1));
+          const signedT = phi < 0 ? -t : t;
+          c = 1.0 / Math.sqrt(signedT * signedT + 1);
+          s = signedT * c;
+        }
 
-    A[p][p] = newApp;
-    A[q][q] = newAqq;
-    A[p][q] = 0;
-    A[q][p] = 0;
+        // Apply rotation to A
+        const newApp = c * c * App - 2 * s * c * Apq + s * s * Aqq;
+        const newAqq = s * s * App + 2 * s * c * Apq + c * c * Aqq;
 
-    for (let i = 0; i < N; i++) {
-      if (i !== p && i !== q) {
-        const Aip = A[i][p];
-        const Aiq = A[i][q];
-        A[i][p] = c * Aip - s * Aiq;
-        A[p][i] = A[i][p];
-        A[i][q] = s * Aip + c * Aiq;
-        A[q][i] = A[i][q];
+        A[p][p] = newApp;
+        A[q][q] = newAqq;
+        A[p][q] = 0;
+        A[q][p] = 0;
+
+        for (let i = 0; i < N; i++) {
+          if (i !== p && i !== q) {
+            const Aip = A[i][p];
+            const Aiq = A[i][q];
+            A[i][p] = c * Aip - s * Aiq;
+            A[p][i] = A[i][p];
+            A[i][q] = s * Aip + c * Aiq;
+            A[q][i] = A[i][q];
+          }
+        }
+
+        // Update eigenvector matrix
+        for (let i = 0; i < N; i++) {
+          const Vip = V[i][p];
+          const Viq = V[i][q];
+          V[i][p] = c * Vip - s * Viq;
+          V[i][q] = s * Vip + c * Viq;
+        }
       }
-    }
-
-    // Update eigenvector matrix
-    for (let i = 0; i < N; i++) {
-      const Vip = V[i][p];
-      const Viq = V[i][q];
-      V[i][p] = c * Vip - s * Viq;
-      V[i][q] = s * Vip + c * Viq;
     }
   }
 

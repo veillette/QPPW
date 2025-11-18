@@ -83,12 +83,14 @@ export function solveFGH(
   const energies: number[] = [];
   const wavefunctions: number[][] = [];
 
+  // Calculate boundary potential once
+  const V_boundary = Math.max(potential(xMin), potential(xMax));
+
   for (let i = 0; i < Math.min(numStates, N); i++) {
     const idx = sortedIndices[i];
     const energy = eigen.eigenvalues[idx];
 
     // Only include bound states (energy < V at boundaries)
-    const V_boundary = Math.max(potential(xMin), potential(xMax));
     if (energy < V_boundary) {
       energies.push(energy);
 
@@ -98,6 +100,7 @@ export function solveFGH(
       wavefunctions.push(normalizedPsi);
     }
   }
+
 
   return {
     energies,

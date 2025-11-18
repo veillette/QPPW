@@ -493,6 +493,12 @@ export class WaveFunctionChartNode extends Node {
       return;
     }
 
+    // Guard against empty wavefunctions
+    if (boundStates.wavefunctions.length === 0) {
+      console.warn("No bound states available for superposition view range");
+      return;
+    }
+
     const config = (this.model as OneWellModel).superpositionConfigProperty.value;
     const numPoints = boundStates.xGrid.length;
 
@@ -517,6 +523,12 @@ export class WaveFunctionChartNode extends Node {
 
       const magnitude = Math.sqrt(real * real + imag * imag);
       maxAbs = Math.max(maxAbs, magnitude);
+    }
+
+    // Guard against zero maxAbs (no valid states for superposition)
+    if (maxAbs === 0) {
+      console.warn("No valid states for superposition, using default range");
+      maxAbs = 1; // Use default range
     }
 
     const displayMode = this.model.displayModeProperty.value;
