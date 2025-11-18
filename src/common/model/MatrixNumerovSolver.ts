@@ -21,6 +21,7 @@
 
 import QuantumConstants from "./QuantumConstants.js";
 import { BoundStateResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
+import { DotMatrix, diagonalize, normalizeWavefunction, matrixToArray } from "./LinearAlgebraUtils.js";
 import qppw from "../../QPPWNamespace.js";
 
 /**
@@ -67,9 +68,9 @@ export function solveMatrixNumerov(
   const coeff = (2 * mass) / (HBAR * HBAR);
   const h2 = dx * dx;
 
-  // Initialize matrices
-  const H = createZeroMatrix(N);
-  const S = createZeroMatrix(N);
+  // Initialize matrices using dot's Matrix class
+  const H = new DotMatrix(N, N);
+  const S = new DotMatrix(N, N);
 
   // Construct matrices using Numerov formulation
   // The equation (after rearranging) becomes:
@@ -84,36 +85,33 @@ export function solveMatrixNumerov(
   for (let i = 0; i < N; i++) {
     // Hamiltonian matrix H (kinetic + potential energy)
     // Diagonal term
-    H[i][i] = (2 / h2) - (10 * factor * V[i]);
+    H.set(i, i, (2 / h2) - (10 * factor * V[i]));
 
     // Off-diagonal terms (kinetic energy coupling)
     if (i > 0) {
-      H[i][i - 1] = -(1 / h2) - (factor * V[i - 1]);
-      H[i - 1][i] = H[i][i - 1]; // Symmetric
+      const offDiagValue = -(1 / h2) - (factor * V[i - 1]);
+      H.set(i, i - 1, offDiagValue);
+      H.set(i - 1, i, offDiagValue); // Symmetric
     }
 
     // Overlap matrix S (Numerov correction terms)
-    S[i][i] = 10 * factor;
+    S.set(i, i, 10 * factor);
 
     if (i > 0) {
-      S[i][i - 1] = factor;
-      S[i - 1][i] = factor; // Symmetric
+      S.set(i, i - 1, factor);
+      S.set(i - 1, i, factor); // Symmetric
     }
   }
 
-  // Apply boundary conditions: ψ(xMin) = ψ(xMax) = 0
-  // We enforce this by removing the first and last grid points
-  // (alternative: set large diagonal values for first/last rows)
+  // Solve generalized eigenvalue problem: H·v = λ·S·v
+  // Transform to standard form: (S^(-1)·H)·v = λ·v
+  // Use dot's Matrix.inverse() and Matrix.times()
+  const Sinv = S.inverse();
+  const SinvH = Sinv.times(H) as DotMatrix;
 
-  // For simplicity, we'll solve the full system and filter bound states
-  // The boundary condition is implicit in the finite grid
-
-  // Solve generalized eigenvalue problem: H·ψ = E·S·ψ
-  // Transform to standard form: S^(-1)·H·ψ = E·ψ
-  const SinvH = solveGeneralizedEigenvalueProblem(H, S);
-
-  // Diagonalize to get eigenvalues and eigenvectors
-  const eigen = diagonalize(SinvH);
+  // Convert to array and diagonalize to get eigenvalues and eigenvectors
+  const SinvHArray = matrixToArray(SinvH);
+  const eigen = diagonalize(SinvHArray);
 
   // Sort eigenvalues by energy
   const sortedIndices = eigen.eigenvalues
@@ -138,13 +136,13 @@ export function solveMatrixNumerov(
       energies.push(energy);
 
       // Extract and normalize wavefunction
-      const wavefunction = eigen.eigenvectors[idx];
+      const wavefunction = [...eigen.eigenvectors[idx]];
 
       // Apply boundary conditions (force ψ=0 at boundaries)
       wavefunction[0] = 0;
       wavefunction[N - 1] = 0;
 
-      const normalizedPsi = normalize(wavefunction, dx);
+      const normalizedPsi = normalizeWavefunction(wavefunction, dx);
       wavefunctions.push(normalizedPsi);
     }
   }
@@ -155,252 +153,6 @@ export function solveMatrixNumerov(
     xGrid,
     method: "numerov", // Use same method tag as traditional Numerov
   };
-}
-
-/**
- * Solve generalized eigenvalue problem H·v = λ·S·v by transforming to
- * standard form: (S^(-1)·H)·v = λ·v
- *
- * For the Numerov matrices, S is tridiagonal and invertible, so we can
- * compute S^(-1)·H directly.
- *
- * @param H - Hamiltonian matrix
- * @param S - Overlap matrix
- * @returns Matrix S^(-1)·H
- */
-function solveGeneralizedEigenvalueProblem(
-  H: number[][],
-  S: number[][]
-): number[][] {
-  // For better numerical stability, we solve S·X = H for X = S^(-1)·H
-  // using a direct solver for tridiagonal systems
-
-  // Since S is symmetric tridiagonal, we can use Cholesky or LU decomposition
-  // For simplicity, we'll invert S directly (small matrices in typical quantum problems)
-
-  const Sinv = invertSymmetricMatrix(S);
-
-  // Compute S^(-1)·H
-  return multiplyMatrices(Sinv, H);
-}
-
-/**
- * Invert a symmetric matrix using Gaussian elimination with partial pivoting.
- * This is suitable for small to moderate sized matrices (N < 500).
- *
- * @param A - Symmetric matrix to invert
- * @returns Inverse matrix A^(-1)
- */
-function invertSymmetricMatrix(A: number[][]): number[][] {
-  const N = A.length;
-
-  // Create augmented matrix [A | I]
-  const augmented: number[][] = [];
-  for (let i = 0; i < N; i++) {
-    augmented[i] = [...A[i]];
-    for (let j = 0; j < N; j++) {
-      augmented[i].push(i === j ? 1 : 0);
-    }
-  }
-
-  // Forward elimination with partial pivoting
-  for (let k = 0; k < N; k++) {
-    // Find pivot
-    let maxRow = k;
-    for (let i = k + 1; i < N; i++) {
-      if (Math.abs(augmented[i][k]) > Math.abs(augmented[maxRow][k])) {
-        maxRow = i;
-      }
-    }
-
-    // Swap rows
-    [augmented[k], augmented[maxRow]] = [augmented[maxRow], augmented[k]];
-
-    // Scale pivot row
-    const pivot = augmented[k][k];
-    for (let j = 0; j < 2 * N; j++) {
-      augmented[k][j] /= pivot;
-    }
-
-    // Eliminate column
-    for (let i = 0; i < N; i++) {
-      if (i !== k) {
-        const factor = augmented[i][k];
-        for (let j = 0; j < 2 * N; j++) {
-          augmented[i][j] -= factor * augmented[k][j];
-        }
-      }
-    }
-  }
-
-  // Extract inverse from right half of augmented matrix
-  const inverse: number[][] = [];
-  for (let i = 0; i < N; i++) {
-    inverse[i] = augmented[i].slice(N);
-  }
-
-  return inverse;
-}
-
-/**
- * Multiply two matrices: C = A·B
- */
-function multiplyMatrices(A: number[][], B: number[][]): number[][] {
-  const M = A.length;
-  const N = B[0].length;
-  const K = A[0].length;
-
-  const C: number[][] = [];
-  for (let i = 0; i < M; i++) {
-    C[i] = new Array(N).fill(0);
-    for (let j = 0; j < N; j++) {
-      for (let k = 0; k < K; k++) {
-        C[i][j] += A[i][k] * B[k][j];
-      }
-    }
-  }
-
-  return C;
-}
-
-/**
- * Create a zero matrix of size N×N.
- */
-function createZeroMatrix(N: number): number[][] {
-  const matrix: number[][] = [];
-  for (let i = 0; i < N; i++) {
-    matrix[i] = new Array(N).fill(0);
-  }
-  return matrix;
-}
-
-/**
- * Diagonalize a symmetric matrix using Jacobi eigenvalue algorithm.
- * Returns eigenvalues and eigenvectors.
- *
- * This is the same algorithm used in DVRSolver for consistency.
- *
- * @param matrix - Symmetric N×N matrix
- * @returns Object with eigenvalues array and eigenvectors (array of column vectors)
- */
-function diagonalize(matrix: number[][]): {
-  eigenvalues: number[];
-  eigenvectors: number[][];
-} {
-  const N = matrix.length;
-
-  // Copy matrix (we'll modify it)
-  const A: number[][] = matrix.map((row) => [...row]);
-
-  // Initialize eigenvectors as identity matrix
-  const V: number[][] = [];
-  for (let i = 0; i < N; i++) {
-    V[i] = new Array(N).fill(0);
-    V[i][i] = 1;
-  }
-
-  // Jacobi iteration
-  const maxIterations = 50 * N * N;
-
-  // Use relative tolerance based on matrix scale
-  const matrixScale = Math.max(...matrix.map((row) => Math.max(...row.map(Math.abs))));
-  const tolerance = matrixScale * 1e-12;
-
-  for (let iter = 0; iter < maxIterations; iter++) {
-    // Find largest off-diagonal element
-    let maxVal = 0;
-    let p = 0;
-    let q = 1;
-
-    for (let i = 0; i < N; i++) {
-      for (let j = i + 1; j < N; j++) {
-        if (Math.abs(A[i][j]) > maxVal) {
-          maxVal = Math.abs(A[i][j]);
-          p = i;
-          q = j;
-        }
-      }
-    }
-
-    // Check convergence
-    if (maxVal < tolerance) {
-      break;
-    }
-
-    // Calculate rotation angle
-    const theta = 0.5 * Math.atan2(2 * A[p][q], A[q][q] - A[p][p]);
-    const c = Math.cos(theta);
-    const s = Math.sin(theta);
-
-    // Apply Jacobi rotation to A
-    const App = c * c * A[p][p] - 2 * s * c * A[p][q] + s * s * A[q][q];
-    const Aqq = s * s * A[p][p] + 2 * s * c * A[p][q] + c * c * A[q][q];
-    const Apq = 0;
-
-    A[p][p] = App;
-    A[q][q] = Aqq;
-    A[p][q] = Apq;
-    A[q][p] = Apq;
-
-    for (let i = 0; i < N; i++) {
-      if (i !== p && i !== q) {
-        const Aip = c * A[i][p] - s * A[i][q];
-        const Aiq = s * A[i][p] + c * A[i][q];
-        A[i][p] = Aip;
-        A[p][i] = Aip;
-        A[i][q] = Aiq;
-        A[q][i] = Aiq;
-      }
-    }
-
-    // Apply rotation to eigenvectors
-    for (let i = 0; i < N; i++) {
-      const Vip = c * V[i][p] - s * V[i][q];
-      const Viq = s * V[i][p] + c * V[i][q];
-      V[i][p] = Vip;
-      V[i][q] = Viq;
-    }
-  }
-
-  // Extract eigenvalues (diagonal of A)
-  const eigenvalues = A.map((row, i) => row[i]);
-
-  // Extract eigenvectors (columns of V)
-  const eigenvectors: number[][] = [];
-  for (let j = 0; j < N; j++) {
-    const eigenvector: number[] = [];
-    for (let i = 0; i < N; i++) {
-      eigenvector.push(V[i][j]);
-    }
-    eigenvectors.push(eigenvector);
-  }
-
-  return { eigenvalues, eigenvectors };
-}
-
-/**
- * Normalize a wavefunction using trapezoidal rule.
- *
- * @param psi - Wavefunction array
- * @param dx - Grid spacing (meters)
- * @returns Normalized wavefunction
- */
-function normalize(psi: number[], dx: number): number[] {
-  // Calculate ∫|ψ|² dx using trapezoidal rule
-  let integral = 0;
-  for (let i = 0; i < psi.length - 1; i++) {
-    integral += (psi[i] * psi[i] + psi[i + 1] * psi[i + 1]) / 2;
-  }
-  integral *= dx;
-
-  const normalization = Math.sqrt(integral);
-
-  // Avoid division by zero
-  if (normalization < 1e-30) {
-    return psi;
-  }
-
-  return psi.map((val) => val / normalization);
 }
 
 qppw.register("MatrixNumerovSolver", { solveMatrixNumerov });
