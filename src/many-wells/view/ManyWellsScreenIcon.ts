@@ -8,96 +8,117 @@ import { Shape } from "scenerystack/kite";
 import { ScreenIcon } from "scenerystack/sim";
 import QPPWColors from "../../QPPWColors.js";
 
+// Dimensions
+const ICON_WIDTH = 80;
+const ICON_HEIGHT = 50;
+const CORNER_RADIUS = 4;
+const NUM_WELLS = 4;
+const WELL_WIDTH = 12;
+const BARRIER_WIDTH = 6;
+
+// Colors
+const BACKGROUND_GRADIENT_TOP = '#1a1a3a';
+const BACKGROUND_GRADIENT_BOTTOM = '#0a0a1f';
+const POTENTIAL_STROKE_COLOR = '#9696c8';
+const BARRIER_GRADIENT_EDGE = '#b43232';
+const BARRIER_GRADIENT_CENTER = '#ff6b3d';
+const BLOCH_WAVE_COLOR = '#00c8ff';
+
+// Energy band colors
+const BAND_COLORS = ['#00ff96', '#ffff64', '#00c8ff', '#ff96ff'];
+const BAND_Y_POSITIONS = [15, 22, 29, 36];
+
+// Line widths
+const POTENTIAL_LINE_WIDTH = 2;
+const BLOCH_WAVE_LINE_WIDTH = 1.5;
+
+// Opacity
+const BARRIER_OPACITY = 0.6;
+const BASE_BAND_OPACITY = 0.8;
+const BAND_OPACITY_DECREMENT = 0.1;
+
 export class ManyWellsScreenIcon extends ScreenIcon {
   public constructor() {
-    const width = 80;
-    const height = 50;
-    const numWells = 4;
-
     // Create background with gradient
-    const backgroundGradient = new LinearGradient(0, 0, 0, height)
-      .addColorStop(0, '#1a1a3a')
-      .addColorStop(1, '#0a0a1f');
+    const backgroundGradient = new LinearGradient(0, 0, 0, ICON_HEIGHT)
+      .addColorStop(0, BACKGROUND_GRADIENT_TOP)
+      .addColorStop(1, BACKGROUND_GRADIENT_BOTTOM);
 
-    const background = new Rectangle(0, 0, width, height, {
+    const background = new Rectangle(0, 0, ICON_WIDTH, ICON_HEIGHT, {
       fill: backgroundGradient,
-      cornerRadius: 4,
+      cornerRadius: CORNER_RADIUS,
     });
 
     // Create periodic potential shape
-    const wellWidth = 12;
-    const barrierWidth = 6;
-    const totalWidth = numWells * wellWidth + (numWells - 1) * barrierWidth;
-    const startX = (width - totalWidth) / 2;
+    const totalWidth = NUM_WELLS * WELL_WIDTH + (NUM_WELLS - 1) * BARRIER_WIDTH;
+    const startX = (ICON_WIDTH - totalWidth) / 2;
 
     const potentialShape = new Shape().moveTo(startX, 8);
 
-    for (let i = 0; i < numWells; i++) {
-      const wellX = startX + i * (wellWidth + barrierWidth);
+    for (let i = 0; i < NUM_WELLS; i++) {
+      const wellX = startX + i * (WELL_WIDTH + BARRIER_WIDTH);
 
       // Down into well
       potentialShape.lineTo(wellX, 8);
       potentialShape.lineTo(wellX, 40);
 
       // Across bottom of well
-      potentialShape.lineTo(wellX + wellWidth, 40);
+      potentialShape.lineTo(wellX + WELL_WIDTH, 40);
 
       // Up out of well (if not last)
-      if (i < numWells - 1) {
-        potentialShape.lineTo(wellX + wellWidth, 8);
+      if (i < NUM_WELLS - 1) {
+        potentialShape.lineTo(wellX + WELL_WIDTH, 8);
         // Across top of barrier
-        potentialShape.lineTo(wellX + wellWidth + barrierWidth, 8);
+        potentialShape.lineTo(wellX + WELL_WIDTH + BARRIER_WIDTH, 8);
       } else {
-        potentialShape.lineTo(wellX + wellWidth, 8);
+        potentialShape.lineTo(wellX + WELL_WIDTH, 8);
       }
     }
 
     const potential = new Path(potentialShape, {
-      stroke: '#9696c8',  // Light purple
-      lineWidth: 2,
+      stroke: POTENTIAL_STROKE_COLOR,
+      lineWidth: POTENTIAL_LINE_WIDTH,
     });
 
     // Create barriers with gradient fills
     const barriers: Node[] = [];
-    for (let i = 0; i < numWells - 1; i++) {
-      const barrierX = startX + (i + 1) * wellWidth + i * barrierWidth;
+    for (let i = 0; i < NUM_WELLS - 1; i++) {
+      const barrierX = startX + (i + 1) * WELL_WIDTH + i * BARRIER_WIDTH;
 
-      const barrierGradient = new LinearGradient(barrierX, 0, barrierX + barrierWidth, 0)
-        .addColorStop(0, '#b43232')
-        .addColorStop(0.5, '#ff6b3d')
-        .addColorStop(1, '#b43232');
+      const barrierGradient = new LinearGradient(barrierX, 0, barrierX + BARRIER_WIDTH, 0)
+        .addColorStop(0, BARRIER_GRADIENT_EDGE)
+        .addColorStop(0.5, BARRIER_GRADIENT_CENTER)
+        .addColorStop(1, BARRIER_GRADIENT_EDGE);
 
-      barriers.push(new Rectangle(barrierX, 8, barrierWidth, 32, {
+      barriers.push(new Rectangle(barrierX, 8, BARRIER_WIDTH, 32, {
         fill: barrierGradient,
-        opacity: 0.6,
+        opacity: BARRIER_OPACITY,
       }));
     }
 
     // Energy bands (multiple horizontal lines with gradient colors)
-    const bandColors = ['#00ff96', '#ffff64', '#00c8ff', '#ff96ff'];
-    const bandYPositions = [15, 22, 29, 36];
     const energyBands: Node[] = [];
 
-    for (let band = 0; band < bandColors.length; band++) {
+    for (let band = 0; band < BAND_COLORS.length; band++) {
       // Draw energy band across all wells
-      for (let i = 0; i < numWells; i++) {
-        const wellX = startX + i * (wellWidth + barrierWidth);
-        energyBands.push(new Rectangle(wellX + 1, bandYPositions[band], wellWidth - 2, 1.5, {
-          fill: bandColors[band],
-          opacity: 0.8 - band * 0.1,
+      for (let i = 0; i < NUM_WELLS; i++) {
+        const wellX = startX + i * (WELL_WIDTH + BARRIER_WIDTH);
+        energyBands.push(new Rectangle(wellX + 1, BAND_Y_POSITIONS[band], WELL_WIDTH - 2, 1.5, {
+          fill: BAND_COLORS[band],
+          opacity: BASE_BAND_OPACITY - band * BAND_OPACITY_DECREMENT,
         }));
       }
     }
 
-    // Bloch wave function (sinusoidal across all wells) - bright blue
+    // Bloch wave function (sinusoidal across all wells)
     const waveShape = new Shape();
     let firstPoint = true;
 
-    for (let i = 0; i < numWells; i++) {
-      const wellX = startX + i * (wellWidth + barrierWidth);
+    for (let i = 0; i < NUM_WELLS; i++) {
+      const wellX = startX + i * (WELL_WIDTH + BARRIER_WIDTH);
 
-      for (let x = wellX + 1; x <= wellX + wellWidth - 1; x += 0.5) {
-        const localX = (x - wellX) / wellWidth;
+      for (let x = wellX + 1; x <= wellX + WELL_WIDTH - 1; x += 0.5) {
+        const localX = (x - wellX) / WELL_WIDTH;
         const globalPhase = i * Math.PI;
         const amplitude = 4 * Math.sin(localX * Math.PI);
         const y = 26 - amplitude * Math.cos(globalPhase);
@@ -112,8 +133,8 @@ export class ManyWellsScreenIcon extends ScreenIcon {
     }
 
     const blochWave = new Path(waveShape, {
-      stroke: '#00c8ff',  // Bright cyan
-      lineWidth: 1.5,
+      stroke: BLOCH_WAVE_COLOR,
+      lineWidth: BLOCH_WAVE_LINE_WIDTH,
     });
 
     const iconNode = new Node({
