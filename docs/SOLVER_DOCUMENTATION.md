@@ -9,24 +9,47 @@ This document describes the implementation of the 1D time-independent Schröding
 ### Analytical Solutions
 For well-known potentials, the solver provides exact analytical solutions:
 - **Infinite Square Well**: $E_n = \frac{n^2 \pi^2 \hbar^2}{2mL^2}$
+- **Finite Square Well**: Transcendental equation solutions
 - **Harmonic Oscillator**: $E_n = \hbar\omega(n + \frac{1}{2})$
+- **Morse Potential**: $E_n = \hbar\omega_e(n + \frac{1}{2}) - \frac{[\hbar\omega_e(n + \frac{1}{2})]^2}{4D_e}$
+- **Pöschl-Teller Potential**: $E_n = -V_0[\sqrt{1 + \frac{2m a^2 V_0}{\hbar^2}} - (n + \frac{1}{2})]^2 \frac{\hbar^2}{2ma^2}$
+- **Rosen-Morse Potential**: Analytical solutions with asymmetry
+- **Eckart Potential**: Analytical solutions for barrier potentials
+- **Asymmetric Triangle**: Airy function solutions
+- **1D Coulomb**: $E_n = -\frac{m\alpha^2}{2\hbar^2 n^2}$
+- **3D Coulomb (Radial)**: Hydrogen-like energy levels
 
 ### Numerical Solutions
-For arbitrary potentials, two numerical methods are available:
+For arbitrary potentials, five numerical methods are available:
 
-#### 1. Numerov Method
+#### 1. Numerov Method (Shooting)
 - Higher-order finite-difference method with $O(h^6)$ error
 - Uses shooting method to find bound states
 - Iterative formula:
   $$\psi_{j+1} = \frac{(12 - 10f_j)\psi_j - (1+f_{j-1})\psi_{j-1}}{1+f_{j+1}}$$
   where $f_j = \frac{h^2}{12}k^2(x_j)$ and $k^2(x) = \frac{2m(E-V(x))}{\hbar^2}$
 
-#### 2. Discrete Variable Representation (DVR) Method
+#### 2. Matrix Numerov Method
+- Matrix formulation of the Numerov algorithm
+- Converts the Schrödinger equation into an eigenvalue problem
+- Higher accuracy than shooting Numerov for most cases
+
+#### 3. Discrete Variable Representation (DVR) Method
 - Matrix diagonalization approach
 - Constructs Hamiltonian $H = T + V$
 - Potential energy: Diagonal matrix with $V_{ii} = V(x_i)$
 - Kinetic energy: Colbert-Miller formula
   $$T_{ij} = \frac{\hbar^2}{2m\Delta x^2} \begin{cases} \frac{\pi^2}{3} & \text{for } i=j \\ \frac{2(-1)^{i-j}}{(i-j)^2} & \text{for } i \neq j \end{cases}$$
+
+#### 4. Fourier Grid Hamiltonian (FGH) Method
+- Uses FFT for kinetic energy evaluation
+- Efficient for periodic or smooth potentials
+- Scales as O(N log N) for kinetic energy
+
+#### 5. Spectral (Chebyshev) Method
+- Expands wavefunction in Chebyshev polynomials
+- High accuracy for smooth potentials
+- Well-suited for non-uniform grid spacing
 
 ## File Structure
 
@@ -34,11 +57,19 @@ For arbitrary potentials, two numerical methods are available:
 src/common/model/
 ├── QuantumConstants.ts          # Physical constants (ℏ, m_e, etc.)
 ├── PotentialFunction.ts         # Type definitions and interfaces
-├── AnalyticalSolutions.ts       # Analytical solvers
-├── NumerovSolver.ts            # Numerov method implementation
-├── DVRSolver.ts                # DVR method implementation
-├── Schrodinger1DSolver.ts      # Main solver class
-└── SolverExamples.ts           # Usage examples and tests
+├── NumerovSolver.ts             # Shooting Numerov method implementation
+├── MatrixNumerovSolver.ts       # Matrix Numerov method implementation
+├── DVRSolver.ts                 # DVR method implementation
+├── FGHSolver.ts                 # Fourier Grid Hamiltonian method
+├── SpectralSolver.ts            # Chebyshev spectral method
+├── DoubleWellNumerovSolver.ts   # Specialized double well solver
+├── Schrodinger1DSolver.ts       # Main solver class
+├── SolverExamples.ts            # Usage examples and tests
+├── AccuracyTests.ts             # Accuracy verification tests
+├── BaseModel.ts                 # Base model class
+└── SuperpositionType.ts         # Superposition type definitions
+
+src/common/model/analytical-solutions/  # Analytical solvers for specific potentials
 ```
 
 ## Usage
@@ -108,6 +139,13 @@ The `Schrodinger1DSolver` class provides static helper methods:
 const infiniteWell = Schrodinger1DSolver.createInfiniteWellPotential(1e-9);
 const harmonicOsc = Schrodinger1DSolver.createHarmonicOscillatorPotential(1000);
 const finiteWell = Schrodinger1DSolver.createFiniteWellPotential(1e-9, 5e-19);
+const morse = Schrodinger1DSolver.createMorsePotential(1e-19, 1e-10, 0);
+const poschlTeller = Schrodinger1DSolver.createPoschlTellerPotential(1e-19, 1e-10);
+const rosenMorse = Schrodinger1DSolver.createRosenMorsePotential(1e-19, 5e-20, 1e-10);
+const eckart = Schrodinger1DSolver.createEckartPotential(1e-19, 5e-20, 1e-10);
+const triangle = Schrodinger1DSolver.createAsymmetricTrianglePotential(1e-9, 1e-9);
+const coulomb1D = Schrodinger1DSolver.createCoulomb1DPotential(1e-28);
+const coulomb3D = Schrodinger1DSolver.createCoulomb3DPotential(1e-28);
 
 // Unit conversions
 const energyJoules = Schrodinger1DSolver.eVToJoules(1.0);
