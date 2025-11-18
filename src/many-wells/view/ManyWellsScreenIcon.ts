@@ -16,6 +16,21 @@ const NUM_WELLS = 4;
 const WELL_WIDTH = 12;
 const BARRIER_WIDTH = 6;
 
+// Layout proportions
+const WELL_TOP = ICON_HEIGHT * 0.16;
+const WELL_BOTTOM = ICON_HEIGHT * 0.8;
+const WELL_DEPTH = WELL_BOTTOM - WELL_TOP;
+const WAVE_CENTER_Y = ICON_HEIGHT * 0.52;
+const WAVE_AMPLITUDE = 4;
+const WELL_INNER_PADDING = 1;
+
+// Energy band layout
+const NUM_BANDS = 4;
+const BAND_HEIGHT = 1.5;
+const BAND_TOP = ICON_HEIGHT * 0.3;
+const BAND_SPACING = (WELL_BOTTOM - BAND_TOP - BAND_HEIGHT) / (NUM_BANDS - 1);
+const BAND_Y_POSITIONS = Array.from({ length: NUM_BANDS }, (_, i) => BAND_TOP + i * BAND_SPACING);
+
 // Colors
 const BACKGROUND_GRADIENT_TOP = '#1a1a3a';
 const BACKGROUND_GRADIENT_BOTTOM = '#0a0a1f';
@@ -26,7 +41,6 @@ const BLOCH_WAVE_COLOR = '#00c8ff';
 
 // Energy band colors
 const BAND_COLORS = ['#00ff96', '#ffff64', '#00c8ff', '#ff96ff'];
-const BAND_Y_POSITIONS = [15, 22, 29, 36];
 
 // Line widths
 const POTENTIAL_LINE_WIDTH = 2;
@@ -53,25 +67,25 @@ export class ManyWellsScreenIcon extends ScreenIcon {
     const totalWidth = NUM_WELLS * WELL_WIDTH + (NUM_WELLS - 1) * BARRIER_WIDTH;
     const startX = (ICON_WIDTH - totalWidth) / 2;
 
-    const potentialShape = new Shape().moveTo(startX, 8);
+    const potentialShape = new Shape().moveTo(startX, WELL_TOP);
 
     for (let i = 0; i < NUM_WELLS; i++) {
       const wellX = startX + i * (WELL_WIDTH + BARRIER_WIDTH);
 
       // Down into well
-      potentialShape.lineTo(wellX, 8);
-      potentialShape.lineTo(wellX, 40);
+      potentialShape.lineTo(wellX, WELL_TOP);
+      potentialShape.lineTo(wellX, WELL_BOTTOM);
 
       // Across bottom of well
-      potentialShape.lineTo(wellX + WELL_WIDTH, 40);
+      potentialShape.lineTo(wellX + WELL_WIDTH, WELL_BOTTOM);
 
       // Up out of well (if not last)
       if (i < NUM_WELLS - 1) {
-        potentialShape.lineTo(wellX + WELL_WIDTH, 8);
+        potentialShape.lineTo(wellX + WELL_WIDTH, WELL_TOP);
         // Across top of barrier
-        potentialShape.lineTo(wellX + WELL_WIDTH + BARRIER_WIDTH, 8);
+        potentialShape.lineTo(wellX + WELL_WIDTH + BARRIER_WIDTH, WELL_TOP);
       } else {
-        potentialShape.lineTo(wellX + WELL_WIDTH, 8);
+        potentialShape.lineTo(wellX + WELL_WIDTH, WELL_TOP);
       }
     }
 
@@ -90,7 +104,7 @@ export class ManyWellsScreenIcon extends ScreenIcon {
         .addColorStop(0.5, BARRIER_GRADIENT_CENTER)
         .addColorStop(1, BARRIER_GRADIENT_EDGE);
 
-      barriers.push(new Rectangle(barrierX, 8, BARRIER_WIDTH, 32, {
+      barriers.push(new Rectangle(barrierX, WELL_TOP, BARRIER_WIDTH, WELL_DEPTH, {
         fill: barrierGradient,
         opacity: BARRIER_OPACITY,
       }));
@@ -98,12 +112,13 @@ export class ManyWellsScreenIcon extends ScreenIcon {
 
     // Energy bands (multiple horizontal lines with gradient colors)
     const energyBands: Node[] = [];
+    const bandInnerWidth = WELL_WIDTH - 2 * WELL_INNER_PADDING;
 
     for (let band = 0; band < BAND_COLORS.length; band++) {
       // Draw energy band across all wells
       for (let i = 0; i < NUM_WELLS; i++) {
         const wellX = startX + i * (WELL_WIDTH + BARRIER_WIDTH);
-        energyBands.push(new Rectangle(wellX + 1, BAND_Y_POSITIONS[band], WELL_WIDTH - 2, 1.5, {
+        energyBands.push(new Rectangle(wellX + WELL_INNER_PADDING, BAND_Y_POSITIONS[band], bandInnerWidth, BAND_HEIGHT, {
           fill: BAND_COLORS[band],
           opacity: BASE_BAND_OPACITY - band * BAND_OPACITY_DECREMENT,
         }));
@@ -117,11 +132,11 @@ export class ManyWellsScreenIcon extends ScreenIcon {
     for (let i = 0; i < NUM_WELLS; i++) {
       const wellX = startX + i * (WELL_WIDTH + BARRIER_WIDTH);
 
-      for (let x = wellX + 1; x <= wellX + WELL_WIDTH - 1; x += 0.5) {
+      for (let x = wellX + WELL_INNER_PADDING; x <= wellX + WELL_WIDTH - WELL_INNER_PADDING; x += 0.5) {
         const localX = (x - wellX) / WELL_WIDTH;
         const globalPhase = i * Math.PI;
-        const amplitude = 4 * Math.sin(localX * Math.PI);
-        const y = 26 - amplitude * Math.cos(globalPhase);
+        const amplitude = WAVE_AMPLITUDE * Math.sin(localX * Math.PI);
+        const y = WAVE_CENTER_Y - amplitude * Math.cos(globalPhase);
 
         if (firstPoint) {
           waveShape.moveTo(x, y);

@@ -13,6 +13,29 @@ const ICON_WIDTH = 70;
 const ICON_HEIGHT = 50;
 const CORNER_RADIUS = 4;
 
+// Layout proportions
+const PADDING = 5;
+const WELL_TOP = ICON_HEIGHT * 0.16;
+const WELL_BOTTOM = ICON_HEIGHT * 0.8;
+const BARRIER_TOP = ICON_HEIGHT * 0.3;
+const CENTRAL_BARRIER_WIDTH = 16;
+const WELL_SECTION_WIDTH = (ICON_WIDTH - 2 * PADDING - CENTRAL_BARRIER_WIDTH) / 2;
+const LEFT_WELL_END = PADDING + WELL_SECTION_WIDTH;
+const RIGHT_WELL_START = LEFT_WELL_END + CENTRAL_BARRIER_WIDTH;
+
+// Wave parameters
+const WAVE_CENTER_Y = ICON_HEIGHT * 0.6;
+const LEFT_WAVE_AMPLITUDE = 8;
+const RIGHT_WAVE_AMPLITUDE = 6;
+const TUNNEL_Y = ICON_HEIGHT * 0.52;
+
+// Energy level layout
+const ENERGY_LEVEL_Y = ICON_HEIGHT * 0.44;
+const ENERGY_LEVEL_WIDTH = WELL_SECTION_WIDTH - 5;
+const ENERGY_LEVEL_HEIGHT = 1.5;
+const LEFT_ENERGY_X = PADDING + 3;
+const RIGHT_ENERGY_X = RIGHT_WELL_START + 2;
+
 // Colors
 const BACKGROUND_GRADIENT_TOP = '#1a1a3a';
 const BACKGROUND_GRADIENT_BOTTOM = '#0a0a1f';
@@ -48,14 +71,14 @@ export class TwoWellsScreenIcon extends ScreenIcon {
 
     // Create double well shape (W-shaped)
     const wellShape = new Shape()
-      .moveTo(5, 8)
-      .lineTo(5, 40)
-      .lineTo(27, 40)
-      .lineTo(27, 15)
-      .lineTo(43, 15)
-      .lineTo(43, 40)
-      .lineTo(65, 40)
-      .lineTo(65, 8);
+      .moveTo(PADDING, WELL_TOP)
+      .lineTo(PADDING, WELL_BOTTOM)
+      .lineTo(LEFT_WELL_END, WELL_BOTTOM)
+      .lineTo(LEFT_WELL_END, BARRIER_TOP)
+      .lineTo(RIGHT_WELL_START, BARRIER_TOP)
+      .lineTo(RIGHT_WELL_START, WELL_BOTTOM)
+      .lineTo(ICON_WIDTH - PADDING, WELL_BOTTOM)
+      .lineTo(ICON_WIDTH - PADDING, WELL_TOP);
 
     const well = new Path(wellShape, {
       stroke: WELL_STROKE_COLOR,
@@ -63,22 +86,26 @@ export class TwoWellsScreenIcon extends ScreenIcon {
     });
 
     // Central barrier with gradient
-    const barrierGradient = new LinearGradient(27, 0, 43, 0)
+    const barrierGradient = new LinearGradient(LEFT_WELL_END, 0, RIGHT_WELL_START, 0)
       .addColorStop(0, BARRIER_GRADIENT_EDGE)
       .addColorStop(0.5, BARRIER_GRADIENT_CENTER)
       .addColorStop(1, BARRIER_GRADIENT_EDGE);
 
-    const barrier = new Rectangle(27, 15, 16, 25, {
+    const barrierHeight = WELL_BOTTOM - BARRIER_TOP;
+    const barrier = new Rectangle(LEFT_WELL_END, BARRIER_TOP, CENTRAL_BARRIER_WIDTH, barrierHeight, {
       fill: barrierGradient,
       opacity: BARRIER_OPACITY,
     });
 
     // Left well wave function
-    const leftWaveShape = new Shape().moveTo(7, 30);
-    for (let x = 7; x <= 25; x += 0.5) {
-      const normalizedX = (x - 7) / 18;
-      const amplitude = 8 * Math.sin(normalizedX * Math.PI);
-      leftWaveShape.lineTo(x, 30 - amplitude);
+    const leftWaveStart = PADDING + 2;
+    const leftWaveEnd = LEFT_WELL_END - 2;
+    const leftWaveWidth = leftWaveEnd - leftWaveStart;
+    const leftWaveShape = new Shape().moveTo(leftWaveStart, WAVE_CENTER_Y);
+    for (let x = leftWaveStart; x <= leftWaveEnd; x += 0.5) {
+      const normalizedX = (x - leftWaveStart) / leftWaveWidth;
+      const amplitude = LEFT_WAVE_AMPLITUDE * Math.sin(normalizedX * Math.PI);
+      leftWaveShape.lineTo(x, WAVE_CENTER_Y - amplitude);
     }
 
     const leftWave = new Path(leftWaveShape, {
@@ -87,11 +114,14 @@ export class TwoWellsScreenIcon extends ScreenIcon {
     });
 
     // Right well wave function (showing tunneled state)
-    const rightWaveShape = new Shape().moveTo(45, 30);
-    for (let x = 45; x <= 63; x += 0.5) {
-      const normalizedX = (x - 45) / 18;
-      const amplitude = 6 * Math.sin(normalizedX * Math.PI);
-      rightWaveShape.lineTo(x, 30 - amplitude);
+    const rightWaveStart = RIGHT_WELL_START + 2;
+    const rightWaveEnd = ICON_WIDTH - PADDING - 2;
+    const rightWaveWidth = rightWaveEnd - rightWaveStart;
+    const rightWaveShape = new Shape().moveTo(rightWaveStart, WAVE_CENTER_Y);
+    for (let x = rightWaveStart; x <= rightWaveEnd; x += 0.5) {
+      const normalizedX = (x - rightWaveStart) / rightWaveWidth;
+      const amplitude = RIGHT_WAVE_AMPLITUDE * Math.sin(normalizedX * Math.PI);
+      rightWaveShape.lineTo(x, WAVE_CENTER_Y - amplitude);
     }
 
     const rightWave = new Path(rightWaveShape, {
@@ -101,8 +131,8 @@ export class TwoWellsScreenIcon extends ScreenIcon {
 
     // Tunneling effect - dashed line through barrier
     const tunnelShape = new Shape()
-      .moveTo(25, 26)
-      .lineTo(45, 26);
+      .moveTo(LEFT_WELL_END - 2, TUNNEL_Y)
+      .lineTo(RIGHT_WELL_START + 2, TUNNEL_Y);
 
     const tunnelEffect = new Path(tunnelShape, {
       stroke: TUNNEL_EFFECT_COLOR,
@@ -112,12 +142,12 @@ export class TwoWellsScreenIcon extends ScreenIcon {
     });
 
     // Energy levels
-    const leftEnergy = new Rectangle(8, 22, 17, 1.5, {
+    const leftEnergy = new Rectangle(LEFT_ENERGY_X, ENERGY_LEVEL_Y, ENERGY_LEVEL_WIDTH, ENERGY_LEVEL_HEIGHT, {
       fill: ENERGY_LEVEL_COLOR,
       opacity: ENERGY_LEVEL_OPACITY,
     });
 
-    const rightEnergy = new Rectangle(45, 22, 17, 1.5, {
+    const rightEnergy = new Rectangle(RIGHT_ENERGY_X, ENERGY_LEVEL_Y, ENERGY_LEVEL_WIDTH, ENERGY_LEVEL_HEIGHT, {
       fill: ENERGY_LEVEL_COLOR,
       opacity: ENERGY_LEVEL_OPACITY,
     });

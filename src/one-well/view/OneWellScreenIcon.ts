@@ -13,6 +13,22 @@ const ICON_WIDTH = 60;
 const ICON_HEIGHT = 50;
 const CORNER_RADIUS = 4;
 
+// Layout proportions
+const PADDING = 5;
+const WELL_TOP = ICON_HEIGHT * 0.2;
+const WELL_BOTTOM = ICON_HEIGHT - PADDING * 2;
+const WAVE_PADDING = PADDING + 3;
+const WAVE_CENTER_Y = ICON_HEIGHT / 2;
+const WAVE_WIDTH = ICON_WIDTH - 2 * WAVE_PADDING;
+const PROBABILITY_BASELINE = WELL_BOTTOM - 2;
+const ENERGY_LEVEL_Y = WAVE_CENTER_Y - 5;
+const ENERGY_LEVEL_WIDTH = ICON_WIDTH - 2 * WAVE_PADDING - 4;
+const ENERGY_LEVEL_HEIGHT = 2;
+
+// Wave parameters
+const WAVE_AMPLITUDE = 10;
+const PROBABILITY_AMPLITUDE = 18;
+
 // Colors
 const BACKGROUND_GRADIENT_TOP = '#1a1a3a';
 const BACKGROUND_GRADIENT_BOTTOM = '#0a0a1f';
@@ -42,10 +58,10 @@ export class OneWellScreenIcon extends ScreenIcon {
 
     // Create potential well shape (U-shaped)
     const wellShape = new Shape()
-      .moveTo(5, 10)
-      .lineTo(5, 40)
-      .lineTo(55, 40)
-      .lineTo(55, 10);
+      .moveTo(PADDING, WELL_TOP)
+      .lineTo(PADDING, WELL_BOTTOM)
+      .lineTo(ICON_WIDTH - PADDING, WELL_BOTTOM)
+      .lineTo(ICON_WIDTH - PADDING, WELL_TOP);
 
     const well = new Path(wellShape, {
       stroke: WELL_STROKE_COLOR,
@@ -53,11 +69,11 @@ export class OneWellScreenIcon extends ScreenIcon {
     });
 
     // Create wave function (sinusoidal curve)
-    const waveShape = new Shape().moveTo(8, 25);
-    for (let x = 8; x <= 52; x += 1) {
-      const normalizedX = (x - 8) / 44;
-      const amplitude = 10 * Math.sin(normalizedX * Math.PI);
-      const y = 25 - amplitude * Math.sin(normalizedX * Math.PI);
+    const waveShape = new Shape().moveTo(WAVE_PADDING, WAVE_CENTER_Y);
+    for (let x = WAVE_PADDING; x <= WAVE_PADDING + WAVE_WIDTH; x += 1) {
+      const normalizedX = (x - WAVE_PADDING) / WAVE_WIDTH;
+      const amplitude = WAVE_AMPLITUDE * Math.sin(normalizedX * Math.PI);
+      const y = WAVE_CENTER_Y - amplitude * Math.sin(normalizedX * Math.PI);
       waveShape.lineTo(x, y);
     }
 
@@ -67,20 +83,20 @@ export class OneWellScreenIcon extends ScreenIcon {
     });
 
     // Create probability density fill
-    const probabilityShape = new Shape().moveTo(8, 38);
-    for (let x = 8; x <= 52; x += 1) {
-      const normalizedX = (x - 8) / 44;
-      const amplitude = Math.pow(Math.sin(normalizedX * Math.PI), 2) * 18;
-      probabilityShape.lineTo(x, 38 - amplitude);
+    const probabilityShape = new Shape().moveTo(WAVE_PADDING, PROBABILITY_BASELINE);
+    for (let x = WAVE_PADDING; x <= WAVE_PADDING + WAVE_WIDTH; x += 1) {
+      const normalizedX = (x - WAVE_PADDING) / WAVE_WIDTH;
+      const amplitude = Math.pow(Math.sin(normalizedX * Math.PI), 2) * PROBABILITY_AMPLITUDE;
+      probabilityShape.lineTo(x, PROBABILITY_BASELINE - amplitude);
     }
-    probabilityShape.lineTo(52, 38).close();
+    probabilityShape.lineTo(WAVE_PADDING + WAVE_WIDTH, PROBABILITY_BASELINE).close();
 
     const probabilityFill = new Path(probabilityShape, {
       fill: PROBABILITY_FILL_COLOR,
     });
 
     // Energy level indicator
-    const energyLevel = new Rectangle(10, 20, 40, 2, {
+    const energyLevel = new Rectangle(WAVE_PADDING + 2, ENERGY_LEVEL_Y, ENERGY_LEVEL_WIDTH, ENERGY_LEVEL_HEIGHT, {
       fill: ENERGY_LEVEL_COLOR,
       opacity: ENERGY_LEVEL_OPACITY,
     });
