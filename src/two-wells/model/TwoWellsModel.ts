@@ -94,7 +94,7 @@ export class TwoWellsModel extends BaseModel {
     this.tunnelingProbabilityProperty = new NumberProperty(0);
 
     // Initialize superposition state
-    this.superpositionTypeProperty = new Property<SuperpositionType>(SuperpositionType.PSI_I_PSI_J);
+    this.superpositionTypeProperty = new Property<SuperpositionType>(SuperpositionType.SINGLE);
     this.superpositionConfigProperty = new Property<SuperpositionConfig>({
       type: SuperpositionType.PSI_I_PSI_J,
       amplitudes: [0.7, 0.7], // Default to equal superposition of first two states (normalized)
