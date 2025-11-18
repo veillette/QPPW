@@ -11,7 +11,7 @@
 
 import QuantumConstants from "./QuantumConstants.js";
 import { BoundStateResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
-import { Matrix, diagonalize, normalizeWavefunction, matrixToArray } from "./LinearAlgebraUtils.js";
+import { DotMatrix, diagonalize, normalizeWavefunction, matrixToArray } from "./LinearAlgebraUtils.js";
 import qppw from "../../QPPWNamespace.js";
 
 /**
@@ -44,7 +44,7 @@ export function solveDVR(
   const potentialValues: number[] = xGrid.map(potential);
 
   // Create potential energy matrix V (diagonal) using dot's Matrix
-  const V = Matrix.diagonalMatrix(potentialValues);
+  const V = DotMatrix.diagonalMatrix(potentialValues);
 
   // Construct kinetic energy matrix T using Colbert-Miller formula
   const T = createKineticEnergyMatrix(N, dx, mass);
@@ -102,11 +102,11 @@ export function solveDVR(
  * @param mass - Particle mass (kg)
  * @returns N×N kinetic energy matrix
  */
-function createKineticEnergyMatrix(N: number, dx: number, mass: number): Matrix {
+function createKineticEnergyMatrix(N: number, dx: number, mass: number): DotMatrix {
   const { HBAR } = QuantumConstants;
   const prefactor = (HBAR * HBAR) / (2 * mass * dx * dx);
 
-  const T = new Matrix(N, N);
+  const T = new DotMatrix(N, N);
   for (let i = 0; i < N; i++) {
     for (let j = 0; j < N; j++) {
       if (i === j) {

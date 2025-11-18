@@ -14,7 +14,7 @@
 import QuantumConstants from "./QuantumConstants.js";
 import { BoundStateResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
 import {
-  Matrix,
+  DotMatrix,
   diagonalize,
   normalizeWavefunctionChebyshev,
   symmetrizeMatrix,
@@ -60,7 +60,7 @@ export function solveSpectral(
   const domainScalingFactor = 2 / (domainMax - domainMin);
 
   // Compute second derivative matrix D² using dot's Matrix.times()
-  const D2 = D.times(D) as Matrix;
+  const D2 = D.times(D) as DotMatrix;
 
   // Apply domain scaling to second derivative matrix
   const scaleFactor = domainScalingFactor * domainScalingFactor;
@@ -71,7 +71,7 @@ export function solveSpectral(
   const { HBAR } = QuantumConstants;
   const kineticPrefactor = -(HBAR * HBAR) / (2 * mass);
 
-  const H = new Matrix(N, N);
+  const H = new DotMatrix(N, N);
   for (let i = 0; i < N; i++) {
     for (let j = 0; j < N; j++) {
       H.set(i, j, kineticPrefactor * D2.get(i, j));
@@ -146,7 +146,7 @@ export function solveSpectral(
  * @param N - Number of collocation points
  * @returns N×N differentiation matrix
  */
-function chebyshevDifferentiationMatrix(N: number): Matrix {
+function chebyshevDifferentiationMatrix(N: number): DotMatrix {
   // Chebyshev-Gauss-Lobatto points
   const x: number[] = [];
   for (let j = 0; j < N; j++) {
@@ -159,7 +159,7 @@ function chebyshevDifferentiationMatrix(N: number): Matrix {
   c[N - 1] = 2;
 
   // Build differentiation matrix
-  const D = new Matrix(N, N);
+  const D = new DotMatrix(N, N);
   for (let i = 0; i < N; i++) {
     for (let j = 0; j < N; j++) {
       if (i === j) {

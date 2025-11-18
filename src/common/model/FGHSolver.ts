@@ -15,7 +15,7 @@
 import QuantumConstants from "./QuantumConstants.js";
 import { BoundStateResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
 import {
-  Matrix,
+  DotMatrix,
   diagonalize,
   normalizeWavefunction,
   matrixToArray,
@@ -117,8 +117,8 @@ export function solveFGH(
  * @param V_x - Potential energy in position space
  * @returns N×N Hamiltonian matrix
  */
-function buildFGHHamiltonian(N: number, T_k: number[], V_x: number[]): Matrix {
-  const H = new Matrix(N, N);
+function buildFGHHamiltonian(N: number, T_k: number[], V_x: number[]): DotMatrix {
+  const H = new DotMatrix(N, N);
 
   // Build kinetic energy matrix by applying T_k in momentum space
   // For each basis function (column j), apply kinetic energy operator

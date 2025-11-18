@@ -21,7 +21,7 @@
 
 import QuantumConstants from "./QuantumConstants.js";
 import { BoundStateResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
-import { Matrix, diagonalize, normalizeWavefunction, matrixToArray } from "./LinearAlgebraUtils.js";
+import { DotMatrix, diagonalize, normalizeWavefunction, matrixToArray } from "./LinearAlgebraUtils.js";
 import qppw from "../../QPPWNamespace.js";
 
 /**
@@ -69,8 +69,8 @@ export function solveMatrixNumerov(
   const h2 = dx * dx;
 
   // Initialize matrices using dot's Matrix class
-  const H = new Matrix(N, N);
-  const S = new Matrix(N, N);
+  const H = new DotMatrix(N, N);
+  const S = new DotMatrix(N, N);
 
   // Construct matrices using Numerov formulation
   // The equation (after rearranging) becomes:
@@ -107,7 +107,7 @@ export function solveMatrixNumerov(
   // Transform to standard form: (S^(-1)·H)·v = λ·v
   // Use dot's Matrix.inverse() and Matrix.times()
   const Sinv = S.inverse();
-  const SinvH = Sinv.times(H) as Matrix;
+  const SinvH = Sinv.times(H) as DotMatrix;
 
   // Convert to array and diagonalize to get eigenvalues and eigenvectors
   const SinvHArray = matrixToArray(SinvH);

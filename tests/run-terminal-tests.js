@@ -6,8 +6,10 @@
  * without requiring a browser.
  *
  * Usage:
- *   npx tsx --tsconfig tsconfig.test.json tests/run-terminal-tests.js
  *   npm test
+ *   (or: npx tsx --import ./tests/browser-globals.js --tsconfig tsconfig.test.json tests/run-terminal-tests.js)
+ *
+ * Note: Browser globals are set up by the preload script (tests/browser-globals.js)
  */
 
 console.log('╔════════════════════════════════════════════════════════════╗');
