@@ -88,8 +88,10 @@ export function solveMatrixNumerov(
     H.set(i, i, (2 / h2) - (10 * factor * V[i]));
 
     // Off-diagonal terms (kinetic energy coupling)
+    // Use average potential at adjacent grid points for symmetric matrix
     if (i > 0) {
-      const offDiagValue = -(1 / h2) - (factor * V[i - 1]);
+      const avgV = (V[i - 1] + V[i]) / 2;
+      const offDiagValue = -(1 / h2) - (factor * avgV);
       H.set(i, i - 1, offDiagValue);
       H.set(i - 1, i, offDiagValue); // Symmetric
     }

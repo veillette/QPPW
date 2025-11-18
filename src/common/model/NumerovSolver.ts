@@ -190,9 +190,11 @@ export function integrateNumerovFromCenter(
   if (parity === "symmetric") {
     // Symmetric state: ψ(-x) = ψ(x)
     // At x=0: ψ'(0) = 0 (derivative must be zero for symmetry)
-    // So ψ(0) = A and ψ(dx) ≈ A (locally flat)
+    // Use Taylor expansion: ψ(dx) ≈ ψ(0) + ψ''(0)·dx²/2
+    // From Schrödinger equation: ψ'' = -k²ψ
+    // So ψ(dx) = ψ(0)·(1 - k²·dx²/2) = ψ(0)·(1 - 6f) where f = k²·dx²/12
     psi[centerIdx] = 1.0;
-    psi[centerIdx + 1] = 1.0; // Flat start since ψ'(0) = 0
+    psi[centerIdx + 1] = 1.0 * (1 - 6 * f[centerIdx]);
   } else {
     // Antisymmetric state: ψ(-x) = -ψ(x)
     // At x=0: ψ(0) = 0 (wavefunction must be zero for antisymmetry)
