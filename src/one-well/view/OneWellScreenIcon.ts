@@ -8,64 +8,97 @@ import { Shape } from "scenerystack/kite";
 import { ScreenIcon } from "scenerystack/sim";
 import QPPWColors from "../../QPPWColors.js";
 
+// Dimensions
+const ICON_WIDTH = 60;
+const ICON_HEIGHT = 50;
+const CORNER_RADIUS = 4;
+
+// Layout proportions
+const PADDING = 5;
+const WELL_TOP = ICON_HEIGHT * 0.2;
+const WELL_BOTTOM = ICON_HEIGHT - PADDING * 2;
+const WAVE_PADDING = PADDING + 3;
+const WAVE_CENTER_Y = ICON_HEIGHT / 2;
+const WAVE_WIDTH = ICON_WIDTH - 2 * WAVE_PADDING;
+const PROBABILITY_BASELINE = WELL_BOTTOM - 2;
+const ENERGY_LEVEL_Y = WAVE_CENTER_Y - 5;
+const ENERGY_LEVEL_WIDTH = ICON_WIDTH - 2 * WAVE_PADDING - 4;
+const ENERGY_LEVEL_HEIGHT = 2;
+
+// Wave parameters
+const WAVE_AMPLITUDE = 10;
+const PROBABILITY_AMPLITUDE = 18;
+
+// Colors
+const BACKGROUND_GRADIENT_TOP = '#1a1a3a';
+const BACKGROUND_GRADIENT_BOTTOM = '#0a0a1f';
+const WELL_STROKE_COLOR = '#9696c8';
+const WAVE_FUNCTION_COLOR = '#00c8ff';
+const PROBABILITY_FILL_COLOR = 'rgba(255, 200, 0, 0.4)';
+const ENERGY_LEVEL_COLOR = '#00ff96';
+
+// Line widths
+const WELL_LINE_WIDTH = 3;
+const WAVE_LINE_WIDTH = 2.5;
+
+// Opacity
+const ENERGY_LEVEL_OPACITY = 0.8;
+
 export class OneWellScreenIcon extends ScreenIcon {
   public constructor() {
-    const width = 60;
-    const height = 50;
-
     // Create background with gradient
-    const backgroundGradient = new LinearGradient(0, 0, 0, height)
-      .addColorStop(0, '#1a1a3a')
-      .addColorStop(1, '#0a0a1f');
+    const backgroundGradient = new LinearGradient(0, 0, 0, ICON_HEIGHT)
+      .addColorStop(0, BACKGROUND_GRADIENT_TOP)
+      .addColorStop(1, BACKGROUND_GRADIENT_BOTTOM);
 
-    const background = new Rectangle(0, 0, width, height, {
+    const background = new Rectangle(0, 0, ICON_WIDTH, ICON_HEIGHT, {
       fill: backgroundGradient,
-      cornerRadius: 4,
+      cornerRadius: CORNER_RADIUS,
     });
 
     // Create potential well shape (U-shaped)
     const wellShape = new Shape()
-      .moveTo(5, 10)
-      .lineTo(5, 40)
-      .lineTo(55, 40)
-      .lineTo(55, 10);
+      .moveTo(PADDING, WELL_TOP)
+      .lineTo(PADDING, WELL_BOTTOM)
+      .lineTo(ICON_WIDTH - PADDING, WELL_BOTTOM)
+      .lineTo(ICON_WIDTH - PADDING, WELL_TOP);
 
     const well = new Path(wellShape, {
-      stroke: '#9696c8',  // Light purple for well outline
-      lineWidth: 3,
+      stroke: WELL_STROKE_COLOR,
+      lineWidth: WELL_LINE_WIDTH,
     });
 
-    // Create wave function (sinusoidal curve) - bright blue
-    const waveShape = new Shape().moveTo(8, 25);
-    for (let x = 8; x <= 52; x += 1) {
-      const normalizedX = (x - 8) / 44;
-      const amplitude = 10 * Math.sin(normalizedX * Math.PI);
-      const y = 25 - amplitude * Math.sin(normalizedX * Math.PI);
+    // Create wave function (sinusoidal curve)
+    const waveShape = new Shape().moveTo(WAVE_PADDING, WAVE_CENTER_Y);
+    for (let x = WAVE_PADDING; x <= WAVE_PADDING + WAVE_WIDTH; x += 1) {
+      const normalizedX = (x - WAVE_PADDING) / WAVE_WIDTH;
+      const amplitude = WAVE_AMPLITUDE * Math.sin(normalizedX * Math.PI);
+      const y = WAVE_CENTER_Y - amplitude * Math.sin(normalizedX * Math.PI);
       waveShape.lineTo(x, y);
     }
 
     const waveFunction = new Path(waveShape, {
-      stroke: '#00c8ff',  // Bright cyan/blue
-      lineWidth: 2.5,
+      stroke: WAVE_FUNCTION_COLOR,
+      lineWidth: WAVE_LINE_WIDTH,
     });
 
-    // Create probability density fill (semi-transparent gold)
-    const probabilityShape = new Shape().moveTo(8, 38);
-    for (let x = 8; x <= 52; x += 1) {
-      const normalizedX = (x - 8) / 44;
-      const amplitude = Math.pow(Math.sin(normalizedX * Math.PI), 2) * 18;
-      probabilityShape.lineTo(x, 38 - amplitude);
+    // Create probability density fill
+    const probabilityShape = new Shape().moveTo(WAVE_PADDING, PROBABILITY_BASELINE);
+    for (let x = WAVE_PADDING; x <= WAVE_PADDING + WAVE_WIDTH; x += 1) {
+      const normalizedX = (x - WAVE_PADDING) / WAVE_WIDTH;
+      const amplitude = Math.pow(Math.sin(normalizedX * Math.PI), 2) * PROBABILITY_AMPLITUDE;
+      probabilityShape.lineTo(x, PROBABILITY_BASELINE - amplitude);
     }
-    probabilityShape.lineTo(52, 38).close();
+    probabilityShape.lineTo(WAVE_PADDING + WAVE_WIDTH, PROBABILITY_BASELINE).close();
 
     const probabilityFill = new Path(probabilityShape, {
-      fill: 'rgba(255, 200, 0, 0.4)',  // Semi-transparent gold
+      fill: PROBABILITY_FILL_COLOR,
     });
 
-    // Energy level indicator (bright green horizontal line)
-    const energyLevel = new Rectangle(10, 20, 40, 2, {
-      fill: '#00ff96',  // Bright green
-      opacity: 0.8,
+    // Energy level indicator
+    const energyLevel = new Rectangle(WAVE_PADDING + 2, ENERGY_LEVEL_Y, ENERGY_LEVEL_WIDTH, ENERGY_LEVEL_HEIGHT, {
+      fill: ENERGY_LEVEL_COLOR,
+      opacity: ENERGY_LEVEL_OPACITY,
     });
 
     const iconNode = new Node({
