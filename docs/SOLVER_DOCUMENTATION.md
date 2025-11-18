@@ -26,7 +26,7 @@ For arbitrary potentials, five numerical methods are available:
 - Higher-order finite-difference method with $O(h^6)$ error
 - Uses shooting method to find bound states
 - Iterative formula:
-  $$\psi_{j+1} = \frac{(12 - 10f_j)\psi_j - (1+f_{j-1})\psi_{j-1}}{1+f_{j+1}}$$
+  $$\psi_{j+1} = \frac{(2 - 10f_j)\psi_j - (1+f_{j-1})\psi_{j-1}}{1+f_{j+1}}$$
   where $f_j = \frac{h^2}{12}k^2(x_j)$ and $k^2(x) = \frac{2m(E-V(x))}{\hbar^2}$
 
 #### 2. Matrix Numerov Method
