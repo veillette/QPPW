@@ -679,6 +679,25 @@ export class EnergyChartNode extends Node {
   }
 
   /**
+   * Updates just the styling (hover/selection state) of existing energy levels without recalculating positions.
+   */
+  private updateEnergyLevelStyling(): void {
+    this.energyLevelNodes.forEach((line, index) => {
+      const isSelected = index === this.model.selectedEnergyLevelIndexProperty.value;
+      const isHovered = index === this.hoveredEnergyLevelIndex;
+
+      line.stroke = isSelected ? QPPWColors.energyLevelSelectedProperty : QPPWColors.energyLevelProperty;
+      line.lineWidth = isSelected ? 4 : (isHovered ? 3 : 2);
+      line.opacity = isHovered ? 1 : 0.7;
+    });
+
+    this.energyLabelNodes.forEach((label, index) => {
+      const isHovered = index === this.hoveredEnergyLevelIndex;
+      label.visible = isHovered;
+    });
+  }
+
+  /**
    * Updates the energy level lines.
    */
   private updateEnergyLevels(boundStates: BoundStateResult): void {
@@ -728,11 +747,11 @@ export class EnergyChartNode extends Node {
         },
         enter: () => {
           this.hoveredEnergyLevelIndex = index;
-          this.updateEnergyLevels(boundStates);
+          this.updateEnergyLevelStyling();
         },
         exit: () => {
           this.hoveredEnergyLevelIndex = null;
-          this.updateEnergyLevels(boundStates);
+          this.updateEnergyLevelStyling();
         },
       });
 
@@ -801,7 +820,7 @@ export class EnergyChartNode extends Node {
   private updateSelection(): void {
     const boundStates = this.model.getBoundStates();
     if (boundStates) {
-      this.updateEnergyLevels(boundStates);
+      this.updateEnergyLevelStyling();
       this.updateTotalEnergyLine(boundStates);
     }
   }
