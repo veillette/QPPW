@@ -358,7 +358,6 @@ function findEnergyNearEstimate(
 
   let prevSign = 0;
   let prevEnergy = energyMin;
-  let signChangesFound = 0;
 
   // Track shooting values for debugging
   const shootingValues: number[] = [];
@@ -376,7 +375,6 @@ function findEnergyNearEstimate(
 
     // Detect sign change
     if (prevSign !== 0 && currentSign !== 0 && currentSign !== prevSign) {
-      signChangesFound++;
 
       // Refine using bisection
       const refinedEnergy = refineEnergy(

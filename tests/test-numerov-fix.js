@@ -24,7 +24,9 @@ try {
     writable: true,
     configurable: true
   });
-} catch {}
+} catch {
+  // Ignore error if navigator is already defined
+}
 
 globalThis.document = {
   createElement: () => ({ getContext: () => null, style: {}, setAttribute: () => {}, appendChild: () => {} }),
@@ -280,11 +282,13 @@ async function runTests() {
     console.log('\n✓ All tests passed! Numerov solver fixes are working correctly.');
   } else {
     console.log('\n✗ Some tests failed. Please review the results above.');
+    // eslint-disable-next-line no-undef
     process.exit(1);
   }
 }
 
 runTests().catch(err => {
   console.error('Test error:', err);
+  // eslint-disable-next-line no-undef
   process.exit(1);
 });

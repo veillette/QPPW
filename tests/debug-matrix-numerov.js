@@ -15,7 +15,9 @@ try {
     value: { userAgent: 'node', platform: 'node', language: 'en-US' },
     writable: true, configurable: true
   });
-} catch {}
+} catch {
+  // Ignore error if navigator is already defined
+}
 globalThis.document = {
   createElement: () => ({ getContext: () => null, style: {}, setAttribute: () => {}, appendChild: () => {} }),
   body: { appendChild: () => {} }, documentElement: { style: {} },
