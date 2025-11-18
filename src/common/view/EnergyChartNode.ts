@@ -213,23 +213,46 @@ export class EnergyChartNode extends Node {
       }
     }
 
-    // Y-axis using bamboo AxisLine
+    // Y-axis at left edge using bamboo AxisLine (at model x=-4nm)
+    const yAxisLeftNode = new AxisLine(this.chartTransform, Orientation.VERTICAL, {
+      stroke: QPPWColors.axisProperty,
+      lineWidth: 2,
+      value: this.xMinProperty.value,
+    });
+    yAxisLeftNode.x = this.chartMargins.left;
+    yAxisLeftNode.y = this.chartMargins.top;
+    axesNode.addChild(yAxisLeftNode);
+
+    // Y-axis at origin using bamboo AxisLine (at model x=0)
     const yAxisNode = new AxisLine(this.chartTransform, Orientation.VERTICAL, {
       stroke: QPPWColors.axisProperty,
       lineWidth: 2,
+      value: 0,
+      opacity: 0.3,
     });
     yAxisNode.x = this.chartMargins.left;
     yAxisNode.y = this.chartMargins.top;
     axesNode.addChild(yAxisNode);
 
-    // X-axis using bamboo AxisLine
+    // X-axis using bamboo AxisLine (at model y=0)
     const xAxisNode = new AxisLine(this.chartTransform, Orientation.HORIZONTAL, {
       stroke: QPPWColors.axisProperty,
       lineWidth: 2,
+      value: 0,
     });
     xAxisNode.x = this.chartMargins.left;
-    xAxisNode.y = this.chartMargins.top + this.plotHeight;
+    xAxisNode.y = this.chartMargins.top;
     axesNode.addChild(xAxisNode);
+
+    // X-axis at bottom using bamboo AxisLine (at model y=yMin)
+    const xAxisBottomNode = new AxisLine(this.chartTransform, Orientation.HORIZONTAL, {
+      stroke: QPPWColors.axisProperty,
+      lineWidth: 2,
+      value: this.yMinProperty.value,
+    });
+    xAxisBottomNode.x = this.chartMargins.left;
+    xAxisBottomNode.y = this.chartMargins.top;
+    axesNode.addChild(xAxisBottomNode);
 
     // Y-axis tick marks using bamboo TickMarkSet
     const yTickMarksNode = new TickMarkSet(this.chartTransform, Orientation.VERTICAL, 5, {
@@ -244,7 +267,7 @@ export class EnergyChartNode extends Node {
 
     // X-axis tick marks using bamboo TickMarkSet
     const xTickMarksNode = new TickMarkSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
-      edge: "min",
+      edge: "max",
       extent: 8,
       stroke: QPPWColors.axisProperty,
       lineWidth: 1,
@@ -267,7 +290,7 @@ export class EnergyChartNode extends Node {
 
     // X-axis tick labels using bamboo TickLabelSet
     const xTickLabelsNode = new TickLabelSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
-      edge: "min",
+      edge: "max",
       createLabel: (value: number) => new Text(value.toFixed(0), {
         font: new PhetFont(12),
         fill: QPPWColors.labelFillProperty,
