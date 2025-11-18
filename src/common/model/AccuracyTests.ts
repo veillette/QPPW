@@ -13,8 +13,7 @@
 
 import { solveDVR } from "./DVRSolver.js";
 import { solveSpectral } from "./SpectralSolver.js";
-// Note: MatrixNumerov currently has numerical issues with the generalized eigenvalue problem
-// import { solveMatrixNumerov } from "./MatrixNumerovSolver.js";
+import { solveMatrixNumerov } from "./MatrixNumerovSolver.js";
 import { solveFGH } from "./FGHSolver.js";
 import { solveHarmonicOscillator } from "./analytical-solutions/harmonic-oscillator.js";
 import { solveFiniteSquareWell } from "./analytical-solutions/finite-square-well.js";
@@ -145,8 +144,7 @@ function testHarmonicOscillatorComprehensive(): TestResult[] {
     // Test all methods - Harmonic oscillator should be very accurate (0.1% tolerance)
     results.push(testMethod("DVR", solveDVR, potential, analytical, mass, numStates, gridConfig, `Harmonic Oscillator (N=${numPoints})`, 0.1));
     results.push(testMethod("Spectral", solveSpectral, potential, analytical, mass, numStates, gridConfig, `Harmonic Oscillator (N=${numPoints})`, 0.1));
-    // Note: MatrixNumerov currently has numerical issues with the generalized eigenvalue problem
-    // results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, numStates, gridConfig, `Harmonic Oscillator (N=${numPoints})`, 0.1));
+    results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, numStates, gridConfig, `Harmonic Oscillator (N=${numPoints})`, 0.1));
 
     // FGH requires power of 2
     if (isPowerOfTwo(numPoints)) {
@@ -198,8 +196,7 @@ function testFiniteSquareWellsComprehensive(): TestResult[] {
 
         // Finite wells should achieve 0.5% accuracy despite discontinuities
         results.push(testMethod("DVR", solveDVR, potential, analytical, mass, numStates, gridConfig, testName, 0.5));
-        // Note: MatrixNumerov currently has numerical issues with the generalized eigenvalue problem
-        // results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, numStates, gridConfig, testName, 0.5));
+        results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, numStates, gridConfig, testName, 0.5));
 
         // FGH for power-of-2 grids
         if (isPowerOfTwo(numPoints)) {
@@ -243,8 +240,7 @@ function testCoulomb3DComprehensive(): TestResult[] {
 
     // Coulomb potential has singularity, but should still achieve 1% accuracy
     results.push(testMethod("DVR", solveDVR, potential, analytical, mass, numStates, gridConfig, testName, 1.0));
-    // Note: MatrixNumerov currently has numerical issues with the generalized eigenvalue problem
-    // results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, numStates, gridConfig, testName, 1.0));
+    results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, numStates, gridConfig, testName, 1.0));
 
     if (isPowerOfTwo(numPoints)) {
       results.push(testMethod("FGH", solveFGH, potential, analytical, mass, numStates, gridConfig, testName, 1.0));
@@ -437,11 +433,10 @@ function testDoubleSquareWellsComprehensive(): TestResult[] {
         const reference = solveDVR(potential, mass, numStates, gridConfig);
 
         // Test other methods against DVR (with timing) - methods should agree within 1%
-        // Note: MatrixNumerov currently has numerical issues with the generalized eigenvalue problem
-        // const numerovStart = performance.now();
-        // const numerovResult = solveMatrixNumerov(potential, mass, numStates, gridConfig);
-        // const numerovTime = performance.now() - numerovStart;
-        // results.push(compareResults("MatrixNumerov", numerovResult, reference, testName, 1.0, numerovTime));
+        const numerovStart = performance.now();
+        const numerovResult = solveMatrixNumerov(potential, mass, numStates, gridConfig);
+        const numerovTime = performance.now() - numerovStart;
+        results.push(compareResults("MatrixNumerov", numerovResult, reference, testName, 1.0, numerovTime));
 
         if (isPowerOfTwo(numPoints)) {
           const fghStart = performance.now();
@@ -634,8 +629,7 @@ export function runQuickAccuracyCheck(): void {
   const analytical = solveHarmonicOscillator(springConstant, mass, 10, gridConfig);
 
   results.push(testMethod("DVR", solveDVR, potential, analytical, mass, 10, gridConfig, "Harmonic Oscillator", 0.1));
-  // Note: MatrixNumerov currently has numerical issues with the generalized eigenvalue problem
-  // results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, 10, gridConfig, "Harmonic Oscillator", 0.1));
+  results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, 10, gridConfig, "Harmonic Oscillator", 0.1));
 
   // 2. Finite square well (using simulation-realistic values)
   const wellWidth = 1e-9;
