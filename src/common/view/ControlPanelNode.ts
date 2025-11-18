@@ -169,6 +169,14 @@ export class ControlPanelNode extends Node {
           }),
       },
       {
+        value: PotentialType.TRIANGULAR,
+        createNode: () =>
+          new Text(stringManager.triangularStringProperty, {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
+      },
+      {
         value: PotentialType.COULOMB_1D,
         createNode: () =>
           new Text(stringManager.coulomb1DStringProperty, {
@@ -680,6 +688,45 @@ export class ControlPanelNode extends Node {
       });
     }
 
+    // Potential Offset slider (only for triangular potential)
+    const offsetValueText = new Text("", {
+      font: new PhetFont(12),
+      fill: QPPWColors.textFillProperty,
+    });
+
+    let offsetRow: Node | null = null;
+    if ("potentialOffsetProperty" in this.model) {
+      const oneWellModel = this.model as OneWellModel;
+
+      oneWellModel.potentialOffsetProperty.link((offset: number) => {
+        offsetValueText.string = `${offset.toFixed(2)} eV`;
+      });
+
+      const offsetSlider = new HSlider(
+        oneWellModel.potentialOffsetProperty,
+        oneWellModel.potentialOffsetProperty.range!,
+        {
+          trackSize: new Dimension2(150, 4),
+          thumbSize: new Dimension2(15, 30),
+        },
+      );
+
+      offsetRow = new VBox({
+        spacing: 4,
+        align: "left",
+        children: [
+          new Text(stringManager.potentialOffsetStringProperty, {
+            font: new PhetFont(12),
+            fill: QPPWColors.textFillProperty,
+          }),
+          new HBox({
+            spacing: 10,
+            children: [offsetSlider, offsetValueText],
+          }),
+        ],
+      });
+    }
+
     // Well Separation slider (only for double square well)
     const separationValueText = new Text("", {
       font: new PhetFont(12),
@@ -739,6 +786,7 @@ export class ControlPanelNode extends Node {
         type === PotentialType.ROSEN_MORSE ||
         type === PotentialType.ECKART ||
         type === PotentialType.ASYMMETRIC_TRIANGLE ||
+        type === PotentialType.TRIANGULAR ||
         type === PotentialType.DOUBLE_SQUARE_WELL;
       depthRow.visible = needsDepth;
     });
@@ -753,6 +801,14 @@ export class ControlPanelNode extends Node {
       });
     }
 
+    // Enable/disable offset slider based on potential type (only for triangular potential)
+    if (offsetRow) {
+      this.model.potentialTypeProperty.link((type) => {
+        const needsOffset = type === PotentialType.TRIANGULAR;
+        offsetRow!.visible = needsOffset;
+      });
+    }
+
     // Enable/disable separation slider based on potential type (only for double square well)
     if (separationRow) {
       this.model.potentialTypeProperty.link((type) => {
@@ -764,6 +820,9 @@ export class ControlPanelNode extends Node {
     const children: Node[] = [titleText, widthRow, depthRow];
     if (barrierHeightRow) {
       children.push(barrierHeightRow);
+    }
+    if (offsetRow) {
+      children.push(offsetRow);
     }
     if (separationRow) {
       children.push(separationRow);

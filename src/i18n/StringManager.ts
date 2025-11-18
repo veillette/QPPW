@@ -37,6 +37,7 @@ export class StringManager {
   public readonly doubleWellStringProperty: StringProperty;
   public readonly barrierHeightStringProperty: StringProperty;
   public readonly barrierWidthStringProperty: StringProperty;
+  public readonly potentialOffsetStringProperty: StringProperty;
   public readonly tunnelingStringProperty: StringProperty;
   public readonly wellSeparationStringProperty: StringProperty;
 
@@ -83,6 +84,7 @@ export class StringManager {
   public readonly rosenMorseStringProperty: StringProperty;
   public readonly eckartStringProperty: StringProperty;
   public readonly asymmetricTriangleStringProperty: StringProperty;
+  public readonly triangularStringProperty: StringProperty;
   public readonly coulomb1DStringProperty: StringProperty;
   public readonly coulomb3DStringProperty: StringProperty;
   public readonly doubleSquareWellStringProperty: StringProperty;
@@ -193,6 +195,7 @@ export class StringManager {
     this.doubleWellStringProperty = new StringProperty("Double Well");
     this.barrierHeightStringProperty = new StringProperty("Barrier Height");
     this.barrierWidthStringProperty = new StringProperty("Barrier Width");
+    this.potentialOffsetStringProperty = new StringProperty("Potential Offset");
     this.tunnelingStringProperty = new StringProperty("Tunneling");
     this.wellSeparationStringProperty = new StringProperty("Well Separation");
 
@@ -239,6 +242,7 @@ export class StringManager {
     this.rosenMorseStringProperty = new StringProperty("Rosen-Morse");
     this.eckartStringProperty = new StringProperty("Eckart");
     this.asymmetricTriangleStringProperty = new StringProperty("Asymmetric Triangle");
+    this.triangularStringProperty = new StringProperty("Triangular");
     this.coulomb1DStringProperty = new StringProperty("1D Coulomb");
     this.coulomb3DStringProperty = new StringProperty("3D Coulomb");
     this.doubleSquareWellStringProperty = new StringProperty("Double Square Well");

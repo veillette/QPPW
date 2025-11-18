@@ -33,6 +33,9 @@ function getEnergyAxisRange(potentialType: PotentialType): { min: number; max: n
     case PotentialType.ASYMMETRIC_TRIANGLE:
       // Special case: V=10eV at infinity, V=0 at x=0
       return { min: -5, max: 15 };
+    case PotentialType.TRIANGULAR:
+      // Triangular well: offset can be -5 to 15 eV, height adds to that
+      return { min: -5, max: 15 };
     case PotentialType.INFINITE_WELL:
       // V=0 inside well (centered at x=0), V=∞ outside (displayed as 15 eV)
       return { min: -5, max: 15 };
@@ -524,6 +527,44 @@ export class EnergyChartNode extends Node {
           shape.lineTo(viewX, viewY);
         }
       }
+    } else if (potentialType === PotentialType.TRIANGULAR) {
+      // Draw triangular potential (finite well version):
+      // V(x) = height + offset for x < 0
+      // V(x) = offset at x = 0
+      // V(x) = offset + (height/width) * x for 0 < x < width
+      // V(x) = height + offset for x > width
+
+      // Get the offset from potentialOffsetProperty (OneWellModel only)
+      const offset = "potentialOffsetProperty" in this.model
+        ? (this.model as OneWellModel).potentialOffsetProperty.value
+        : 0;
+      const height = wellDepth;
+      const barrierTop = height + offset;
+      const slope = height / wellWidth; // eV/nm
+
+      const yBarrier = this.dataToViewY(barrierTop);
+      const yOffset = this.dataToViewY(offset);
+
+      // Left region (x < 0): horizontal line at height + offset
+      shape.moveTo(this.chartMargins.left, yBarrier);
+      shape.lineTo(this.dataToViewX(0), yBarrier);
+
+      // Drop to offset at x = 0
+      shape.lineTo(this.dataToViewX(0), yOffset);
+
+      // Linear region (0 < x < width): V = offset + slope * x
+      const numPoints = 50;
+      for (let i = 1; i <= numPoints; i++) {
+        const x = (wellWidth * i / numPoints);
+        const V = offset + slope * x;
+        const viewX = this.dataToViewX(x);
+        const viewY = this.dataToViewY(V);
+        shape.lineTo(viewX, viewY);
+      }
+
+      // At x = width, we should be back at height + offset
+      // Then continue as horizontal line to the right
+      shape.lineTo(this.chartWidth - this.chartMargins.right, yBarrier);
     } else if (potentialType === PotentialType.COULOMB_1D || potentialType === PotentialType.COULOMB_3D) {
       // Draw Coulomb potential: V(x) = -k/|x| where k is determined by wellDepth
       // V→0 as x→∞, V→-wellDepth at some characteristic distance
