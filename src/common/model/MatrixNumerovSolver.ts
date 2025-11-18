@@ -73,35 +73,40 @@ export function solveMatrixNumerov(
   const S = new DotMatrix(N, N);
 
   // Construct matrices using Numerov formulation
-  // The equation (after rearranging) becomes:
+  // From Numerov formula: ψ_{i-1} - 2ψ_i + ψ_{i+1} = (h²/12)[f_{i-1}ψ_{i-1} + 10f_iψ_i + f_{i+1}ψ_{i+1}]
+  // where f_i = (2m/ℏ²)(E - V_i)
   //
-  // [1 + h²/12·2m/ℏ²·V_{i-1}]·ψ_{i-1} - [2 - 10h²/12·2m/ℏ²·V_i]·ψ_i + [1 + h²/12·2m/ℏ²·V_{i+1}]·ψ_{i+1}
-  //   = E·h²·2m/ℏ²·[ψ_{i-1}/12 + 10ψ_i/12 + ψ_{i+1}/12]
-  //
-  // This gives us H·ψ = E·S·ψ where:
+  // After dividing by h² and rearranging:
+  // H·ψ = E·S·ψ where:
+  // - H contains kinetic (1/h²) and potential terms
+  // - S contains overlap corrections (no h² factor!)
 
-  const factor = (h2 / 12) * coeff;
+  // Factor for H matrix potential terms (includes h²)
+  const hFactor = (h2 / 12) * coeff;
+  // Factor for S matrix overlap terms (no h²!)
+  const sFactor = coeff / 12;
 
   for (let i = 0; i < N; i++) {
     // Hamiltonian matrix H (kinetic + potential energy)
-    // Diagonal term
-    H.set(i, i, (2 / h2) - (10 * factor * V[i]));
+    // Diagonal term: 2/h² - (10h²/12)(2m/ℏ²)V_i
+    H.set(i, i, (2 / h2) - (10 * hFactor * V[i]));
 
     // Off-diagonal terms (kinetic energy coupling)
     // Use average potential at adjacent grid points for symmetric matrix
     if (i > 0) {
       const avgV = (V[i - 1] + V[i]) / 2;
-      const offDiagValue = -(1 / h2) - (factor * avgV);
+      const offDiagValue = -(1 / h2) - (hFactor * avgV);
       H.set(i, i - 1, offDiagValue);
       H.set(i - 1, i, offDiagValue); // Symmetric
     }
 
     // Overlap matrix S (Numerov correction terms)
-    S.set(i, i, 10 * factor);
+    // S_ii = (10/12)(2m/ℏ²), S_ij = (1/12)(2m/ℏ²)
+    S.set(i, i, 10 * sFactor);
 
     if (i > 0) {
-      S.set(i, i - 1, factor);
-      S.set(i - 1, i, factor); // Symmetric
+      S.set(i, i - 1, sFactor);
+      S.set(i - 1, i, sFactor); // Symmetric
     }
   }
 
