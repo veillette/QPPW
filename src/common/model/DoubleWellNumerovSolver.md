@@ -161,7 +161,7 @@ where k²(x) = 2m(E - V(x))/ℏ²
 is integrated using the Numerov formula:
 
 ```
-ψ_{j+1} = [(12 - 10f_j)ψ_j - (1+f_{j-1})ψ_{j-1}] / (1+f_{j+1})
+ψ_{j+1} = [(2 - 10f_j)ψ_j - (1+f_{j-1})ψ_{j-1}] / (1+f_{j+1})
 where f_j = (h²/12) k²(x_j)
 ```
 

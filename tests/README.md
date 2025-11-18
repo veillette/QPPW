@@ -17,8 +17,9 @@ The test directory has been simplified to include only essential files:
 The comprehensive test suite (`AccuracyTests.ts`) validates all numerical methods (DVR, Spectral, Matrix Numerov, and FGH) against analytical solutions across multiple potential types and grid sizes:
 
 ### 1. Harmonic Oscillator
-- Tests across grid sizes: 100, 150, 200, 256 points
-- All 4 methods tested
+- Tests across grid sizes: 64, 128, 256, 512 points
+- All 4 methods tested (DVR, Spectral, Matrix Numerov, FGH)
+- Tests first 10 energy levels
 - **0.1% error tolerance**
 
 ### 2. Finite Square Wells
@@ -27,14 +28,14 @@ The comprehensive test suite (`AccuracyTests.ts`) validates all numerical method
   - Deep well: 1nm width, 50eV depth
   - Wide shallow well: 2nm width, 10eV depth
   - Narrow medium well: 0.5nm width, 30eV depth
-- Grid sizes: 150, 200 points
-- DVR, Matrix Numerov, and FGH methods
+- Grid sizes: 64, 128, 256, 512 points (powers of 2)
+- All 4 methods tested (DVR, Spectral, Matrix Numerov, FGH)
 - **0.5% error tolerance**
 
 ### 3. 3D Coulomb Potential (Hydrogen Atom)
-- Tests the radial Schrödinger equation for s-waves
-- Grid sizes: 150, 200, 256 points
-- DVR, Matrix Numerov, and FGH methods
+- Tests the radial Schrödinger equation for s-waves (L=0)
+- Grid sizes: 64, 128, 256, 512 points (powers of 2)
+- All 4 methods tested (DVR, Spectral, Matrix Numerov, FGH)
 - **1.0% error tolerance**
 
 ### 4. Double Square Wells
@@ -42,7 +43,7 @@ The comprehensive test suite (`AccuracyTests.ts`) validates all numerical method
   - Symmetric, low barrier: 0.5nm wells, 0.3nm barrier, 30eV depth, 10eV barrier
   - Symmetric, medium barrier: 0.5nm wells, 0.5nm barrier, 40eV depth, 20eV barrier
   - Wide wells, low barrier: 0.6nm wells, 0.4nm barrier, 35eV depth, 5eV barrier
-- Grid sizes: 200, 256 points
+- Grid sizes: 64, 128, 256, 512 points (powers of 2)
 - Methods compared against DVR as reference
 - **1.0% error tolerance**
 
@@ -99,7 +100,7 @@ Useful during active development.
    npm start
    ```
 
-2. **Open your browser** and navigate to the local server URL (usually `http://localhost:8080`)
+2. **Open your browser** and navigate to the local server URL (usually `http://localhost:5173`)
 
 3. **Open browser console** (F12 or Cmd+Option+I) and run:
    ```javascript
