@@ -40,6 +40,21 @@ const QuantumConstants = {
    * Meters to nanometer conversion
    */
   M_TO_NM: 1e9,
+
+  /**
+   * Bohr radius in meters (atomic unit of length)
+   */
+  BOHR_RADIUS: 5.29177210903e-11,
+
+  /**
+   * Hartree energy in Joules (atomic unit of energy)
+   */
+  HARTREE_TO_JOULES: 4.3597447222071e-18,
+
+  /**
+   * Joules to Hartree conversion
+   */
+  JOULES_TO_HARTREE: 1.0 / 4.3597447222071e-18,
 } as const;
 
 qppw.register("QuantumConstants", QuantumConstants);

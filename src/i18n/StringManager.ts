@@ -61,6 +61,8 @@ export class StringManager {
   public readonly fghDescriptionStringProperty: StringProperty;
   public readonly spectralStringProperty: StringProperty;
   public readonly spectralDescriptionStringProperty: StringProperty;
+  public readonly quantumBoundStringProperty: StringProperty;
+  public readonly quantumBoundDescriptionStringProperty: StringProperty;
   public readonly autoPauseWhenTabHiddenStringProperty: StringProperty;
   public readonly autoPauseDescriptionStringProperty: StringProperty;
   public readonly gridPointsStringProperty: StringProperty;
@@ -219,6 +221,8 @@ export class StringManager {
     this.fghDescriptionStringProperty = new StringProperty("Plane wave basis method - natural for periodic systems with spectral accuracy");
     this.spectralStringProperty = new StringProperty("Spectral (Chebyshev)");
     this.spectralDescriptionStringProperty = new StringProperty("Chebyshev polynomial method - exponential convergence for smooth functions");
+    this.quantumBoundStringProperty = new StringProperty("Quantum Bound State");
+    this.quantumBoundDescriptionStringProperty = new StringProperty("Advanced shooting method with adaptive energy bracketing and secant refinement");
     this.autoPauseWhenTabHiddenStringProperty = new StringProperty("Auto-pause when tab is hidden");
     this.autoPauseDescriptionStringProperty = new StringProperty("Automatically pause the simulation when the browser tab is not visible");
     this.gridPointsStringProperty = new StringProperty("Grid Points");
@@ -442,6 +446,7 @@ export class StringManager {
       dvrStringProperty: this.dvrStringProperty,
       fghStringProperty: this.fghStringProperty,
       spectralStringProperty: this.spectralStringProperty,
+      quantumBoundStringProperty: this.quantumBoundStringProperty,
     };
   }
 
@@ -455,6 +460,7 @@ export class StringManager {
       dvrStringProperty: this.dvrDescriptionStringProperty,
       fghStringProperty: this.fghDescriptionStringProperty,
       spectralStringProperty: this.spectralDescriptionStringProperty,
+      quantumBoundStringProperty: this.quantumBoundDescriptionStringProperty,
     };
   }
 }
