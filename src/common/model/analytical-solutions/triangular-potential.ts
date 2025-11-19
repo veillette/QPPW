@@ -15,6 +15,13 @@
 import QuantumConstants from "../QuantumConstants.js";
 import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
 import { airyAi, airyBi, airyAiPrime, airyBiPrime } from "./math-utilities.js";
+import {
+  calculateAiryAlpha,
+  generateGrid,
+  normalizeWavefunction,
+  applySignConvention,
+  refineBisection,
+} from "./airy-utilities.js";
 
 /**
  * Analytical solution for the finite triangular potential well.
@@ -43,23 +50,21 @@ export function solveTriangularPotential(
   // Barrier height (maximum potential)
   const V0 = height + offset;
 
-  // Scaling parameter for Airy functions: α = (2mF/ℏ²)^(1/3)
-  const alpha = Math.pow((2 * mass * F) / (HBAR * HBAR), 1 / 3);
+  // Scaling parameter for Airy functions
+  const alpha = calculateAiryAlpha(mass, F);
 
   // Find bound state energies by solving transcendental equation
   const energies: number[] = [];
 
   // Energy must be between offset (minimum) and V0 (barrier height)
-  // Search for eigenvalues in this range
-  const Emin = offset + 1e-6 * Math.abs(height); // Just above the well bottom
-  const Emax = V0 - 1e-6 * Math.abs(height); // Just below the barrier
+  const Emin = offset + 1e-6 * Math.abs(height);
+  const Emax = V0 - 1e-6 * Math.abs(height);
 
   // Number of search points for initial bracketing
   const numSearchPoints = 1000;
   const dE = (Emax - Emin) / numSearchPoints;
 
   // Function to evaluate the transcendental equation
-  // Returns zero when E is an eigenvalue
   const transcendentalFunction = (E: number): number => {
     // Decay constant in barrier regions
     const kappa = Math.sqrt(2 * mass * (V0 - E)) / HBAR;
@@ -68,26 +73,22 @@ export function solveTriangularPotential(
     const x0 = (E - offset) / F;
 
     // Airy function arguments at boundaries
-    const z0 = alpha * (0 - x0); // at x = 0
-    const zW = alpha * (width - x0); // at x = width
+    const z0 = alpha * (0 - x0);
+    const zW = alpha * (width - x0);
 
-    // Evaluate Airy functions
+    // Evaluate Airy functions and derivatives
     const Ai0 = airyAi(z0);
     const Bi0 = airyBi(z0);
     const AiW = airyAi(zW);
     const BiW = airyBi(zW);
-
-    // Evaluate Airy function derivatives
     const AiPrime0 = airyAiPrime(z0);
     const BiPrime0 = airyBiPrime(z0);
     const AiPrimeW = airyAiPrime(zW);
     const BiPrimeW = airyBiPrime(zW);
 
-    // Left boundary matching coefficients
+    // Boundary matching coefficients
     const leftAi = kappa * Ai0 - alpha * AiPrime0;
     const leftBi = kappa * Bi0 - alpha * BiPrime0;
-
-    // Right boundary matching coefficients
     const rightAi = kappa * AiW + alpha * AiPrimeW;
     const rightBi = kappa * BiW + alpha * BiPrimeW;
 
@@ -104,13 +105,11 @@ export function solveTriangularPotential(
     const currF = transcendentalFunction(E);
 
     if (prevF * currF < 0) {
-      // Sign change detected - bracket found
       brackets.push([E - dE, E]);
     }
 
     prevF = currF;
 
-    // Stop if we have enough brackets
     if (brackets.length >= numStates * 2) {
       break;
     }
@@ -128,13 +127,12 @@ export function solveTriangularPotential(
     }
   }
 
-  // Sort energies (should already be sorted, but ensure it)
+  // Sort energies
   energies.sort((a, b) => a - b);
 
   const actualNumStates = energies.length;
 
   if (actualNumStates === 0) {
-    // No bound states found
     return {
       energies: [],
       wavefunctions: [],
@@ -144,19 +142,13 @@ export function solveTriangularPotential(
   }
 
   // Generate grid
-  const numPoints = gridConfig.numPoints;
-  const xGrid: number[] = [];
-  const dx = (gridConfig.xMax - gridConfig.xMin) / (numPoints - 1);
-  for (let i = 0; i < numPoints; i++) {
-    xGrid.push(gridConfig.xMin + i * dx);
-  }
+  const { xGrid, dx } = generateGrid(gridConfig);
 
   // Calculate wavefunctions
   const wavefunctions: number[][] = [];
 
   for (let n = 0; n < actualNumStates; n++) {
     const E = energies[n];
-    const wavefunction: number[] = [];
 
     // Decay constant
     const kappa = Math.sqrt(2 * mass * (V0 - E)) / HBAR;
@@ -168,14 +160,13 @@ export function solveTriangularPotential(
     const z0 = alpha * (0 - x0);
     const zW = alpha * (width - x0);
 
-    // Get Airy functions at left boundary to determine A/B ratio
+    // Get Airy functions at left boundary
     const Ai0 = airyAi(z0);
     const Bi0 = airyBi(z0);
     const AiPrime0 = airyAiPrime(z0);
     const BiPrime0 = airyBiPrime(z0);
 
-    // From left boundary matching:
-    // A/B = -(kappa * Bi0 - alpha * BiPrime0) / (kappa * Ai0 - alpha * AiPrime0)
+    // Boundary matching coefficients
     const leftAi = kappa * Ai0 - alpha * AiPrime0;
     const leftBi = kappa * Bi0 - alpha * BiPrime0;
 
@@ -187,8 +178,7 @@ export function solveTriangularPotential(
     const rightAi = kappa * AiW + alpha * AiPrimeW;
     const rightBi = kappa * BiW + alpha * BiPrimeW;
 
-    // Choose normalization based on which boundary gives better numerical stability
-    // Use the boundary condition with larger magnitude to avoid division by small numbers
+    // Choose normalization based on numerical stability
     let A: number, B: number;
     if (Math.abs(leftAi) > Math.abs(rightAi) && Math.abs(leftAi) > 1e-10) {
       B = 1;
@@ -197,7 +187,6 @@ export function solveTriangularPotential(
       B = 1;
       A = -rightBi / rightAi;
     } else {
-      // Fallback: use simple ratio
       B = 1;
       A = Math.abs(leftAi) > 1e-15 ? -leftBi / leftAi : 0;
     }
@@ -205,75 +194,54 @@ export function solveTriangularPotential(
     // Compute unnormalized wavefunction
     const psiRaw: number[] = [];
 
+    // Compute wavefunction at x=0 for left region
+    const psiAt0 = A * Ai0 + B * Bi0;
+
+    // For the finite triangular well, Bi(z) grows exponentially for z > 0.
+    // The classical turning point is at x0 where z = 0.
+    // For x > x0 (classically forbidden in linear region), we're in the
+    // exponentially decaying part of the Airy solution.
+    //
+    // Key insight: Only use Airy functions where they're well-behaved (z < some limit).
+    // For large positive z, switch to WKB/exponential approximation.
+
+    // Maximum z value where Airy functions are numerically stable
+    // Bi(z) ~ exp(2/3 * z^(3/2)) / sqrt(pi * z^(1/2)) for large z
+    // Keep z below ~5 to avoid overflow
+    const zMax = 5.0;
+
     for (const x of xGrid) {
       let psi: number;
 
       if (x < 0) {
         // Region I: exponential decay to the left
-        // ψ = C * exp(κx)
-        // C is determined by continuity at x = 0
-        const psiAt0 = A * Ai0 + B * Bi0;
         psi = psiAt0 * Math.exp(kappa * x);
-      } else if (x <= width) {
-        // Region II: linear potential - Airy functions
-        // ψ = A * Ai(z) + B * Bi(z)
-        const z = alpha * (x - x0);
-        psi = A * airyAi(z) + B * airyBi(z);
+      } else if (x >= width) {
+        // Region III: exponential decay to the right (barrier region)
+        // Use value at classical turning point and decay from there
+        const psiAtX0 = A * airyAi(0) + B * airyBi(0);
+        psi = psiAtX0 * Math.exp(-kappa * (x - x0));
       } else {
-        // Region III: exponential decay to the right
-        // ψ = D * exp(-κ(x - width))
-        // D is determined by continuity at x = width
-        const psiAtW = A * AiW + B * BiW;
+        // Region II: linear potential
+        const z = alpha * (x - x0);
 
-        // For numerical stability, ensure the decay is smooth
-        // If psiAtW is anomalously large due to Bi overflow, use the value
-        // just inside the linear region as reference
-        const distanceFromWidth = x - width;
-        if (Math.abs(psiAtW) > 1e6) {
-          // Evaluate wavefunction just before the boundary
-          const xNearW = width - 1e-12;
-          const zNear = alpha * (xNearW - x0);
-          const psiNearW = A * airyAi(zNear) + B * airyBi(zNear);
-          psi = psiNearW * Math.exp(-kappa * distanceFromWidth);
+        if (z < zMax) {
+          // Safe to use Airy functions
+          psi = A * airyAi(z) + B * airyBi(z);
         } else {
-          psi = psiAtW * Math.exp(-kappa * distanceFromWidth);
+          // z is too large, use exponential decay from the point where z = zMax
+          const xTransition = x0 + zMax / alpha;
+          const psiTransition = A * airyAi(zMax) + B * airyBi(zMax);
+          psi = psiTransition * Math.exp(-kappa * (x - xTransition));
         }
       }
 
       psiRaw.push(psi);
     }
 
-    // Normalize wavefunction
-    let normSq = 0;
-    for (const psi of psiRaw) {
-      normSq += psi * psi * dx;
-    }
-    const norm = 1 / Math.sqrt(normSq);
-
-    for (const psi of psiRaw) {
-      wavefunction.push(norm * psi);
-    }
-
-    // Ensure consistent sign convention (positive at first antinode)
-    // Find the maximum absolute value and check its sign
-    let maxAbsIndex = 0;
-    let maxAbsValue = 0;
-    for (let i = 0; i < wavefunction.length; i++) {
-      if (Math.abs(wavefunction[i]) > maxAbsValue) {
-        maxAbsValue = Math.abs(wavefunction[i]);
-        maxAbsIndex = i;
-      }
-    }
-
-    // For ground state (n=0), ensure it's positive
-    // For excited states, use alternating convention based on state index
-    const shouldBePositive = n % 2 === 0;
-    if ((wavefunction[maxAbsIndex] > 0) !== shouldBePositive) {
-      for (let i = 0; i < wavefunction.length; i++) {
-        wavefunction[i] = -wavefunction[i];
-      }
-    }
-
+    // Normalize and apply sign convention
+    const normalizedPsi = normalizeWavefunction(psiRaw, dx);
+    const wavefunction = applySignConvention(normalizedPsi, n);
     wavefunctions.push(wavefunction);
   }
 
@@ -283,41 +251,4 @@ export function solveTriangularPotential(
     xGrid,
     method: "analytical",
   };
-}
-
-/**
- * Refine a root using bisection method.
- */
-function refineBisection(
-  f: (x: number) => number,
-  a: number,
-  b: number,
-  tolerance: number,
-  maxIterations: number
-): number | null {
-  let fa = f(a);
-  let fb = f(b);
-
-  if (fa * fb > 0) {
-    return null; // No sign change
-  }
-
-  for (let iter = 0; iter < maxIterations; iter++) {
-    const c = (a + b) / 2;
-    const fc = f(c);
-
-    if (Math.abs(fc) < tolerance || (b - a) / 2 < tolerance) {
-      return c;
-    }
-
-    if (fa * fc < 0) {
-      b = c;
-      fb = fc;
-    } else {
-      a = c;
-      fa = fc;
-    }
-  }
-
-  return (a + b) / 2;
 }

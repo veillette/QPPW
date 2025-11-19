@@ -122,7 +122,7 @@ export function logGamma(x: number): number {
  * Ai(x) is the solution to y'' - xy = 0 that decays exponentially for large positive x.
  */
 export function airyAi(x: number): number {
-  const ABS_X_THRESHOLD = 3.0;
+  const ABS_X_THRESHOLD = 5.0;
 
   if (Math.abs(x) < ABS_X_THRESHOLD) {
     // Series expansion for small |x|
@@ -133,7 +133,7 @@ export function airyAi(x: number): number {
 
     let term1 = 1.0;
     let sum1 = 1.0;
-    for (let k = 1; k <= 20; k++) {
+    for (let k = 1; k <= 30; k++) {
       term1 *= (x * x * x) / ((3 * k - 1) * (3 * k));
       sum1 += term1;
       if (Math.abs(term1) < 1e-15) break;
@@ -141,7 +141,7 @@ export function airyAi(x: number): number {
 
     let term2 = x;
     let sum2 = x;
-    for (let k = 1; k <= 20; k++) {
+    for (let k = 1; k <= 30; k++) {
       term2 *= (x * x * x) / ((3 * k) * (3 * k + 1));
       sum2 += term2;
       if (Math.abs(term2) < 1e-15) break;
@@ -149,12 +149,18 @@ export function airyAi(x: number): number {
 
     return c1 * sum1 - c2 * sum2;
   } else if (x > 0) {
-    // Asymptotic expansion for large positive x
-    // Ai(x) ≈ (1/(2√π)) * x^(-1/4) * exp(-ζ) * (1 - ...)
+    // Asymptotic expansion for large positive x with higher-order corrections
+    // Ai(x) ≈ (1/(2√π)) * x^(-1/4) * exp(-ζ) * (1 - c₁/ζ + c₂/ζ² - ...)
     // where ζ = (2/3) * x^(3/2)
     const zeta = (2.0 / 3.0) * Math.pow(x, 1.5);
     const factor = 0.5 / Math.sqrt(Math.PI) * Math.pow(x, -0.25);
-    return factor * Math.exp(-zeta);
+
+    // Asymptotic series coefficients: cₖ = Γ(3k + 1/2) / (54^k * k! * Γ(k + 1/2))
+    // First few: c₁ = 5/72, c₂ = 385/10368
+    const invZeta = 1.0 / zeta;
+    const correction = 1.0 - (5.0 / 72.0) * invZeta + (385.0 / 10368.0) * invZeta * invZeta;
+
+    return factor * Math.exp(-zeta) * correction;
   } else {
     // Asymptotic expansion for large negative x
     // Ai(x) ≈ (1/√π) * |x|^(-1/4) * sin(ζ + π/4)
@@ -169,10 +175,10 @@ export function airyAi(x: number): number {
 /**
  * Airy function Bi(x) using series expansion for small |x| and asymptotic form for large |x|.
  * Bi(x) is the solution to y'' - xy = 0 that grows exponentially for large positive x.
- * Note: Currently unused but available for future use with different boundary conditions.
+ * Used by the triangular potential solver for finite barrier boundary conditions.
  */
 export function airyBi(x: number): number {
-  const ABS_X_THRESHOLD = 3.0;
+  const ABS_X_THRESHOLD = 5.0;
 
   if (Math.abs(x) < ABS_X_THRESHOLD) {
     // Series expansion for small |x|
@@ -183,7 +189,7 @@ export function airyBi(x: number): number {
 
     let term1 = 1.0;
     let sum1 = 1.0;
-    for (let k = 1; k <= 20; k++) {
+    for (let k = 1; k <= 30; k++) {
       term1 *= (x * x * x) / ((3 * k - 1) * (3 * k));
       sum1 += term1;
       if (Math.abs(term1) < 1e-15) break;
@@ -191,7 +197,7 @@ export function airyBi(x: number): number {
 
     let term2 = x;
     let sum2 = x;
-    for (let k = 1; k <= 20; k++) {
+    for (let k = 1; k <= 30; k++) {
       term2 *= (x * x * x) / ((3 * k) * (3 * k + 1));
       sum2 += term2;
       if (Math.abs(term2) < 1e-15) break;
@@ -199,12 +205,18 @@ export function airyBi(x: number): number {
 
     return c3 * sum1 + c4 * sum2;
   } else if (x > 0) {
-    // Asymptotic expansion for large positive x
-    // Bi(x) ≈ (1/√π) * x^(-1/4) * exp(ζ)
+    // Asymptotic expansion for large positive x with higher-order corrections
+    // Bi(x) ≈ (1/√π) * x^(-1/4) * exp(ζ) * (1 + c₁/ζ + c₂/ζ² + ...)
     // where ζ = (2/3) * x^(3/2)
     const zeta = (2.0 / 3.0) * Math.pow(x, 1.5);
     const factor = 1.0 / Math.sqrt(Math.PI) * Math.pow(x, -0.25);
-    return factor * Math.exp(zeta);
+
+    // Asymptotic series coefficients (same as Ai but with + signs)
+    // First few: c₁ = 5/72, c₂ = 385/10368
+    const invZeta = 1.0 / zeta;
+    const correction = 1.0 + (5.0 / 72.0) * invZeta + (385.0 / 10368.0) * invZeta * invZeta;
+
+    return factor * Math.exp(zeta) * correction;
   } else {
     // Asymptotic expansion for large negative x
     // Bi(x) ≈ (1/√π) * |x|^(-1/4) * cos(ζ + π/4)
@@ -218,7 +230,7 @@ export function airyBi(x: number): number {
 
 /**
  * Derivative of Airy function Ai'(x) using numerical differentiation.
- * Note: Currently unused but available for future boundary condition matching.
+ * Used by the triangular potential solver for boundary condition matching.
  */
 export function airyAiPrime(x: number): number {
   const h = 1e-6;
@@ -227,7 +239,7 @@ export function airyAiPrime(x: number): number {
 
 /**
  * Derivative of Airy function Bi'(x) using numerical differentiation.
- * Note: Currently unused but available for future boundary condition matching.
+ * Used by the triangular potential solver for boundary condition matching.
  */
 export function airyBiPrime(x: number): number {
   const h = 1e-6;
