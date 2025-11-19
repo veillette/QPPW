@@ -160,55 +160,92 @@ export function solveTriangularPotential(
     const z0 = alpha * (0 - x0);
     const zW = alpha * (width - x0);
 
-    // Get Airy functions at left boundary
+    // Get Airy functions at left boundary (z0 is typically negative for bound states)
     const Ai0 = airyAi(z0);
     const Bi0 = airyBi(z0);
     const AiPrime0 = airyAiPrime(z0);
     const BiPrime0 = airyBiPrime(z0);
 
-    // Boundary matching coefficients
+    // Boundary matching at x=0 (left boundary)
+    // ψ must match exponential decay: ψ = C*exp(κx) for x<0
+    // Continuity: A*Ai(z0) + B*Bi(z0) = C
+    // Derivative continuity: α*(A*Ai'(z0) + B*Bi'(z0)) = κ*C
+    // This gives: κ*(A*Ai0 + B*Bi0) = α*(A*Ai'0 + B*Bi'0)
+    // Rearranging: A*(κ*Ai0 - α*Ai'0) = -B*(κ*Bi0 - α*Bi'0)
     const leftAi = kappa * Ai0 - alpha * AiPrime0;
     const leftBi = kappa * Bi0 - alpha * BiPrime0;
 
-    // Get Airy functions at right boundary
-    const AiW = airyAi(zW);
-    const BiW = airyBi(zW);
-    const AiPrimeW = airyAiPrime(zW);
-    const BiPrimeW = airyBiPrime(zW);
-    const rightAi = kappa * AiW + alpha * AiPrimeW;
-    const rightBi = kappa * BiW + alpha * BiPrimeW;
+    // For numerical stability, compute A/B ratio from left boundary
+    // A/B = -leftBi / leftAi
+    // But we need to be careful: for bound states, both boundary conditions
+    // should give the same ratio. Use the one that's more stable.
 
-    // Choose normalization based on numerical stability
+    // Compute coefficients using left boundary condition
+    // Normalize so that |A|² + |B|² = 1 for better numerical behavior
     let A: number, B: number;
-    if (Math.abs(leftAi) > Math.abs(rightAi) && Math.abs(leftAi) > 1e-10) {
-      B = 1;
-      A = -leftBi / leftAi;
-    } else if (Math.abs(rightAi) > 1e-10) {
-      B = 1;
-      A = -rightBi / rightAi;
+
+    if (Math.abs(leftAi) > 1e-12) {
+      const ratio = -leftBi / leftAi;  // A/B
+      // Normalize: A = ratio/sqrt(1 + ratio²), B = 1/sqrt(1 + ratio²)
+      const normFactor = 1.0 / Math.sqrt(1.0 + ratio * ratio);
+      A = ratio * normFactor;
+      B = normFactor;
+    } else if (Math.abs(leftBi) > 1e-12) {
+      // leftAi ≈ 0 means A can be anything, use B/A ratio instead
+      const ratio = -leftAi / leftBi;  // B/A
+      const normFactor = 1.0 / Math.sqrt(1.0 + ratio * ratio);
+      A = normFactor;
+      B = ratio * normFactor;
     } else {
-      B = 1;
-      A = Math.abs(leftAi) > 1e-15 ? -leftBi / leftAi : 0;
+      // Both are small - use default
+      A = 1;
+      B = 0;
+    }
+
+    // Verify the solution doesn't blow up by checking the ratio A*Ai + B*Bi
+    // at a point where z is moderately positive (but not too large)
+    const zTest = Math.min(zW, 3.0);  // Test at z=3 or zW, whichever is smaller
+    if (zTest > 0) {
+      const AiTest = airyAi(zTest);
+      const BiTest = airyBi(zTest);
+      const psiTest = A * AiTest + B * BiTest;
+
+      // If the wavefunction is already blowing up at z=3,
+      // the coefficient ratio needs adjustment
+      // For true bound state, |ψ| should be decaying, not growing
+      if (Math.abs(psiTest) > 100 * Math.abs(A * Ai0 + B * Bi0)) {
+        // Coefficients are causing blow-up, try to minimize Bi contribution
+        // Use the asymptotic behavior: for decay, we need mostly Ai
+        A = 1;
+        B = -A * airyAi(zTest) / airyBi(zTest);
+        // Re-normalize
+        const norm = Math.sqrt(A * A + B * B);
+        A /= norm;
+        B /= norm;
+      }
     }
 
     // Compute unnormalized wavefunction
+    //
+    // Key insight: In the classically forbidden region (x > x0), the physical
+    // solution must decay. The combination A*Ai + B*Bi should produce this decay,
+    // but numerical errors cause Bi to dominate and blow up.
+    //
+    // Solution: For x > x0 (positive z), use only the decaying Ai solution
+    // and match amplitude at the classical turning point z=0.
     const psiRaw: number[] = [];
 
     // Compute wavefunction at x=0 for left region
     const psiAt0 = A * Ai0 + B * Bi0;
 
-    // For the finite triangular well, Bi(z) grows exponentially for z > 0.
-    // The classical turning point is at x0 where z = 0.
-    // For x > x0 (classically forbidden in linear region), we're in the
-    // exponentially decaying part of the Airy solution.
-    //
-    // Key insight: Only use Airy functions where they're well-behaved (z < some limit).
-    // For large positive z, switch to WKB/exponential approximation.
+    // Value at classical turning point (z=0)
+    const psiAtX0 = A * airyAi(0) + B * airyBi(0);
 
-    // Maximum z value where Airy functions are numerically stable
-    // Bi(z) ~ exp(2/3 * z^(3/2)) / sqrt(pi * z^(1/2)) for large z
-    // Keep z below ~5 to avoid overflow
-    const zMax = 5.0;
+    // For the forbidden region, we use WKB-like decay
+    // The local wavevector in the linear potential is:
+    // k(x) = sqrt(2m(V(x)-E)/ℏ²) = sqrt(2m*F*(x-x0)/ℏ²) = alpha^(3/2) * sqrt(x-x0)
+    // WKB: ψ ~ exp(-∫k dx) = exp(-2/3 * alpha^(3/2) * (x-x0)^(3/2))
+    // This matches the asymptotic form of Ai(z) for large z
 
     for (const x of xGrid) {
       let psi: number;
@@ -216,24 +253,51 @@ export function solveTriangularPotential(
       if (x < 0) {
         // Region I: exponential decay to the left
         psi = psiAt0 * Math.exp(kappa * x);
-      } else if (x >= width) {
-        // Region III: exponential decay to the right (barrier region)
-        // Use value at classical turning point and decay from there
-        const psiAtX0 = A * airyAi(0) + B * airyBi(0);
-        psi = psiAtX0 * Math.exp(-kappa * (x - x0));
-      } else {
-        // Region II: linear potential
-        const z = alpha * (x - x0);
+      } else if (x <= x0) {
+        // Region II-a: classically allowed region (0 <= x <= x0)
+        // Use full Airy combination here where both are well-behaved
+        const z = alpha * (x - x0);  // z <= 0 here
+        psi = A * airyAi(z) + B * airyBi(z);
+      } else if (x < width) {
+        // Region II-b: classically forbidden within linear potential (x0 < x < width)
+        // Use WKB/asymptotic decay to avoid Bi blow-up
+        const z = alpha * (x - x0);  // z > 0 here
 
-        if (z < zMax) {
-          // Safe to use Airy functions
-          psi = A * airyAi(z) + B * airyBi(z);
+        // Use Ai-only with amplitude matched at turning point
+        // Ai(z) for large z ~ exp(-2/3 * z^(3/2)) / (2*sqrt(pi)*z^(1/4))
+        // But for moderate z, use actual Ai
+        if (z < 4.0) {
+          // For small positive z, Ai is still accurate
+          // Scale to match amplitude at turning point
+          const aiAtZ = airyAi(z);
+          const aiAt0 = airyAi(0);
+          psi = psiAtX0 * (aiAtZ / aiAt0);
         } else {
-          // z is too large, use exponential decay from the point where z = zMax
-          const xTransition = x0 + zMax / alpha;
-          const psiTransition = A * airyAi(zMax) + B * airyBi(zMax);
-          psi = psiTransition * Math.exp(-kappa * (x - xTransition));
+          // For larger z, use asymptotic form of Ai
+          const zeta = (2.0 / 3.0) * Math.pow(z, 1.5);
+          const aiAt0 = airyAi(0);
+          // Ai(z)/Ai(0) ~ (1/(2*sqrt(pi)*z^(1/4))) * exp(-zeta) / Ai(0)
+          const ratio = (1.0 / (2.0 * Math.sqrt(Math.PI) * Math.pow(z, 0.25))) * Math.exp(-zeta) / aiAt0;
+          psi = psiAtX0 * ratio;
         }
+      } else {
+        // Region III: exponential decay in right barrier (x >= width)
+        // Continue exponential decay from end of linear region
+        const zAtWidth = alpha * (width - x0);
+        let psiAtWidth: number;
+
+        if (zAtWidth < 4.0) {
+          const aiAtWidth = airyAi(zAtWidth);
+          const aiAt0 = airyAi(0);
+          psiAtWidth = psiAtX0 * (aiAtWidth / aiAt0);
+        } else {
+          const zeta = (2.0 / 3.0) * Math.pow(zAtWidth, 1.5);
+          const aiAt0 = airyAi(0);
+          const ratio = (1.0 / (2.0 * Math.sqrt(Math.PI) * Math.pow(zAtWidth, 0.25))) * Math.exp(-zeta) / aiAt0;
+          psiAtWidth = psiAtX0 * ratio;
+        }
+
+        psi = psiAtWidth * Math.exp(-kappa * (x - width));
       }
 
       psiRaw.push(psi);
