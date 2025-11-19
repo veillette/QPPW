@@ -73,9 +73,13 @@ export function solveCoulomb1DPotential(
       const absX = Math.abs(x);
       const rho = 2 * absX / a_n;
 
-      // Wavefunction: ψ(x) = N * exp(-ρ/2) * L_n^1(ρ)
+      // Wavefunction: ψ(x) = sign(x) * N * exp(-ρ/2) * L_n^1(ρ)
+      // ODD parity: ψ(-x) = -ψ(x), which matches the energy formula E_n = -E_R/(n+1/2)²
       const laguerre = associatedLaguerre(n, 1, rho);
-      const value = normalization * Math.exp(-rho / 2) * laguerre;
+      const radialPart = normalization * Math.exp(-rho / 2) * laguerre;
+
+      // Apply sign(x) for odd parity (ψ(0) = 0)
+      const value = x >= 0 ? radialPart : -radialPart;
 
       wavefunction.push(value);
     }

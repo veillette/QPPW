@@ -156,16 +156,30 @@ for (let state = 0; state < 3; state++) {
   console.log(`  n=${state}: ∫|ψ_${state}|²dx = ${integral.toFixed(4)}`);
 }
 
-// Check symmetry (1D Coulomb should produce even wavefunctions for all bound states)
-console.log('\nSymmetry check (even parity expected):');
+// Check symmetry - 1D Coulomb with E_n = -E_R/(n+1/2)² should have ODD parity
+console.log('\nParity check:');
+console.log('  Energy formula E_n = -E_R/(n+1/2)² is for ODD-parity states');
+console.log('  (wavefunctions should satisfy ψ(-x) = -ψ(x))');
+console.log('');
 for (let state = 0; state < 3; state++) {
   const wf = result1D.wavefunctions[state];
   const midIdx = Math.floor(wf.length / 2);
-  // Check ψ(-x) = ψ(x)
-  const leftVal = wf[midIdx - 100];
-  const rightVal = wf[midIdx + 100];
-  const symmetryError = Math.abs(leftVal - rightVal) / Math.max(Math.abs(leftVal), Math.abs(rightVal)) * 100;
-  console.log(`  n=${state}: |ψ(-x) - ψ(x)|/|ψ| at |x|≈${(Math.abs(result1D.xGrid[midIdx+100])*1e10).toFixed(1)}Å: ${symmetryError.toFixed(2)}%`);
+  const offset = 50;
+  const leftVal = wf[midIdx - offset];  // ψ(-x)
+  const rightVal = wf[midIdx + offset]; // ψ(x)
+
+  // Check if even: ψ(-x) = ψ(x)
+  const evenError = Math.abs(leftVal - rightVal);
+  // Check if odd: ψ(-x) = -ψ(x)
+  const oddError = Math.abs(leftVal + rightVal);
+
+  const isEven = evenError < oddError;
+  const parity = isEven ? 'EVEN' : 'ODD';
+  const expected = 'ODD';
+  const correct = parity === expected;
+
+  console.log(`  n=${state}: ψ(-x) = ${leftVal.toExponential(3)}, ψ(x) = ${rightVal.toExponential(3)}`);
+  console.log(`        Parity: ${parity} (expected ${expected}) ${correct ? '✓' : '✗ INCORRECT'}`);
 }
 
 // ===================================================================
