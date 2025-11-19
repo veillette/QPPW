@@ -82,26 +82,52 @@ export function jacobiPolynomial(n: number, alpha: number, beta: number, x: numb
 }
 
 /**
- * Gamma function approximation using Stirling's formula for large n
- * and direct calculation for small n.
+ * Gamma function using Lanczos approximation for high accuracy.
+ * This provides ~15 digits of precision for positive real arguments.
  */
 export function gamma(n: number): number {
-  // For integer or half-integer values
-  if (n === Math.floor(n)) {
-    // Integer
-    return factorial(n - 1);
-  } else if (n - 0.5 === Math.floor(n - 0.5)) {
-    // Half-integer: Γ(n+1/2) = sqrt(π) * (2n)! / (4^n * n!)
-    const k = n - 0.5;
-    return Math.sqrt(Math.PI) * factorial(2 * k) / (Math.pow(4, k) * factorial(k));
-  } else {
-    // Use Stirling's approximation: Γ(n) ≈ sqrt(2π/n) * (n/e)^n
-    return Math.sqrt(2 * Math.PI / n) * Math.pow(n / Math.E, n);
+  // Handle special cases
+  if (n <= 0 && n === Math.floor(n)) {
+    return Infinity; // Poles at non-positive integers
   }
+
+  // For small positive integers, use factorial
+  if (n === Math.floor(n) && n > 0 && n <= 20) {
+    return factorial(n - 1);
+  }
+
+  // Lanczos approximation coefficients (g=7, n=9)
+  const g = 7;
+  const coefficients = [
+    0.99999999999980993,
+    676.5203681218851,
+    -1259.1392167224028,
+    771.32342877765313,
+    -176.61502916214059,
+    12.507343278686905,
+    -0.13857109526572012,
+    9.9843695780195716e-6,
+    1.5056327351493116e-7
+  ];
+
+  // Use reflection formula for n < 0.5
+  if (n < 0.5) {
+    return Math.PI / (Math.sin(Math.PI * n) * gamma(1 - n));
+  }
+
+  const x = n - 1;
+  let a = coefficients[0];
+  for (let i = 1; i < coefficients.length; i++) {
+    a += coefficients[i] / (x + i);
+  }
+
+  const t = x + g + 0.5;
+  return Math.sqrt(2 * Math.PI) * Math.pow(t, x + 0.5) * Math.exp(-t) * a;
 }
 
 /**
  * Log-gamma function for better numerical stability.
+ * Uses Stirling's series with Bernoulli number corrections for high accuracy.
  */
 export function logGamma(x: number): number {
   if (x <= 0) {
@@ -113,8 +139,33 @@ export function logGamma(x: number): number {
     return Math.log(factorial(x - 1));
   }
 
-  // Stirling's approximation: log(Γ(x)) ≈ (x-0.5)*log(x) - x + 0.5*log(2π)
-  return (x - 0.5) * Math.log(x) - x + 0.5 * Math.log(2 * Math.PI);
+  // For small x, use recurrence relation to shift to larger values
+  // logGamma(x) = logGamma(x+1) - log(x)
+  if (x < 7) {
+    return logGamma(x + 1) - Math.log(x);
+  }
+
+  // Stirling's series with Bernoulli number corrections:
+  // log(Γ(x)) ≈ (x-0.5)*log(x) - x + 0.5*log(2π) + Σ B_{2k}/(2k(2k-1)x^{2k-1})
+  // Bernoulli coefficients: B_2/2 = 1/12, B_4/12 = -1/360, B_6/30 = 1/1260, etc.
+  const x2 = x * x;
+  const x4 = x2 * x2;
+  const x6 = x4 * x2;
+  const x8 = x6 * x2;
+  const x10 = x8 * x2;
+  const x12 = x10 * x2;
+
+  // Coefficients from Bernoulli numbers: B_{2k}/(2k*(2k-1))
+  const correction =
+    1 / (12 * x) -                    // B_2/(1*2) = 1/12
+    1 / (360 * x2 * x) +              // B_4/(3*4) = -1/360
+    1 / (1260 * x4 * x) -             // B_6/(5*6) = 1/1260
+    1 / (1680 * x6 * x) +             // B_8/(7*8) = -1/1680
+    1 / (1188 * x8 * x) -             // B_10/(9*10) = 1/1188 (approx 5/5940)
+    691 / (360360 * x10 * x) +        // B_12/(11*12) = -691/360360
+    1 / (156 * x12 * x);              // B_14/(13*14) = 1/156 (approx 7/1092)
+
+  return (x - 0.5) * Math.log(x) - x + 0.5 * Math.log(2 * Math.PI) + correction;
 }
 
 /**
