@@ -328,22 +328,15 @@ export class OneWellModel extends BaseModel {
           potentialParams.wellWidth = wellWidth; // width in meters
           potentialParams.energyOffset = this.potentialOffsetProperty.value * QuantumConstants.EV_TO_JOULES; // offset in Joules
           break;
-        case PotentialType.COULOMB_1D: {
-          // For 1D Coulomb potential: E_0 = -2mα²/ℏ² = -13.6 eV
-          // Solving for α: α = √(13.6 eV * ℏ² / (2m))
-          const groundStateEnergy = 13.6 * QuantumConstants.EV_TO_JOULES; // -13.6 eV in Joules
-          potentialParams.coulombStrength = Math.sqrt(
-            (groundStateEnergy * QuantumConstants.HBAR * QuantumConstants.HBAR) / (2 * mass)
-          );
-          break;
-        }
+        case PotentialType.COULOMB_1D:
         case PotentialType.COULOMB_3D: {
-          // For 3D Coulomb potential (hydrogen): E_1 = -mα²/(2ℏ²) = -13.6 eV
-          // Solving for α: α = √(2ℏ² * 13.6 eV / m)
-          const groundStateEnergy = 13.6 * QuantumConstants.EV_TO_JOULES; // -13.6 eV in Joules
-          potentialParams.coulombStrength = Math.sqrt(
-            (2 * QuantumConstants.HBAR * QuantumConstants.HBAR * groundStateEnergy) / mass
-          );
+          // For Coulomb potentials, use coulombStrength parameter α = k*e²
+          // where k = 1/(4πε₀) ≈ 8.9875517923e9 N·m²/C²
+          // α ≈ 2.307e-28 J·m for electron charge
+          // Energy then scales naturally with mass: E_n = -mα²/(2ℏ²n²)
+          // With electron mass, this gives E_1 = -13.6 eV
+          const coulombConstant = 8.9875517923e9; // Coulomb's constant in N·m²/C²
+          potentialParams.coulombStrength = coulombConstant * QuantumConstants.ELEMENTARY_CHARGE * QuantumConstants.ELEMENTARY_CHARGE;
           break;
         }
         default:
