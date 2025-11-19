@@ -56,7 +56,7 @@ console.log('Energy eigenvalues (3D Hydrogen, L=0):');
 console.log('  n  | Computed (eV)  | Expected (eV)  | Error (%)');
 console.log('-----+----------------+----------------+----------');
 
-let energyErrors3D = [];
+const energyErrors3D = [];
 for (let i = 0; i < 5; i++) {
   const n = i + 1;
   const computedEV = result3D.energies[i] / E_CHARGE;
@@ -132,7 +132,7 @@ console.log('Energy eigenvalues (1D Coulomb):');
 console.log('  n  | Computed (eV)   | Expected (eV)   | Error (%)');
 console.log('-----+-----------------+-----------------+----------');
 
-let energyErrors1D = [];
+const energyErrors1D = [];
 for (let i = 0; i < 5; i++) {
   const computedEV = result1D.energies[i] / E_CHARGE;
   const expectedEV = expected1DEnergies[i] / E_CHARGE;
