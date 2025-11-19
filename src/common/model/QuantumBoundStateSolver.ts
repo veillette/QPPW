@@ -112,6 +112,23 @@ export class QuantumSolverException extends Error {
   }
 }
 
+/**
+ * Exception thrown when attempting to find a bound state that doesn't exist
+ * (energy exceeds maximum potential)
+ */
+export class InvalidBoundStateException extends Error {
+  constructor(
+    message: string,
+    public readonly stateNumber: number,
+    public readonly energy: number,
+    public readonly maxPotential: number
+  ) {
+    super(message);
+    this.name = 'InvalidBoundStateException';
+    Object.setPrototypeOf(this, InvalidBoundStateException.prototype);
+  }
+}
+
 // ============================================================================
 // Main Solver Class
 // ============================================================================
@@ -145,6 +162,9 @@ export class QuantumBoundStateSolver {
 
   // Cached node transition energies for efficient multi-state solving
   private nodeTransitionEnergies: number[] | null = null;
+
+  // Cached maximum potential for bound state validation
+  private readonly maxPotential: number;
 
   /**
    * Constructor for the Enhanced Quantum Bound State Solver
@@ -186,6 +206,9 @@ export class QuantumBoundStateSolver {
     this.gridPositions = this.calculateGridPositions(xMin, xMax, numPoints);
     this.potentialEnergies = this.calculatePotentialOnGrid();
 
+    // Cache maximum potential for bound state validation
+    this.maxPotential = Math.max(...this.potentialEnergies);
+
     // Initialize caches
     this.cache = new Map();
     this.numerovFactorCache = new Map();
@@ -210,6 +233,16 @@ export class QuantumBoundStateSolver {
 
     // Find energy
     const energy = this.findEnergyEigenvalue(desiredNodes);
+
+    // Validate that this is a true bound state (energy must be below maximum potential)
+    if (energy >= this.maxPotential) {
+      throw new InvalidBoundStateException(
+        `State ${n} with energy ${energy} is not a bound state: energy exceeds maximum potential ${this.maxPotential}`,
+        n,
+        energy,
+        this.maxPotential
+      );
+    }
 
     // Calculate wavefunction
     const waveFunction = this.calculateNormalizedWaveFunction(energy);
@@ -243,16 +276,32 @@ export class QuantumBoundStateSolver {
   }
 
   /**
-   * Finds multiple eigenstates efficiently
+   * Finds multiple eigenstates efficiently.
+   * Stops when bound states are exhausted (energy exceeds maximum potential).
    */
   public findMultipleEigenstates(nStates: number): QuantumState[] {
     const states: QuantumState[] = [];
 
     for (let n = 1; n <= nStates; n++) {
-      states.push(this.findEigenstate(n));
+      try {
+        states.push(this.findEigenstate(n));
+      } catch (error) {
+        // Stop when we've exhausted all bound states
+        if (error instanceof InvalidBoundStateException) {
+          break;
+        }
+        throw error;
+      }
     }
 
     return states;
+  }
+
+  /**
+   * Returns the maximum potential energy (useful for determining bound state limit)
+   */
+  public getMaxPotential(): number {
+    return this.maxPotential;
   }
 
   /**
@@ -1137,7 +1186,8 @@ qppw.register("QuantumBoundStateSolver", {
   QuantumBoundStateSolver,
   solveQuantumBound,
   createAtomicUnitsSolver,
-  QuantumSolverException
+  QuantumSolverException,
+  InvalidBoundStateException
 });
 
 export default QuantumBoundStateSolver;
