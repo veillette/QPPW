@@ -34,7 +34,7 @@ const ENERGY_BRACKET_MULTIPLIER = 2.0;   // Factor for expanding energy search
 
 // Boundary condition constants
 const BOUNDARY_PSI_INITIAL = 0.0;        // psi(boundary) = 0
-const BOUNDARY_PSI_DERIVATIVE = 1e-10;   // Small initial derivative
+const BOUNDARY_PSI_DERIVATIVE = 1.0;     // Initial derivative (will be normalized)
 
 // Performance constants
 const CACHE_SIZE_LIMIT = 100;
@@ -314,26 +314,58 @@ export class QuantumBoundStateSolver {
    */
   private findEnergyBounds(desiredNodes: number): { lowerBound: number; upperBound: number } {
     const boxLength = this.gridPositions[this.gridPoints - 1] - this.gridPositions[0];
+
+    // Get potential range to determine appropriate energy bounds
+    const minPotential = Math.min(...this.potentialEnergies);
+    const maxPotential = Math.max(...this.potentialEnergies);
+
+    // Particle in box estimate (for positive energy states)
     const particleInBoxEstimate = this.hbarSquaredOver2m * Math.PI * Math.PI *
                                   (desiredNodes + 1) * (desiredNodes + 1) /
                                   (boxLength * boxLength);
 
-    // Find upper bound (too many nodes)
-    let upperBound = particleInBoxEstimate * INITIAL_ENERGY_SCALING;
+    // Determine if we're looking for negative energy states (finite well type)
+    // For a finite well with V = -V0 inside and V = 0 outside,
+    // bound states have energies between minPotential and maxPotential
+    const hasNegativePotential = minPotential < 0;
 
+    let upperBound: number;
+    let lowerBound: number;
+
+    if (hasNegativePotential) {
+      // For finite wells: search between potential minimum and maximum
+      // Bound states have energies between minPotential and maxPotential
+      upperBound = maxPotential + particleInBoxEstimate * 0.1;  // Slightly above the well edge
+      lowerBound = minPotential * 1.1;  // Slightly below the well bottom
+    } else {
+      // For positive potentials (like harmonic oscillator): use standard estimate
+      upperBound = particleInBoxEstimate * INITIAL_ENERGY_SCALING;
+      lowerBound = -Math.abs(upperBound);
+    }
+
+    // Refine upper bound (find energy with too many nodes)
     for (let i = 0; i < this.maxIterations; i++) {
       const upperTest = this.integrateSchrodinger(upperBound, desiredNodes);
       if (upperTest.hasTooManyNodes(desiredNodes)) break;
-      upperBound *= ENERGY_BRACKET_MULTIPLIER;
+      if (hasNegativePotential) {
+        // For negative potential wells, increase energy toward 0
+        upperBound += particleInBoxEstimate * 0.5;
+        if (upperBound > maxPotential + particleInBoxEstimate) break;
+      } else {
+        upperBound *= ENERGY_BRACKET_MULTIPLIER;
+      }
     }
 
-    // Find lower bound (too few nodes)
-    let lowerBound = -Math.abs(upperBound);
-
+    // Refine lower bound (find energy with too few nodes)
     for (let i = 0; i < this.maxIterations; i++) {
       const lowerTest = this.integrateSchrodinger(lowerBound, desiredNodes);
       if (!lowerTest.hasTooManyNodes(desiredNodes)) break;
-      lowerBound *= ENERGY_BRACKET_MULTIPLIER;
+      if (hasNegativePotential) {
+        // For negative potential wells, decrease energy further below well bottom
+        lowerBound *= 1.2;
+      } else {
+        lowerBound *= ENERGY_BRACKET_MULTIPLIER;
+      }
     }
 
     return { lowerBound, upperBound };
@@ -349,11 +381,22 @@ export class QuantumBoundStateSolver {
   ): number {
     let lower = lowerBound;
     let upper = upperBound;
-    let energy = 0;
+    let energy = 0.5 * (lower + upper); // Initialize to midpoint
 
     for (let i = 0; i < this.maxIterations; i++) {
       energy = 0.5 * (lower + upper);
       const test = this.integrateSchrodinger(energy, desiredNodes);
+
+      // Check for invalid integration results
+      if (!Number.isFinite(test.logDerivativeMismatch)) {
+        // Try a different energy if integration fails
+        if (test.nodeCount > desiredNodes) {
+          upper = energy;
+        } else {
+          lower = energy;
+        }
+        continue;
+      }
 
       if (test.isConverged) break;
 
@@ -493,7 +536,7 @@ export class QuantumBoundStateSolver {
   }
 
   /**
-   * Forward integration using Numerov method
+   * Forward integration using Numerov method with periodic renormalization
    */
   private integrateForward(
     effectivePotential: number[],
@@ -506,20 +549,38 @@ export class QuantumBoundStateSolver {
 
     let nodes = 0;
     const psiValues: number[] = [psi_current, psi_next];
+    let scaleFactor = 1.0;
+
+    // Renormalization threshold to prevent overflow
+    const RENORM_THRESHOLD = 1e10;
 
     for (let i = 2; i <= matchPoint + 1; i++) {
       psi_prev = psi_current;
       psi_current = psi_next;
 
-      // Numerov recursion
+      // Numerov recursion - indices must match wavefunction indices
+      // psi_prev = psi[i-2], psi_current = psi[i-1], psi_next = psi[i]
       psi_next = this.numerovStep(
         psi_current,
         psi_prev,
+        effectivePotential[i-2],
         effectivePotential[i-1],
         effectivePotential[i],
-        effectivePotential[i+1] ?? 0,
         numerovFactor
       );
+
+      // Periodic renormalization to prevent overflow
+      if (Math.abs(psi_next) > RENORM_THRESHOLD) {
+        const norm = Math.abs(psi_next);
+        psi_prev /= norm;
+        psi_current /= norm;
+        psi_next /= norm;
+        scaleFactor *= norm;
+        // Renormalize stored values
+        for (let j = 0; j < psiValues.length; j++) {
+          psiValues[j] /= norm;
+        }
+      }
 
       psiValues.push(psi_next);
 
@@ -539,12 +600,12 @@ export class QuantumBoundStateSolver {
     return {
       nodes,
       logDerivative,
-      psiAtMatch: psiValues[matchPoint]
+      psiAtMatch: psiValues[matchPoint] * scaleFactor
     };
   }
 
   /**
-   * Backward integration using Numerov method
+   * Backward integration using Numerov method with periodic renormalization
    */
   private integrateBackward(
     effectivePotential: number[],
@@ -556,23 +617,41 @@ export class QuantumBoundStateSolver {
     let psi_next = BOUNDARY_PSI_DERIVATIVE;
 
     let nodes = 0;
-    const psiValues: number[] = new Array(this.gridPoints);
+    const psiValues: number[] = new Array(this.gridPoints).fill(0);
     psiValues[this.gridPoints - 1] = psi_prev;
     psiValues[this.gridPoints - 2] = psi_current;
+    let scaleFactor = 1.0;
+
+    // Renormalization threshold to prevent overflow
+    const RENORM_THRESHOLD = 1e10;
 
     for (let i = this.gridPoints - 3; i >= matchPoint - 1; i--) {
       psi_prev = psi_current;
       psi_current = psi_next;
 
-      // Numerov recursion
+      // Numerov recursion - indices must match wavefunction indices
+      // Going backwards: psi_prev = psi[i+2], psi_current = psi[i+1], psi_next = psi[i]
       psi_next = this.numerovStep(
         psi_current,
         psi_prev,
+        effectivePotential[i+2],
         effectivePotential[i+1],
         effectivePotential[i],
-        effectivePotential[i-1] ?? 0,
         numerovFactor
       );
+
+      // Periodic renormalization to prevent overflow
+      if (Math.abs(psi_next) > RENORM_THRESHOLD) {
+        const norm = Math.abs(psi_next);
+        psi_prev /= norm;
+        psi_current /= norm;
+        psi_next /= norm;
+        scaleFactor *= norm;
+        // Renormalize stored values
+        for (let j = i + 1; j < this.gridPoints; j++) {
+          psiValues[j] /= norm;
+        }
+      }
 
       psiValues[i] = psi_next;
 
@@ -592,12 +671,12 @@ export class QuantumBoundStateSolver {
     return {
       nodes,
       logDerivative,
-      psiAtMatch: psiValues[matchPoint]
+      psiAtMatch: psiValues[matchPoint] * scaleFactor
     };
   }
 
   /**
-   * Single Numerov integration step
+   * Single Numerov integration step with overflow protection
    */
   private numerovStep(
     psi_current: number,
@@ -607,9 +686,22 @@ export class QuantumBoundStateSolver {
     pot_next: number,
     numerovFactor: number
   ): number {
-    return (psi_current * (2.0 + 10.0 * numerovFactor * pot_current) -
-            psi_prev * (1.0 - numerovFactor * pot_prev)) /
-           (1.0 - numerovFactor * pot_next);
+    const denominator = 1.0 - numerovFactor * pot_next;
+
+    // Prevent division by near-zero values and handle overflow
+    if (Math.abs(denominator) < 1e-15) {
+      return psi_current * 2.0; // Fallback for numerical stability
+    }
+
+    const result = (psi_current * (2.0 + 10.0 * numerovFactor * pot_current) -
+            psi_prev * (1.0 - numerovFactor * pot_prev)) / denominator;
+
+    // Cap extreme values to prevent overflow
+    const MAX_PSI = 1e100;
+    if (!Number.isFinite(result)) {
+      return Math.sign(psi_current) * MAX_PSI;
+    }
+    return Math.max(-MAX_PSI, Math.min(MAX_PSI, result));
   }
 
   /**
@@ -740,12 +832,8 @@ export class QuantumBoundStateSolver {
   private calculatePotentialOnGrid(): number[] {
     const potential = new Array<number>(this.gridPoints);
 
-    // Infinite walls at boundaries
-    potential[0] = 0;
-    potential[this.gridPoints - 1] = 0;
-
-    // Sample interior points
-    for (let i = 1; i < this.gridPoints - 1; i++) {
+    // Sample all points including boundaries
+    for (let i = 0; i < this.gridPoints; i++) {
       potential[i] = this.potentialFunction(this.gridPositions[i]);
     }
 

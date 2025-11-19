@@ -15,6 +15,7 @@ import { solveDVR } from "./DVRSolver.js";
 import { solveSpectral } from "./SpectralSolver.js";
 import { solveMatrixNumerov } from "./MatrixNumerovSolver.js";
 import { solveFGH } from "./FGHSolver.js";
+import { solveQuantumBound } from "./QuantumBoundStateSolver.js";
 import { solveHarmonicOscillator } from "./analytical-solutions/harmonic-oscillator.js";
 import { solveFiniteSquareWell } from "./analytical-solutions/finite-square-well.js";
 import { solveCoulomb3DPotential } from "./analytical-solutions/coulomb-3d-potential.js";
@@ -150,6 +151,9 @@ function testHarmonicOscillatorComprehensive(): TestResult[] {
     if (isPowerOfTwo(numPoints)) {
       results.push(testMethod("FGH", solveFGH, potential, analytical, mass, numStates, gridConfig, `Harmonic Oscillator (N=${numPoints})`, 0.1));
     }
+
+    // QuantumBoundStateSolver (shooting method) - use higher tolerance as it's less accurate
+    results.push(testMethod("QuantumBound", solveQuantumBound, potential, analytical, mass, numStates, gridConfig, `Harmonic Oscillator (N=${numPoints})`, 5.0));
   }
 
   return results;
@@ -202,6 +206,9 @@ function testFiniteSquareWellsComprehensive(): TestResult[] {
         if (isPowerOfTwo(numPoints)) {
           results.push(testMethod("FGH", solveFGH, potential, analytical, mass, numStates, gridConfig, testName, 0.5));
         }
+
+        // QuantumBoundStateSolver (shooting method) - use higher tolerance
+        results.push(testMethod("QuantumBound", solveQuantumBound, potential, analytical, mass, numStates, gridConfig, testName, 5.0));
       }
     }
   }
@@ -245,6 +252,9 @@ function testCoulomb3DComprehensive(): TestResult[] {
     if (isPowerOfTwo(numPoints)) {
       results.push(testMethod("FGH", solveFGH, potential, analytical, mass, numStates, gridConfig, testName, 1.0));
     }
+
+    // QuantumBoundStateSolver (shooting method) - use higher tolerance
+    results.push(testMethod("QuantumBound", solveQuantumBound, potential, analytical, mass, numStates, gridConfig, testName, 10.0));
   }
 
   return results;
@@ -307,6 +317,9 @@ function testMorsePotentialComprehensive(): TestResult[] {
           if (isPowerOfTwo(numPoints)) {
             results.push(testMethod("FGH", solveFGH, potential, analytical, mass, numStates, gridConfig, testName, 0.5));
           }
+
+          // QuantumBoundStateSolver (shooting method) - use higher tolerance
+          results.push(testMethod("QuantumBound", solveQuantumBound, potential, analytical, mass, numStates, gridConfig, testName, 5.0));
         }
       } catch (error) {
         // Skip configurations that don't support bound states
@@ -372,6 +385,9 @@ function testPoschlTellerComprehensive(): TestResult[] {
           if (isPowerOfTwo(numPoints)) {
             results.push(testMethod("FGH", solveFGH, potential, analytical, mass, numStates, gridConfig, testName, 0.5));
           }
+
+          // QuantumBoundStateSolver (shooting method) - use higher tolerance
+          results.push(testMethod("QuantumBound", solveQuantumBound, potential, analytical, mass, numStates, gridConfig, testName, 5.0));
         }
       } catch (error) {
         // Skip configurations that don't support bound states
@@ -444,6 +460,12 @@ function testDoubleSquareWellsComprehensive(): TestResult[] {
           const fghTime = performance.now() - fghStart;
           results.push(compareResults("FGH", fghResult, reference, testName, 1.0, fghTime));
         }
+
+        // QuantumBoundStateSolver (shooting method) - use higher tolerance
+        const quantumBoundStart = performance.now();
+        const quantumBoundResult = solveQuantumBound(potential, mass, numStates, gridConfig);
+        const quantumBoundTime = performance.now() - quantumBoundStart;
+        results.push(compareResults("QuantumBound", quantumBoundResult, reference, testName, 10.0, quantumBoundTime));
       } catch (error) {
         results.push({
           testName: `Double Well - ${testName}`,
@@ -538,7 +560,7 @@ export function runAccuracyTests(): void {
   console.log("========================================");
   console.log("Comprehensive Numerical Method Tests");
   console.log("========================================");
-  console.log("Testing: DVR, Spectral, Matrix Numerov, and FGH");
+  console.log("Testing: DVR, Spectral, Matrix Numerov, FGH, and QuantumBound (experimental)");
   console.log("Across multiple potentials and grid sizes");
   console.log("");
 
@@ -630,6 +652,7 @@ export function runQuickAccuracyCheck(): void {
 
   results.push(testMethod("DVR", solveDVR, potential, analytical, mass, 10, gridConfig, "Harmonic Oscillator", 0.1));
   results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, 10, gridConfig, "Harmonic Oscillator", 0.1));
+  results.push(testMethod("QuantumBound", solveQuantumBound, potential, analytical, mass, 10, gridConfig, "Harmonic Oscillator", 0.1));
 
   // 2. Finite square well (using simulation-realistic values)
   const wellWidth = 1e-9;
@@ -643,6 +666,7 @@ export function runQuickAccuracyCheck(): void {
 
   if (analytical2.energies.length > 0) {
     results.push(testMethod("DVR", solveDVR, potential2, analytical2, mass, 10, gridConfig2, "Finite Square Well", 0.5));
+    results.push(testMethod("QuantumBound", solveQuantumBound, potential2, analytical2, mass, 10, gridConfig2, "Finite Square Well", 0.5));
   }
 
   // Print results
