@@ -326,7 +326,7 @@ export class QuantumBoundStateSolver {
 
     // Energy range and step size
     const energyRange = Math.max(Math.abs(maxPotential - minPotential), particleInBoxEstimate * 10);
-    let energyStep = energyRange / 200;  // Start with moderate steps
+    const energyStep = energyRange / 200;  // Start with moderate steps
 
     // Start well below minimum potential
     let energy = minPotential - Math.abs(particleInBoxEstimate) * 4;
