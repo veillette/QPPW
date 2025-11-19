@@ -120,7 +120,6 @@ export class QuantumSolverException extends Error {
 
 export class QuantumBoundStateSolver {
   // Configuration
-  private readonly reportWarnings: boolean;
   private readonly maxIterations: number;
   private readonly convergenceTolerance: number;
   private readonly energyTolerance: number;
@@ -172,7 +171,6 @@ export class QuantumBoundStateSolver {
     this.validateInputs(xMin, xMax, numPoints);
 
     // Set configuration with defaults
-    this.reportWarnings = config?.reportWarnings ?? false;
     this.maxIterations = config?.maxIterations ?? DEFAULT_MAX_ITERATIONS;
     this.convergenceTolerance = config?.convergenceTolerance ?? DEFAULT_CONVERGENCE_TOLERANCE;
     this.energyTolerance = config?.energyTolerance ?? DEFAULT_ENERGY_TOLERANCE;

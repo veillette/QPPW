@@ -145,7 +145,7 @@ export abstract class BaseScreenView extends ScreenView {
    * Subclasses should override this method to add screen-specific step logic.
    * @param dt - The time step in seconds
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   public step(_dt: number): void {
     // Base implementation - subclasses should override
   }

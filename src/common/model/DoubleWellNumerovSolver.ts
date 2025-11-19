@@ -337,9 +337,9 @@ function findEnergyNearEstimate(
   dx: number,
   mass: number,
   wellDepth: number,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   _leftCenter: number,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   _rightCenter: number,
 ): number | null {
   const energyMin = Math.max(0, energyEstimate - searchWindow); // Energy must be >= 0 (well bottom)

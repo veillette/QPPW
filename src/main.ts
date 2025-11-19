@@ -38,7 +38,7 @@ onReadyToLaunch(() => {
       simulationOptions: {
         customPreferences: [
           {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+             
             createContent: (_tandem: Tandem) => {
               // Auto-pause preference
               const autoPauseSection = new VBox({

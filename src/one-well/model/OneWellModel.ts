@@ -126,7 +126,7 @@ export class OneWellModel extends BaseModel {
    * but grid points changes do matter because they affect the wavefunction grid.
    * @param _method - The new numerical method (unused)
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   protected onSolverMethodChanged(_method: NumericalMethod): void {
     // Invalidate the cached bound state result so wavefunctions are recalculated
     // with the new grid configuration

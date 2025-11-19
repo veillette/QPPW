@@ -46,7 +46,7 @@ export class ManyWellsModel extends BaseModel {
    * Called when the solver method changes.
    * @param _method - The new numerical method (unused)
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   protected onSolverMethodChanged(_method: NumericalMethod): void {
     // No cached results to invalidate for many wells model yet
   }
