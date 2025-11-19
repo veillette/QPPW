@@ -28,7 +28,7 @@ const DEFAULT_WAVE_FUNCTION_TOLERANCE = 1e-8;
 
 // Integration constants
 const NUMEROV_COEFFICIENT = 1.0 / 12.0;  // h^2/12 factor in Numerov method
-const MATCHING_POINT_FRACTION = 0.53;    // Empirically optimal matching point
+const MATCHING_POINT_FRACTION = 0.49;    // Matching point fraction for shooting method
 const INITIAL_ENERGY_SCALING = 10.0;     // Safety factor for energy bounds
 const ENERGY_BRACKET_MULTIPLIER = 2.0;   // Factor for expanding energy search
 
@@ -46,7 +46,7 @@ const CACHE_SIZE_LIMIT = 100;
 /**
  * Solver configuration options
  */
-export interface SolverConfig {
+export type SolverConfig = {
   reportWarnings?: boolean;
   maxIterations?: number;
   convergenceTolerance?: number;
@@ -56,19 +56,19 @@ export interface SolverConfig {
   useRichardsonExtrapolation?: boolean;
   normalizationMethod?: 'max' | 'l2';
   enableCaching?: boolean;
-}
+};
 
 /**
  * Detailed solution information
  */
-export interface QuantumState {
+export type QuantumState = {
   energy: number;
   waveFunction: number[];
   nodes: number;
   normalizationConstant: number;
   matchingPoint: number;
   convergenceMetric: number;
-}
+};
 
 /**
  * Integration result with detailed metrics
@@ -94,11 +94,11 @@ class IntegrationResult {
 /**
  * Cache entry for memoization
  */
-interface CacheEntry<T> {
+type CacheEntry<T> = {
   key: string;
   value: T;
   timestamp: number;
-}
+};
 
 /**
  * Custom exception for solver errors
@@ -395,30 +395,52 @@ export class QuantumBoundStateSolver {
   }
 
   /**
-   * Secant method for final energy refinement
+   * Secant method for final energy refinement.
+   *
+   * The secant method finds roots of f(E) = logDerivativeMismatch by iteratively
+   * approximating the derivative using two previous points:
+   *   E_new = E_current - f(E_current) * (E_current - E_previous) / (f(E_current) - f(E_previous))
+   *
+   * This converges faster than bisection (superlinear) while avoiding the need
+   * for analytical derivatives.
    */
   private refineEnergyWithSecant(initialEnergy: number, desiredNodes: number): number {
-    let e0 = initialEnergy * 0.999;
-    let e1 = initialEnergy * 1.001;
+    // Initialize with two energy guesses bracketing the solution
+    // These are slightly perturbed from the initial estimate
+    let energyPrevious = initialEnergy * 0.999;  // Previous energy iterate
+    let energyCurrent = initialEnergy * 1.001;   // Current energy iterate
 
-    let f0 = this.integrateSchrodinger(e0, desiredNodes).logDerivativeMismatch;
-    let f1 = this.integrateSchrodinger(e1, desiredNodes).logDerivativeMismatch;
+    // Evaluate the mismatch function at both initial points
+    // f(E) = log derivative mismatch, which should be zero at the true eigenvalue
+    let mismatchPrevious = this.integrateSchrodinger(energyPrevious, desiredNodes).logDerivativeMismatch;
+    let mismatchCurrent = this.integrateSchrodinger(energyCurrent, desiredNodes).logDerivativeMismatch;
 
-    for (let i = 0; i < 10; i++) {
-      if (Math.abs(f1 - f0) < this.convergenceTolerance) break;
+    // Secant iteration: refine energy until convergence
+    for (let iteration = 0; iteration < 10; iteration++) {
+      // Check if the denominator (slope approximation) is too small
+      // This would cause numerical instability in the secant formula
+      const mismatchDifference = mismatchCurrent - mismatchPrevious;
+      if (Math.abs(mismatchDifference) < this.convergenceTolerance) break;
 
-      const e2 = e1 - f1 * (e1 - e0) / (f1 - f0);
-      const f2 = this.integrateSchrodinger(e2, desiredNodes).logDerivativeMismatch;
+      // Apply the secant formula to compute the next energy estimate
+      // This approximates Newton's method using finite differences
+      const energyNext = energyCurrent - mismatchCurrent * (energyCurrent - energyPrevious) / mismatchDifference;
 
-      if (Math.abs(f2) < this.convergenceTolerance) return e2;
+      // Evaluate the mismatch at the new energy
+      const mismatchNext = this.integrateSchrodinger(energyNext, desiredNodes).logDerivativeMismatch;
 
-      e0 = e1;
-      f0 = f1;
-      e1 = e2;
-      f1 = f2;
+      // Check for convergence: mismatch is essentially zero
+      if (Math.abs(mismatchNext) < this.convergenceTolerance) return energyNext;
+
+      // Shift the iteration window: current becomes previous, next becomes current
+      // This maintains the two-point history needed for the secant approximation
+      energyPrevious = energyCurrent;
+      mismatchPrevious = mismatchCurrent;
+      energyCurrent = energyNext;
+      mismatchCurrent = mismatchNext;
     }
 
-    return e1;
+    return energyCurrent;
   }
 
   /**

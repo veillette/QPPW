@@ -155,6 +155,24 @@ onReadyToLaunch(() => {
                     }),
                     tandemName: "spectralRadioButton",
                   },
+                  {
+                    value: NumericalMethod.QUANTUM_BOUND,
+                    createNode: () => new VBox({
+                      align: "left",
+                      spacing: 4,
+                      children: [
+                        new Text(numericalMethodNames.quantumBoundStringProperty, {
+                          font: new PhetFont(14),
+                        }),
+                        new Text(numericalMethodDescriptions.quantumBoundStringProperty, {
+                          font: new PhetFont(11),
+                          fill: "rgb(80,80,80)",
+                          maxWidth: 550,
+                        }),
+                      ],
+                    }),
+                    tandemName: "quantumBoundRadioButton",
+                  },
                 ],
                 {
                   spacing: 12,

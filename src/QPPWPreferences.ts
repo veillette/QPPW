@@ -27,7 +27,7 @@ const QPPWPreferences = {
     tandem: Tandem.PREFERENCES.createTandem("numericalMethodProperty"),
     phetioFeatured: true,
     phetioValueType: StringIO,
-    validValues: [NumericalMethod.NUMEROV, NumericalMethod.MATRIX_NUMEROV, NumericalMethod.DVR, NumericalMethod.FGH, NumericalMethod.SPECTRAL],
+    validValues: [NumericalMethod.NUMEROV, NumericalMethod.MATRIX_NUMEROV, NumericalMethod.DVR, NumericalMethod.FGH, NumericalMethod.SPECTRAL, NumericalMethod.QUANTUM_BOUND],
   }),
 
   /**

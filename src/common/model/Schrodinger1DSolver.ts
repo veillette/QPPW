@@ -32,6 +32,7 @@ import { solveDVR } from "./DVRSolver.js";
 import { solveFGH } from "./FGHSolver.js";
 import { solveSpectral } from "./SpectralSolver.js";
 import { solveDoubleWellNumerov } from "./DoubleWellNumerovSolver.js";
+import { solveQuantumBound } from "./QuantumBoundStateSolver.js";
 import QuantumConstants from "./QuantumConstants.js";
 import qppw from "../../QPPWNamespace.js";
 
@@ -44,6 +45,7 @@ export enum NumericalMethod {
   DVR = "dvr",
   FGH = "fgh",
   SPECTRAL = "spectral",
+  QUANTUM_BOUND = "quantum_bound",
 }
 
 /**
@@ -389,6 +391,9 @@ export class Schrodinger1DSolver {
     } else if (this.numericalMethod === NumericalMethod.FGH) {
       // Fourier Grid Hamiltonian method
       return solveFGH(potential, mass, numStates, gridConfig);
+    } else if (this.numericalMethod === NumericalMethod.QUANTUM_BOUND) {
+      // Advanced shooting method with adaptive bracketing
+      return solveQuantumBound(potential, mass, numStates, gridConfig);
     } else {
       // Spectral (Chebyshev) method
       return solveSpectral(potential, mass, numStates, gridConfig);
