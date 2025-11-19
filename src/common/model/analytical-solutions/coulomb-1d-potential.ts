@@ -3,6 +3,15 @@
  * V(x) = -α/|x|
  *
  * This potential has a singularity at x=0 and describes a 1D hydrogen-like atom.
+ *
+ * Important: For the pure 1D Coulomb potential, only odd-parity eigenstates exist
+ * as normalizable solutions. Even-parity eigenstates are absent because they would
+ * diverge at the origin. This implementation correctly uses the odd-parity form
+ * with ψ(0) = 0.
+ *
+ * Reference:
+ * - "The one-dimensional Coulomb problem"
+ *   https://doi.org/10.1098/rspa.2015.0534
  */
 
 import QuantumConstants from "../QuantumConstants.js";
@@ -78,8 +87,9 @@ export function solveCoulomb1DPotential(
       const laguerre = associatedLaguerre(n, 1, rho);
       const radialPart = normalization * Math.exp(-rho / 2) * laguerre;
 
-      // Apply sign(x) for odd parity (ψ(0) = 0)
-      const value = x >= 0 ? radialPart : -radialPart;
+      // Apply sign(x) for odd parity
+      // Math.sign(0) = 0 ensures ψ(0) = 0, which is required for odd parity states
+      const value = Math.sign(x) * radialPart;
 
       wavefunction.push(value);
     }

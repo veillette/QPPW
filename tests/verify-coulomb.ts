@@ -208,14 +208,47 @@ console.log('3D R_10 at first grid point:');
 console.log(`  Computed: ${R10_at_origin.toExponential(4)}`);
 console.log(`  Expected (≈ 2/a₀^(3/2)): ${(2/Math.pow(A_0, 1.5)).toExponential(4)}`);
 
-// 1D: Ground state should have maximum at x=0
+// 1D: Odd parity means ψ(0) = 0 (wavefunction passes through zero at origin)
 const wf0_1D = result1D.wavefunctions[0];
-const midIdx1D = Math.floor(wf0_1D.length / 2);
-const atCenter1D = wf0_1D[midIdx1D];
-const awayFromCenter1D = wf0_1D[midIdx1D + 200];
-console.log('\n1D ψ_0 shape check:');
-console.log(`  At x=0: ${atCenter1D.toExponential(4)}`);
+// Find index closest to x=0
+const closestToZeroIdx = result1D.xGrid.reduce((minIdx, x, idx, arr) =>
+  Math.abs(x) < Math.abs(arr[minIdx]) ? idx : minIdx, 0);
+const xAtClosest = result1D.xGrid[closestToZeroIdx];
+const atClosestToZero = wf0_1D[closestToZeroIdx];
+const nearCenter1D = wf0_1D[closestToZeroIdx + 50]; // Just away from center
+const awayFromCenter1D = wf0_1D[closestToZeroIdx + 200];
+
+console.log('\n1D ψ_0 shape check (odd parity):');
+console.log(`  x closest to 0: ${(xAtClosest * 1e10).toExponential(4)} Å`);
+console.log(`  ψ at x≈0: ${atClosestToZero.toExponential(4)}`);
+console.log(`  Near center: ${nearCenter1D.toExponential(4)}`);
 console.log(`  Away from center: ${awayFromCenter1D.toExponential(4)}`);
-console.log(`  Ratio (should be > 1): ${(Math.abs(atCenter1D) / Math.abs(awayFromCenter1D)).toFixed(2)}`);
+
+// For odd parity, check that:
+// 1. ψ changes sign around x=0 (values on opposite sides have opposite signs)
+// 2. ψ(x) = -ψ(-x) approximately (antisymmetry)
+const leftOfCenter = wf0_1D[closestToZeroIdx - 1];
+const rightOfCenter = wf0_1D[closestToZeroIdx + 1];
+const signChange = (leftOfCenter * rightOfCenter) < 0;
+
+// Check antisymmetry using grid symmetry: x[i] = -x[N-1-i]
+// For a grid from -L to +L with N points, points at indices i and (N-1-i) are symmetric
+const testIdx = 400; // About 6 Angstroms from center
+const symmetricIdx = result1D.xGrid.length - 1 - testIdx;
+const leftValSym = wf0_1D[testIdx];
+const rightValSym = wf0_1D[symmetricIdx];
+const xLeft = result1D.xGrid[testIdx];
+const xRight = result1D.xGrid[symmetricIdx];
+const antisymmetryError = Math.abs(leftValSym + rightValSym) / Math.max(Math.abs(leftValSym), Math.abs(rightValSym));
+const isAntisymmetric = antisymmetryError < 0.05; // Should be very close for symmetric grid points
+
+console.log(`  Sign change around x=0: ${signChange ? 'PASS ✓' : 'FAIL ✗'}`);
+console.log(`  Antisymmetry at x=${(xLeft*1e10).toFixed(2)} and ${(xRight*1e10).toFixed(2)} Å: ${isAntisymmetric ? 'PASS ✓' : 'FAIL ✗'} (error: ${(antisymmetryError*100).toFixed(1)}%)`);
+
+// If x=0 is exactly on the grid, check ψ(0) = 0
+if (Math.abs(xAtClosest) < 1e-15) {
+  const isZeroAtOrigin = Math.abs(atClosestToZero) < 1e-10;
+  console.log(`  ψ(0) = 0 (exact): ${isZeroAtOrigin ? 'PASS ✓' : 'FAIL ✗'}`);
+}
 
 console.log('\n=== End of Verification ===');
