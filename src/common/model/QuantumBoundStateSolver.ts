@@ -29,8 +29,6 @@ const DEFAULT_WAVE_FUNCTION_TOLERANCE = 1e-8;
 // Integration constants
 const NUMEROV_COEFFICIENT = 1.0 / 12.0;  // h^2/12 factor in Numerov method
 const MATCHING_POINT_FRACTION = 0.49;    // Matching point fraction for shooting method
-const INITIAL_ENERGY_SCALING = 10.0;     // Safety factor for energy bounds
-const ENERGY_BRACKET_MULTIPLIER = 2.0;   // Factor for expanding energy search
 
 // Boundary condition constants
 const BOUNDARY_PSI_INITIAL = 0.0;        // psi(boundary) = 0
@@ -144,6 +142,9 @@ export class QuantumBoundStateSolver {
   private totalIterations = 0;
   private cacheHits = 0;
   private cacheMisses = 0;
+
+  // Cached node transition energies for efficient multi-state solving
+  private nodeTransitionEnergies: number[] | null = null;
 
   /**
    * Constructor for the Enhanced Quantum Bound State Solver
@@ -280,6 +281,7 @@ export class QuantumBoundStateSolver {
   public clearCache(): void {
     this.cache.clear();
     this.numerovFactorCache.clear();
+    this.nodeTransitionEnergies = null;
     this.cacheHits = 0;
     this.cacheMisses = 0;
   }
@@ -310,62 +312,125 @@ export class QuantumBoundStateSolver {
   }
 
   /**
-   * Finds energy bounds using adaptive bracketing
+   * Finds all node transition energies by sweeping through the energy range.
+   * This is called once and cached for efficiency when finding multiple eigenstates.
    */
-  private findEnergyBounds(desiredNodes: number): { lowerBound: number; upperBound: number } {
+  private findNodeTransitionEnergies(maxNodes: number): number[] {
     const boxLength = this.gridPositions[this.gridPoints - 1] - this.gridPositions[0];
-
-    // Get potential range to determine appropriate energy bounds
     const minPotential = Math.min(...this.potentialEnergies);
     const maxPotential = Math.max(...this.potentialEnergies);
 
-    // Particle in box estimate (for positive energy states)
-    const particleInBoxEstimate = this.hbarSquaredOver2m * Math.PI * Math.PI *
-                                  (desiredNodes + 1) * (desiredNodes + 1) /
+    // Particle in box estimate for energy spacing
+    const particleInBoxEstimate = this.hbarSquaredOver2m * Math.PI * Math.PI /
                                   (boxLength * boxLength);
 
-    // Determine if we're looking for negative energy states (finite well type)
-    // For a finite well with V = -V0 inside and V = 0 outside,
-    // bound states have energies between minPotential and maxPotential
-    const hasNegativePotential = minPotential < 0;
+    // Energy range and step size
+    const energyRange = Math.max(Math.abs(maxPotential - minPotential), particleInBoxEstimate * 10);
+    let energyStep = energyRange / 200;  // Start with moderate steps
 
-    let upperBound: number;
+    // Start well below minimum potential
+    let energy = minPotential - Math.abs(particleInBoxEstimate) * 4;
+
+    // Find starting energy with 0 nodes
+    for (let i = 0; i < this.maxIterations; i++) {
+      const test = this.integrateSchrodinger(energy, 0);
+      if (test.nodeCount === 0) break;
+      energy -= Math.abs(particleInBoxEstimate) * Math.pow(2, i);
+    }
+
+    // Array to store transition energies: transitions[n] = energy where nodes change from n-1 to n
+    // transitions[0] = starting energy (below ground state)
+    const transitions: number[] = [energy];
+    let currentNodes = 0;
+    let prevEnergy = energy;
+
+    // Sweep upward to find all transitions
+    // Use a fixed "reference" node count for consistent matching point
+    const maxIterations = this.maxIterations * 100;
+    for (let i = 0; i < maxIterations && currentNodes <= maxNodes; i++) {
+      energy += energyStep;
+
+      // Safety limit
+      if (energy > maxPotential + energyRange * 20) break;
+
+      // Use currentNodes for the matching point calculation to ensure consistency
+      const test = this.integrateSchrodinger(energy, Math.max(0, currentNodes));
+      const nodeCount = test.nodeCount;
+
+      // Check for node transition
+      if (nodeCount > currentNodes) {
+        // Record the transition energy
+        // Use binary search to find more precise transition point
+        let lo = prevEnergy;
+        let hi = energy;
+        for (let j = 0; j < 20; j++) {
+          const mid = (lo + hi) / 2;
+          const midTest = this.integrateSchrodinger(mid, currentNodes);
+          if (midTest.nodeCount > currentNodes) {
+            hi = mid;
+          } else {
+            lo = mid;
+          }
+        }
+        const transitionEnergy = (lo + hi) / 2;
+
+        // Fill in any skipped transitions
+        while (transitions.length <= nodeCount) {
+          transitions.push(transitionEnergy);
+        }
+        currentNodes = nodeCount;
+      }
+
+      prevEnergy = energy;
+    }
+
+    return transitions;
+  }
+
+  /**
+   * Finds energy bounds using cached node transition energies.
+   *
+   * The key insight is that as energy increases, the number of nodes in the
+   * wavefunction increases monotonically. For state n with (n-1) nodes, we need
+   * to find the energy range where the node count transitions from (n-2) to (n-1) to n.
+   */
+  private findEnergyBounds(desiredNodes: number): { lowerBound: number; upperBound: number } {
+    // Build or retrieve cached transition energies
+    if (!this.nodeTransitionEnergies || this.nodeTransitionEnergies.length <= desiredNodes + 1) {
+      this.nodeTransitionEnergies = this.findNodeTransitionEnergies(desiredNodes + 5);
+    }
+
+    const boxLength = this.gridPositions[this.gridPoints - 1] - this.gridPositions[0];
+    const minPotential = Math.min(...this.potentialEnergies);
+    const particleInBoxEstimate = this.hbarSquaredOver2m * Math.PI * Math.PI /
+                                  (boxLength * boxLength);
+
     let lowerBound: number;
+    let upperBound: number;
 
-    if (hasNegativePotential) {
-      // For finite wells: search between potential minimum and maximum
-      // Bound states have energies between minPotential and maxPotential
-      upperBound = maxPotential + particleInBoxEstimate * 0.1;  // Slightly above the well edge
-      lowerBound = minPotential * 1.1;  // Slightly below the well bottom
+    // Use transition energies for bracketing
+    if (this.nodeTransitionEnergies.length > desiredNodes + 1) {
+      // Lower bound: just above where we transition TO desiredNodes
+      // Upper bound: just below where we transition TO desiredNodes+1
+      lowerBound = this.nodeTransitionEnergies[desiredNodes];
+      upperBound = this.nodeTransitionEnergies[desiredNodes + 1];
+    } else if (this.nodeTransitionEnergies.length > desiredNodes) {
+      // We have the lower transition but not upper
+      lowerBound = this.nodeTransitionEnergies[desiredNodes];
+      upperBound = lowerBound + particleInBoxEstimate * (desiredNodes + 1) * 2;
     } else {
-      // For positive potentials (like harmonic oscillator): use standard estimate
-      upperBound = particleInBoxEstimate * INITIAL_ENERGY_SCALING;
-      lowerBound = -Math.abs(upperBound);
+      // Fallback: estimate based on particle in box
+      const estimatedEnergy = minPotential + particleInBoxEstimate * (desiredNodes + 1) * (desiredNodes + 1);
+      lowerBound = estimatedEnergy - particleInBoxEstimate * (desiredNodes + 1);
+      upperBound = estimatedEnergy + particleInBoxEstimate * (desiredNodes + 1);
     }
 
-    // Refine upper bound (find energy with too many nodes)
-    for (let i = 0; i < this.maxIterations; i++) {
-      const upperTest = this.integrateSchrodinger(upperBound, desiredNodes);
-      if (upperTest.hasTooManyNodes(desiredNodes)) break;
-      if (hasNegativePotential) {
-        // For negative potential wells, increase energy toward 0
-        upperBound += particleInBoxEstimate * 0.5;
-        if (upperBound > maxPotential + particleInBoxEstimate) break;
-      } else {
-        upperBound *= ENERGY_BRACKET_MULTIPLIER;
-      }
-    }
-
-    // Refine lower bound (find energy with too few nodes)
-    for (let i = 0; i < this.maxIterations; i++) {
-      const lowerTest = this.integrateSchrodinger(lowerBound, desiredNodes);
-      if (!lowerTest.hasTooManyNodes(desiredNodes)) break;
-      if (hasNegativePotential) {
-        // For negative potential wells, decrease energy further below well bottom
-        lowerBound *= 1.2;
-      } else {
-        lowerBound *= ENERGY_BRACKET_MULTIPLIER;
-      }
+    // Ensure valid bounds
+    if (lowerBound >= upperBound) {
+      const midpoint = (lowerBound + upperBound) / 2;
+      const halfWidth = Math.abs(particleInBoxEstimate) * (desiredNodes + 1);
+      lowerBound = midpoint - halfWidth;
+      upperBound = midpoint + halfWidth;
     }
 
     return { lowerBound, upperBound };
