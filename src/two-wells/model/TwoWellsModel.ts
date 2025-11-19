@@ -119,7 +119,7 @@ export class TwoWellsModel extends BaseModel {
    * Invalidates the cached bound state results.
    * @param _method - The new numerical method (unused but required by interface)
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   protected onSolverMethodChanged(_method: NumericalMethod): void {
     this.boundStateResult = null; // Invalidate cache
   }
