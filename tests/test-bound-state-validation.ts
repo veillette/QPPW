@@ -139,10 +139,10 @@ function testInvalidStateException(): TestResult {
     details.push(`Maximum potential: ${maxPotential / QuantumConstants.EV_TO_JOULES} eV`);
 
     // First find the ground state (should succeed)
-    let groundStateFound = false;
+    let _groundStateFound = false;
     try {
       const groundState = solver.findEigenstate(1);
-      groundStateFound = true;
+      _groundStateFound = true;
       details.push(`Ground state energy: ${groundState.energy / QuantumConstants.EV_TO_JOULES} eV`);
     } catch (error) {
       if (error instanceof InvalidBoundStateException) {
