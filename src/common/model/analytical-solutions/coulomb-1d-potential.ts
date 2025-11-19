@@ -7,7 +7,7 @@
 
 import QuantumConstants from "../QuantumConstants.js";
 import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
-import { associatedLaguerre, gamma } from "./math-utilities.js";
+import { associatedLaguerre } from "./math-utilities.js";
 
 /**
  * Analytical solution for the 1D Coulomb potential.
@@ -62,16 +62,24 @@ export function solveCoulomb1DPotential(
     const nEff = n + 0.5;
     const a_n = nEff * a0;
 
-    // Normalization constant (simplified)
-    const normalization = Math.sqrt(1.0 / (a_n * gamma(2 * n + 2)));
+    // Normalization constant for 1D Coulomb
+    // For ψ_n(x) = N * exp(-|x|/a_n) * L_n^1(2|x|/a_n)
+    // with ∫_{-∞}^{∞} |ψ|² dx = 1
+    // Using ∫_0^∞ exp(-ρ) * |L_n^1(ρ)|² dρ = (n+1)
+    // Full integral: 2 * N² * (a_n/2) * (n+1) = N² * a_n * (n+1) = 1
+    const normalization = Math.sqrt(1.0 / (a_n * (n + 1)));
 
     for (const x of xGrid) {
       const absX = Math.abs(x);
       const rho = 2 * absX / a_n;
 
-      // Wavefunction: ψ(x) = N * exp(-ρ/2) * L_n^1(ρ)
+      // Wavefunction: ψ(x) = sign(x) * N * exp(-ρ/2) * L_n^1(ρ)
+      // ODD parity: ψ(-x) = -ψ(x), which matches the energy formula E_n = -E_R/(n+1/2)²
       const laguerre = associatedLaguerre(n, 1, rho);
-      const value = normalization * Math.exp(-rho / 2) * laguerre;
+      const radialPart = normalization * Math.exp(-rho / 2) * laguerre;
+
+      // Apply sign(x) for odd parity (ψ(0) = 0)
+      const value = x >= 0 ? radialPart : -radialPart;
 
       wavefunction.push(value);
     }

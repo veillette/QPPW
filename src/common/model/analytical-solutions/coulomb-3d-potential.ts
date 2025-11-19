@@ -60,8 +60,9 @@ export function solveCoulomb3DPotential(
     const a_n = n * a0;
 
     // Normalization constant for L=0
-    // N_n0 = 2/(n²a_0^3) * sqrt(1/n)
-    const normalization = 2.0 / (a_n * Math.sqrt(a_n)) * Math.sqrt(factorial(n - 1) / (2 * n * factorial(n)));
+    // N_n0 = sqrt{(2/(na₀))³ * (n-1)!/[2n(n!)³]}
+    // Simplified form that ensures ∫|R_nl|²r²dr = 1
+    const normalization = 2.0 / (a_n * Math.sqrt(a_n)) * Math.sqrt(factorial(n - 1) / (n * factorial(n)));
 
     for (const r of xGrid) {
       // For visualization on a symmetric x-axis, use |r| so the wavefunction appears on both sides
