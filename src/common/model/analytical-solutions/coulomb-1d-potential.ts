@@ -7,7 +7,7 @@
 
 import QuantumConstants from "../QuantumConstants.js";
 import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
-import { associatedLaguerre, gamma } from "./math-utilities.js";
+import { associatedLaguerre } from "./math-utilities.js";
 
 /**
  * Analytical solution for the 1D Coulomb potential.
@@ -62,8 +62,12 @@ export function solveCoulomb1DPotential(
     const nEff = n + 0.5;
     const a_n = nEff * a0;
 
-    // Normalization constant (simplified)
-    const normalization = Math.sqrt(1.0 / (a_n * gamma(2 * n + 2)));
+    // Normalization constant for 1D Coulomb
+    // For ψ_n(x) = N * exp(-|x|/a_n) * L_n^1(2|x|/a_n)
+    // with ∫_{-∞}^{∞} |ψ|² dx = 1
+    // Using ∫_0^∞ exp(-ρ) * |L_n^1(ρ)|² dρ = (n+1)
+    // Full integral: 2 * N² * (a_n/2) * (n+1) = N² * a_n * (n+1) = 1
+    const normalization = Math.sqrt(1.0 / (a_n * (n + 1)));
 
     for (const x of xGrid) {
       const absX = Math.abs(x);
