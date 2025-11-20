@@ -12,7 +12,7 @@
  */
 
 import QuantumConstants from "./QuantumConstants.js";
-import { BoundStateResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
+import { BoundStateResult, EnergyOnlyResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
 import {
   DotMatrix,
   diagonalize,
@@ -30,14 +30,30 @@ import qppw from "../../QPPWNamespace.js";
  * @param mass - Particle mass in kg
  * @param numStates - Number of lowest bound states to return
  * @param gridConfig - Grid configuration
- * @returns Bound state results
+ * @param energiesOnly - If true, only compute energies (faster, no wavefunctions)
+ * @returns Bound state results or energy-only results
  */
 export function solveSpectral(
   potential: PotentialFunction,
   mass: number,
   numStates: number,
   gridConfig: GridConfig,
-): BoundStateResult {
+  energiesOnly?: true,
+): EnergyOnlyResult;
+export function solveSpectral(
+  potential: PotentialFunction,
+  mass: number,
+  numStates: number,
+  gridConfig: GridConfig,
+  energiesOnly: false,
+): BoundStateResult;
+export function solveSpectral(
+  potential: PotentialFunction,
+  mass: number,
+  numStates: number,
+  gridConfig: GridConfig,
+  energiesOnly: boolean = true,
+): BoundStateResult | EnergyOnlyResult {
   const { xMin, xMax, numPoints } = gridConfig;
   const N = numPoints;
 
@@ -104,7 +120,6 @@ export function solveSpectral(
 
   // Extract the lowest numStates bound states
   const energies: number[] = [];
-  const wavefunctions: number[][] = [];
 
   // For spectral method with Dirichlet boundary conditions (ψ=0 at boundaries),
   // all eigenvalues correspond to bound states confined by the boundary conditions.
@@ -113,8 +128,21 @@ export function solveSpectral(
   for (let i = 0; i < Math.min(numStates, interiorSize); i++) {
     const idx = sortedIndices[i];
     const energy = eigen.eigenvalues[idx];
-
     energies.push(energy);
+  }
+
+  // If only energies requested, return early without computing wavefunctions
+  if (energiesOnly) {
+    return {
+      energies,
+      method: "spectral",
+    };
+  }
+
+  // Compute wavefunctions
+  const wavefunctions: number[][] = [];
+  for (let i = 0; i < Math.min(numStates, interiorSize); i++) {
+    const idx = sortedIndices[i];
 
     // Reconstruct full wavefunction with boundary conditions
     const psi_interior = eigen.eigenvectors[idx];

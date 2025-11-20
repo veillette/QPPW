@@ -56,6 +56,16 @@ export interface BoundStateResult {
   method: "analytical" | "numerov" | "dvr" | "spectral";
 }
 
+/**
+ * Result from solving only for energies (no wavefunctions)
+ */
+export interface EnergyOnlyResult {
+  /** Energy eigenvalues in Joules */
+  energies: number[];
+  /** Method used to find energies */
+  method: "analytical" | "numerov" | "dvr" | "spectral";
+}
+
 qppw.register("PotentialFunction", { PotentialType });
 
 export default PotentialFunction;
