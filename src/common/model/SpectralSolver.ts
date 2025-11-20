@@ -20,6 +20,7 @@ import {
   symmetrizeMatrix,
   extractInteriorMatrix,
   matrixToArray,
+  cubicSplineInterpolation,
 } from "./LinearAlgebraUtils.js";
 import qppw from "../../QPPWNamespace.js";
 
@@ -52,7 +53,7 @@ export function solveSpectral(
   mass: number,
   numStates: number,
   gridConfig: GridConfig,
-  energiesOnly: boolean = true,
+  energiesOnly: boolean = false,
 ): BoundStateResult | EnergyOnlyResult {
   const { xMin, xMax, numPoints } = gridConfig;
   const N = numPoints;
@@ -153,10 +154,33 @@ export function solveSpectral(
     wavefunctions.push(normalizedPsi);
   }
 
+  // Interpolate wavefunctions to finer grid (8x more points)
+  if (wavefunctions.length === 0) {
+    return {
+      energies,
+      wavefunctions: [],
+      xGrid,
+      method: "spectral",
+    };
+  }
+
+  const upsampleFactor = 8;
+  const { fineXGrid } = cubicSplineInterpolation(
+    xGrid,
+    wavefunctions[0],
+    upsampleFactor,
+  );
+
+  const fineWavefunctions: number[][] = [];
+  for (const wavefunction of wavefunctions) {
+    const { fineYValues } = cubicSplineInterpolation(xGrid, wavefunction, upsampleFactor);
+    fineWavefunctions.push(fineYValues);
+  }
+
   return {
     energies,
-    wavefunctions,
-    xGrid,
+    wavefunctions: fineWavefunctions,
+    xGrid: fineXGrid,
     method: "spectral",
   };
 }
