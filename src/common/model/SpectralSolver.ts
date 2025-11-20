@@ -22,6 +22,7 @@ import {
   matrixToArray,
   cubicSplineInterpolation,
 } from "./LinearAlgebraUtils.js";
+import { standardizeWavefunction } from "./WavefunctionStandardization.js";
 import qppw from "../../QPPWNamespace.js";
 
 /**
@@ -151,7 +152,9 @@ export function solveSpectral(
 
     // Normalize
     const normalizedPsi = normalizeWavefunctionChebyshev(psi_full, xMin, xMax);
-    wavefunctions.push(normalizedPsi);
+    // Standardize sign for consistency across solvers
+    const standardizedPsi = standardizeWavefunction(normalizedPsi, xGrid);
+    wavefunctions.push(standardizedPsi);
   }
 
   // Interpolate wavefunctions to finer grid (8x more points)
