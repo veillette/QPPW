@@ -22,6 +22,7 @@
 import QuantumConstants from "./QuantumConstants.js";
 import { BoundStateResult, EnergyOnlyResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
 import { DotMatrix, diagonalize, normalizeWavefunction, matrixToArray, cubicSplineInterpolation } from "./LinearAlgebraUtils.js";
+import { standardizeWavefunction } from "./WavefunctionStandardization.js";
 import qppw from "../../QPPWNamespace.js";
 
 /**
@@ -184,7 +185,9 @@ export function solveMatrixNumerov(
       wavefunction[N - 1] = 0;
 
       const normalizedPsi = normalizeWavefunction(wavefunction, dx);
-      wavefunctions.push(normalizedPsi);
+      // Standardize sign for consistency across solvers
+      const standardizedPsi = standardizeWavefunction(normalizedPsi, xGrid);
+      wavefunctions.push(standardizedPsi);
     }
   }
 

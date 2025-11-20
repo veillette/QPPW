@@ -25,6 +25,7 @@ import {
   ComplexNumber,
   cubicSplineInterpolation,
 } from "./LinearAlgebraUtils.js";
+import { standardizeWavefunction } from "./WavefunctionStandardization.js";
 import qppw from "../../QPPWNamespace.js";
 
 /**
@@ -116,7 +117,7 @@ export function solveFGH(
   if (energiesOnly) {
     return {
       energies,
-      method: "dvr",
+      method: "fgh",
     };
   }
 
@@ -131,7 +132,9 @@ export function solveFGH(
       // Normalize wavefunction
       const wavefunction = eigen.eigenvectors[idx];
       const normalizedPsi = normalizeWavefunction(wavefunction, dx);
-      wavefunctions.push(normalizedPsi);
+      // Standardize sign for consistency across solvers
+      const standardizedPsi = standardizeWavefunction(normalizedPsi, xGrid);
+      wavefunctions.push(standardizedPsi);
     }
   }
 
@@ -141,7 +144,7 @@ export function solveFGH(
       energies,
       wavefunctions: [],
       xGrid,
-      method: "dvr", // Using "dvr" for compatibility with existing code
+      method: "fgh",
     };
   }
 
@@ -162,7 +165,7 @@ export function solveFGH(
     energies,
     wavefunctions: fineWavefunctions,
     xGrid: fineXGrid,
-    method: "dvr", // Using "dvr" for compatibility with existing code
+    method: "fgh",
   };
 }
 
