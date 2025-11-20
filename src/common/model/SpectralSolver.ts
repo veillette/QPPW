@@ -38,21 +38,21 @@ export function solveSpectral(
   mass: number,
   numStates: number,
   gridConfig: GridConfig,
-  energiesOnly: true,
+  energiesOnly?: true,
 ): EnergyOnlyResult;
 export function solveSpectral(
   potential: PotentialFunction,
   mass: number,
   numStates: number,
   gridConfig: GridConfig,
-  energiesOnly?: false,
+  energiesOnly: false,
 ): BoundStateResult;
 export function solveSpectral(
   potential: PotentialFunction,
   mass: number,
   numStates: number,
   gridConfig: GridConfig,
-  energiesOnly?: boolean,
+  energiesOnly: boolean = true,
 ): BoundStateResult | EnergyOnlyResult {
   const { xMin, xMax, numPoints } = gridConfig;
   const N = numPoints;

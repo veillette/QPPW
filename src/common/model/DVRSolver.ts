@@ -29,21 +29,21 @@ export function solveDVR(
   mass: number,
   numStates: number,
   gridConfig: GridConfig,
-  energiesOnly: true,
+  energiesOnly?: true,
 ): EnergyOnlyResult;
 export function solveDVR(
   potential: PotentialFunction,
   mass: number,
   numStates: number,
   gridConfig: GridConfig,
-  energiesOnly?: false,
+  energiesOnly: false,
 ): BoundStateResult;
 export function solveDVR(
   potential: PotentialFunction,
   mass: number,
   numStates: number,
   gridConfig: GridConfig,
-  energiesOnly?: boolean,
+  energiesOnly: boolean = true,
 ): BoundStateResult | EnergyOnlyResult {
   const { xMin, xMax, numPoints } = gridConfig;
   const dx = (xMax - xMin) / (numPoints - 1);
