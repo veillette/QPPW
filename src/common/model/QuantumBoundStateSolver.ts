@@ -28,7 +28,7 @@ const DEFAULT_WAVE_FUNCTION_TOLERANCE = 1e-8;
 
 // Integration constants
 const NUMEROV_COEFFICIENT = 1.0 / 12.0;  // h^2/12 factor in Numerov method
-const MATCHING_POINT_FRACTION = 0.49;    // Matching point fraction for shooting method
+const MATCHING_POINT_FRACTION = 0.45;    // Matching point fraction for shooting method
 
 // Boundary condition constants
 const BOUNDARY_PSI_INITIAL = 0.0;        // psi(boundary) = 0
@@ -45,7 +45,6 @@ const CACHE_SIZE_LIMIT = 100;
  * Solver configuration options
  */
 export type SolverConfig = {
-  reportWarnings?: boolean;
   maxIterations?: number;
   convergenceTolerance?: number;
   energyTolerance?: number;
@@ -75,8 +74,7 @@ class IntegrationResult {
   constructor(
     public readonly nodeCount: number,
     public readonly logDerivativeMismatch: number,
-    public readonly matchingAmplitude: number = 0,
-    public readonly convergenceQuality: number = 0
+    public readonly matchingAmplitude: number = 0
   ) {}
 
   hasTooManyNodes(desiredNodes: number): boolean {
@@ -93,9 +91,7 @@ class IntegrationResult {
  * Cache entry for memoization
  */
 type CacheEntry<T> = {
-  key: string;
   value: T;
-  timestamp: number;
 };
 
 /**
@@ -155,13 +151,11 @@ export class QuantumBoundStateSolver {
   private readonly cache: Map<string, CacheEntry<unknown>>;
   private readonly numerovFactorCache: Map<number, number>;
 
-  // Performance metrics
-  private totalIterations = 0;
-  private cacheHits = 0;
-  private cacheMisses = 0;
-
   // Cached node transition energies for efficient multi-state solving
   private nodeTransitionEnergies: number[] | null = null;
+
+  // Optimal matching point computed from potential structure
+  private optimalMatchPoint: number;
 
   // Cached maximum potential for bound state validation
   private readonly maxPotential: number;
@@ -209,9 +203,51 @@ export class QuantumBoundStateSolver {
     // Cache maximum potential for bound state validation
     this.maxPotential = Math.max(...this.potentialEnergies);
 
+    // Compute optimal matching point based on potential structure
+    this.optimalMatchPoint = this.computeOptimalMatchPoint();
+
     // Initialize caches
     this.cache = new Map();
     this.numerovFactorCache = new Map();
+  }
+
+  /**
+   * Computes optimal matching point by finding center of leftmost well region.
+   * This places the matching point where the wavefunction has significant amplitude.
+   */
+  private computeOptimalMatchPoint(): number {
+    const minPotential = Math.min(...this.potentialEnergies);
+    const tolerance = (this.maxPotential - minPotential) * 0.01; // 1% tolerance
+
+    // Find the first (leftmost) region where potential is at minimum
+    let wellStart = -1;
+    let wellEnd = -1;
+
+    for (let i = 0; i < this.gridPoints; i++) {
+      const isInWell = this.potentialEnergies[i] <= minPotential + tolerance;
+
+      if (isInWell && wellStart === -1) {
+        wellStart = i;
+      }
+      if (!isInWell && wellStart !== -1 && wellEnd === -1) {
+        wellEnd = i - 1;
+        break; // Found first well, stop
+      }
+    }
+
+    // Handle case where well extends to end of grid
+    if (wellStart !== -1 && wellEnd === -1) {
+      wellEnd = this.gridPoints - 1;
+    }
+
+    // If we found a well, use a point 3/4 through it (closer to right edge)
+    // This gives more room for forward integration while staying in the well
+    if (wellStart !== -1 && wellEnd !== -1) {
+      return Math.floor(wellStart + 0.75 * (wellEnd - wellStart));
+    }
+
+    // Fallback to default fraction
+    return Math.floor(this.gridPoints * MATCHING_POINT_FRACTION);
   }
 
   // ========================================================================
@@ -249,14 +285,14 @@ export class QuantumBoundStateSolver {
 
     // Determine optimal matching point
     const matchingPoint = this.adaptiveMatching
-      ? this.findOptimalMatchingPoint(energy, desiredNodes)
+      ? this.findOptimalMatchingPoint(energy)
       : Math.floor(this.gridPoints * MATCHING_POINT_FRACTION);
 
     // Calculate normalization constant
     const normalizationConstant = this.calculateNormalizationConstant(waveFunction);
 
     // Verify solution quality
-    const convergenceMetric = this.calculateConvergenceMetric(energy, waveFunction, desiredNodes);
+    const convergenceMetric = this.calculateConvergenceMetric(energy);
 
     const state: QuantumState = {
       energy,
@@ -312,27 +348,12 @@ export class QuantumBoundStateSolver {
   }
 
   /**
-   * Gets performance metrics
-   */
-  public getPerformanceMetrics() {
-    return {
-      totalIterations: this.totalIterations,
-      cacheHits: this.cacheHits,
-      cacheMisses: this.cacheMisses,
-      cacheHitRate: this.cacheHits / Math.max(1, this.cacheHits + this.cacheMisses),
-      averageIterationsPerState: this.totalIterations / Math.max(1, this.cache.size)
-    };
-  }
-
-  /**
    * Clears all caches
    */
   public clearCache(): void {
     this.cache.clear();
     this.numerovFactorCache.clear();
     this.nodeTransitionEnergies = null;
-    this.cacheHits = 0;
-    this.cacheMisses = 0;
   }
 
   // ========================================================================
@@ -346,6 +367,12 @@ export class QuantumBoundStateSolver {
     // Get initial energy bounds
     const { lowerBound, upperBound } = this.findEnergyBounds(desiredNodes);
 
+    // Check for invalid bounds - no bound state exists for this node count
+    if (lowerBound >= upperBound || lowerBound >= this.maxPotential) {
+      // Return maxPotential to trigger the bound state validation check
+      return this.maxPotential;
+    }
+
     // Binary search with Richardson extrapolation if enabled
     let energy: number;
     if (this.useRichardsonExtrapolation) {
@@ -355,7 +382,7 @@ export class QuantumBoundStateSolver {
     }
 
     // Fine-tune with secant method
-    energy = this.refineEnergyWithSecant(energy, desiredNodes);
+    energy = this.refineEnergyWithSecant(energy);
 
     return energy;
   }
@@ -363,58 +390,66 @@ export class QuantumBoundStateSolver {
   /**
    * Finds all node transition energies by sweeping through the energy range.
    * This is called once and cached for efficiency when finding multiple eigenstates.
+   *
+   * Key principle: All bound state energies lie between minPotential and maxPotential.
+   * We track node count to determine eigenstate order (n-th state has n-1 nodes).
    */
   private findNodeTransitionEnergies(maxNodes: number): number[] {
     const boxLength = this.gridPositions[this.gridPoints - 1] - this.gridPositions[0];
     const minPotential = Math.min(...this.potentialEnergies);
     const maxPotential = Math.max(...this.potentialEnergies);
 
-    // Particle in box estimate for energy spacing
-    const particleInBoxEstimate = this.hbarSquaredOver2m * Math.PI * Math.PI /
-                                  (boxLength * boxLength);
+    // Estimate for energy scale (particle in a box)
+    const energyScale = this.hbarSquaredOver2m * Math.PI * Math.PI / (boxLength * boxLength);
 
-    // Energy range and step size
-    const energyRange = Math.max(Math.abs(maxPotential - minPotential), particleInBoxEstimate * 10);
-    const energyStep = energyRange / 200;  // Start with moderate steps
+    // Energy range for bound states
+    const energyRange = maxPotential - minPotential;
 
-    // Start well below minimum potential
-    let energy = minPotential - Math.abs(particleInBoxEstimate) * 4;
+    // Use fine energy steps to avoid missing closely-spaced levels (e.g., doublets in double wells)
+    const numSteps = Math.max(1000, maxNodes * 100);
+    const energyStep = energyRange / numSteps;
 
-    // Find starting energy with 0 nodes
-    for (let i = 0; i < this.maxIterations; i++) {
-      const test = this.integrateSchrodinger(energy, 0);
-      if (test.nodeCount === 0) break;
-      energy -= Math.abs(particleInBoxEstimate) * Math.pow(2, i);
+    // Use computed optimal matching point for consistent node counting during the sweep
+    // This is critical - adaptive matching causes erratic node counts
+    const fixedMatchPoint = this.optimalMatchPoint;
+
+    // Start well below minimum potential to ensure 0 nodes
+    let energy = minPotential - energyScale * 10;
+
+    // Find energy with 0 nodes
+    let test = this.integrateSchrodinger(energy, fixedMatchPoint);
+    while (test.nodeCount > 0 && energy > minPotential - energyScale * 1000) {
+      energy -= energyScale * 10;
+      test = this.integrateSchrodinger(energy, fixedMatchPoint);
     }
 
-    // Array to store transition energies: transitions[n] = energy where nodes change from n-1 to n
-    // transitions[0] = starting energy (below ground state)
+    // Initialize transitions array with starting energy (below ground state)
     const transitions: number[] = [energy];
     let currentNodes = 0;
     let prevEnergy = energy;
 
-    // Sweep upward to find all transitions
-    // Use a fixed "reference" node count for consistent matching point
-    const maxIterations = this.maxIterations * 100;
-    for (let i = 0; i < maxIterations && currentNodes <= maxNodes; i++) {
+    // Sweep from below minPotential up to maxPotential
+    // Bound states must have E < maxPotential
+    const maxIterations = numSteps * 2;
+    for (let iter = 0; iter < maxIterations && currentNodes <= maxNodes; iter++) {
       energy += energyStep;
 
-      // Safety limit
-      if (energy > maxPotential + energyRange * 20) break;
+      // Stop at maxPotential - no bound states above this
+      if (energy >= maxPotential) {
+        break;
+      }
 
-      // Use currentNodes for the matching point calculation to ensure consistency
-      const test = this.integrateSchrodinger(energy, Math.max(0, currentNodes));
+      test = this.integrateSchrodinger(energy, fixedMatchPoint);
       const nodeCount = test.nodeCount;
 
       // Check for node transition
       if (nodeCount > currentNodes) {
-        // Record the transition energy
-        // Use binary search to find more precise transition point
+        // Use binary search to find precise transition point
         let lo = prevEnergy;
         let hi = energy;
-        for (let j = 0; j < 20; j++) {
+        for (let j = 0; j < 40; j++) {
           const mid = (lo + hi) / 2;
-          const midTest = this.integrateSchrodinger(mid, currentNodes);
+          const midTest = this.integrateSchrodinger(mid, fixedMatchPoint);
           if (midTest.nodeCount > currentNodes) {
             hi = mid;
           } else {
@@ -433,6 +468,9 @@ export class QuantumBoundStateSolver {
       prevEnergy = energy;
     }
 
+    // Add a final transition at maxPotential to mark the end of bound states
+    transitions.push(maxPotential);
+
     return transitions;
   }
 
@@ -449,37 +487,36 @@ export class QuantumBoundStateSolver {
       this.nodeTransitionEnergies = this.findNodeTransitionEnergies(desiredNodes + 5);
     }
 
-    const boxLength = this.gridPositions[this.gridPoints - 1] - this.gridPositions[0];
     const minPotential = Math.min(...this.potentialEnergies);
-    const particleInBoxEstimate = this.hbarSquaredOver2m * Math.PI * Math.PI /
-                                  (boxLength * boxLength);
 
     let lowerBound: number;
     let upperBound: number;
 
     // Use transition energies for bracketing
     if (this.nodeTransitionEnergies.length > desiredNodes + 1) {
-      // Lower bound: just above where we transition TO desiredNodes
-      // Upper bound: just below where we transition TO desiredNodes+1
+      // Lower bound: energy where we transition TO desiredNodes
+      // Upper bound: energy where we transition TO desiredNodes+1
       lowerBound = this.nodeTransitionEnergies[desiredNodes];
       upperBound = this.nodeTransitionEnergies[desiredNodes + 1];
     } else if (this.nodeTransitionEnergies.length > desiredNodes) {
-      // We have the lower transition but not upper
+      // We have the lower transition but not upper - use maxPotential as upper
       lowerBound = this.nodeTransitionEnergies[desiredNodes];
-      upperBound = lowerBound + particleInBoxEstimate * (desiredNodes + 1) * 2;
+      upperBound = this.maxPotential;
     } else {
-      // Fallback: estimate based on particle in box
-      const estimatedEnergy = minPotential + particleInBoxEstimate * (desiredNodes + 1) * (desiredNodes + 1);
-      lowerBound = estimatedEnergy - particleInBoxEstimate * (desiredNodes + 1);
-      upperBound = estimatedEnergy + particleInBoxEstimate * (desiredNodes + 1);
+      // No transition found for this node count - no bound state exists
+      lowerBound = this.maxPotential;
+      upperBound = this.maxPotential;
+    }
+
+    // Ensure lower bound is at least minPotential
+    if (lowerBound < minPotential) {
+      lowerBound = minPotential;
     }
 
     // Ensure valid bounds
     if (lowerBound >= upperBound) {
-      const midpoint = (lowerBound + upperBound) / 2;
-      const halfWidth = Math.abs(particleInBoxEstimate) * (desiredNodes + 1);
-      lowerBound = midpoint - halfWidth;
-      upperBound = midpoint + halfWidth;
+      // No valid bracket - this state likely doesn't exist
+      return { lowerBound: this.maxPotential, upperBound: this.maxPotential };
     }
 
     return { lowerBound, upperBound };
@@ -497,9 +534,12 @@ export class QuantumBoundStateSolver {
     let upper = upperBound;
     let energy = 0.5 * (lower + upper); // Initialize to midpoint
 
+    // Use computed optimal match point for consistent node counting with transition detection
+    const fixedMatchPoint = this.optimalMatchPoint;
+
     for (let i = 0; i < this.maxIterations; i++) {
       energy = 0.5 * (lower + upper);
-      const test = this.integrateSchrodinger(energy, desiredNodes);
+      const test = this.integrateSchrodinger(energy, fixedMatchPoint);
 
       // Check for invalid integration results
       if (!Number.isFinite(test.logDerivativeMismatch)) {
@@ -521,8 +561,6 @@ export class QuantumBoundStateSolver {
       }
 
       if (Math.abs(upper - lower) < this.energyTolerance) break;
-
-      this.totalIterations++;
     }
 
     return energy;
@@ -559,16 +597,19 @@ export class QuantumBoundStateSolver {
    * This converges faster than bisection (superlinear) while avoiding the need
    * for analytical derivatives.
    */
-  private refineEnergyWithSecant(initialEnergy: number, desiredNodes: number): number {
+  private refineEnergyWithSecant(initialEnergy: number): number {
     // Initialize with two energy guesses bracketing the solution
     // These are slightly perturbed from the initial estimate
     let energyPrevious = initialEnergy * 0.999;  // Previous energy iterate
     let energyCurrent = initialEnergy * 1.001;   // Current energy iterate
 
+    // Use computed optimal match point for consistent node counting
+    const fixedMatchPoint = this.optimalMatchPoint;
+
     // Evaluate the mismatch function at both initial points
     // f(E) = log derivative mismatch, which should be zero at the true eigenvalue
-    let mismatchPrevious = this.integrateSchrodinger(energyPrevious, desiredNodes).logDerivativeMismatch;
-    let mismatchCurrent = this.integrateSchrodinger(energyCurrent, desiredNodes).logDerivativeMismatch;
+    let mismatchPrevious = this.integrateSchrodinger(energyPrevious, fixedMatchPoint).logDerivativeMismatch;
+    let mismatchCurrent = this.integrateSchrodinger(energyCurrent, fixedMatchPoint).logDerivativeMismatch;
 
     // Secant iteration: refine energy until convergence
     for (let iteration = 0; iteration < 10; iteration++) {
@@ -582,7 +623,7 @@ export class QuantumBoundStateSolver {
       const energyNext = energyCurrent - mismatchCurrent * (energyCurrent - energyPrevious) / mismatchDifference;
 
       // Evaluate the mismatch at the new energy
-      const mismatchNext = this.integrateSchrodinger(energyNext, desiredNodes).logDerivativeMismatch;
+      const mismatchNext = this.integrateSchrodinger(energyNext, fixedMatchPoint).logDerivativeMismatch;
 
       // Check for convergence: mismatch is essentially zero
       if (Math.abs(mismatchNext) < this.convergenceTolerance) return energyNext;
@@ -600,11 +641,15 @@ export class QuantumBoundStateSolver {
 
   /**
    * Enhanced Schrodinger equation integration with optimizations
+   * @param energy - Energy to integrate at
+   * @param useFixedMatchPoint - If provided, use this fixed match point instead of adaptive
    */
-  private integrateSchrodinger(energy: number, desiredNodes: number): IntegrationResult {
-    const matchPoint = this.adaptiveMatching
-      ? this.findOptimalMatchingPoint(energy, desiredNodes)
-      : Math.floor(this.gridPoints * MATCHING_POINT_FRACTION);
+  private integrateSchrodinger(energy: number, useFixedMatchPoint?: number): IntegrationResult {
+    const matchPoint = useFixedMatchPoint !== undefined
+      ? useFixedMatchPoint
+      : (this.adaptiveMatching
+          ? this.findOptimalMatchingPoint(energy)
+          : this.optimalMatchPoint);
 
     const numerovFactor = this.getNumerovFactor();
     const inverseHbar2Over2m = 1.0 / this.hbarSquaredOver2m;
@@ -638,14 +683,10 @@ export class QuantumBoundStateSolver {
     // Calculate matching amplitude for quality assessment
     const matchingAmplitude = Math.abs(forwardResult.psiAtMatch);
 
-    // Calculate convergence quality metric
-    const convergenceQuality = Math.exp(-Math.abs(logDerivativeMismatch) / this.convergenceTolerance);
-
     return new IntegrationResult(
       nodeCount,
       logDerivativeMismatch,
-      matchingAmplitude,
-      convergenceQuality
+      matchingAmplitude
     );
   }
 
@@ -824,7 +865,7 @@ export class QuantumBoundStateSolver {
   private calculateNormalizedWaveFunction(energy: number): number[] {
     const waveFunction = new Array<number>(this.gridPoints);
     const matchPoint = this.adaptiveMatching
-      ? this.findOptimalMatchingPoint(energy, 0)
+      ? this.findOptimalMatchingPoint(energy)
       : Math.floor(this.gridPoints * MATCHING_POINT_FRACTION);
 
     const numerovFactor = this.getNumerovFactor();
@@ -987,7 +1028,7 @@ export class QuantumBoundStateSolver {
   /**
    * Finds optimal matching point for given energy
    */
-  private findOptimalMatchingPoint(energy: number, _desiredNodes: number): number {
+  private findOptimalMatchingPoint(energy: number): number {
     // Find classical turning points
     const turningPoints: number[] = [];
     for (let i = 1; i < this.gridPoints - 1; i++) {
@@ -1029,12 +1070,8 @@ export class QuantumBoundStateSolver {
   /**
    * Calculates convergence quality metric
    */
-  private calculateConvergenceMetric(
-    energy: number,
-    _waveFunction: number[],
-    desiredNodes: number
-  ): number {
-    const result = this.integrateSchrodinger(energy, desiredNodes);
+  private calculateConvergenceMetric(energy: number): number {
+    const result = this.integrateSchrodinger(energy);
     const continuity = Math.exp(-Math.abs(result.logDerivativeMismatch));
     const amplitude = result.matchingAmplitude;
     return continuity * amplitude;
@@ -1052,11 +1089,9 @@ export class QuantumBoundStateSolver {
 
     const entry = this.cache.get(key);
     if (entry) {
-      this.cacheHits++;
       return entry.value as T;
     }
 
-    this.cacheMisses++;
     return null;
   }
 
@@ -1075,11 +1110,7 @@ export class QuantumBoundStateSolver {
       }
     }
 
-    this.cache.set(key, {
-      key,
-      value,
-      timestamp: Date.now()
-    });
+    this.cache.set(key, { value });
   }
 }
 
@@ -1145,47 +1176,12 @@ export function solveQuantumBound(
 }
 
 // ============================================================================
-// Utility Functions
-// ============================================================================
-
-/**
- * Creates a solver with atomic units (Hartree, Bohr radii)
- */
-export function createAtomicUnitsSolver(
-  xMin: number,  // Bohr radii
-  xMax: number,  // Bohr radii
-  numPoints: number,
-  potentialFunction: (x: number) => number,  // Hartree
-  config?: SolverConfig
-): QuantumBoundStateSolver {
-  // In atomic units, hbar = m_e = e = 1, so hbar^2/2m = 0.5
-  // Convert to SI: use electron mass
-  const { ELECTRON_MASS, BOHR_RADIUS, HARTREE_TO_JOULES } = QuantumConstants;
-
-  // Create wrapper that converts from atomic to SI units
-  const siPotential = (x: number) => {
-    const xBohr = x / BOHR_RADIUS;
-    return potentialFunction(xBohr) * HARTREE_TO_JOULES;
-  };
-
-  return new QuantumBoundStateSolver(
-    ELECTRON_MASS,
-    xMin * BOHR_RADIUS,
-    xMax * BOHR_RADIUS,
-    numPoints,
-    siPotential,
-    config
-  );
-}
-
-// ============================================================================
 // Registration
 // ============================================================================
 
 qppw.register("QuantumBoundStateSolver", {
   QuantumBoundStateSolver,
   solveQuantumBound,
-  createAtomicUnitsSolver,
   QuantumSolverException,
   InvalidBoundStateException
 });

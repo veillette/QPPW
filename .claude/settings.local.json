@@ -16,7 +16,8 @@
       "Bash(curl:*)",
       "Bash(pkill:*)",
       "Bash(npm test:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []
