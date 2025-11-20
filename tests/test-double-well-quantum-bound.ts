@@ -73,7 +73,7 @@ function runSingleTest(
   const xMin = -totalExtent / 2;
   const xMax = totalExtent / 2;
 
-  const gridConfig: GridConfig = {
+  const _gridConfig: GridConfig = {
     xMin,
     xMax,
     numPoints: NUM_POINTS
