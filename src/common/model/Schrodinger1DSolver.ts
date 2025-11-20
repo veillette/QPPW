@@ -12,6 +12,7 @@ import {
   GridConfig,
   PotentialFunction,
   PotentialType,
+  SolverMethod,
 } from "./PotentialFunction.js";
 import {
   solveFiniteSquareWell,
@@ -33,7 +34,9 @@ import { solveFGH } from "./FGHSolver.js";
 import { solveSpectral } from "./SpectralSolver.js";
 import { solveDoubleWellNumerov } from "./DoubleWellNumerovSolver.js";
 import { solveQuantumBound } from "./QuantumBoundStateSolver.js";
+import { computeWavefunctionsRK45 } from "./WavefunctionRK45Solver.js";
 import QuantumConstants from "./QuantumConstants.js";
+import QPPWPreferences from "../../QPPWPreferences.js";
 import qppw from "../../QPPWNamespace.js";
 
 /**
@@ -340,6 +343,10 @@ export class Schrodinger1DSolver {
   /**
    * Solve the Schrödinger equation numerically for an arbitrary potential.
    *
+   * Uses a two-step approach:
+   * 1. Find energies with selected solver on coarse grid (from preferences)
+   * 2. Compute wavefunctions on finer grid (1000 points) using RK45
+   *
    * @param potential - Function V(x) returning potential energy in Joules
    * @param mass - Particle mass in kg
    * @param numStates - Number of bound states to calculate
@@ -354,16 +361,24 @@ export class Schrodinger1DSolver {
     gridConfig: GridConfig,
     energyRange?: [number, number],
   ): BoundStateResult {
+    const { xMin, xMax } = gridConfig;
+
+    // Step 1: Find energies using selected solver with coarse grid (from preferences)
+    const coarseNumPoints = QPPWPreferences.gridPointsProperty.value;
+    const coarseGridConfig: GridConfig = { xMin, xMax, numPoints: coarseNumPoints };
+
+    let energies: number[];
+    let method: SolverMethod;
+
     if (this.numericalMethod === NumericalMethod.NUMEROV) {
       // Numerov method requires energy range for shooting method
       if (!energyRange) {
         // Estimate energy range based on potential at grid points
-        const { xMin, xMax, numPoints } = gridConfig;
-        const dx = (xMax - xMin) / (numPoints - 1);
+        const dx = (xMax - xMin) / (coarseNumPoints - 1);
         let Vmin = Infinity;
         let Vmax = -Infinity;
 
-        for (let i = 0; i < numPoints; i++) {
+        for (let i = 0; i < coarseNumPoints; i++) {
           const x = xMin + i * dx;
           const V = potential(x);
           if (V < Vmin) Vmin = V;
@@ -374,30 +389,61 @@ export class Schrodinger1DSolver {
         energyRange = [Vmin, Vmax];
       }
 
-      return solveNumerov(
+      // Numerov returns full result, extract energies
+      const numerovResult = solveNumerov(
         potential,
         mass,
         numStates,
-        gridConfig,
+        coarseGridConfig,
         energyRange[0],
         energyRange[1],
       );
+      energies = numerovResult.energies;
+      method = numerovResult.method;
     } else if (this.numericalMethod === NumericalMethod.MATRIX_NUMEROV) {
-      // Matrix Numerov method
-      return solveMatrixNumerov(potential, mass, numStates, gridConfig, false);
+      // Matrix Numerov method - energies only
+      const result = solveMatrixNumerov(potential, mass, numStates, coarseGridConfig, true);
+      energies = result.energies;
+      method = result.method;
     } else if (this.numericalMethod === NumericalMethod.DVR) {
-      // DVR method
-      return solveDVR(potential, mass, numStates, gridConfig, false);
+      // DVR method - energies only
+      const result = solveDVR(potential, mass, numStates, coarseGridConfig, true);
+      energies = result.energies;
+      method = result.method;
     } else if (this.numericalMethod === NumericalMethod.FGH) {
-      // Fourier Grid Hamiltonian method
-      return solveFGH(potential, mass, numStates, gridConfig, false);
+      // Fourier Grid Hamiltonian method - energies only
+      const result = solveFGH(potential, mass, numStates, coarseGridConfig, true);
+      energies = result.energies;
+      method = result.method;
     } else if (this.numericalMethod === NumericalMethod.QUANTUM_BOUND) {
       // Advanced shooting method with adaptive bracketing
-      return solveQuantumBound(potential, mass, numStates, gridConfig);
+      const result = solveQuantumBound(potential, mass, numStates, coarseGridConfig);
+      energies = result.energies;
+      method = result.method;
     } else {
-      // Spectral (Chebyshev) method
-      return solveSpectral(potential, mass, numStates, gridConfig, false);
+      // Spectral (Chebyshev) method - energies only
+      const result = solveSpectral(potential, mass, numStates, coarseGridConfig, true);
+      energies = result.energies;
+      method = result.method;
     }
+
+    // Step 2: Compute wavefunctions on finer grid using RK45
+    const fineNumPoints = 1000;
+    const fineGridConfig: GridConfig = { xMin, xMax, numPoints: fineNumPoints };
+
+    const wavefunctionResult = computeWavefunctionsRK45(
+      energies,
+      potential,
+      mass,
+      fineGridConfig
+    );
+
+    return {
+      energies,
+      wavefunctions: wavefunctionResult.wavefunctions,
+      xGrid: wavefunctionResult.xGrid,
+      method,
+    };
   }
 
   /**

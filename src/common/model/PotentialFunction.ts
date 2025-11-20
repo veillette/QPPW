@@ -43,6 +43,11 @@ export interface GridConfig {
 }
 
 /**
+ * Valid solver method identifiers
+ */
+export type SolverMethod = "analytical" | "numerov" | "matrix_numerov" | "dvr" | "fgh" | "spectral" | "quantum_bound";
+
+/**
  * Result from solving the Schrödinger equation
  */
 export interface BoundStateResult {
@@ -53,7 +58,7 @@ export interface BoundStateResult {
   /** Grid x-positions in meters */
   xGrid: number[];
   /** Whether analytical or numerical solution was used */
-  method: "analytical" | "numerov" | "dvr" | "spectral";
+  method: SolverMethod;
 }
 
 /**
@@ -63,7 +68,7 @@ export interface EnergyOnlyResult {
   /** Energy eigenvalues in Joules */
   energies: number[];
   /** Method used to find energies */
-  method: "analytical" | "numerov" | "dvr" | "spectral";
+  method: SolverMethod;
 }
 
 qppw.register("PotentialFunction", { PotentialType });
