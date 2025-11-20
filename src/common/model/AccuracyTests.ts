@@ -22,7 +22,7 @@ import { solveCoulomb3DPotential } from "./analytical-solutions/coulomb-3d-poten
 import { solveMorsePotential } from "./analytical-solutions/morse-potential.js";
 import { solvePoschlTellerPotential } from "./analytical-solutions/poschl-teller-potential.js";
 import QuantumConstants from "./QuantumConstants.js";
-import { BoundStateResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
+import { EnergyOnlyResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
 import Schrodinger1DSolver from "./Schrodinger1DSolver.js";
 import qppw from "../../QPPWNamespace.js";
 
@@ -56,9 +56,9 @@ function percentageError(numerical: number, analytical: number): number {
  */
 function testMethod(
   methodName: string,
-  solver: (pot: PotentialFunction, mass: number, numStates: number, grid: GridConfig) => BoundStateResult,
+  solver: (pot: PotentialFunction, mass: number, numStates: number, grid: GridConfig) => EnergyOnlyResult,
   potential: PotentialFunction,
-  analyticalSolution: BoundStateResult,
+  analyticalSolution: EnergyOnlyResult,
   mass: number,
   numStates: number,
   gridConfig: GridConfig,
@@ -487,8 +487,8 @@ function testDoubleSquareWellsComprehensive(): TestResult[] {
  */
 function compareResults(
   methodName: string,
-  result: BoundStateResult,
-  reference: BoundStateResult,
+  result: EnergyOnlyResult,
+  reference: EnergyOnlyResult,
   testName: string,
   tolerance: number,
   executionTime: number
