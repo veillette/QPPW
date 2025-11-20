@@ -384,19 +384,19 @@ export class Schrodinger1DSolver {
       );
     } else if (this.numericalMethod === NumericalMethod.MATRIX_NUMEROV) {
       // Matrix Numerov method
-      return solveMatrixNumerov(potential, mass, numStates, gridConfig);
+      return solveMatrixNumerov(potential, mass, numStates, gridConfig, false);
     } else if (this.numericalMethod === NumericalMethod.DVR) {
       // DVR method
-      return solveDVR(potential, mass, numStates, gridConfig);
+      return solveDVR(potential, mass, numStates, gridConfig, false);
     } else if (this.numericalMethod === NumericalMethod.FGH) {
       // Fourier Grid Hamiltonian method
-      return solveFGH(potential, mass, numStates, gridConfig);
+      return solveFGH(potential, mass, numStates, gridConfig, false);
     } else if (this.numericalMethod === NumericalMethod.QUANTUM_BOUND) {
       // Advanced shooting method with adaptive bracketing
       return solveQuantumBound(potential, mass, numStates, gridConfig);
     } else {
       // Spectral (Chebyshev) method
-      return solveSpectral(potential, mass, numStates, gridConfig);
+      return solveSpectral(potential, mass, numStates, gridConfig, false);
     }
   }
 
