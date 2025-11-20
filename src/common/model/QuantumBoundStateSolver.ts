@@ -330,7 +330,25 @@ export class QuantumBoundStateSolver {
       }
     }
 
-    return states;
+    // Sort states by energy to ensure correct ordering
+    states.sort((a, b) => a.energy - b.energy);
+
+    // Remove duplicate energies (keep only unique states)
+    // Use relative tolerance based on energy scale
+    const uniqueStates: QuantumState[] = [];
+    for (const state of states) {
+      if (uniqueStates.length === 0) {
+        uniqueStates.push(state);
+      } else {
+        const prevEnergy = uniqueStates[uniqueStates.length - 1].energy;
+        const relDiff = Math.abs(state.energy - prevEnergy) / Math.max(Math.abs(prevEnergy), 1e-20);
+        if (relDiff > 1e-6) { // 0.0001% relative difference
+          uniqueStates.push(state);
+        }
+      }
+    }
+
+    return uniqueStates;
   }
 
   /**
@@ -470,6 +488,13 @@ export class QuantumBoundStateSolver {
 
     // Add a final transition at maxPotential to mark the end of bound states
     transitions.push(maxPotential);
+
+    // Ensure transitions are monotonically increasing (fix numerical issues)
+    for (let i = 1; i < transitions.length; i++) {
+      if (transitions[i] < transitions[i - 1]) {
+        transitions[i] = transitions[i - 1];
+      }
+    }
 
     return transitions;
   }
