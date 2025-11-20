@@ -34,7 +34,7 @@ import { solveFGH } from "./FGHSolver.js";
 import { solveSpectral } from "./SpectralSolver.js";
 import { solveDoubleWellNumerov } from "./DoubleWellNumerovSolver.js";
 import { solveQuantumBound } from "./QuantumBoundStateSolver.js";
-import { computeWavefunctionsRK45 } from "./WavefunctionRK45Solver.js";
+import { computeWavefunctionsNumerov } from "./WavefunctionNumerovSolver.js";
 import QuantumConstants from "./QuantumConstants.js";
 import QPPWPreferences from "../../QPPWPreferences.js";
 import qppw from "../../QPPWNamespace.js";
@@ -345,7 +345,7 @@ export class Schrodinger1DSolver {
    *
    * Uses a two-step approach:
    * 1. Find energies with selected solver on coarse grid (from preferences)
-   * 2. Compute wavefunctions on finer grid (1000 points) using RK45
+   * 2. Compute wavefunctions on finer grid (1000 points) using Numerov method
    *
    * @param potential - Function V(x) returning potential energy in Joules
    * @param mass - Particle mass in kg
@@ -427,11 +427,11 @@ export class Schrodinger1DSolver {
       method = result.method;
     }
 
-    // Step 2: Compute wavefunctions on finer grid using RK45
+    // Step 2: Compute wavefunctions on finer grid using Numerov method
     const fineNumPoints = 1000;
     const fineGridConfig: GridConfig = { xMin, xMax, numPoints: fineNumPoints };
 
-    const wavefunctionResult = computeWavefunctionsRK45(
+    const wavefunctionResult = computeWavefunctionsNumerov(
       energies,
       potential,
       mass,
