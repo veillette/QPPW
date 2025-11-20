@@ -717,6 +717,111 @@ export function fftFreq(N: number, dx: number): number[] {
   return waveNumberArray;
 }
 
+/**
+ * Cubic spline interpolation for smooth wavefunction upsampling.
+ * Uses natural boundary conditions (second derivative = 0 at endpoints).
+ *
+ * @param xGrid - Original x-coordinates
+ * @param yValues - Original y-values (wavefunction values)
+ * @param upsampleFactor - Factor to increase resolution (e.g., 8 for 8x more points)
+ * @returns Object with fineXGrid and fineYValues
+ */
+export function cubicSplineInterpolation(
+  xGrid: number[],
+  yValues: number[],
+  upsampleFactor: number,
+): { fineXGrid: number[]; fineYValues: number[] } {
+  const n = xGrid.length;
+  if (n < 2) {
+    throw new Error("Need at least 2 points for interpolation");
+  }
+  if (yValues.length !== n) {
+    throw new Error("xGrid and yValues must have the same length");
+  }
+
+  // Build cubic spline coefficients using natural boundary conditions
+  // For each interval [x_i, x_{i+1}], the spline is:
+  // S_i(x) = a_i + b_i(x-x_i) + c_i(x-x_i)² + d_i(x-x_i)³
+
+  const h: number[] = []; // Interval widths
+  for (let i = 0; i < n - 1; i++) {
+    h.push(xGrid[i + 1] - xGrid[i]);
+  }
+
+  // Set up tridiagonal system for second derivatives
+  // Natural boundary conditions: M_0 = M_{n-1} = 0
+  const alpha: number[] = new Array(n - 1);
+  for (let i = 1; i < n - 1; i++) {
+    alpha[i] =
+      (3 / h[i]) * (yValues[i + 1] - yValues[i]) -
+      (3 / h[i - 1]) * (yValues[i] - yValues[i - 1]);
+  }
+
+  // Solve tridiagonal system for second derivatives M_i
+  const l: number[] = new Array(n);
+  const mu: number[] = new Array(n);
+  const z: number[] = new Array(n);
+
+  l[0] = 1;
+  mu[0] = 0;
+  z[0] = 0;
+
+  for (let i = 1; i < n - 1; i++) {
+    l[i] = 2 * (xGrid[i + 1] - xGrid[i - 1]) - h[i - 1] * mu[i - 1];
+    mu[i] = h[i] / l[i];
+    z[i] = (alpha[i] - h[i - 1] * z[i - 1]) / l[i];
+  }
+
+  l[n - 1] = 1;
+  z[n - 1] = 0;
+
+  const M: number[] = new Array(n); // Second derivatives
+  M[n - 1] = 0;
+
+  for (let j = n - 2; j >= 0; j--) {
+    M[j] = z[j] - mu[j] * M[j + 1];
+  }
+
+  // Compute spline coefficients
+  const a: number[] = [...yValues];
+  const b: number[] = new Array(n - 1);
+  const c: number[] = new Array(n - 1);
+  const d: number[] = new Array(n - 1);
+
+  for (let i = 0; i < n - 1; i++) {
+    c[i] = M[i];
+    b[i] = (yValues[i + 1] - yValues[i]) / h[i] - (h[i] * (M[i + 1] + 2 * M[i])) / 3;
+    d[i] = (M[i + 1] - M[i]) / (3 * h[i]);
+  }
+
+  // Generate fine grid
+  const fineXGrid: number[] = [];
+  const fineYValues: number[] = [];
+
+  for (let i = 0; i < n - 1; i++) {
+    const x0 = xGrid[i];
+    const x1 = xGrid[i + 1];
+
+    // Generate upsampleFactor points in this interval
+    // (include start point, exclude end point except for last interval)
+    const pointsInInterval = i === n - 2 ? upsampleFactor + 1 : upsampleFactor;
+
+    for (let j = 0; j < pointsInInterval; j++) {
+      const t = j / upsampleFactor;
+      const x = x0 + t * (x1 - x0);
+      const dx = x - x0;
+
+      // Evaluate cubic spline
+      const y = a[i] + b[i] * dx + c[i] * dx * dx + d[i] * dx * dx * dx;
+
+      fineXGrid.push(x);
+      fineYValues.push(y);
+    }
+  }
+
+  return { fineXGrid, fineYValues };
+}
+
 qppw.register("LinearAlgebraUtils", {
   arrayToMatrix,
   matrixToArray,
@@ -731,6 +836,7 @@ qppw.register("LinearAlgebraUtils", {
   diagonalize,
   normalizeWavefunction,
   normalizeWavefunctionChebyshev,
+  cubicSplineInterpolation,
   complexAdd,
   complexSubtract,
   complexMultiply,

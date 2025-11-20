@@ -11,7 +11,7 @@
 
 import QuantumConstants from "./QuantumConstants.js";
 import { BoundStateResult, EnergyOnlyResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
-import { DotMatrix, diagonalize, normalizeWavefunction, matrixToArray } from "./LinearAlgebraUtils.js";
+import { DotMatrix, diagonalize, normalizeWavefunction, matrixToArray, cubicSplineInterpolation } from "./LinearAlgebraUtils.js";
 import qppw from "../../QPPWNamespace.js";
 
 /**
@@ -43,7 +43,7 @@ export function solveDVR(
   mass: number,
   numStates: number,
   gridConfig: GridConfig,
-  energiesOnly: boolean = true,
+  energiesOnly: boolean = false,
 ): BoundStateResult | EnergyOnlyResult {
   const { xMin, xMax, numPoints } = gridConfig;
   const dx = (xMax - xMin) / (numPoints - 1);
@@ -118,10 +118,33 @@ export function solveDVR(
     }
   }
 
+  // Interpolate wavefunctions to finer grid (8x more points)
+  if (wavefunctions.length === 0) {
+    return {
+      energies,
+      wavefunctions: [],
+      xGrid,
+      method: "dvr",
+    };
+  }
+
+  const upsampleFactor = 8;
+  const { fineXGrid } = cubicSplineInterpolation(
+    xGrid,
+    wavefunctions[0],
+    upsampleFactor,
+  );
+
+  const fineWavefunctions: number[][] = [];
+  for (const wavefunction of wavefunctions) {
+    const { fineYValues } = cubicSplineInterpolation(xGrid, wavefunction, upsampleFactor);
+    fineWavefunctions.push(fineYValues);
+  }
+
   return {
     energies,
-    wavefunctions,
-    xGrid,
+    wavefunctions: fineWavefunctions,
+    xGrid: fineXGrid,
     method: "dvr",
   };
 }
