@@ -13,7 +13,7 @@
  */
 
 import QuantumConstants from "./QuantumConstants.js";
-import { BoundStateResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
+import { BoundStateResult, EnergyOnlyResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
 import {
   DotMatrix,
   diagonalize,
@@ -33,14 +33,30 @@ import qppw from "../../QPPWNamespace.js";
  * @param mass - Particle mass in kg
  * @param numStates - Number of lowest bound states to return
  * @param gridConfig - Grid configuration
- * @returns Bound state results
+ * @param energiesOnly - If true, only compute energies (faster, no wavefunctions)
+ * @returns Bound state results or energy-only results
  */
 export function solveFGH(
   potential: PotentialFunction,
   mass: number,
   numStates: number,
   gridConfig: GridConfig,
-): BoundStateResult {
+  energiesOnly: true,
+): EnergyOnlyResult;
+export function solveFGH(
+  potential: PotentialFunction,
+  mass: number,
+  numStates: number,
+  gridConfig: GridConfig,
+  energiesOnly?: false,
+): BoundStateResult;
+export function solveFGH(
+  potential: PotentialFunction,
+  mass: number,
+  numStates: number,
+  gridConfig: GridConfig,
+  energiesOnly?: boolean,
+): BoundStateResult | EnergyOnlyResult {
   const { xMin, xMax, numPoints } = gridConfig;
   // L = (xMax - xMin) / 2 for periodic domain [-L, L]
   const dx = (xMax - xMin) / numPoints; // Note: periodic grid, no endpoint
@@ -81,7 +97,6 @@ export function solveFGH(
 
   // Extract the lowest numStates bound states
   const energies: number[] = [];
-  const wavefunctions: number[][] = [];
 
   // Calculate boundary potential once
   const V_boundary = Math.max(potential(xMin), potential(xMax));
@@ -93,14 +108,31 @@ export function solveFGH(
     // Only include bound states (energy < V at boundaries)
     if (energy < V_boundary) {
       energies.push(energy);
+    }
+  }
 
+  // If only energies requested, return early without computing wavefunctions
+  if (energiesOnly) {
+    return {
+      energies,
+      method: "dvr",
+    };
+  }
+
+  // Compute wavefunctions
+  const wavefunctions: number[][] = [];
+  for (let i = 0; i < Math.min(numStates, N); i++) {
+    const idx = sortedIndices[i];
+    const energy = eigen.eigenvalues[idx];
+
+    // Only include bound states (energy < V at boundaries)
+    if (energy < V_boundary) {
       // Normalize wavefunction
       const wavefunction = eigen.eigenvectors[idx];
       const normalizedPsi = normalizeWavefunction(wavefunction, dx);
       wavefunctions.push(normalizedPsi);
     }
   }
-
 
   return {
     energies,
