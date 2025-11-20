@@ -12,7 +12,6 @@ import {
   GridConfig,
   PotentialFunction,
   PotentialType,
-  SolverMethod,
 } from "./PotentialFunction.js";
 import {
   solveFiniteSquareWell,
@@ -334,14 +333,17 @@ export class Schrodinger1DSolver {
     gridConfig: GridConfig,
     energyRange?: [number, number],
   ): BoundStateResult {
+    // Configuration constants
+    const ENERGIES_ONLY = false;
+    const FINE_GRID_POINTS = 1000;
+
     const { xMin, xMax } = gridConfig;
 
-    // Step 1: Find energies using selected solver with coarse grid (from preferences)
+    // Step 1: Find energies (and optionally wavefunctions) using selected solver
     const coarseNumPoints = QPPWPreferences.gridPointsProperty.value;
     const coarseGridConfig: GridConfig = { xMin, xMax, numPoints: coarseNumPoints };
 
-    let energies: number[];
-    let method: SolverMethod;
+    let result: BoundStateResult;
 
     if (this.numericalMethod === NumericalMethod.NUMEROV) {
       // Numerov method requires energy range for shooting method
@@ -362,8 +364,8 @@ export class Schrodinger1DSolver {
         energyRange = [Vmin, Vmax];
       }
 
-      // Numerov returns full result, extract energies
-      const numerovResult = solveNumerov(
+      // Numerov always returns full result with wavefunctions
+      result = solveNumerov(
         potential,
         mass,
         numStates,
@@ -371,52 +373,45 @@ export class Schrodinger1DSolver {
         energyRange[0],
         energyRange[1],
       );
-      energies = numerovResult.energies;
-      method = numerovResult.method;
     } else if (this.numericalMethod === NumericalMethod.MATRIX_NUMEROV) {
-      // Matrix Numerov method - energies only
-      const result = solveMatrixNumerov(potential, mass, numStates, coarseGridConfig, true);
-      energies = result.energies;
-      method = result.method;
+      // Matrix Numerov method
+      result = solveMatrixNumerov(potential, mass, numStates, coarseGridConfig, ENERGIES_ONLY);
     } else if (this.numericalMethod === NumericalMethod.DVR) {
-      // DVR method - energies only
-      const result = solveDVR(potential, mass, numStates, coarseGridConfig, true);
-      energies = result.energies;
-      method = result.method;
+      // DVR method
+      result = solveDVR(potential, mass, numStates, coarseGridConfig, ENERGIES_ONLY);
     } else if (this.numericalMethod === NumericalMethod.FGH) {
-      // Fourier Grid Hamiltonian method - energies only
-      const result = solveFGH(potential, mass, numStates, coarseGridConfig, true);
-      energies = result.energies;
-      method = result.method;
+      // Fourier Grid Hamiltonian method
+      result = solveFGH(potential, mass, numStates, coarseGridConfig, ENERGIES_ONLY);
     } else if (this.numericalMethod === NumericalMethod.QUANTUM_BOUND) {
       // Advanced shooting method with adaptive bracketing
-      const result = solveQuantumBound(potential, mass, numStates, coarseGridConfig);
-      energies = result.energies;
-      method = result.method;
+      result = solveQuantumBound(potential, mass, numStates, coarseGridConfig);
     } else {
-      // Spectral (Chebyshev) method - energies only
-      const result = solveSpectral(potential, mass, numStates, coarseGridConfig, true);
-      energies = result.energies;
-      method = result.method;
+      // Spectral (Chebyshev) method
+      result = solveSpectral(potential, mass, numStates, coarseGridConfig, ENERGIES_ONLY);
     }
 
-    // Step 2: Compute wavefunctions on finer grid using Numerov method
-    const fineNumPoints = 1000;
-    const fineGridConfig: GridConfig = { xMin, xMax, numPoints: fineNumPoints };
+    // Step 2: If ENERGIES_ONLY was true, compute wavefunctions on finer grid using Numerov
+    // Otherwise, return the result directly from the solver
+    if (ENERGIES_ONLY) {
+      const fineGridConfig: GridConfig = { xMin, xMax, numPoints: FINE_GRID_POINTS };
 
-    const wavefunctionResult = computeWavefunctionsNumerov(
-      energies,
-      potential,
-      mass,
-      fineGridConfig
-    );
+      const wavefunctionResult = computeWavefunctionsNumerov(
+        result.energies,
+        potential,
+        mass,
+        fineGridConfig
+      );
 
-    return {
-      energies,
-      wavefunctions: wavefunctionResult.wavefunctions,
-      xGrid: wavefunctionResult.xGrid,
-      method,
-    };
+      return {
+        energies: result.energies,
+        wavefunctions: wavefunctionResult.wavefunctions,
+        xGrid: wavefunctionResult.xGrid,
+        method: result.method,
+      };
+    } else {
+      // Use wavefunctions directly from the solver
+      return result;
+    }
   }
 
   /**
