@@ -25,14 +25,14 @@ import {
   solveAsymmetricTrianglePotential,
   solveCoulomb1DPotential,
   solveCoulomb3DPotential,
-  solveTriangularPotential
+  solveTriangularPotential,
+  solveDoubleSquareWellAnalytical
 } from "./analytical-solutions";
 import { solveNumerov } from "./NumerovSolver.js";
 import { solveMatrixNumerov } from "./MatrixNumerovSolver.js";
 import { solveDVR } from "./DVRSolver.js";
 import { solveFGH } from "./FGHSolver.js";
 import { solveSpectral } from "./SpectralSolver.js";
-import { solveDoubleWellNumerov } from "./DoubleWellNumerovSolver.js";
 import { solveQuantumBound } from "./QuantumBoundStateSolver.js";
 import { computeWavefunctionsNumerov } from "./WavefunctionNumerovSolver.js";
 import QuantumConstants from "./QuantumConstants.js";
@@ -288,10 +288,9 @@ export class Schrodinger1DSolver {
           wellParams.wellDepth !== undefined &&
           wellParams.wellSeparation !== undefined
         ) {
-          // Always use specialized analytical double well solver
-          // This provides better energy search by using single well approximation
-          // and WKB tunneling estimates, regardless of numerical method preference
-          return solveDoubleWellNumerov(
+          // Always use analytical solution for double square well
+          // Solves the transcendental equations from boundary conditions exactly
+          return solveDoubleSquareWellAnalytical(
             wellParams.wellWidth,
             wellParams.wellDepth,
             wellParams.wellSeparation,
