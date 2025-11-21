@@ -70,8 +70,8 @@ for (let stateIdx = 0; stateIdx < Math.min(4, result.energies.length); stateIdx+
   const idxLouter = findClosestIndex(Louter);
   const idxLinner = findClosestIndex(Linner);
   const idx0 = findClosestIndex(0);
-  const idxMinusLinner = findClosestIndex(-Linner);
-  const idxMinusLouter = findClosestIndex(-Louter);
+  const _idxMinusLinner = findClosestIndex(-Linner);
+  const _idxMinusLouter = findClosestIndex(-Louter);
 
   // Check continuity at x = L_outer (well/outside boundary on right)
   console.log("\n  Right edge (L_outer = " + (Louter/NM_TO_M).toFixed(3) + " nm):");
