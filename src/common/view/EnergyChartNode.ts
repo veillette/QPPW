@@ -41,9 +41,9 @@ function getEnergyAxisRange(potentialType: PotentialType): { min: number; max: n
       return { min: -5, max: 15 };
     case PotentialType.DOUBLE_SQUARE_WELL:
       // Double square well with barrier between wells
-      // Energy reference: V=0 in barrier, V=-V₀ in wells
-      // Bound states have negative energies (below barrier)
-      return { min: -15, max: 5 };
+      // Energy reference: V=0 in wells, V=wellDepth in barrier
+      // Bound states have positive energies (between 0 and wellDepth)
+      return { min: 0, max: 20 };
     case PotentialType.MORSE:
       // Morse potential: V=0 at dissociation limit (infinity), V=-De at bottom
       return { min: -15, max: 5 };
@@ -608,7 +608,7 @@ export class EnergyChartNode extends Node {
       }
     } else if (potentialType === PotentialType.DOUBLE_SQUARE_WELL) {
       // Draw double square well
-      // Convention: V=0 in barrier, V=-wellDepth in wells
+      // Convention: V=0 in wells, V=wellDepth in barrier
       // This matches the analytical solution convention
       // Wells are centered at ±(separation/2 + wellWidth/2)
       const separation = (this.model as TwoWellsModel).wellSeparationProperty.value;
@@ -623,25 +623,25 @@ export class EnergyChartNode extends Node {
       const rightWellLeft = rightWellCenter - halfWidth;
       const rightWellRight = rightWellCenter + halfWidth;
 
-      const yWell = this.dataToViewY(-wellDepth); // Well energy (negative)
-      const yBarrier = this.dataToViewY(0); // Barrier energy
+      const y0 = this.dataToViewY(0); // Well energy
+      const yBarrier = this.dataToViewY(wellDepth); // Barrier energy
 
       // Draw from left to right
       // Left outside region (at barrier height)
       shape.moveTo(this.chartMargins.left, yBarrier);
       shape.lineTo(this.dataToViewX(leftWellLeft), yBarrier);
 
-      // Left well (drop down to V=-wellDepth)
-      shape.lineTo(this.dataToViewX(leftWellLeft), yWell);
-      shape.lineTo(this.dataToViewX(leftWellRight), yWell);
+      // Left well (drop down to V=0)
+      shape.lineTo(this.dataToViewX(leftWellLeft), y0);
+      shape.lineTo(this.dataToViewX(leftWellRight), y0);
       shape.lineTo(this.dataToViewX(leftWellRight), yBarrier);
 
       // Barrier between wells
       shape.lineTo(this.dataToViewX(rightWellLeft), yBarrier);
 
-      // Right well (drop down to V=-wellDepth)
-      shape.lineTo(this.dataToViewX(rightWellLeft), yWell);
-      shape.lineTo(this.dataToViewX(rightWellRight), yWell);
+      // Right well (drop down to V=0)
+      shape.lineTo(this.dataToViewX(rightWellLeft), y0);
+      shape.lineTo(this.dataToViewX(rightWellRight), y0);
       shape.lineTo(this.dataToViewX(rightWellRight), yBarrier);
 
       // Right outside region (at barrier height)
