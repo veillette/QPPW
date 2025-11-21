@@ -68,14 +68,19 @@ export function solveDoubleSquareWellAnalytical(
   const Louter = Linner + wellWidth;
   const V0 = wellDepth;
 
+  // Search for extra states to ensure we don't miss any roots
+  // For a symmetric double well, states MUST alternate in parity (even, odd, even, odd, ...)
+  // We search for more states than needed to ensure robust root-finding
+  const searchStates = numStates + 4;
+
   // Find even parity states
   const evenEnergies = findEvenParityDoubleWell(
-    Linner, Louter, V0, mass, Math.ceil(numStates / 2)
+    Linner, Louter, V0, mass, Math.ceil(searchStates / 2)
   );
 
   // Find odd parity states
   const oddEnergies = findOddParityDoubleWell(
-    Linner, Louter, V0, mass, Math.ceil(numStates / 2)
+    Linner, Louter, V0, mass, Math.ceil(searchStates / 2)
   );
 
   // Combine and sort states by energy
@@ -91,8 +96,32 @@ export function solveDoubleSquareWellAnalytical(
   // Sort by energy (ascending, lowest energy first)
   combinedStates.sort((a, b) => a.energy - b.energy);
 
-  // Take first numStates
-  const selectedStates = combinedStates.slice(0, numStates);
+  // For symmetric double well, states MUST alternate in parity
+  // Ground state is always even, then odd, then even, etc.
+  // Filter to ensure proper alternation
+  const selectedStates: Array<{ energy: number; parity: "even" | "odd" }> = [];
+  let expectedParity: "even" | "odd" = "even";  // Ground state is even
+
+  for (const state of combinedStates) {
+    if (state.parity === expectedParity) {
+      selectedStates.push(state);
+      // Alternate expected parity
+      expectedParity = expectedParity === "even" ? "odd" : "even";
+
+      // Stop when we have enough states
+      if (selectedStates.length >= numStates) {
+        break;
+      }
+    }
+  }
+
+  // If we didn't find enough alternating states, warn and use what we found
+  if (selectedStates.length < numStates) {
+    console.warn(
+      `Warning: Only found ${selectedStates.length} properly alternating states out of ${numStates} requested. ` +
+      `This may indicate numerical issues in root-finding or parameter regime near continuum threshold.`
+    );
+  }
 
   // Generate grid
   const numPoints = gridConfig.numPoints;
@@ -190,7 +219,8 @@ function findEvenParityDoubleWell(
   const Emax = V0;  // Barrier top (continuum threshold)
 
   // Use systematic search with bisection
-  const numSearchPoints = 500;
+  // Increased resolution to ensure we don't miss any roots
+  const numSearchPoints = 1500;
   const dE = (Emax - Emin) / numSearchPoints;
 
   for (let i = 0; i < numSearchPoints - 1; i++) {
@@ -271,7 +301,8 @@ function findOddParityDoubleWell(
   // Search for roots
   const Emin = 0;
   const Emax = V0;
-  const numSearchPoints = 500;
+  // Increased resolution to ensure we don't miss any roots
+  const numSearchPoints = 1500;
   const dE = (Emax - Emin) / numSearchPoints;
 
   for (let i = 0; i < numSearchPoints - 1; i++) {
