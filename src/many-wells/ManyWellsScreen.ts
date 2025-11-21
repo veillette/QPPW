@@ -10,7 +10,7 @@ export class ManyWellsScreen extends Screen<ManyWellsModel, ManyWellsScreenView>
   public constructor(options: ScreenOptions) {
     super(
       () => new ManyWellsModel(),
-      (model) => new ManyWellsScreenView(model),
+      (model: ManyWellsModel) => new ManyWellsScreenView(model),
       options,
     );
   }

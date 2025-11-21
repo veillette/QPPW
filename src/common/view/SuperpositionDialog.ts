@@ -131,7 +131,7 @@ export class SuperpositionDialog {
         fill: QPPWColors.textFillProperty,
       });
 
-      amplitudeProperty.link((value) => {
+      amplitudeProperty.link((value: number) => {
         valueText.string = value.toFixed(2);
       });
 

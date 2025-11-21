@@ -379,10 +379,10 @@ export class EnergyChartNode extends Node {
     this.model.wellOffsetProperty.link(() => this.update());
     this.model.particleMassProperty.link(() => this.update());
     this.model.selectedEnergyLevelIndexProperty.link(() => this.updateSelection());
-    this.model.showTotalEnergyProperty.link((show) => {
+    this.model.showTotalEnergyProperty.link((show: boolean) => {
       this.totalEnergyLine.visible = show;
     });
-    this.model.showPotentialEnergyProperty.link((show) => {
+    this.model.showPotentialEnergyProperty.link((show: boolean) => {
       this.potentialPath.visible = show;
     });
 

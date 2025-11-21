@@ -218,7 +218,7 @@ onReadyToLaunch(() => {
 
               // Bidirectional sync between exponent and grid points
               // Use lazyLink to avoid firing during initialization
-              exponentProperty.lazyLink((exponent) => {
+              exponentProperty.lazyLink((exponent: number) => {
                 if (isUpdating) return;
                 isUpdating = true;
                 const gridPoints = Math.pow(2, Math.round(exponent));
@@ -228,7 +228,7 @@ onReadyToLaunch(() => {
                 isUpdating = false;
               });
 
-              QPPWPreferences.gridPointsProperty.lazyLink((gridPoints) => {
+              QPPWPreferences.gridPointsProperty.lazyLink((gridPoints: number) => {
                 if (isUpdating) return;
                 isUpdating = true;
                 const exponent = Math.log2(gridPoints);
@@ -261,7 +261,7 @@ onReadyToLaunch(() => {
                 font: new PhetFont({ size: 14, weight: "bold" }),
               });
 
-              QPPWPreferences.gridPointsProperty.link((value) => {
+              QPPWPreferences.gridPointsProperty.link((value: number) => {
                 gridPointsValueText.string = `${value} points`;
               });
 
