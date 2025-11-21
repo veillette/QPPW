@@ -130,7 +130,7 @@ for (const testCase of testCases) {
   console.log(`  Target states: ${testCase.numStates}`);
 
   const Linner = testCase.wellSeparation / 2;
-  const Louter = Linner + testCase.wellWidth;
+  const _Louter = Linner + testCase.wellWidth;
   const L = testCase.wellWidth;
 
   const gridConfig = {
