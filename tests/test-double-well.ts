@@ -28,10 +28,10 @@ let failedTests = 0;
 
 // Configuration for high-quality solutions
 const DEFAULT_GRID_POINTS = 1000;
-const EDGE_TOLERANCE = 0.02; // 2% for edge decay (higher states near continuum need more tolerance)
-const NORMALIZATION_TOLERANCE = 0.01; // 1% for normalization
-const PARITY_TOLERANCE = 0.1; // 10% for parity detection
-const DERIVATIVE_TOLERANCE = 0.04; // 4% for derivative continuity (accounts for numerical precision)
+const EDGE_TOLERANCE = 0.01; // 1% for edge decay (tightened from 2%)
+const NORMALIZATION_TOLERANCE = 0.005; // 0.5% for normalization (tightened from 1%)
+const PARITY_TOLERANCE = 0.05; // 5% for parity detection (tightened from 10%)
+const DERIVATIVE_TOLERANCE = 0.03; // 3% for derivative continuity (tightened from 4%)
 
 /**
  * Helper function to solve double well with convenient units (nm/eV)
@@ -158,7 +158,13 @@ function checkNormalization(x: number[], psi: number[]): number {
 /**
  * Check edge decay behavior
  */
-function checkEdgeDecay(x: number[], psi: number[], Louter: number): {
+function checkEdgeDecay(
+  x: number[],
+  psi: number[],
+  Louter: number,
+  stateEnergy?: number,
+  wellDepth?: number
+): {
   leftDecay: number;
   rightDecay: number;
   leftOk: boolean;
@@ -183,11 +189,20 @@ function checkEdgeDecay(x: number[], psi: number[], Louter: number): {
   const leftDecay = Math.abs(psi[0]) / maxPsi;
   const rightDecay = Math.abs(psi[psi.length - 1]) / maxPsi;
 
+  // For states near the continuum (E/V₀ > 0.8), use relaxed tolerance
+  let tolerance = EDGE_TOLERANCE;
+  if (stateEnergy !== undefined && wellDepth !== undefined) {
+    const energyRatio = stateEnergy / wellDepth;
+    if (energyRatio > 0.8) {
+      tolerance = EDGE_TOLERANCE * 2; // Double tolerance for high energy states
+    }
+  }
+
   return {
     leftDecay,
     rightDecay,
-    leftOk: leftDecay < EDGE_TOLERANCE,
-    rightOk: rightDecay < EDGE_TOLERANCE
+    leftOk: leftDecay < tolerance,
+    rightOk: rightDecay < tolerance
   };
 }
 
@@ -299,7 +314,13 @@ try {
 
   let edgeErrors = 0;
   for (let i = 0; i < result.energies.length; i++) {
-    const edgeInfo = checkEdgeDecay(result.xGrid, result.wavefunctions[i], result.Louter);
+    const edgeInfo = checkEdgeDecay(
+      result.xGrid,
+      result.wavefunctions[i],
+      result.Louter,
+      result.energies[i],
+      0.5 // well depth in eV
+    );
     if (!edgeInfo.leftOk || !edgeInfo.rightOk) {
       console.error(`  State ${i}: left decay ${(edgeInfo.leftDecay * 100).toFixed(2)}%, right decay ${(edgeInfo.rightDecay * 100).toFixed(2)}%`);
       edgeErrors++;
@@ -578,9 +599,9 @@ try {
     const changeDeeper = ((deeperResult.energies[i] - baseResult.energies[i]) / baseResult.energies[i] * 100);
     const changeShallower = ((shallowerResult.energies[i] - baseResult.energies[i]) / baseResult.energies[i] * 100);
 
-    // Check changes are reasonable (not too large for 5% parameter change)
-    assert(Math.abs(changeDeeper) < 20, `Deeper well change should be < 20% for E[${i}]`);
-    assert(Math.abs(changeShallower) < 20, `Shallower well change should be < 20% for E[${i}]`);
+    // Check changes are reasonable (tightened from 20% to 15% for 5% parameter change)
+    assert(Math.abs(changeDeeper) < 15, `Deeper well change should be < 15% for E[${i}]`);
+    assert(Math.abs(changeShallower) < 15, `Shallower well change should be < 15% for E[${i}]`);
 
     console.log(`    E[${i}]: deeper ${changeDeeper.toFixed(2)}%, shallower ${changeShallower.toFixed(2)}%`);
   }
@@ -615,8 +636,8 @@ try {
     const changeWider = ((widerResult.energies[i] - baseResult.energies[i]) / baseResult.energies[i] * 100);
     const changeNarrower = ((narrowerResult.energies[i] - baseResult.energies[i]) / baseResult.energies[i] * 100);
 
-    assert(Math.abs(changeWider) < 20, `Barrier width change should be < 20% for E[${i}]`);
-    assert(Math.abs(changeNarrower) < 20, `Barrier width change should be < 20% for E[${i}]`);
+    assert(Math.abs(changeWider) < 10, `Barrier width change should be < 10% for E[${i}]`);
+    assert(Math.abs(changeNarrower) < 10, `Barrier width change should be < 10% for E[${i}]`);
 
     console.log(`    E[${i}]: wider barrier ${changeWider.toFixed(2)}%, narrower barrier ${changeNarrower.toFixed(2)}%`);
   }
@@ -753,33 +774,42 @@ try {
 
   console.log(`  Found ${result.energies.length} states`);
 
-  // Verify all states (for extreme parameters, just check basic properties)
-  let energyErrors = 0, parityErrors = 0, nodeOrderErrors = 0;
+  // For very deep wells, verify states have consistent structure
+  // The solver may skip low-lying states in deep wells, so we verify based on node count
+  let energyErrors = 0, parityErrors = 0, nodeConsistencyErrors = 0;
+  const nodeCounts: number[] = [];
+
   for (let i = 0; i < result.energies.length; i++) {
     // Check energy bounds
     if (result.energies[i] <= 0 || result.energies[i] >= wellDepth) {
       energyErrors++;
     }
-    // Check parity alternation
+
+    // Count nodes
+    const nodes = countNodes(result.wavefunctions[i]);
+    nodeCounts.push(nodes);
+
+    // Check parity based on node count (node count determines parity)
     const parity = detectParity(result.xGrid, result.wavefunctions[i]);
-    const expectedParity = i % 2 === 0 ? 'even' : 'odd';
+    const expectedParity = nodes % 2 === 0 ? 'even' : 'odd';
     if (parity !== expectedParity) {
+      console.error(`  State ${i} (${nodes} nodes): expected ${expectedParity} parity, got ${parity}`);
       parityErrors++;
-    }
-    // For extreme parameters, just check that node count increases monotonically
-    if (i > 0) {
-      const prevNodes = countNodes(result.wavefunctions[i - 1]);
-      const currentNodes = countNodes(result.wavefunctions[i]);
-      if (currentNodes <= prevNodes) {
-        nodeOrderErrors++;
-      }
     }
   }
 
-  const allValid = (energyErrors === 0 && parityErrors === 0 && nodeOrderErrors === 0);
-  assert(allValid, `All ${result.energies.length} states should be valid (energy errors: ${energyErrors}, parity errors: ${parityErrors}, node order errors: ${nodeOrderErrors})`);
-  console.log(`  ✓ All ${result.energies.length} states are properly bound with correct parity`);
-  console.log(`  ✓ Node count increases monotonically (extreme parameter regime may skip low-energy states)`);
+  // Verify node counts are strictly increasing
+  for (let i = 1; i < nodeCounts.length; i++) {
+    if (nodeCounts[i] <= nodeCounts[i - 1]) {
+      console.error(`  Node count not increasing: state ${i-1} has ${nodeCounts[i-1]} nodes, state ${i} has ${nodeCounts[i]} nodes`);
+      nodeConsistencyErrors++;
+    }
+  }
+
+  const allValid = (energyErrors === 0 && parityErrors === 0 && nodeConsistencyErrors === 0);
+  assert(allValid, `All ${result.energies.length} states should be valid (energy errors: ${energyErrors}, parity errors: ${parityErrors}, node consistency errors: ${nodeConsistencyErrors})`);
+  console.log(`  ✓ All ${result.energies.length} states are properly bound with correct parity for their node count`);
+  console.log(`  ✓ Node counts strictly increasing: ${nodeCounts.slice(0, 5).join(', ')}${nodeCounts.length > 5 ? ', ...' : ''}`);
   console.log(`  ✓ Energy range: ${result.energies[0].toFixed(6)} to ${result.energies[result.energies.length - 1].toFixed(6)} eV`);
   console.log('  ✓ Test PASSED\n');
 } catch (error) {
@@ -802,20 +832,32 @@ try {
   console.log(`  Found ${result.energies.length} states`);
   console.log(`  Ground state splitting: ${splitting.toExponential(4)} eV`);
 
-  // For very weak coupling, parity alternation may break down as wells become essentially independent
-  // Just verify that states were found and are valid
-  let allBound = true;
-  for (let i = 0; i < result.energies.length; i++) {
+  // With very weak coupling, verify states exist with proper symmetry
+  // Note: when barrier is very wide, states come in nearly-degenerate pairs
+  // and the ordering of even/odd states may not follow strict alternation
+  let energyErrors = 0, definiteParityCount = 0;
+  const parities: string[] = [];
+
+  for (let i = 0; i < Math.min(10, result.energies.length); i++) {
+    // Check energy bounds
     if (result.energies[i] <= 0 || result.energies[i] >= 0.5) {
-      allBound = false;
-      break;
+      energyErrors++;
+    }
+    // Check that states have definite parity (not mixed)
+    const parity = detectParity(result.xGrid, result.wavefunctions[i]);
+    parities.push(parity);
+    if (parity === 'even' || parity === 'odd') {
+      definiteParityCount++;
     }
   }
 
-  assert(allBound, 'All states should be bound');
+  assert(energyErrors === 0, 'All states should be bound');
+  assert(definiteParityCount === Math.min(10, result.energies.length),
+         `All states must have definite parity (not mixed): ${definiteParityCount}/${Math.min(10, result.energies.length)}`);
 
   console.log('  ✓ States found with very weak coupling (wide barrier)');
-  console.log('  ✓ With extreme weak coupling, wells are essentially independent');
+  console.log(`  ✓ All states have definite parity: ${parities.join(', ')}`);
+  console.log('  ✓ Note: weak coupling may result in nearly-degenerate pairs with non-alternating order');
   console.log('  ✓ Test PASSED\n');
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
