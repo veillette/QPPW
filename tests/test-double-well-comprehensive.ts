@@ -100,7 +100,7 @@ function calculateWKBTransmission(
   particleMass: number = 1.0
 ): number {
   const E = energy * EV_TO_JOULES;
-  const V = barrierHeight * EV_TO_JOULES;
+  const _V = barrierHeight * EV_TO_JOULES;
   const a = barrierWidth * NM_TO_M;
   const m = particleMass * ELECTRON_MASS;
 
@@ -575,7 +575,7 @@ try {
               sweepPassed++;
             }
           }
-        } catch (error) {
+        } catch (_error) {
           // Skip failed configurations
         }
       }
