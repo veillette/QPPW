@@ -322,8 +322,8 @@ function computeDoubleWellWavefunction(
   // Solve for coefficients A, B, C, D from matching conditions
   // Set A = 1 for convenience, then normalize at end
 
-  let A = 1.0;
-  let B: number, C: number, D: number;
+  const A = 1.0;
+  let B: number, C: number;
 
   if (parity === "even") {
     // A cosh(κ L_inner) = B
@@ -339,7 +339,7 @@ function computeDoubleWellWavefunction(
 
   // From well/outside matching:
   // B cos(kL) + C sin(kL) = D
-  D = B * Math.cos(k * L) + C * Math.sin(k * L);
+  const D = B * Math.cos(k * L) + C * Math.sin(k * L);
 
   // Evaluate on grid (not yet normalized)
   const psi: number[] = [];

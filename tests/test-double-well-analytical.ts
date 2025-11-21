@@ -5,7 +5,7 @@
 import { solveDoubleSquareWellAnalytical } from "../src/common/model/analytical-solutions/double-square-well.js";
 import QuantumConstants from "../src/common/model/QuantumConstants.js";
 
-const { HBAR, ELECTRON_MASS, EV_TO_JOULES, NM_TO_M } = QuantumConstants;
+const { HBAR: _HBAR, ELECTRON_MASS, EV_TO_JOULES, NM_TO_M } = QuantumConstants;
 
 console.log("Testing Analytical Double Square Well Solver");
 console.log("=".repeat(60));
