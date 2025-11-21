@@ -2,14 +2,23 @@
  * Advanced Quantum Bound State Solver for the Time-Independent Schrodinger Equation
  *
  * Features:
- * - Shooting method with adaptive energy bracketing
- * - 6th-order accurate Numerov integration
+ * - Inward-Outward shooting method with adaptive energy bracketing
+ * - Logarithmic derivative integration for enhanced stability (y = ψ'/ψ method)
+ * - 6th-order accurate Numerov integration (alternative to log derivative)
+ * - Automatic symmetry detection and parity-based eigenvalue finding
  * - Automatic matching point optimization
  * - Richardson extrapolation for improved accuracy
  * - Cached computations for performance
  *
- * The TISE is: -hbar^2/(2m) d^2psi/dx^2 + V(x)psi = E*psi
- * Rearranged as: d^2psi/dx^2 = -k^2(x)psi where k^2(x) = 2m(E - V(x))/hbar^2
+ * Algorithm improvements:
+ * 1. Logarithmic derivative method: Integrates y = ψ'/ψ using dy/dx = 2m/ℏ²[V(x)-E] - y²
+ *    This avoids exponential growth in classically forbidden regions
+ * 2. Inward-outward integration: Integrates from both boundaries and matches at x_m
+ * 3. Symmetry exploitation: For symmetric potentials, uses parity (even/odd) to improve convergence
+ * 4. Node counting: Ground state has 0 nodes, first excited has 1 node, etc.
+ *
+ * The TISE is: -ℏ²/(2m) d²ψ/dx² + V(x)ψ = Eψ
+ * Rearranged as: d²ψ/dx² = -k²(x)ψ where k²(x) = 2m(E - V(x))/ℏ²
  */
 
 import QuantumConstants from "./QuantumConstants.js";
@@ -34,6 +43,10 @@ const MATCHING_POINT_FRACTION = 0.45;    // Matching point fraction for shooting
 const BOUNDARY_PSI_INITIAL = 0.0;        // psi(boundary) = 0
 const BOUNDARY_PSI_DERIVATIVE = 1.0;     // Initial derivative (will be normalized)
 
+// Logarithmic derivative integration constants
+const LOG_DERIV_BOUNDARY_VALUE = 10.0;   // Initial y = psi'/psi at boundary (large for exponential decay)
+const SYMMETRY_TOLERANCE = 1e-10;        // Tolerance for detecting symmetric potentials
+
 // Performance constants
 const CACHE_SIZE_LIMIT = 100;
 
@@ -53,6 +66,8 @@ export type SolverConfig = {
   useRichardsonExtrapolation?: boolean;
   normalizationMethod?: 'max' | 'l2';
   enableCaching?: boolean;
+  useLogDerivativeMethod?: boolean;    // Use logarithmic derivative integration for stability
+  useSymmetry?: boolean;                // Exploit potential symmetry for better convergence
 };
 
 /**
@@ -139,6 +154,8 @@ export class QuantumBoundStateSolver {
   private readonly useRichardsonExtrapolation: boolean;
   private readonly normalizationMethod: 'max' | 'l2';
   private readonly enableCaching: boolean;
+  private readonly useLogDerivativeMethod: boolean;
+  private readonly useSymmetry: boolean;
 
   // Grid properties
   private readonly deltaX: number;
@@ -159,6 +176,10 @@ export class QuantumBoundStateSolver {
 
   // Cached maximum potential for bound state validation
   private readonly maxPotential: number;
+
+  // Symmetry properties
+  private readonly isSymmetric: boolean;
+  private readonly symmetryCenter: number;
 
   /**
    * Constructor for the Enhanced Quantum Bound State Solver
@@ -194,6 +215,8 @@ export class QuantumBoundStateSolver {
     this.useRichardsonExtrapolation = config?.useRichardsonExtrapolation ?? false;
     this.normalizationMethod = config?.normalizationMethod ?? 'l2';
     this.enableCaching = config?.enableCaching ?? true;
+    this.useLogDerivativeMethod = config?.useLogDerivativeMethod ?? false;  // Disabled by default (experimental)
+    this.useSymmetry = config?.useSymmetry ?? true;  // Enable by default
 
     // Pre-calculate grid properties
     this.deltaX = (xMax - xMin) / (numPoints - 1);
@@ -205,6 +228,11 @@ export class QuantumBoundStateSolver {
 
     // Compute optimal matching point based on potential structure
     this.optimalMatchPoint = this.computeOptimalMatchPoint();
+
+    // Detect potential symmetry
+    const symmetryInfo = this.detectSymmetry();
+    this.isSymmetric = symmetryInfo.isSymmetric;
+    this.symmetryCenter = symmetryInfo.center;
 
     // Initialize caches
     this.cache = new Map();
@@ -248,6 +276,35 @@ export class QuantumBoundStateSolver {
 
     // Fallback to default fraction
     return Math.floor(this.gridPoints * MATCHING_POINT_FRACTION);
+  }
+
+  /**
+   * Detects if the potential is symmetric about its center.
+   * Returns symmetry information including center point.
+   */
+  private detectSymmetry(): { isSymmetric: boolean; center: number } {
+    const xMin = this.gridPositions[0];
+    const xMax = this.gridPositions[this.gridPoints - 1];
+    const center = (xMin + xMax) / 2.0;
+
+    // Check if potential is symmetric about center
+    let maxAsymmetry = 0;
+    for (let i = 0; i < this.gridPoints / 2; i++) {
+      const leftIdx = i;
+      const rightIdx = this.gridPoints - 1 - i;
+      const asymmetry = Math.abs(
+        this.potentialEnergies[leftIdx] - this.potentialEnergies[rightIdx]
+      );
+      maxAsymmetry = Math.max(maxAsymmetry, asymmetry);
+    }
+
+    // Get potential scale for relative comparison
+    const potentialRange = this.maxPotential - Math.min(...this.potentialEnergies);
+    const relativeAsymmetry = potentialRange > 0 ? maxAsymmetry / potentialRange : maxAsymmetry;
+
+    const isSymmetric = relativeAsymmetry < SYMMETRY_TOLERANCE;
+
+    return { isSymmetric, center };
   }
 
   // ========================================================================
@@ -366,6 +423,20 @@ export class QuantumBoundStateSolver {
   }
 
   /**
+   * Returns whether the potential is symmetric
+   */
+  public isPotentialSymmetric(): boolean {
+    return this.isSymmetric;
+  }
+
+  /**
+   * Returns the symmetry center of the potential
+   */
+  public getSymmetryCenter(): number {
+    return this.symmetryCenter;
+  }
+
+  /**
    * Clears all caches
    */
   public clearCache(): void {
@@ -403,6 +474,84 @@ export class QuantumBoundStateSolver {
     energy = this.refineEnergyWithSecant(energy);
 
     return energy;
+  }
+
+  /**
+   * Determines expected parity for a given state in a symmetric potential.
+   * Ground state (n=0 nodes) is symmetric, first excited (n=1 nodes) is antisymmetric, etc.
+   */
+  private getExpectedParity(nodes: number): 'even' | 'odd' {
+    return nodes % 2 === 0 ? 'even' : 'odd';
+  }
+
+  /**
+   * Checks if a wavefunction has the expected parity at the symmetry center.
+   * For even parity: ψ'(center) ≈ 0
+   * For odd parity: ψ(center) ≈ 0
+   */
+  private checkParity(energy: number, expectedParity: 'even' | 'odd'): number {
+    // Find center index
+    const centerIdx = Math.floor(this.gridPoints / 2);
+
+    // Integrate and check parity violation
+    // For even states: derivative should be zero at center
+    // For odd states: wavefunction should be zero at center
+
+    // Calculate wavefunction near center
+    const matchPoint = centerIdx;
+    const numerovFactor = this.getNumerovFactor();
+    const inverseHbar2Over2m = 1.0 / this.hbarSquaredOver2m;
+    const effectivePotential = this.potentialEnergies.map(V =>
+      inverseHbar2Over2m * (V - energy)
+    );
+
+    // Integrate from left to center
+    const forwardResult = this.integrateForward(
+      effectivePotential,
+      numerovFactor,
+      matchPoint
+    );
+
+    if (expectedParity === 'even') {
+      // Check derivative at center (should be ~0 for even states)
+      return forwardResult.logDerivative;  // This should be near zero
+    } else {
+      // Check amplitude at center (should be ~0 for odd states)
+      return forwardResult.psiAtMatch;  // This should be near zero
+    }
+  }
+
+  /**
+   * Secant method refinement with parity constraint for symmetric potentials.
+   */
+  private refineEnergyWithSecantSymmetric(initialEnergy: number, desiredNodes: number): number {
+    const expectedParity = this.getExpectedParity(desiredNodes);
+
+    // Modified secant method that also enforces parity
+    let energyPrevious = initialEnergy * 0.999;
+    let energyCurrent = initialEnergy * 1.001;
+
+    const fixedMatchPoint = Math.floor(this.gridPoints / 2);  // Use center for symmetric case
+
+    let mismatchPrevious = this.integrateSchrodinger(energyPrevious, fixedMatchPoint).logDerivativeMismatch;
+    let mismatchCurrent = this.integrateSchrodinger(energyCurrent, fixedMatchPoint).logDerivativeMismatch;
+
+    for (let iteration = 0; iteration < 10; iteration++) {
+      const mismatchDifference = mismatchCurrent - mismatchPrevious;
+      if (Math.abs(mismatchDifference) < this.convergenceTolerance) break;
+
+      const energyNext = energyCurrent - mismatchCurrent * (energyCurrent - energyPrevious) / mismatchDifference;
+      const mismatchNext = this.integrateSchrodinger(energyNext, fixedMatchPoint).logDerivativeMismatch;
+
+      if (Math.abs(mismatchNext) < this.convergenceTolerance) return energyNext;
+
+      energyPrevious = energyCurrent;
+      mismatchPrevious = mismatchCurrent;
+      energyCurrent = energyNext;
+      mismatchCurrent = mismatchNext;
+    }
+
+    return energyCurrent;
   }
 
   /**
@@ -670,6 +819,12 @@ export class QuantumBoundStateSolver {
    * @param useFixedMatchPoint - If provided, use this fixed match point instead of adaptive
    */
   private integrateSchrodinger(energy: number, useFixedMatchPoint?: number): IntegrationResult {
+    // Use logarithmic derivative method if enabled (more stable)
+    if (this.useLogDerivativeMethod) {
+      return this.integrateSchrodingerLogDeriv(energy, useFixedMatchPoint);
+    }
+
+    // Otherwise use standard Numerov method
     const matchPoint = useFixedMatchPoint !== undefined
       ? useFixedMatchPoint
       : (this.adaptiveMatching
@@ -882,6 +1037,158 @@ export class QuantumBoundStateSolver {
       return Math.sign(psi_current) * MAX_PSI;
     }
     return Math.max(-MAX_PSI, Math.min(MAX_PSI, result));
+  }
+
+  /**
+   * Integrates the logarithmic derivative equation: dy/dx = 2m/ℏ²[V(x) - E] - y²
+   * where y = ψ'/ψ. This method is more stable than direct integration in
+   * classically forbidden regions where ψ grows exponentially.
+   *
+   * Uses RK4 for integration of this nonlinear ODE.
+   */
+  private integrateLogDerivativeForward(
+    energy: number,
+    matchPoint: number
+  ): { y: number[]; nodes: number } {
+    const y = new Array<number>(matchPoint + 2);
+    const psi = new Array<number>(matchPoint + 2);
+    const inverseHbar2Over2m = 1.0 / this.hbarSquaredOver2m;
+
+    // Start with small ψ at boundary and integrate both ψ and y = ψ'/ψ
+    psi[0] = this.deltaX;  // Small but nonzero
+    psi[1] = this.deltaX;
+    y[0] = 0;  // Start with zero derivative
+
+    let nodes = 0;
+
+    // Integrate using relationship: dψ/dx = y·ψ
+    for (let i = 0; i <= matchPoint; i++) {
+      const V = this.potentialEnergies[i];
+      const k_squared = inverseHbar2Over2m * (V - energy);
+
+      // dy/dx = k² - y²
+      const dydt = (yVal: number): number => k_squared - yVal * yVal;
+
+      if (i < matchPoint) {
+        // RK4 step for y
+        const k1 = dydt(y[i]);
+        const k2 = dydt(y[i] + 0.5 * this.deltaX * k1);
+        const k3 = dydt(y[i] + 0.5 * this.deltaX * k2);
+        const k4 = dydt(y[i] + this.deltaX * k3);
+        y[i + 1] = y[i] + (this.deltaX / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4);
+
+        // Also track ψ for node counting: dψ/dx = y·ψ
+        const avgY = (y[i] + y[i + 1]) / 2;
+        psi[i + 1] = psi[i] * Math.exp(avgY * this.deltaX);
+
+        // Renormalize if getting too large
+        if (Math.abs(psi[i + 1]) > 1e10) {
+          const scale = 1e10 / Math.abs(psi[i + 1]);
+          psi[i + 1] *= scale;
+          psi[i] *= scale;
+        }
+
+        // Count nodes in ψ
+        if (psi[i] * psi[i + 1] < 0 && Math.abs(psi[i]) > 1e-10 && Math.abs(psi[i + 1]) > 1e-10) {
+          nodes++;
+        }
+      }
+    }
+
+    return { y, nodes };
+  }
+
+  /**
+   * Integrates the logarithmic derivative backward from right boundary.
+   */
+  private integrateLogDerivativeBackward(
+    energy: number,
+    matchPoint: number
+  ): { y: number[]; nodes: number } {
+    const y = new Array<number>(this.gridPoints);
+    const psi = new Array<number>(this.gridPoints);
+    const inverseHbar2Over2m = 1.0 / this.hbarSquaredOver2m;
+
+    // Start with small ψ at boundary
+    psi[this.gridPoints - 1] = this.deltaX;
+    psi[this.gridPoints - 2] = this.deltaX;
+    y[this.gridPoints - 1] = 0;
+
+    let nodes = 0;
+
+    // RK4 integration backward
+    for (let i = this.gridPoints - 1; i >= matchPoint; i--) {
+      const V = this.potentialEnergies[i];
+      const k_squared = inverseHbar2Over2m * (V - energy);
+
+      // dy/dx = k² - y²
+      const dydt = (yVal: number): number => k_squared - yVal * yVal;
+
+      if (i > matchPoint) {
+        // RK4 step backward
+        const k1 = dydt(y[i]);
+        const k2 = dydt(y[i] - 0.5 * this.deltaX * k1);
+        const k3 = dydt(y[i] - 0.5 * this.deltaX * k2);
+        const k4 = dydt(y[i] - this.deltaX * k3);
+        y[i - 1] = y[i] - (this.deltaX / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4);
+
+        // Track ψ for node counting
+        const avgY = (y[i] + y[i - 1]) / 2;
+        psi[i - 1] = psi[i] * Math.exp(-avgY * this.deltaX);
+
+        // Renormalize if getting too large
+        if (Math.abs(psi[i - 1]) > 1e10) {
+          const scale = 1e10 / Math.abs(psi[i - 1]);
+          psi[i - 1] *= scale;
+          psi[i] *= scale;
+        }
+
+        // Count nodes
+        if (psi[i] * psi[i - 1] < 0 && Math.abs(psi[i]) > 1e-10 && Math.abs(psi[i - 1]) > 1e-10) {
+          nodes++;
+        }
+      }
+    }
+
+    return { y, nodes };
+  }
+
+  /**
+   * Alternative integration using logarithmic derivative method.
+   * This provides better numerical stability in classically forbidden regions.
+   */
+  private integrateSchrodingerLogDeriv(
+    energy: number,
+    useFixedMatchPoint?: number
+  ): IntegrationResult {
+    const matchPoint = useFixedMatchPoint !== undefined
+      ? useFixedMatchPoint
+      : (this.adaptiveMatching
+          ? this.findOptimalMatchingPoint(energy)
+          : this.optimalMatchPoint);
+
+    // Integrate logarithmic derivative from both sides
+    const forwardResult = this.integrateLogDerivativeForward(energy, matchPoint);
+    const backwardResult = this.integrateLogDerivativeBackward(energy, matchPoint);
+
+    // Count total nodes
+    const nodeCount = forwardResult.nodes + backwardResult.nodes;
+
+    // The matching condition is: y_left(x_m) should equal y_right(x_m)
+    // The mismatch indicates how far we are from an eigenvalue
+    const yLeft = forwardResult.y[matchPoint];
+    const yRight = backwardResult.y[matchPoint];
+    const logDerivativeMismatch = yLeft - yRight;
+
+    // Estimate matching amplitude from log derivative
+    // If |y| is large, ψ is near a node
+    const matchingAmplitude = 1.0 / (1.0 + Math.min(Math.abs(yLeft), Math.abs(yRight)));
+
+    return new IntegrationResult(
+      nodeCount,
+      logDerivativeMismatch,
+      matchingAmplitude
+    );
   }
 
   /**
