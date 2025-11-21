@@ -41,6 +41,8 @@ function getEnergyAxisRange(potentialType: PotentialType): { min: number; max: n
       return { min: -5, max: 15 };
     case PotentialType.DOUBLE_SQUARE_WELL:
       // Double square well with barrier between wells
+      // Energy reference: V=0 in wells, V=wellDepth in barrier
+      // Bound states have positive energies (between 0 and wellDepth)
       return { min: 0, max: 20 };
     case PotentialType.MORSE:
       // Morse potential: V=0 at dissociation limit (infinity), V=-De at bottom
@@ -607,6 +609,7 @@ export class EnergyChartNode extends Node {
     } else if (potentialType === PotentialType.DOUBLE_SQUARE_WELL) {
       // Draw double square well
       // Convention: V=0 in wells, V=wellDepth in barrier
+      // This matches the analytical solution convention
       // Wells are centered at ±(separation/2 + wellWidth/2)
       const separation = (this.model as TwoWellsModel).wellSeparationProperty.value;
 

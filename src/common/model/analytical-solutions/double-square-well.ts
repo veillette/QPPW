@@ -1,10 +1,10 @@
 /**
  * Analytical transcendental equations for symmetric double square well.
  *
- * Geometry:
- * - Left well:  [-L_outer, -L_inner] with V = -V₀
- * - Barrier:    [-L_inner, +L_inner] with V = 0
- * - Right well: [+L_inner, +L_outer] with V = -V₀
+ * Energy reference convention (matching the simulation):
+ * - Left well:  [-L_outer, -L_inner] with V = 0
+ * - Barrier:    [-L_inner, +L_inner] with V = V₀
+ * - Right well: [+L_inner, +L_outer] with V = 0
  *
  * Where:
  *   L_inner = wellSeparation / 2
@@ -12,9 +12,9 @@
  *
  * Due to symmetry, we solve on x ≥ 0 only:
  *
- * Region I:   [L_inner, L_outer]  → Inside right well
- * Region II:  [0, L_inner]        → Barrier region
- * Region III: [L_outer, ∞)        → Outside (exponential decay)
+ * Region I:   [L_inner, L_outer]  → Inside right well (V = 0)
+ * Region II:  [0, L_inner]        → Barrier region (V = V₀)
+ * Region III: [L_outer, ∞)        → Outside (V = V₀, exponential decay)
  *
  * Wavefunctions have form:
  *
@@ -29,9 +29,9 @@
  *   Region III (outside): ψ = D exp(-α(x - L_outer))
  *
  * Where:
- *   k² = 2m(E + V₀)/ℏ²   (oscillatory in well, E + V₀ > 0)
- *   κ² = -2mE/ℏ²          (exponential in barrier, E < 0)
- *   α² = -2mE/ℏ²          (same as κ for bound states)
+ *   k² = 2mE/ℏ²           (oscillatory in well, 0 < E < V₀)
+ *   κ² = 2m(V₀ - E)/ℏ²    (exponential in barrier, E < V₀)
+ *   α² = 2m(V₀ - E)/ℏ²    (same as κ for bound states)
  */
 
 import QuantumConstants from "../QuantumConstants.js";
@@ -43,9 +43,12 @@ import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
  * Solves the transcendental equations arising from boundary condition matching
  * to find bound state energies and wavefunctions.
  *
+ * Energy convention: Wells at V=0, barrier at V=V₀ (positive).
+ * Bound state energies are between 0 and V₀.
+ *
  * @param wellWidth - Width of each well (L) in meters
- * @param wellDepth - Depth of each well (V₀) in Joules (positive value)
- * @param wellSeparation - Center-to-center separation in meters
+ * @param wellDepth - Height of barrier relative to wells (V₀) in Joules (positive value)
+ * @param wellSeparation - Barrier width (edge-to-edge well separation) in meters
  * @param mass - Particle mass in kg
  * @param numStates - Number of energy levels to calculate
  * @param gridConfig - Grid configuration for wavefunction evaluation
@@ -85,7 +88,7 @@ export function solveDoubleSquareWellAnalytical(
     combinedStates.push({ energy: E, parity: "odd" });
   }
 
-  // Sort by energy (ascending, most negative first)
+  // Sort by energy (ascending, lowest energy first)
   combinedStates.sort((a, b) => a.energy - b.energy);
 
   // Take first numStates
@@ -147,18 +150,18 @@ function findEvenParityDoubleWell(
    * Returns f(E) = 0 when E is an eigenvalue.
    */
   const transcendentalEquation = (E: number): number => {
-    // Must be bound state
-    if (E >= 0) return Infinity;
+    // Must be bound state (below barrier top)
+    if (E >= V0) return Infinity;
 
-    // Check if classically forbidden (not enough energy in well)
-    if (E + V0 <= 0) {
+    // Must be above well bottom
+    if (E <= 0) {
       return Infinity;
     }
 
     // Wave numbers
-    const k = Math.sqrt(2 * mass * (E + V0)) / HBAR;
-    const kappa = Math.sqrt(-2 * mass * E) / HBAR;
-    const alpha = kappa; // Same for bound states
+    const k = Math.sqrt(2 * mass * E) / HBAR;           // In wells
+    const kappa = Math.sqrt(2 * mass * (V0 - E)) / HBAR; // In barrier
+    const alpha = kappa; // Same for bound states (outside also at V₀)
 
     // Hyperbolic functions at barrier/well interface
     const coshKL = Math.cosh(kappa * Linner);
@@ -178,12 +181,13 @@ function findEvenParityDoubleWell(
     const lhs = numerator / denominator;
     const rhs = alpha;
 
-    return lhs - rhs;
+    // Matching condition: ψ'_well / ψ_well = ψ'_outside / ψ_outside = -α
+    return lhs + rhs;
   };
 
   // Search for roots in energy range
-  const Emin = -V0; // Bottom of well
-  const Emax = 0;   // Continuum threshold
+  const Emin = 0;   // Well bottom
+  const Emax = V0;  // Barrier top (continuum threshold)
 
   // Use systematic search with bisection
   const numSearchPoints = 500;
@@ -235,12 +239,12 @@ function findOddParityDoubleWell(
    * Returns f(E) = 0 when E is an eigenvalue.
    */
   const transcendentalEquation = (E: number): number => {
-    if (E >= 0) return Infinity;
+    if (E >= V0) return Infinity;
 
-    if (E + V0 <= 0) return Infinity;
+    if (E <= 0) return Infinity;
 
-    const k = Math.sqrt(2 * mass * (E + V0)) / HBAR;
-    const kappa = Math.sqrt(-2 * mass * E) / HBAR;
+    const k = Math.sqrt(2 * mass * E) / HBAR;
+    const kappa = Math.sqrt(2 * mass * (V0 - E)) / HBAR;
     const alpha = kappa;
 
     // Hyperbolic functions at barrier/well interface
@@ -260,12 +264,13 @@ function findOddParityDoubleWell(
     const lhs = numerator / denominator;
     const rhs = alpha;
 
-    return lhs - rhs;
+    // Matching condition: ψ'_well / ψ_well = ψ'_outside / ψ_outside = -α
+    return lhs + rhs;
   };
 
   // Search for roots
-  const Emin = -V0;
-  const Emax = 0;
+  const Emin = 0;
+  const Emax = V0;
   const numSearchPoints = 500;
   const dE = (Emax - Emin) / numSearchPoints;
 
@@ -293,11 +298,13 @@ function findOddParityDoubleWell(
  *
  * Constructs the full wavefunction by matching boundary conditions and normalizing.
  *
- * @param E - Energy eigenvalue
+ * Energy convention: Wells at V=0, barrier at V=V₀.
+ *
+ * @param E - Energy eigenvalue (between 0 and V₀)
  * @param parity - "even" or "odd" parity
  * @param Linner - Inner boundary (half the barrier width)
  * @param Louter - Outer boundary (Linner + wellWidth)
- * @param V0 - Well depth (positive)
+ * @param V0 - Barrier height (positive)
  * @param mass - Particle mass
  * @param xGrid - Position grid
  * @returns Normalized wavefunction values
@@ -313,8 +320,8 @@ function computeDoubleWellWavefunction(
 ): number[] {
 
   const { HBAR } = QuantumConstants;
-  const k = Math.sqrt(2 * mass * (E + V0)) / HBAR;
-  const kappa = Math.sqrt(-2 * mass * E) / HBAR;
+  const k = Math.sqrt(2 * mass * E) / HBAR;
+  const kappa = Math.sqrt(2 * mass * (V0 - E)) / HBAR;
   const alpha = kappa;
 
   const L = Louter - Linner; // wellWidth
