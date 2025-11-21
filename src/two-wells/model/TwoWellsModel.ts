@@ -265,8 +265,7 @@ export class TwoWellsModel extends BaseModel {
     let gridConfig;
 
     if (this.potentialTypeProperty.value === PotentialType.DOUBLE_SQUARE_WELL) {
-      // For double square well, use focused grid to keep kinetic energy manageable
-      const method = this.solver.getNumericalMethod();
+      // For double square well, use analytical solution with fixed 1000 grid points
       const separation = this.wellSeparationProperty.value;
       const wellWidthNm = wellWidth / QuantumConstants.NM_TO_M;
       const wellCenter = (separation / 2 + wellWidthNm / 2);
@@ -277,42 +276,17 @@ export class TwoWellsModel extends BaseModel {
 
       // Add margin for wavefunction decay (need ~3-4 decay lengths)
       // For bound states, decay length ~ 0.1 nm, so margin ~ 0.4 nm is sufficient
-      // Increased margins to ensure proper boundary conditions for shooting method
-      const margin = method === 'numerov' ? 2.0 : 2.0; // nm
+      // Increased margins to ensure proper boundary conditions
+      const margin = 2.0; // nm
 
       const gridRange = outerEdge + margin;
 
-      if (method === 'dvr') {
-        // DVR: use user-configured grid points
-        gridConfig = {
-          xMin: -gridRange * QuantumConstants.NM_TO_M,
-          xMax: gridRange * QuantumConstants.NM_TO_M,
-          numPoints: QPPWPreferences.gridPointsProperty.value,
-        };
-      } else if (method === 'spectral') {
-        // Spectral: use user-configured grid points
-        gridConfig = {
-          xMin: -gridRange * QuantumConstants.NM_TO_M,
-          xMax: gridRange * QuantumConstants.NM_TO_M,
-          numPoints: QPPWPreferences.gridPointsProperty.value,
-        };
-      } else if (method === 'fgh') {
-        // FGH: round to nearest power of 2 for FFT efficiency
-        const userPoints = QPPWPreferences.gridPointsProperty.value;
-        const powerOf2 = Math.pow(2, Math.round(Math.log2(userPoints)));
-        gridConfig = {
-          xMin: -gridRange * QuantumConstants.NM_TO_M,
-          xMax: gridRange * QuantumConstants.NM_TO_M,
-          numPoints: powerOf2,
-        };
-      } else {
-        // Numerov/Matrix Numerov: use user-configured grid points
-        gridConfig = {
-          xMin: -gridRange * QuantumConstants.NM_TO_M,
-          xMax: gridRange * QuantumConstants.NM_TO_M,
-          numPoints: QPPWPreferences.gridPointsProperty.value,
-        };
-      }
+      // Use fixed 1000 grid points for analytical solution
+      gridConfig = {
+        xMin: -gridRange * QuantumConstants.NM_TO_M,
+        xMax: gridRange * QuantumConstants.NM_TO_M,
+        numPoints: 1000,
+      };
     } else {
       // For other potentials, span the full chart display range (-4 nm to +4 nm)
       const CHART_DISPLAY_RANGE_NM = 4;
