@@ -44,7 +44,6 @@ const BOUNDARY_PSI_INITIAL = 0.0;        // psi(boundary) = 0
 const BOUNDARY_PSI_DERIVATIVE = 1.0;     // Initial derivative (will be normalized)
 
 // Logarithmic derivative integration constants
-const LOG_DERIV_BOUNDARY_VALUE = 10.0;   // Initial y = psi'/psi at boundary (large for exponential decay)
 const SYMMETRY_TOLERANCE = 1e-10;        // Tolerance for detecting symmetric potentials
 
 // Performance constants
@@ -155,7 +154,6 @@ export class QuantumBoundStateSolver {
   private readonly normalizationMethod: 'max' | 'l2';
   private readonly enableCaching: boolean;
   private readonly useLogDerivativeMethod: boolean;
-  private readonly useSymmetry: boolean;
 
   // Grid properties
   private readonly deltaX: number;
@@ -216,7 +214,6 @@ export class QuantumBoundStateSolver {
     this.normalizationMethod = config?.normalizationMethod ?? 'l2';
     this.enableCaching = config?.enableCaching ?? true;
     this.useLogDerivativeMethod = config?.useLogDerivativeMethod ?? false;  // Disabled by default (experimental)
-    this.useSymmetry = config?.useSymmetry ?? true;  // Enable by default
 
     // Pre-calculate grid properties
     this.deltaX = (xMax - xMin) / (numPoints - 1);
@@ -474,84 +471,6 @@ export class QuantumBoundStateSolver {
     energy = this.refineEnergyWithSecant(energy);
 
     return energy;
-  }
-
-  /**
-   * Determines expected parity for a given state in a symmetric potential.
-   * Ground state (n=0 nodes) is symmetric, first excited (n=1 nodes) is antisymmetric, etc.
-   */
-  private getExpectedParity(nodes: number): 'even' | 'odd' {
-    return nodes % 2 === 0 ? 'even' : 'odd';
-  }
-
-  /**
-   * Checks if a wavefunction has the expected parity at the symmetry center.
-   * For even parity: ψ'(center) ≈ 0
-   * For odd parity: ψ(center) ≈ 0
-   */
-  private checkParity(energy: number, expectedParity: 'even' | 'odd'): number {
-    // Find center index
-    const centerIdx = Math.floor(this.gridPoints / 2);
-
-    // Integrate and check parity violation
-    // For even states: derivative should be zero at center
-    // For odd states: wavefunction should be zero at center
-
-    // Calculate wavefunction near center
-    const matchPoint = centerIdx;
-    const numerovFactor = this.getNumerovFactor();
-    const inverseHbar2Over2m = 1.0 / this.hbarSquaredOver2m;
-    const effectivePotential = this.potentialEnergies.map(V =>
-      inverseHbar2Over2m * (V - energy)
-    );
-
-    // Integrate from left to center
-    const forwardResult = this.integrateForward(
-      effectivePotential,
-      numerovFactor,
-      matchPoint
-    );
-
-    if (expectedParity === 'even') {
-      // Check derivative at center (should be ~0 for even states)
-      return forwardResult.logDerivative;  // This should be near zero
-    } else {
-      // Check amplitude at center (should be ~0 for odd states)
-      return forwardResult.psiAtMatch;  // This should be near zero
-    }
-  }
-
-  /**
-   * Secant method refinement with parity constraint for symmetric potentials.
-   */
-  private refineEnergyWithSecantSymmetric(initialEnergy: number, desiredNodes: number): number {
-    const expectedParity = this.getExpectedParity(desiredNodes);
-
-    // Modified secant method that also enforces parity
-    let energyPrevious = initialEnergy * 0.999;
-    let energyCurrent = initialEnergy * 1.001;
-
-    const fixedMatchPoint = Math.floor(this.gridPoints / 2);  // Use center for symmetric case
-
-    let mismatchPrevious = this.integrateSchrodinger(energyPrevious, fixedMatchPoint).logDerivativeMismatch;
-    let mismatchCurrent = this.integrateSchrodinger(energyCurrent, fixedMatchPoint).logDerivativeMismatch;
-
-    for (let iteration = 0; iteration < 10; iteration++) {
-      const mismatchDifference = mismatchCurrent - mismatchPrevious;
-      if (Math.abs(mismatchDifference) < this.convergenceTolerance) break;
-
-      const energyNext = energyCurrent - mismatchCurrent * (energyCurrent - energyPrevious) / mismatchDifference;
-      const mismatchNext = this.integrateSchrodinger(energyNext, fixedMatchPoint).logDerivativeMismatch;
-
-      if (Math.abs(mismatchNext) < this.convergenceTolerance) return energyNext;
-
-      energyPrevious = energyCurrent;
-      mismatchPrevious = mismatchCurrent;
-      energyCurrent = energyNext;
-      mismatchCurrent = mismatchNext;
-    }
-
-    return energyCurrent;
   }
 
   /**
