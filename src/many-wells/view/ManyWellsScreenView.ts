@@ -13,7 +13,7 @@ import stringManager from "../../i18n/StringManager.js";
 
 export class ManyWellsScreenView extends BaseScreenView {
   private readonly wellsContainer: Node;
-  private readonly controlPanel: Panel;
+  private readonly customControlPanel: Panel;
 
   public constructor(model: ManyWellsModel, options?: ScreenViewOptions) {
     super( model,      options);
@@ -33,8 +33,8 @@ export class ManyWellsScreenView extends BaseScreenView {
     this.addChild(titleText);
 
     // Create control panel
-    this.controlPanel = this.createControlPanel();
-    this.addChild(this.controlPanel);
+    this.customControlPanel = this.createControlPanel();
+    this.addChild(this.customControlPanel);
   }
 
   /**
