@@ -103,6 +103,13 @@ const testCases = [
     wellSeparation: 3 * NM_TO_M,
     numStates: 8,
   },
+  {
+    name: "Very wide wells (testing up to 20 states)",
+    wellWidth: 20 * NM_TO_M,
+    wellDepth: 0.5 * EV_TO_JOULES,
+    wellSeparation: 4 * NM_TO_M,
+    numStates: 20,
+  },
 ];
 
 const mass = 0.067 * ELECTRON_MASS;

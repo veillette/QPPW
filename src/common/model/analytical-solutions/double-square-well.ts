@@ -152,6 +152,71 @@ export function solveDoubleSquareWellAnalytical(
 }
 
 /**
+ * Validate that an energy is a true bound state, not a spurious root.
+ *
+ * Checks that:
+ * 1. The wavefunction value at the outer boundary (D) is not too small
+ * 2. The derivative matching condition is satisfied (small residual)
+ *
+ * Spurious roots can occur when D ≈ 0, causing a pole in the transcendental
+ * equation that gets mistaken for a zero crossing.
+ */
+function isValidBoundState(
+  E: number,
+  Linner: number,
+  L: number,
+  V0: number,
+  mass: number,
+  parity: "even" | "odd"
+): boolean {
+  const { HBAR } = QuantumConstants;
+
+  // Wave numbers
+  const k = Math.sqrt(2 * mass * E) / HBAR;
+  const kappa = Math.sqrt(2 * mass * (V0 - E)) / HBAR;
+  const alpha = kappa;
+
+  // Calculate coefficients
+  let B: number, C: number;
+  if (parity === "even") {
+    B = Math.cosh(kappa * Linner);
+    C = (kappa / k) * Math.sinh(kappa * Linner);
+  } else {
+    B = Math.sinh(kappa * Linner);
+    C = (kappa / k) * Math.cosh(kappa * Linner);
+  }
+
+  // Calculate D (wavefunction value at outer boundary)
+  const D = B * Math.cos(k * L) + C * Math.sin(k * L);
+
+  // Reject if D is too small (near-node at boundary)
+  // Use relative threshold compared to B (typical barrier value)
+  // A very small D indicates a spurious pole in the transcendental equation
+  const relativeDThreshold = 0.001;  // 0.1% of typical barrier amplitude
+  if (Math.abs(D) < Math.abs(B) * relativeDThreshold) {
+    return false;
+  }
+
+  // Verify derivative matching condition
+  const numerator = -k * B * Math.sin(k * L) + k * C * Math.cos(k * L);
+  const denominator = D;
+
+  const lhs = numerator / denominator;  // ψ'/ψ from inside
+  const rhs = -alpha;  // ψ'/ψ from outside (should match)
+
+  // Check that matching condition is satisfied
+  // Allow for some numerical error in the root-finding
+  const relativeError = Math.abs((lhs - rhs) / rhs);
+  const matchingTolerance = 0.05;  // 5% relative error
+
+  if (relativeError > matchingTolerance) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
  * Find even parity bound states: ψ'(0) = 0
  *
  * Matching conditions give us a transcendental equation in E.
@@ -234,8 +299,11 @@ function findEvenParityDoubleWell(
     if (f1 * f2 < 0 && isFinite(f1) && isFinite(f2)) {
       const root = solveBisection(transcendentalEquation, E1, E2, 1e-12, 100);
       if (root !== null) {
-        energies.push(root);
-        if (energies.length >= maxStates) break;
+        // Validate this is a true bound state, not a spurious root
+        if (isValidBoundState(root, Linner, L, V0, mass, "even")) {
+          energies.push(root);
+          if (energies.length >= maxStates) break;
+        }
       }
     }
   }
@@ -315,8 +383,11 @@ function findOddParityDoubleWell(
     if (f1 * f2 < 0 && isFinite(f1) && isFinite(f2)) {
       const root = solveBisection(transcendentalEquation, E1, E2, 1e-12, 100);
       if (root !== null) {
-        energies.push(root);
-        if (energies.length >= maxStates) break;
+        // Validate this is a true bound state, not a spurious root
+        if (isValidBoundState(root, Linner, L, V0, mass, "odd")) {
+          energies.push(root);
+          if (energies.length >= maxStates) break;
+        }
       }
     }
   }
