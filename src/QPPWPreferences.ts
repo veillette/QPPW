@@ -3,10 +3,10 @@
  */
 
 import { BooleanProperty, NumberProperty, Property } from "scenerystack/axon";
-import { Range } from "scenerystack";
+import { Range } from "scenerystack/dot";
 import { Tandem, StringIO } from "scenerystack/tandem";
 import qppw from "./QPPWNamespace.js";
-import { NumericalMethod } from "./common/model/Schrodinger1DSolver.js";
+import { NumericalMethod } from "./common/model/NumericalMethod.js";
 
 const QPPWPreferences = {
   // Simulation Preferences

@@ -37,18 +37,10 @@ import { computeWavefunctionsNumerov } from "./WavefunctionNumerovSolver.js";
 import QuantumConstants from "./QuantumConstants.js";
 import QPPWPreferences from "../../QPPWPreferences.js";
 import qppw from "../../QPPWNamespace.js";
+import { NumericalMethod } from "./NumericalMethod.js";
 
-/**
- * Numerical method selection for solving the Schrödinger equation
- */
-export enum NumericalMethod {
-  NUMEROV = "numerov",
-  MATRIX_NUMEROV = "matrix_numerov",
-  DVR = "dvr",
-  FGH = "fgh",
-  SPECTRAL = "spectral",
-  QUANTUM_BOUND = "quantum_bound",
-}
+// Re-export NumericalMethod for backward compatibility
+export { NumericalMethod };
 
 /**
  * Configuration for potential well parameters (for analytical solutions)

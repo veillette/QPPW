@@ -63,3 +63,25 @@ globalThis.phet.chipper.queryParameters = {};
 // Animation frame polyfills
 globalThis.requestAnimationFrame = (cb) => setTimeout(cb, 16);
 globalThis.cancelAnimationFrame = (id) => clearTimeout(id);
+
+// Scenerystack Range mock for tests
+globalThis.Range = class Range {
+  constructor(min, max) {
+    this.min = min;
+    this.max = max;
+  }
+};
+
+// matchMedia mock (used by QPPWPreferences for reduced motion detection)
+globalThis.matchMedia = globalThis.matchMedia || function(query) {
+  return {
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => true
+  };
+};

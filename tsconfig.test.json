@@ -2,7 +2,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "paths": {
-      "scenerystack": ["./tests/mock-scenerystack.js"]
+      "scenerystack": ["./tests/mock-scenerystack.js"],
+      "scenerystack/dot": ["./tests/mock-scenerystack.js"]
     }
   }
 }
