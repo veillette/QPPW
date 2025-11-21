@@ -264,32 +264,18 @@ export class TwoWellsModel extends BaseModel {
     // Grid configuration
     let gridConfig;
 
+    // For all potentials, span the full chart display range (-4 nm to +4 nm)
+    const CHART_DISPLAY_RANGE_NM = 4;
+
     if (this.potentialTypeProperty.value === PotentialType.DOUBLE_SQUARE_WELL) {
-      // For double square well, use analytical solution with fixed 1000 grid points
-      const separation = this.wellSeparationProperty.value;
-      const wellWidthNm = wellWidth / QuantumConstants.NM_TO_M;
-      const wellCenter = (separation / 2 + wellWidthNm / 2);
-
-      // Grid must extend beyond the outer edge of the wells to capture decay region
-      // Outer edge of outer well is at: wellCenter + wellWidth/2
-      const outerEdge = wellCenter + wellWidthNm / 2;
-
-      // Add margin for wavefunction decay (need ~3-4 decay lengths)
-      // For bound states, decay length ~ 0.1 nm, so margin ~ 0.4 nm is sufficient
-      // Increased margins to ensure proper boundary conditions
-      const margin = 2.0; // nm
-
-      const gridRange = outerEdge + margin;
-
-      // Use fixed 1000 grid points for analytical solution
+      // For double square well, use analytical solution with fixed 2000 grid points
+      // spanning the full chart range (-4 nm to +4 nm)
       gridConfig = {
-        xMin: -gridRange * QuantumConstants.NM_TO_M,
-        xMax: gridRange * QuantumConstants.NM_TO_M,
-        numPoints: 1000,
+        xMin: -CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
+        xMax: CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
+        numPoints: 2000,
       };
     } else {
-      // For other potentials, span the full chart display range (-4 nm to +4 nm)
-      const CHART_DISPLAY_RANGE_NM = 4;
       const method = this.solver.getNumericalMethod();
       let numGridPoints = QPPWPreferences.gridPointsProperty.value;
 
