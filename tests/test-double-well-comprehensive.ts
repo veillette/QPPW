@@ -3,6 +3,15 @@
  * Comprehensive tests for double well potential
  * These tests explore extreme parameter ranges and verify theoretical predictions
  *
+ * Energy Convention (CURRENT):
+ * - Wells are at V = -V₀ (negative potential)
+ * - Barrier is at V = 0 (reference)
+ * - Bound states have energies: -V₀ < E < 0
+ * - Ground state has most negative energy (deepest in well)
+ * - Higher energy states are less negative (approaching 0)
+ *
+ * NOTE: This will be updated when analytical solver switches to V=0 convention
+ *
  * Usage:
  *   npx tsx --import ./tests/browser-globals.js tests/test-double-well-comprehensive.ts
  */
@@ -81,11 +90,13 @@ function assert(condition: boolean, message: string): void {
 
 /**
  * Calculate WKB transmission coefficient
+ * Current convention: wells at V=-V₀, barrier at V=0
+ * Energy is negative for bound states (-V₀ < E < 0)
  */
 function calculateWKBTransmission(
-  energy: number,
-  barrierHeight: number,
-  barrierWidth: number,
+  energy: number,        // Energy in eV (negative for bound states)
+  barrierHeight: number, // Barrier height in eV (well depth V₀, positive value)
+  barrierWidth: number,  // Barrier width in nm
   particleMass: number = 1.0
 ): number {
   const E = energy * EV_TO_JOULES;
@@ -93,10 +104,12 @@ function calculateWKBTransmission(
   const a = barrierWidth * NM_TO_M;
   const m = particleMass * ELECTRON_MASS;
 
-  if (E >= V) return 1.0;
+  // Energy relative to barrier top: E_rel = E - 0 = E (negative)
+  // For tunneling: κ² = 2m|E|/ℏ² = -2mE/ℏ² (since E < 0)
+  if (E >= 0) return 1.0; // Above barrier
 
-  const gamma = Math.sqrt(2 * m * (V - E)) / HBAR;
-  const transmission = Math.exp(-2 * gamma * a);
+  const kappa = Math.sqrt(-2 * m * E) / HBAR;
+  const transmission = Math.exp(-2 * kappa * a);
 
   return transmission;
 }
@@ -193,11 +206,12 @@ try {
     1.0
   );
 
-  console.log(`  Ground state energy: ${groundState.energy.toFixed(6)} eV`);
+  console.log(`  Ground state energy: ${groundState.energy.toFixed(6)} eV (-${5.0} < E < 0)`);
   console.log(`  WKB transmission: ${wkbTransmission.toExponential(3)}`);
   console.log(`  Barrier probability: ${overlap.barrier.toFixed(6)}`);
   console.log(`  Left well: ${overlap.left.toFixed(6)}, Right well: ${overlap.right.toFixed(6)}`);
 
+  assert(groundState.energy < 0 && groundState.energy > -5.0, 'Ground state energy should be bound (-wellDepth < E < 0)');
   assert(overlap.barrier < 0.2, 'Barrier probability should be small for wide barrier');
 
   console.log(`  ✓ Test PASSED`);
@@ -336,8 +350,9 @@ extremeTests.forEach((test, i) => {
     assert(result.states.length >= test.minStates, `Should have at least ${test.minStates} states`);
 
     const groundState = result.states[0];
+    const wellDepth = test.params[1] as number;
     assert(isFinite(groundState.energy), 'Ground state energy should be finite');
-    assert(groundState.energy < 0, 'Ground state should be bound (E < 0)');
+    assert(groundState.energy < 0 && groundState.energy > -wellDepth, `Ground state should be bound (-${wellDepth} < E < 0 eV)`);
 
     console.log(`  ✓ States found: ${result.states.length}`);
     console.log(`  ✓ Ground state energy: ${groundState.energy.toFixed(6)} eV`);
