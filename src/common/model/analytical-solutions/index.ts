@@ -19,6 +19,7 @@ export { solveAsymmetricTrianglePotential } from "./asymmetric-triangle-potentia
 export { solveCoulomb1DPotential } from "./coulomb-1d-potential.js";
 export { solveCoulomb3DPotential } from "./coulomb-3d-potential.js";
 export { solveTriangularPotential } from "./triangular-potential.js";
+export { solveDoubleSquareWellAnalytical } from "./double-square-well.js";
 
 // Export utility functions that may be useful externally
 export * from "./math-utilities.js";
@@ -35,6 +36,7 @@ import { solveAsymmetricTrianglePotential } from "./asymmetric-triangle-potentia
 import { solveCoulomb1DPotential } from "./coulomb-1d-potential.js";
 import { solveCoulomb3DPotential } from "./coulomb-3d-potential.js";
 import { solveTriangularPotential } from "./triangular-potential.js";
+import { solveDoubleSquareWellAnalytical } from "./double-square-well.js";
 
 // Register all solutions with the QPPW namespace
 qppw.register("AnalyticalSolutions", {
@@ -48,5 +50,6 @@ qppw.register("AnalyticalSolutions", {
   solveAsymmetricTrianglePotential,
   solveCoulomb1DPotential,
   solveCoulomb3DPotential,
-  solveTriangularPotential
+  solveTriangularPotential,
+  solveDoubleSquareWellAnalytical
 });

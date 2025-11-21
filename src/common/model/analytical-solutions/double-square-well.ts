@@ -38,15 +38,6 @@ import QuantumConstants from "../QuantumConstants.js";
 import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
 
 /**
- * Geometry definition for symmetric double square well
- */
-interface DoubleWellGeometry {
-  wellWidth: number;        // L (width of each well)
-  wellDepth: number;        // V₀ (positive value)
-  wellSeparation: number;   // d (center-to-center separation)
-}
-
-/**
  * Analytical solution for symmetric double square well potential.
  *
  * Solves the transcendental equations arising from boundary condition matching
@@ -68,8 +59,6 @@ export function solveDoubleSquareWellAnalytical(
   numStates: number,
   gridConfig: GridConfig,
 ): BoundStateResult {
-
-  const { HBAR } = QuantumConstants;
 
   // Geometry
   const Linner = wellSeparation / 2;
