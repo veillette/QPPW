@@ -48,7 +48,7 @@ import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
  *
  * @param wellWidth - Width of each well (L) in meters
  * @param wellDepth - Height of barrier relative to wells (V₀) in Joules (positive value)
- * @param wellSeparation - Center-to-center separation in meters
+ * @param wellSeparation - Barrier width (edge-to-edge well separation) in meters
  * @param mass - Particle mass in kg
  * @param numStates - Number of energy levels to calculate
  * @param gridConfig - Grid configuration for wavefunction evaluation
@@ -181,7 +181,8 @@ function findEvenParityDoubleWell(
     const lhs = numerator / denominator;
     const rhs = alpha;
 
-    return lhs - rhs;
+    // Matching condition: ψ'_well / ψ_well = ψ'_outside / ψ_outside = -α
+    return lhs + rhs;
   };
 
   // Search for roots in energy range
@@ -263,7 +264,8 @@ function findOddParityDoubleWell(
     const lhs = numerator / denominator;
     const rhs = alpha;
 
-    return lhs - rhs;
+    // Matching condition: ψ'_well / ψ_well = ψ'_outside / ψ_outside = -α
+    return lhs + rhs;
   };
 
   // Search for roots
