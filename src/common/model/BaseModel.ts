@@ -35,7 +35,7 @@ export abstract class BaseModel {
     this.solver = new Schrodinger1DSolver();
 
     // Update solver method when preference changes
-    QPPWPreferences.numericalMethodProperty.link((method) => {
+    QPPWPreferences.numericalMethodProperty.link((method: NumericalMethod) => {
       this.solver.setNumericalMethod(method);
       this.onSolverMethodChanged(method);
     });

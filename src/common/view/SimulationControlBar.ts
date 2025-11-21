@@ -44,7 +44,7 @@ export class SimulationControlBar extends Node {
       fill: QPPWColors.textFillProperty,
     });
 
-    this.model.timeProperty.link((time) => {
+    this.model.timeProperty.link((time: number) => {
       this.timeText.string = stringManager.timeFormatStringProperty.value.replace("{{time}}", time.toFixed(2));
     });
 

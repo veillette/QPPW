@@ -321,7 +321,7 @@ export class ControlPanelNode extends Node {
         fill: QPPWColors.textFillProperty,
       });
 
-      oneWellModel.coherentDisplacementProperty.link((displacement) => {
+      oneWellModel.coherentDisplacementProperty.link((displacement: number) => {
         displacementValueText.string = `${displacement.toFixed(2)} nm`;
       });
 
@@ -351,7 +351,7 @@ export class ControlPanelNode extends Node {
       });
 
       // Show/hide displacement slider based on superposition type
-      this.model.superpositionTypeProperty.link((type) => {
+      this.model.superpositionTypeProperty.link((type: SuperpositionType) => {
         displacementRow!.visible = type === SuperpositionType.COHERENT;
       });
     }
@@ -361,7 +361,7 @@ export class ControlPanelNode extends Node {
     let isHandlingDialogResult = false;
 
     // Open dialog when "Custom..." is selected
-    this.model.superpositionTypeProperty.link((type) => {
+    this.model.superpositionTypeProperty.link((type: SuperpositionType) => {
       // Skip if we're handling dialog result to avoid recursion
       if (isHandlingDialogResult) {
         return;
@@ -511,7 +511,7 @@ export class ControlPanelNode extends Node {
     });
 
     // Enable/disable wave function views based on display mode
-    this.model.displayModeProperty.link((mode) => {
+    this.model.displayModeProperty.link((mode: string) => {
       const enabled = mode === "waveFunction";
       realPartCheckbox.enabled = enabled;
       imaginaryPartCheckbox.enabled = enabled;
@@ -546,7 +546,7 @@ export class ControlPanelNode extends Node {
     });
 
     // Update text when mass changes
-    this.model.particleMassProperty.link((mass) => {
+    this.model.particleMassProperty.link((mass: number) => {
       massValueText.string = `${mass.toFixed(2)} mₑ`;
     });
 
@@ -587,7 +587,7 @@ export class ControlPanelNode extends Node {
       fill: QPPWColors.textFillProperty,
     });
 
-    this.model.wellWidthProperty.link((width) => {
+    this.model.wellWidthProperty.link((width: number) => {
       widthValueText.string = `${width.toFixed(2)} nm`;
     });
 
@@ -621,7 +621,7 @@ export class ControlPanelNode extends Node {
       fill: QPPWColors.textFillProperty,
     });
 
-    this.model.wellDepthProperty.link((depth) => {
+    this.model.wellDepthProperty.link((depth: number) => {
       depthValueText.string = `${depth.toFixed(2)} eV`;
     });
 
@@ -769,7 +769,7 @@ export class ControlPanelNode extends Node {
 
     // Enable/disable width slider based on potential type
     // Coulomb potentials have fixed spatial extent and don't use well width
-    this.model.potentialTypeProperty.link((type) => {
+    this.model.potentialTypeProperty.link((type: PotentialType) => {
       const needsWidth =
         type !== PotentialType.COULOMB_1D &&
         type !== PotentialType.COULOMB_3D;
@@ -777,7 +777,7 @@ export class ControlPanelNode extends Node {
     });
 
     // Enable/disable depth slider based on potential type
-    this.model.potentialTypeProperty.link((type) => {
+    this.model.potentialTypeProperty.link((type: PotentialType) => {
       const needsDepth =
         type === PotentialType.FINITE_WELL ||
         type === PotentialType.HARMONIC_OSCILLATOR ||
@@ -793,7 +793,7 @@ export class ControlPanelNode extends Node {
 
     // Enable/disable barrier height slider based on potential type (only for Rosen-Morse and Eckart)
     if (barrierHeightRow) {
-      this.model.potentialTypeProperty.link((type) => {
+      this.model.potentialTypeProperty.link((type: PotentialType) => {
         const needsBarrierHeight =
           type === PotentialType.ROSEN_MORSE ||
           type === PotentialType.ECKART;
@@ -803,7 +803,7 @@ export class ControlPanelNode extends Node {
 
     // Enable/disable offset slider based on potential type (only for triangular potential)
     if (offsetRow) {
-      this.model.potentialTypeProperty.link((type) => {
+      this.model.potentialTypeProperty.link((type: PotentialType) => {
         const needsOffset = type === PotentialType.TRIANGULAR;
         offsetRow!.visible = needsOffset;
       });
@@ -811,7 +811,7 @@ export class ControlPanelNode extends Node {
 
     // Enable/disable separation slider based on potential type (only for double square well)
     if (separationRow) {
-      this.model.potentialTypeProperty.link((type) => {
+      this.model.potentialTypeProperty.link((type: PotentialType) => {
         const needsSeparation = type === PotentialType.DOUBLE_SQUARE_WELL;
         separationRow!.visible = needsSeparation;
       });

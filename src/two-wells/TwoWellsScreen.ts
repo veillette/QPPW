@@ -10,7 +10,7 @@ export class TwoWellsScreen extends Screen<TwoWellsModel, TwoWellsScreenView> {
   public constructor(options: ScreenOptions) {
     super(
       () => new TwoWellsModel(),
-      (model) => new TwoWellsScreenView(model),
+      (model: TwoWellsModel) => new TwoWellsScreenView(model),
       options,
     );
   }

@@ -10,7 +10,7 @@ export class OneWellScreen extends Screen<OneWellModel, OneWellScreenView> {
   public constructor(options: ScreenOptions) {
     super(
       () => new OneWellModel(),
-      (model) => new OneWellScreenView(model),
+      (model: OneWellModel) => new OneWellScreenView(model),
       options,
     );
   }
