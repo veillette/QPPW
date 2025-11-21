@@ -7,7 +7,7 @@ This document describes the implementation of the 1D time-independent Schröding
 ## Features
 
 ### Analytical Solutions
-For well-known potentials, the solver provides exact analytical solutions:
+For well-known potentials, the solver provides exact analytical solutions for **12 potentials**:
 - **Infinite Square Well**: $E_n = \frac{n^2 \pi^2 \hbar^2}{2mL^2}$
 - **Finite Square Well**: Transcendental equation solutions
 - **Harmonic Oscillator**: $E_n = \hbar\omega(n + \frac{1}{2})$
@@ -16,11 +16,13 @@ For well-known potentials, the solver provides exact analytical solutions:
 - **Rosen-Morse Potential**: Analytical solutions with asymmetry
 - **Eckart Potential**: Analytical solutions for barrier potentials
 - **Asymmetric Triangle**: Airy function solutions
+- **Triangular Potential**: Finite triangular well with Airy functions
 - **1D Coulomb**: $E_n = -\frac{m\alpha^2}{2\hbar^2 n^2}$
 - **3D Coulomb (Radial)**: Hydrogen-like energy levels
+- **Double Square Well**: Symmetric double well with parity-separated states
 
 ### Numerical Solutions
-For arbitrary potentials, five numerical methods are available:
+For arbitrary potentials, six numerical methods are available:
 
 #### 1. Numerov Method (Shooting)
 - Higher-order finite-difference method with $O(h^6)$ error
@@ -50,6 +52,11 @@ For arbitrary potentials, five numerical methods are available:
 - Expands wavefunction in Chebyshev polynomials
 - High accuracy for smooth potentials
 - Well-suited for non-uniform grid spacing
+
+#### 6. QuantumBound Method (Experimental)
+- Alternative bound state solver implementation
+- Currently under development and testing
+- May provide improved accuracy for specific potential types
 
 ## File Structure
 

@@ -17,7 +17,8 @@
       "Bash(pkill:*)",
       "Bash(npm test:*)",
       "Bash(git pull:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

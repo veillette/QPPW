@@ -10,7 +10,7 @@ This simulation allows users to explore the properties of quantum "particles" bo
 
 - **Real-time Quantum Simulation**: Solves the 1D Schrödinger equation numerically in real time with the mass set to the electron mass
 - **Interactive Potential Wells**: Click and drag directly on the potential energy diagram to modify well parameters
-- **Multiple Well Types**: Includes 10 analytically solvable potentials:
+- **Multiple Well Types**: Includes 12 analytically solvable potentials:
   - Infinite and finite square wells
   - Harmonic oscillator
   - Morse potential (with width parameterization)
@@ -18,6 +18,7 @@ This simulation allows users to explore the properties of quantum "particles" bo
   - Rosen-Morse potential (available in codebase)
   - Eckart potential (available in codebase)
   - Asymmetric triangle potential
+  - Triangular potential
   - Coulomb 1D and 3D potentials
   - Double square well (for Two Wells screen)
 - **Comprehensive Visualizations**:
@@ -78,20 +79,22 @@ This simulation is designed to help students understand:
 - **TypeScript**: Type-safe development
 - **Vite**: Fast build tool and development server
 - **Quantum Solvers**: Multiple numerical methods with analytical solutions
-  - **Analytical Solutions**: Exact solutions for 10 potentials evaluated at 1000 grid points
+  - **Analytical Solutions**: Exact solutions for 12 potentials evaluated at 1000 grid points
     - Infinite/finite square wells
     - Harmonic oscillator
     - Morse potential (width-parameterized)
     - Pöschl-Teller potential (width-parameterized)
     - Rosen-Morse and Eckart potentials
     - Coulomb 1D and 3D
-    - Asymmetric triangle
+    - Asymmetric triangle and triangular potentials
     - Double square well
   - **Numerical Methods**: For validation and extension
     - DVR (Discrete Variable Representation)
     - Spectral method
     - Matrix Numerov
     - FGH (Fourier Grid Hamiltonian)
+    - Shooting Numerov (classical shooting method)
+    - QuantumBound (experimental)
 - **Time Evolution**: Proper quantum dynamics with individual eigenstate phase evolution for superpositions
 
 ### Installation
@@ -145,9 +148,9 @@ npm test
 ```
 
 This command:
-- Runs all 60+ accuracy tests across 4 numerical methods (DVR, Spectral, Matrix Numerov, FGH)
-- Tests harmonic oscillator, finite square wells, Coulomb potential, and double wells
-- Uses grid sizes of 64, 128, 256, and 512 points
+- Runs comprehensive accuracy tests across 5 numerical methods (DVR, Spectral, Matrix Numerov, FGH, and QuantumBound)
+- Tests harmonic oscillator, finite square wells, 3D Coulomb potential, Morse potential, Pöschl-Teller potential, and double wells
+- Uses grid sizes of 32, 64, and 128 points
 - Displays detailed pass/fail results with error percentages
 - Shows performance metrics (execution times) for each method
 - Provides a summary of passed/failed tests
@@ -176,7 +179,7 @@ start tests/accuracy-tests.html
 ```
 
 The browser test interface provides:
-- **Run Full Tests** button - Comprehensive test suite (60+ tests)
+- **Run Full Tests** button - Comprehensive test suite with multiple potentials and methods
 - **Run Quick Check** button - Rapid validation subset
 - Visual pass/fail indicators with color coding
 - Detailed error percentages and performance metrics
@@ -214,12 +217,14 @@ import('/src/common/model/AccuracyTests.ts').then(m => m.runQuickAccuracyCheck()
 
 The comprehensive test suite (`tests/accuracy-tests.html`) validates:
 
-1. **Harmonic Oscillator** - Tests first 10 energy levels across grid sizes (64, 128, 256, 512) with 0.1% error tolerance
+1. **Harmonic Oscillator** - Tests first 10 energy levels across grid sizes (32, 64, 128) with 0.1% error tolerance
 2. **Finite Square Wells** (4 configurations) - Tests bound states with 0.5% error tolerance
 3. **3D Coulomb/Hydrogen Atom** - Tests first few energy levels with 1.0% error tolerance
-4. **Double Square Wells** (3 configurations) - Tests energy level pairs with 1.0% error tolerance
+4. **Morse Potential** - Tests vibrational energy levels with 1.0% error tolerance
+5. **Pöschl-Teller Potential** - Tests bound states with 1.0% error tolerance
+6. **Double Square Wells** (3 configurations) - Tests energy level pairs with 1.0% error tolerance
 
-All four numerical methods are tested (DVR, Spectral, Matrix Numerov, FGH) across multiple grid sizes (all powers of 2) to ensure accuracy and robustness. The tests verify that numerical methods match analytical solutions within specified tolerances.
+All five numerical methods are tested (DVR, Spectral, Matrix Numerov, FGH, and QuantumBound) across multiple grid sizes (all powers of 2) to ensure accuracy and robustness. The tests verify that numerical methods match analytical solutions within specified tolerances.
 
 For more details, see [`tests/README.md`](tests/README.md).
 

@@ -10,6 +10,22 @@ Analytical solutions provide exact mathematical expressions for energy eigenvalu
 - Providing benchmarks for computational methods
 - Educational purposes
 
+### Available Potentials
+
+This module provides **12 analytical solutions**:
+1. Infinite Square Well
+2. Finite Square Well
+3. Harmonic Oscillator
+4. Morse Potential
+5. Pöschl-Teller Potential
+6. Rosen-Morse Potential
+7. Eckart Potential
+8. Asymmetric Triangle Potential
+9. Triangular Potential (Finite)
+10. Coulomb 1D Potential
+11. Coulomb 3D Potential (Hydrogen Atom)
+12. Double Square Well
+
 ### Implementation Details
 
 All analytical solutions are evaluated at **1000 grid points** for high-resolution visualization, independent of the user's grid preference setting. This ensures smooth, accurate wavefunction displays while numerical methods can use user-configurable grid sizes.
@@ -430,7 +446,68 @@ Outside the well, the wavefunction decays exponentially.
 
 ---
 
-## 9. Coulomb 1D Potential
+## 9. Triangular Potential (Finite)
+
+**File**: `triangular-potential.ts`
+
+### Description
+The finite triangular potential creates a triangular well with a minimum at x = 0 and linear slopes rising to finite barriers on both sides. This potential models quantum systems in constant electric fields with finite confinement.
+
+### Potential
+```
+V(x) = height + offset    for x < 0
+V(x) = offset             at x = 0
+V(x) = offset + (height/width) * x    for 0 < x < width
+V(x) = height + offset    for x > width
+```
+
+### Parameters
+- `height`: Height of the potential barrier in Joules
+- `width`: Width of the triangular region in meters
+- `offset`: Energy offset/minimum of the well in Joules
+- `mass` (m): Particle mass in kg
+- `numStates`: Number of energy levels to calculate
+- `gridConfig`: Grid configuration for wavefunction evaluation
+
+### Energy Eigenvalues
+Bound states exist when: `offset < E < height + offset`
+
+Energy eigenvalues are found by solving boundary matching conditions using Airy functions with the bisection method:
+
+```
+E_n found via matching Ai(z) and Bi(z) at boundaries
+```
+
+where the slope parameter is `F = height/width`.
+
+### Wavefunctions
+In the triangular region (0 < x < width):
+```
+ψ(x) = A·Ai(α(x - x₀)) + B·Bi(α(x - x₀))
+```
+
+where:
+- `α = (2mF/ℏ²)^(1/3)` is the scaling parameter
+- `x₀ = (E - offset)/F` is the classical turning point
+- Ai(x) and Bi(x) are Airy functions
+
+In the barrier regions (x < 0 or x > width), the wavefunction decays exponentially.
+
+### Numerical Methods
+**Airy Function Calculation**:
+- Uses the same Airy function implementations as asymmetric triangle potential
+- Boundary matching via bisection method for eigenvalue search
+- Wavefunction normalization across all regions
+
+### Physical Significance
+- Models quantum systems in uniform electric fields with finite barriers
+- Describes field emission with confinement
+- Important in quantum wells with applied bias
+- Demonstrates quantum tunneling in linear potentials
+
+---
+
+## 11. Coulomb 1D Potential
 
 **File**: `coulomb-1d-potential.ts`
 
@@ -473,7 +550,7 @@ where:
 
 ---
 
-## 10. Coulomb 3D Potential (Hydrogen Atom)
+## 12. Coulomb 3D Potential (Hydrogen Atom)
 
 **File**: `coulomb-3d-potential.ts`
 
@@ -524,6 +601,77 @@ Associated Laguerre polynomials `L_n^α(x)` are calculated using recurrence:
   - Chemical bonding
   - Atomic spectroscopy
   - Quantum chemistry calculations
+
+---
+
+## 13. Double Square Well
+
+**File**: `double-square-well.ts`
+
+### Description
+The double square well consists of two finite square wells separated by a barrier. This system is fundamental for understanding quantum tunneling, molecular bonding, and energy level splitting in symmetric systems.
+
+### Potential
+```
+V(x) = 0     for x ∈ [-L_outer, -L_inner] ∪ [L_inner, L_outer]  (wells)
+V(x) = V₀    for x ∈ [-L_inner, L_inner]                         (barrier)
+V(x) = V₀    for |x| > L_outer                                    (outside)
+```
+
+where:
+- `L_inner = wellSeparation / 2`
+- `L_outer = L_inner + wellWidth`
+
+### Parameters
+- `wellWidth`: Width of each individual well in meters
+- `wellDepth` (V₀): Height of barrier relative to wells in Joules (positive value)
+- `wellSeparation`: Barrier width (edge-to-edge separation between wells) in meters
+- `mass` (m): Particle mass in kg
+- `numStates`: Number of energy levels to calculate
+- `gridConfig`: Grid configuration for wavefunction evaluation
+
+### Energy Eigenvalues
+Bound state energies (0 < E < V₀) are found by solving transcendental equations from boundary matching.
+
+Due to symmetry, wavefunctions have definite parity:
+
+**Even parity states**: ψ(-x) = ψ(x)
+**Odd parity states**: ψ(-x) = -ψ(x)
+
+Energy levels alternate in parity: even, odd, even, odd, ...
+
+### Wavefunctions
+**Even parity** (ψ'(0) = 0):
+- Barrier region: `ψ = A cosh(κx)`
+- Well region: `ψ = B cos(k(x - L_inner)) + C sin(k(x - L_inner))`
+- Outside: `ψ = D exp(-α|x - L_outer|)`
+
+**Odd parity** (ψ(0) = 0):
+- Barrier region: `ψ = A sinh(κx)`
+- Well region: `ψ = B cos(k(x - L_inner)) + C sin(k(x - L_inner))`
+- Outside: `ψ = D exp(-α|x - L_outer|)`
+
+where:
+- `k² = 2mE/ℏ²` (oscillatory in wells)
+- `κ² = 2m(V₀ - E)/ℏ²` (exponential in barrier)
+- `α² = 2m(V₀ - E)/ℏ²` (exponential outside)
+
+### Numerical Methods
+Eigenvalues are found using the **bisection method** applied to the transcendental equations from boundary condition matching:
+1. Search for even and odd parity solutions separately
+2. Iterate until convergence (tolerance: 10⁻¹⁰)
+3. Sort and interleave solutions by parity to ensure correct ordering
+4. Construct normalized wavefunctions with proper boundary matching
+
+### Physical Significance
+- Models molecular bonding in diatomic molecules (bonding and antibonding states)
+- Demonstrates energy level splitting due to quantum tunneling
+- Explains symmetric and antisymmetric wavefunctions in coupled quantum wells
+- Important for:
+  - Ammonia maser (NH₃ inversion)
+  - Quantum dots and coupled quantum wells
+  - Superlattices in semiconductors
+  - Understanding exchange splitting
 
 ---
 

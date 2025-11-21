@@ -1,6 +1,6 @@
 # Comprehensive Accuracy Tests for Numerical Quantum Solvers
 
-This document describes the comprehensive accuracy validation tests for all numerical methods used in the QPPW quantum physics simulation: **DVR**, **Spectral**, **Matrix Numerov**, and **FGH**.
+This document describes the comprehensive accuracy validation tests for all numerical methods used in the QPPW quantum physics simulation: **DVR**, **Spectral**, **Matrix Numerov**, **FGH**, and **QuantumBound** (experimental).
 
 ## Overview
 
@@ -9,8 +9,8 @@ The accuracy tests verify that all numerical methods produce results within acce
 ## Test Coverage
 
 The comprehensive test suite validates methods across:
-- **Multiple potential types**: Harmonic oscillator, finite square wells, 3D Coulomb, double wells
-- **Various grid sizes**: 100, 150, 200, 256 points
+- **Multiple potential types**: Harmonic oscillator, finite square wells, 3D Coulomb, Morse potential, Pöschl-Teller potential, double wells
+- **Various grid sizes**: 32, 64, 128 points (all powers of 2)
 - **Different parameters**: Well depths, widths, barrier heights
 - **Performance metrics**: Execution time, average/min/max timing per method
 
@@ -32,10 +32,10 @@ where:
 **Test Parameters:**
 - Mass: Electron mass (9.109 × 10⁻³¹ kg)
 - Angular frequency: 10¹⁵ rad/s
-- Grid sizes: **64, 128, 256, 512 points** (powers of 2)
+- Grid sizes: **32, 64, 128 points** (powers of 2)
 - Grid range: -5 nm to +5 nm
 - States tested: 10 states (n = 0, 1, 2, ..., 9)
-- Methods tested: DVR, Spectral, Matrix Numerov, FGH
+- Methods tested: DVR, Spectral, Matrix Numerov, FGH, QuantumBound
 - Error tolerance: **0.1%** (extremely high accuracy for smooth potentials)
 
 ### 2. Finite Square Wells
@@ -50,10 +50,10 @@ Multiple configurations test various well depths and widths:
 
 **Test Parameters:**
 - Mass: Electron mass
-- Grid sizes: **64, 128, 256, 512 points** (powers of 2)
+- Grid sizes: **32, 64, 128 points** (powers of 2)
 - Grid range: -2L to +2L (where L = well width)
 - States tested: Bound states
-- Methods tested: DVR, Spectral, Matrix Numerov, FGH
+- Methods tested: DVR, Spectral, Matrix Numerov, FGH, QuantumBound
 - Error tolerance: **0.5%** (stringent despite discontinuous potential)
 
 ### 3. 3D Coulomb Potential (Hydrogen Atom, L=0)
@@ -69,15 +69,41 @@ where α = e²/(4πε₀) is the Coulomb strength.
 **Test Parameters:**
 - Mass: Electron mass
 - Coulomb strength: e²/(4πε₀) = 2.307 × 10⁻²⁸ J·m
-- Grid sizes: **64, 128, 256, 512 points** (powers of 2)
+- Grid sizes: **32, 64, 128 points** (powers of 2)
 - Grid range: 1 pm to 10 nm (r > 0)
 - States tested: First few states
-- Methods tested: DVR, Spectral, Matrix Numerov, FGH
+- Methods tested: DVR, Spectral, Matrix Numerov, FGH, QuantumBound
 - Error tolerance: **1.0%** (stringent even for singular potential)
 
-### 4. Double Square Wells
+### 4. Morse Potential
 
-Tests symmetric double wells with central barrier (no analytical solution):
+Tests vibrational energy levels in anharmonic molecular potentials:
+
+**Test Parameters:**
+- Mass: Electron mass (or reduced mass for realistic molecules)
+- Dissociation energy: Realistic molecular values
+- Well width: Typical molecular bond length scale (~10⁻¹⁰ m)
+- Grid sizes: **32, 64, 128 points** (powers of 2)
+- States tested: Vibrational states
+- Methods tested: DVR, Spectral, Matrix Numerov, FGH, QuantumBound
+- Error tolerance: **1.0%** (anharmonic potential with exact solution)
+
+### 5. Pöschl-Teller Potential
+
+Tests bound states in hyperbolic potential wells:
+
+**Test Parameters:**
+- Mass: Electron mass
+- Potential depth: Various values
+- Well width: ~10⁻¹⁰ m
+- Grid sizes: **32, 64, 128 points** (powers of 2)
+- States tested: Bound states
+- Methods tested: DVR, Spectral, Matrix Numerov, FGH, QuantumBound
+- Error tolerance: **1.0%** (hyperbolic potential with exact solution)
+
+### 6. Double Square Wells
+
+Tests symmetric double wells with central barrier (has analytical solution):
 
 **Configurations:**
 1. Low barrier: 0.5 nm wells, 0.3 nm barrier, 30 eV depth, 10 eV barrier
@@ -86,9 +112,9 @@ Tests symmetric double wells with central barrier (no analytical solution):
 
 **Test Parameters:**
 - Mass: Electron mass
-- Grid sizes: **64, 128, 256, 512 points** (powers of 2)
-- States tested: Energy level pairs
-- Methods tested: DVR, Spectral, Matrix Numerov, FGH (compared to DVR reference)
+- Grid sizes: **32, 64, 128 points** (powers of 2)
+- States tested: Energy level pairs (even and odd parity states)
+- Methods tested: DVR, Spectral, Matrix Numerov, FGH, QuantumBound (compared to analytical solution or DVR reference)
 - Error tolerance: **1.0%** (stringent inter-method agreement required)
 
 ## Running the Tests

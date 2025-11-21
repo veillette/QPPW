@@ -14,11 +14,11 @@ The test directory has been simplified to include only essential files:
 
 ## Test Coverage
 
-The comprehensive test suite (`AccuracyTests.ts`) validates all numerical methods (DVR, Spectral, Matrix Numerov, and FGH) against analytical solutions across multiple potential types and grid sizes:
+The comprehensive test suite (`AccuracyTests.ts`) validates all numerical methods (DVR, Spectral, Matrix Numerov, FGH, and QuantumBound) against analytical solutions across multiple potential types and grid sizes:
 
 ### 1. Harmonic Oscillator
-- Tests across grid sizes: 64, 128, 256, 512 points
-- All 4 methods tested (DVR, Spectral, Matrix Numerov, FGH)
+- Tests across grid sizes: 32, 64, 128 points
+- All 5 methods tested (DVR, Spectral, Matrix Numerov, FGH, QuantumBound)
 - Tests first 10 energy levels
 - **0.1% error tolerance**
 
@@ -28,22 +28,34 @@ The comprehensive test suite (`AccuracyTests.ts`) validates all numerical method
   - Deep well: 1nm width, 50eV depth
   - Wide shallow well: 2nm width, 10eV depth
   - Narrow medium well: 0.5nm width, 30eV depth
-- Grid sizes: 64, 128, 256, 512 points (powers of 2)
-- All 4 methods tested (DVR, Spectral, Matrix Numerov, FGH)
+- Grid sizes: 32, 64, 128 points (powers of 2)
+- All 5 methods tested (DVR, Spectral, Matrix Numerov, FGH, QuantumBound)
 - **0.5% error tolerance**
 
 ### 3. 3D Coulomb Potential (Hydrogen Atom)
 - Tests the radial Schrödinger equation for s-waves (L=0)
-- Grid sizes: 64, 128, 256, 512 points (powers of 2)
-- All 4 methods tested (DVR, Spectral, Matrix Numerov, FGH)
+- Grid sizes: 32, 64, 128 points (powers of 2)
+- All 5 methods tested (DVR, Spectral, Matrix Numerov, FGH, QuantumBound)
 - **1.0% error tolerance**
 
-### 4. Double Square Wells
+### 4. Morse Potential
+- Tests vibrational energy levels for realistic molecular parameters
+- Grid sizes: 32, 64, 128 points (powers of 2)
+- All 5 methods tested (DVR, Spectral, Matrix Numerov, FGH, QuantumBound)
+- **1.0% error tolerance**
+
+### 5. Pöschl-Teller Potential
+- Tests bound states in hyperbolic wells
+- Grid sizes: 32, 64, 128 points (powers of 2)
+- All 5 methods tested (DVR, Spectral, Matrix Numerov, FGH, QuantumBound)
+- **1.0% error tolerance**
+
+### 6. Double Square Wells
 - **3 configurations tested:**
   - Symmetric, low barrier: 0.5nm wells, 0.3nm barrier, 30eV depth, 10eV barrier
   - Symmetric, medium barrier: 0.5nm wells, 0.5nm barrier, 40eV depth, 20eV barrier
   - Wide wells, low barrier: 0.6nm wells, 0.4nm barrier, 35eV depth, 5eV barrier
-- Grid sizes: 64, 128, 256, 512 points (powers of 2)
+- Grid sizes: 32, 64, 128 points (powers of 2)
 - Methods compared against DVR as reference
 - **1.0% error tolerance**
 
@@ -72,7 +84,7 @@ This provides a visual interface for running tests.
    ```
 
 3. **Run tests** by clicking one of the buttons:
-   - **"Run Full Tests"** - Runs comprehensive test suite (~60+ tests)
+   - **"Run Full Tests"** - Runs comprehensive test suite (tests all methods across all potentials and grid sizes)
    - **"Run Quick Check"** - Runs a subset for rapid validation
 
 ### Method 2: Command-Line Tests (Recommended)
@@ -184,6 +196,8 @@ All tests now use stringent tolerances with maximum 1% error:
 - **Harmonic Oscillator**: **0.1%** - Very well-behaved smooth potential, extremely high accuracy expected
 - **Finite Square Wells**: **0.5%** - Despite discontinuous potential, accurate methods achieve sub-1% error
 - **3D Coulomb**: **1.0%** - Singular potential at r=0, still achieves 1% accuracy with proper grid
+- **Morse Potential**: **1.0%** - Anharmonic potential with exact analytical solutions
+- **Pöschl-Teller**: **1.0%** - Hyperbolic potential with exact analytical solutions
 - **Double Square Wells**: **1.0%** - Inter-method comparison (vs DVR reference, no analytical solution)
 
 ## Adding New Tests
