@@ -282,6 +282,11 @@ export class WaveFunctionChartNode extends Node {
     this.model.wellOffsetProperty.link(() => this.update());
     this.model.particleMassProperty.link(() => this.update());
 
+    // Link to wellSeparationProperty if available (TwoWellsModel only)
+    if ("wellSeparationProperty" in this.model) {
+      (this.model as TwoWellsModel).wellSeparationProperty.link(() => this.update());
+    }
+
     // Update when grid points preference changes (affects wavefunction resolution)
     QPPWPreferences.gridPointsProperty.link(() => {
       // Force model to invalidate its cache by notifying it of the change
