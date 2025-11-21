@@ -288,43 +288,17 @@ export class Schrodinger1DSolver {
           wellParams.wellDepth !== undefined &&
           wellParams.wellSeparation !== undefined
         ) {
-          // Use specialized double well solver for Numerov method
-          // This provides much better energy search by using single well approximation
-          if (this.numericalMethod === NumericalMethod.NUMEROV) {
-            return solveDoubleWellNumerov(
-              wellParams.wellWidth,
-              wellParams.wellDepth,
-              wellParams.wellSeparation,
-              mass,
-              numStates,
-              gridConfig,
-            );
-          }
-
-          // For other methods (DVR, FGH, Spectral), use generic potential
-          const wellWidth = wellParams.wellWidth;
-          const wellDepth = wellParams.wellDepth;
-          const separation = wellParams.wellSeparation;
-
-          // Two square wells centered at ±(separation/2 + wellWidth/2)
-          // Wells are symmetric about x=0
-          const leftWellCenter = -(separation / 2 + wellWidth / 2);
-          const rightWellCenter = separation / 2 + wellWidth / 2;
-
-          const potential: PotentialFunction = (x: number) => {
-            // Check if x is inside either well
-            const inLeftWell = Math.abs(x - leftWellCenter) <= wellWidth / 2;
-            const inRightWell = Math.abs(x - rightWellCenter) <= wellWidth / 2;
-
-            if (inLeftWell || inRightWell) {
-              return 0; // Ground level is 0 inside the wells
-            } else {
-              return wellDepth; // Potential height outside the wells
-            }
-          };
-
-          const result = this.solveNumerical(potential, mass, numStates, gridConfig);
-          return result;
+          // Always use specialized analytical double well solver
+          // This provides better energy search by using single well approximation
+          // and WKB tunneling estimates, regardless of numerical method preference
+          return solveDoubleWellNumerov(
+            wellParams.wellWidth,
+            wellParams.wellDepth,
+            wellParams.wellSeparation,
+            mass,
+            numStates,
+            gridConfig,
+          );
         }
         break;
 
