@@ -215,16 +215,31 @@ import('/src/common/model/AccuracyTests.ts').then(m => m.runQuickAccuracyCheck()
 
 #### Test Coverage
 
-The comprehensive test suite (`tests/accuracy-tests.html`) validates:
+The project includes two comprehensive test suites:
 
-1. **Harmonic Oscillator** - Tests first 10 energy levels across grid sizes (32, 64, 128) with 0.1% error tolerance
-2. **Finite Square Wells** (4 configurations) - Tests bound states with 0.5% error tolerance
-3. **3D Coulomb/Hydrogen Atom** - Tests first few energy levels with 1.0% error tolerance
-4. **Morse Potential** - Tests vibrational energy levels with 1.0% error tolerance
-5. **Pöschl-Teller Potential** - Tests bound states with 1.0% error tolerance
-6. **Double Square Wells** (3 configurations) - Tests energy level pairs with 1.0% error tolerance
+**1. Accuracy Tests** (`npm test`) - Validates all numerical methods against analytical solutions:
+- **Harmonic Oscillator** - 10 energy levels, 0.1% tolerance
+- **Finite Square Wells** (4 configurations) - 0.5% tolerance
+- **3D Coulomb/Hydrogen Atom** - 1.0% tolerance
+- **Morse Potential** - Vibrational levels, 1.0% tolerance
+- **Pöschl-Teller Potential** - Bound states, 1.0% tolerance
+- **Double Square Wells** (3 configurations) - 1.0% tolerance
+- Tests all 5 numerical methods (DVR, Spectral, Matrix Numerov, FGH, QuantumBound)
+- Multiple grid sizes (32, 64, 128 points)
 
-All five numerical methods are tested (DVR, Spectral, Matrix Numerov, FGH, and QuantumBound) across multiple grid sizes (all powers of 2) to ensure accuracy and robustness. The tests verify that numerical methods match analytical solutions within specified tolerances.
+**2. Double Well Test Suite** (`npm run test:double-well`) - **23 stringent tests** for double quantum wells:
+- Parity alternation, node counting, edge behavior
+- Normalization (0.2% tolerance), energy ordering
+- Derivative continuity (1.5% tolerance)
+- **Orthogonality of eigenstates** (1% tolerance)
+- **Wavefunction continuity** at boundaries
+- **Probability localization** (>70% in wells required)
+- **Energy bounds validation** (0 < E < V₀)
+- **Tunneling/energy splitting consistency**
+- Parameter variations and extreme regimes
+- Grid convergence with 1500 points
+
+These tests ensure numerical accuracy and physical correctness across all quantum systems in the simulation.
 
 For more details, see [`tests/README.md`](tests/README.md).
 

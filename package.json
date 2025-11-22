@@ -28,8 +28,6 @@
     "preview": "npx vite preview",
     "test": "tsx --tsconfig tsconfig.test.json --import ./tests/browser-globals.js tests/run-terminal-tests.js",
     "test:double-well": "tsx --tsconfig tsconfig.test.json --import ./tests/browser-globals.js tests/test-double-well.ts",
-    "test:bound-state": "tsx --tsconfig tsconfig.test.json --import ./tests/browser-globals.js tests/test-bound-state-validation.ts",
-    "test:solver": "tsx --tsconfig tsconfig.test.json --import ./tests/browser-globals.js tests/test-quantum-solver-improvements.ts",
     "test:coulomb": "tsx --tsconfig tsconfig.test.json --import ./tests/browser-globals.js tests/verify-coulomb.ts",
     "lint": "npx eslint .",
     "lint:fix": "npx eslint --fix .",
