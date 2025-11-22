@@ -4,14 +4,20 @@
  *
  * This potential has a singularity at x=0 and describes a 1D hydrogen-like atom.
  *
- * Important: For the pure 1D Coulomb potential, only odd-parity eigenstates exist
+ * IMPORTANT: For the pure 1D Coulomb potential, only odd-parity eigenstates exist
  * as normalizable solutions. Even-parity eigenstates are absent because they would
- * diverge at the origin. This implementation correctly uses the odd-parity form
- * with ψ(0) = 0.
+ * diverge at the origin. This implementation correctly produces ALL odd-parity
+ * wavefunctions with ψ(0) = 0.
+ *
+ * WARNING: Standard numerical solvers (DVR, FGH, etc.) will incorrectly find a mix
+ * of even and odd parity states if applied to this potential. Only the analytical
+ * solution or the solveCoulomb1DNumerical wrapper (which filters for odd parity)
+ * should be used. The analytical solution is STRONGLY PREFERRED as it's exact and
+ * much more efficient.
  *
  * Reference:
- * - "The one-dimensional Coulomb problem"
- *   https://doi.org/10.1098/rspa.2015.0534
+ * - Loudon, R. (2016). "The one-dimensional Coulomb problem"
+ *   Proc. R. Soc. A 472: 20150534. https://doi.org/10.1098/rspa.2015.0534
  */
 
 import QuantumConstants from "../QuantumConstants.js";

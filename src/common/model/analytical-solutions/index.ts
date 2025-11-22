@@ -17,6 +17,7 @@ export { solveRosenMorsePotential } from "./rosen-morse-potential.js";
 export { solveEckartPotential } from "./eckart-potential.js";
 export { solveAsymmetricTrianglePotential } from "./asymmetric-triangle-potential.js";
 export { solveCoulomb1DPotential } from "./coulomb-1d-potential.js";
+export { solveCoulomb1DNumerical } from "./coulomb-1d-numerical-wrapper.js";
 export { solveCoulomb3DPotential } from "./coulomb-3d-potential.js";
 export { solveTriangularPotential } from "./triangular-potential.js";
 export { solveDoubleSquareWellAnalytical } from "./double-square-well.js";

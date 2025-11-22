@@ -512,7 +512,7 @@ In the barrier regions (x < 0 or x > width), the wavefunction decays exponential
 **File**: `coulomb-1d-potential.ts`
 
 ### Description
-The 1D Coulomb potential describes a one-dimensional hydrogen-like atom, with a singularity at x = 0.
+The 1D Coulomb potential describes a one-dimensional hydrogen-like atom, with a singularity at x = 0. This is a pathological potential with unique properties that differ significantly from the 3D case.
 
 ### Potential
 ```
@@ -535,18 +535,36 @@ Note: The effective quantum number is (n + 1/2) in 1D, different from 3D.
 
 ### Wavefunctions
 ```
-ψ_n(x) = N_n exp(-|x|/a_n) L_n^1(2|x|/a_n)
+ψ_n(x) = sign(x) × N_n exp(-|x|/a_n) L_n^1(2|x|/a_n)
 ```
 
 where:
 - Effective Bohr radius: `a_0 = ℏ²/(mα)`
 - Characteristic length: `a_n = (n + 1/2)a_0`
 - `L_n^1(x)` are associated Laguerre polynomials with α = 1
+- **ALL wavefunctions have ODD PARITY**: ψ(-x) = -ψ(x) and ψ(0) = 0
+
+### ⚠️ Important: Odd-Parity Requirement
+
+**The 1D Coulomb potential only supports odd-parity eigenstates!**
+
+For this potential, only odd-parity eigenstates ψ_n(x) = -ψ_n(-x) exist as normalizable solutions. Even-parity eigenstates diverge at x = 0 and are unphysical. This is fundamentally different from the 3D Coulomb potential where both parities exist.
+
+**WARNING**: Standard numerical solvers (DVR, FGH, Matrix Numerov, etc.) will incorrectly find a mix of even and odd parity states when applied to this potential. This is because they don't "know" about the odd-parity constraint.
+
+**Recommended approach**:
+- Always use `solveCoulomb1DPotential()` (analytical solution) - it's exact and fast
+- If numerical methods are required, use `solveCoulomb1DNumerical()` which filters for odd parity
+- Do NOT apply standard numerical solvers directly to this potential
 
 ### Physical Significance
 - Theoretical model for 1D confinement of Coulomb systems
-- Useful for understanding dimensional effects in quantum mechanics
+- Demonstrates the bizarre effects of dimensionality on quantum mechanics
+- Useful for understanding dimensional effects in quantum systems
 - Related to carbon nanotubes and quantum wires with Coulomb interactions
+
+### References
+- Loudon, R. (2016). "The one-dimensional Coulomb problem", Proc. R. Soc. A 472: 20150534
 
 ---
 
