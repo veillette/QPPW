@@ -220,7 +220,6 @@ export function airyAi(x: number): number {
 /**
  * Airy function Bi(x) using series expansion for small |x| and asymptotic form for large |x|.
  * Bi(x) is the solution to y'' - xy = 0 that grows exponentially for large positive x.
- * Note: Currently unused but available for future use with different boundary conditions.
  */
 export function airyBi(x: number): number {
   const ABS_X_THRESHOLD = 3.0;
@@ -269,7 +268,6 @@ export function airyBi(x: number): number {
 
 /**
  * Derivative of Airy function Ai'(x) using numerical differentiation.
- * Note: Currently unused but available for future boundary condition matching.
  */
 export function airyAiPrime(x: number): number {
   const h = 1e-6;
@@ -278,9 +276,9 @@ export function airyAiPrime(x: number): number {
 
 /**
  * Derivative of Airy function Bi'(x) using numerical differentiation.
- * Note: Currently unused but available for future boundary condition matching.
  */
 export function airyBiPrime(x: number): number {
   const h = 1e-6;
   return (airyBi(x + h) - airyBi(x - h)) / (2 * h);
 }
+

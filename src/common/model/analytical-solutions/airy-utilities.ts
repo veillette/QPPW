@@ -1,5 +1,5 @@
 /**
- * Shared utilities for Airy function-based quantum well solutions.
+ * Utilities for Airy function-based quantum well solutions.
  * Used by asymmetric-triangle-potential and triangular-potential solvers.
  */
 
