@@ -58,6 +58,219 @@ function countNodes(wavefunction: number[]): number {
 }
 
 /**
+ * Search for missing eigenvalues using node counting as a diagnostic.
+ *
+ * Uses the theorem that the n-th eigenstate must have exactly n nodes.
+ * If state at index n has more than n nodes, we know eigenvalue(s) are missing before it.
+ *
+ * Performs targeted ultra-fine search in energy gaps where missing states are detected.
+ *
+ * @returns Object with newly found states
+ */
+function searchForMissingEigenvalues(
+  currentStates: Array<{ energy: number; parity: "even" | "odd" }>,
+  Linner: number,
+  Louter: number,
+  V0: number,
+  mass: number,
+  gridConfig: GridConfig,
+  numStates: number
+): { newStates: Array<{ energy: number; parity: "even" | "odd" }> } {
+
+  const newStates: Array<{ energy: number; parity: "even" | "odd" }> = [];
+
+  // Quick validation: need at least one state to check
+  if (currentStates.length === 0) {
+    return { newStates };
+  }
+
+  // Generate temporary grid for node counting
+  const numPoints = Math.min(gridConfig.numPoints, 500);  // Use moderate resolution for speed
+  const xGrid: number[] = [];
+  const dx = (gridConfig.xMax - gridConfig.xMin) / (numPoints - 1);
+  for (let i = 0; i < numPoints; i++) {
+    xGrid.push(gridConfig.xMin + i * dx);
+  }
+
+  // Compute wavefunctions and count nodes for current states
+  const statesWithNodes: Array<{
+    index: number;
+    energy: number;
+    parity: "even" | "odd";
+    nodeCount: number;
+    expectedNodes: number;
+  }> = [];
+
+  for (let n = 0; n < Math.min(currentStates.length, numStates); n++) {
+    const state = currentStates[n];
+    const wf = computeDoubleWellWavefunction(
+      state.energy, state.parity, Linner, Louter, V0, mass, xGrid
+    );
+    const nodeCount = countNodes(wf);
+
+    statesWithNodes.push({
+      index: n,
+      energy: state.energy,
+      parity: state.parity,
+      nodeCount,
+      expectedNodes: n
+    });
+  }
+
+  // Detect missing states: if state n has k > n nodes, then (k - n) states are missing
+  const searchRegions: Array<{
+    Emin: number;
+    Emax: number;
+    missingParity: "even" | "odd";
+    expectedNodeCount: number;
+  }> = [];
+
+  for (let i = 0; i < statesWithNodes.length; i++) {
+    const current = statesWithNodes[i];
+
+    if (current.nodeCount > current.expectedNodes) {
+      // Missing state(s) detected!
+      const numMissing = current.nodeCount - current.expectedNodes;
+
+      console.log(
+        `Detected missing state(s): Index ${i} has ${current.nodeCount} nodes but should have ${current.expectedNodes}.\n` +
+        `  This means ${numMissing} state(s) are missing before this one.`
+      );
+
+      // Determine where to search: between previous state and current state
+      const Emin = i > 0 ? statesWithNodes[i - 1].energy : V0 * 1e-6;
+      const Emax = current.energy;
+
+      // Determine expected parity of missing state(s)
+      // States alternate: even, odd, even, odd, ...
+      // If we're looking for state at index n, parity is "even" if n is even, "odd" if n is odd
+      for (let missingIndex = current.expectedNodes; missingIndex < current.nodeCount; missingIndex++) {
+        const expectedParity: "even" | "odd" = missingIndex % 2 === 0 ? "even" : "odd";
+
+        searchRegions.push({
+          Emin,
+          Emax,
+          missingParity: expectedParity,
+          expectedNodeCount: missingIndex
+        });
+      }
+    }
+  }
+
+  // Perform ultra-fine targeted search in each region
+  for (const region of searchRegions) {
+    console.log(
+      `Searching for missing ${region.missingParity} parity state with ${region.expectedNodeCount} nodes\n` +
+      `  Energy range: [${region.Emin.toExponential(4)}, ${region.Emax.toExponential(4)}] J`
+    );
+
+    // Use the appropriate transcendental equation based on parity
+    const searchResults = targetedEigenvalueSearch(
+      region.Emin,
+      region.Emax,
+      region.missingParity,
+      Linner,
+      Louter,
+      V0,
+      mass,
+      xGrid,
+      region.expectedNodeCount
+    );
+
+    newStates.push(...searchResults);
+  }
+
+  return { newStates };
+}
+
+/**
+ * Targeted ultra-fine search for a specific missing eigenvalue.
+ * Uses 10x finer grid than normal search and validates with node counting.
+ */
+function targetedEigenvalueSearch(
+  Emin: number,
+  Emax: number,
+  parity: "even" | "odd",
+  Linner: number,
+  Louter: number,
+  V0: number,
+  mass: number,
+  xGrid: number[],
+  expectedNodeCount: number
+): Array<{ energy: number; parity: "even" | "odd" }> {
+
+  const { HBAR } = QuantumConstants;
+  const L = Louter - Linner;
+  const foundStates: Array<{ energy: number; parity: "even" | "odd" }> = [];
+
+  // Transcendental equation for the specified parity
+  const transcendentalEquation = (E: number): number => {
+    if (E >= V0 || E <= 0) return Infinity;
+
+    const k = Math.sqrt(2 * mass * E) / HBAR;
+    const kappa = Math.sqrt(2 * mass * (V0 - E)) / HBAR;
+    const alpha = kappa;
+
+    if (parity === "even") {
+      const coshKL = Math.cosh(kappa * Linner);
+      const sinhKL = Math.sinh(kappa * Linner);
+      const numerator = -k * coshKL * Math.sin(k * L) + kappa * sinhKL * Math.cos(k * L);
+      const denominator = coshKL * Math.cos(k * L) + (kappa/k) * sinhKL * Math.sin(k * L);
+
+      if (Math.abs(denominator) < 1e-15) return Infinity;
+      return numerator / denominator + alpha;
+    } else {
+      const sinhKL = Math.sinh(kappa * Linner);
+      const coshKL = Math.cosh(kappa * Linner);
+      const numerator = -k * sinhKL * Math.sin(k * L) + kappa * coshKL * Math.cos(k * L);
+      const denominator = sinhKL * Math.cos(k * L) + (kappa/k) * coshKL * Math.sin(k * L);
+
+      if (Math.abs(denominator) < 1e-15) return Infinity;
+      return numerator / denominator + alpha;
+    }
+  };
+
+  // Ultra-fine search: 10x finer than normal
+  const numSearchPoints = 10000;
+  const dE = (Emax - Emin) / numSearchPoints;
+
+  for (let i = 0; i < numSearchPoints - 1; i++) {
+    const E1 = Emin + i * dE;
+    const E2 = Emin + (i + 1) * dE;
+
+    const f1 = transcendentalEquation(E1);
+    const f2 = transcendentalEquation(E2);
+
+    if (f1 * f2 < 0 && isFinite(f1) && isFinite(f2)) {
+      const root = solveBisection(transcendentalEquation, E1, E2, 1e-14, 150);
+
+      if (root !== null && isValidBoundState(root, Linner, L, V0, mass, parity)) {
+        // Validate with node counting
+        const wf = computeDoubleWellWavefunction(root, parity, Linner, Louter, V0, mass, xGrid);
+        const nodeCount = countNodes(wf);
+
+        if (nodeCount === expectedNodeCount) {
+          // Check if this is truly a new state
+          const isNew = foundStates.every(s => Math.abs(s.energy - root) > 1e-11);
+          if (isNew) {
+            console.log(
+              `  ✓ Found missing ${parity} state: E = ${root.toExponential(6)} J, ${nodeCount} nodes`
+            );
+            foundStates.push({ energy: root, parity });
+          }
+        }
+      }
+    }
+  }
+
+  if (foundStates.length === 0) {
+    console.log(`  ✗ No matching state found in this region`);
+  }
+
+  return foundStates;
+}
+
+/**
  * Analytical solution for symmetric double square well potential.
  *
  * Solves the transcendental equations arising from boundary condition matching
@@ -118,6 +331,34 @@ export function solveDoubleSquareWellAnalytical(
 
   // Sort by energy (ascending, lowest energy first)
   combinedStates.sort((a, b) => a.energy - b.energy);
+
+  // Iteratively search for missing eigenvalues using node counting
+  // This is critical for ensuring the doublet and other low-lying states are found
+  const maxRecoveryAttempts = 3;
+  for (let attempt = 0; attempt < maxRecoveryAttempts; attempt++) {
+    const recoveryResult = searchForMissingEigenvalues(
+      combinedStates,
+      Linner,
+      Louter,
+      V0,
+      mass,
+      gridConfig,
+      numStates
+    );
+
+    if (recoveryResult.newStates.length === 0) {
+      // No missing states detected, we're done
+      break;
+    }
+
+    console.log(
+      `[Recovery Attempt ${attempt + 1}] Found ${recoveryResult.newStates.length} missing eigenvalue(s) via node counting`
+    );
+
+    // Add newly found states and re-sort
+    combinedStates.push(...recoveryResult.newStates);
+    combinedStates.sort((a, b) => a.energy - b.energy);
+  }
 
   // For symmetric double well, states MUST alternate in parity
   // Ground state is always even, then odd, then even, etc.
