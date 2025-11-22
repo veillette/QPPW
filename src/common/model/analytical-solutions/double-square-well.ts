@@ -68,10 +68,13 @@ export function solveDoubleSquareWellAnalytical(
   const Louter = Linner + wellWidth;
   const V0 = wellDepth;
 
+  // Estimate expected number of bound states using WKB approximation
+  const estimatedStates = estimateNumberOfBoundStates(wellWidth, V0, mass);
+
   // Search for extra states to ensure we don't miss any roots
   // For a symmetric double well, states MUST alternate in parity (even, odd, even, odd, ...)
   // We search for more states than needed to ensure robust root-finding
-  const searchStates = numStates + 4;
+  const searchStates = Math.max(numStates + 4, estimatedStates);
 
   // Find even parity states
   const evenEnergies = findEvenParityDoubleWell(
@@ -115,11 +118,29 @@ export function solveDoubleSquareWellAnalytical(
     }
   }
 
-  // If we didn't find enough alternating states, warn and use what we found
+  // Validate that we found enough states
   if (selectedStates.length < numStates) {
+    // Count how many states of each parity we found
+    const evenCount = evenEnergies.length;
+    const oddCount = oddEnergies.length;
+
     console.warn(
-      `Warning: Only found ${selectedStates.length} properly alternating states out of ${numStates} requested. ` +
-      `This may indicate numerical issues in root-finding or parameter regime near continuum threshold.`
+      `Warning: Only found ${selectedStates.length} properly alternating states out of ${numStates} requested.\n` +
+      `  Even parity states found: ${evenCount}\n` +
+      `  Odd parity states found: ${oddCount}\n` +
+      `  WKB estimate suggests ~${estimatedStates} total states should exist.\n` +
+      `  This may indicate:\n` +
+      `    - Missing eigenvalues despite adaptive search\n` +
+      `    - Parameter regime near continuum threshold\n` +
+      `    - Need for finer grid resolution in specific energy regions`
+    );
+  }
+
+  // Check if we're significantly below WKB estimate
+  if (selectedStates.length < estimatedStates * 0.7) {
+    console.warn(
+      `Warning: Found ${selectedStates.length} states but WKB approximation suggests ~${estimatedStates} should exist.\n` +
+      `  Significant shortfall detected - some eigenvalues may be missing.`
     );
   }
 
@@ -217,6 +238,112 @@ function isValidBoundState(
 }
 
 /**
+ * Estimate the expected number of bound states using semiclassical WKB approximation.
+ *
+ * For a double square well, the number of bound states is approximately:
+ * N ≈ (2 * wellWidth) * sqrt(2 * m * V0) / (π * ℏ)
+ *
+ * This gives a rough upper bound on the number of states we should find.
+ */
+function estimateNumberOfBoundStates(
+  wellWidth: number,
+  V0: number,
+  mass: number
+): number {
+  const { HBAR } = QuantumConstants;
+
+  // WKB approximation for total well width (both wells combined)
+  const totalWellWidth = 2 * wellWidth;
+  const estimate = totalWellWidth * Math.sqrt(2 * mass * V0) / (Math.PI * HBAR);
+
+  // Round up to get conservative estimate
+  return Math.ceil(estimate);
+}
+
+/**
+ * Detect suspiciously large gaps in the energy spectrum that might indicate missing eigenvalues.
+ *
+ * Returns intervals [E1, E2] where additional search should be performed.
+ */
+function detectEnergyGaps(
+  energies: number[],
+  V0: number
+): Array<{ start: number; end: number }> {
+
+  if (energies.length < 2) return [];
+
+  const gaps: Array<{ start: number; end: number }> = [];
+
+  // Calculate typical energy spacing
+  const spacings: number[] = [];
+  for (let i = 1; i < energies.length; i++) {
+    spacings.push(energies[i] - energies[i - 1]);
+  }
+
+  // Use median spacing as reference (more robust than mean)
+  spacings.sort((a, b) => a - b);
+  const medianSpacing = spacings[Math.floor(spacings.length / 2)];
+
+  // Flag gaps that are significantly larger than median (3x threshold)
+  const gapThreshold = 3.0 * medianSpacing;
+
+  for (let i = 1; i < energies.length; i++) {
+    const gap = energies[i] - energies[i - 1];
+    if (gap > gapThreshold && gap > V0 * 0.01) {  // Also must be > 1% of V0
+      gaps.push({
+        start: energies[i - 1],
+        end: energies[i]
+      });
+    }
+  }
+
+  return gaps;
+}
+
+/**
+ * Perform adaptive search in a specific energy interval with increased resolution.
+ *
+ * Uses a finer grid to search for roots that might have been missed in the initial sweep.
+ */
+function searchInInterval(
+  transcendentalEq: (E: number) => number,
+  validator: (E: number) => boolean,
+  Estart: number,
+  Eend: number,
+  maxRoots: number
+): number[] {
+
+  const roots: number[] = [];
+
+  // Use very fine grid for adaptive search
+  const numSearchPoints = 5000;  // 5x finer than initial search
+  const dE = (Eend - Estart) / numSearchPoints;
+
+  for (let i = 0; i < numSearchPoints - 1; i++) {
+    const E1 = Estart + i * dE;
+    const E2 = Estart + (i + 1) * dE;
+
+    const f1 = transcendentalEq(E1);
+    const f2 = transcendentalEq(E2);
+
+    // Check for sign change (root exists)
+    if (f1 * f2 < 0 && isFinite(f1) && isFinite(f2)) {
+      const root = solveBisection(transcendentalEq, E1, E2, 1e-12, 100);
+      if (root !== null && validator(root)) {
+        // Check if this root is new (not already found)
+        const isNew = roots.every(existingRoot => Math.abs(root - existingRoot) > 1e-10);
+        if (isNew) {
+          roots.push(root);
+          if (roots.length >= maxRoots) break;
+        }
+      }
+    }
+  }
+
+  return roots;
+}
+
+/**
  * Find even parity bound states: ψ'(0) = 0
  *
  * Matching conditions give us a transcendental equation in E.
@@ -283,8 +410,7 @@ function findEvenParityDoubleWell(
   const Emin = 0;   // Well bottom
   const Emax = V0;  // Barrier top (continuum threshold)
 
-  // Use systematic search with bisection
-  // Increased resolution to ensure we don't miss any roots
+  // Phase 1: Initial systematic search with bisection
   const numSearchPoints = 1500;
   const dE = (Emax - Emin) / numSearchPoints;
 
@@ -302,8 +428,34 @@ function findEvenParityDoubleWell(
         // Validate this is a true bound state, not a spurious root
         if (isValidBoundState(root, Linner, L, V0, mass, "even")) {
           energies.push(root);
-          if (energies.length >= maxStates) break;
         }
+      }
+    }
+  }
+
+  // Phase 2: Detect gaps and perform adaptive search
+  if (energies.length > 0 && energies.length < maxStates) {
+    const gaps = detectEnergyGaps(energies, V0);
+
+    if (gaps.length > 0) {
+      // Create validator closure
+      const validator = (E: number) => isValidBoundState(E, Linner, L, V0, mass, "even");
+
+      // Search in each gap region
+      for (const gap of gaps) {
+        const additionalRoots = searchInInterval(
+          transcendentalEquation,
+          validator,
+          gap.start,
+          gap.end,
+          maxStates - energies.length
+        );
+
+        // Add new roots and re-sort
+        energies.push(...additionalRoots);
+        energies.sort((a, b) => a - b);
+
+        if (energies.length >= maxStates) break;
       }
     }
   }
@@ -366,10 +518,9 @@ function findOddParityDoubleWell(
     return lhs + rhs;
   };
 
-  // Search for roots
+  // Phase 1: Initial systematic search
   const Emin = 0;
   const Emax = V0;
-  // Increased resolution to ensure we don't miss any roots
   const numSearchPoints = 1500;
   const dE = (Emax - Emin) / numSearchPoints;
 
@@ -386,8 +537,34 @@ function findOddParityDoubleWell(
         // Validate this is a true bound state, not a spurious root
         if (isValidBoundState(root, Linner, L, V0, mass, "odd")) {
           energies.push(root);
-          if (energies.length >= maxStates) break;
         }
+      }
+    }
+  }
+
+  // Phase 2: Detect gaps and perform adaptive search
+  if (energies.length > 0 && energies.length < maxStates) {
+    const gaps = detectEnergyGaps(energies, V0);
+
+    if (gaps.length > 0) {
+      // Create validator closure
+      const validator = (E: number) => isValidBoundState(E, Linner, L, V0, mass, "odd");
+
+      // Search in each gap region
+      for (const gap of gaps) {
+        const additionalRoots = searchInInterval(
+          transcendentalEquation,
+          validator,
+          gap.start,
+          gap.end,
+          maxStates - energies.length
+        );
+
+        // Add new roots and re-sort
+        energies.push(...additionalRoots);
+        energies.sort((a, b) => a - b);
+
+        if (energies.length >= maxStates) break;
       }
     }
   }
