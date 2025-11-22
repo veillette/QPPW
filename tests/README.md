@@ -4,12 +4,14 @@ This directory contains comprehensive test suites for the QPPW quantum physics s
 
 ## Structure
 
-The test directory has been simplified to include only essential files:
+The test directory contains only essential files:
 
-- **AccuracyTests.ts** - Comprehensive test suite in `src/common/model/`
+- **AccuracyTests.ts** - Comprehensive accuracy test suite in `src/common/model/`
+- **test-double-well.ts** - Comprehensive double well test suite with stringent validation
 - **accuracy-tests.html** - Browser-based test runner with visual interface
 - **run-terminal-tests.js** - Terminal-based test runner (used by `npm test`)
-- **run-tests.js** - Legacy test runner (imports from built JS files, deprecated)
+- **verify-coulomb.ts** - Coulomb potential verification tests
+- **browser-globals.js** - Browser environment setup for testing
 - **docs/** - Test documentation
 
 ## Test Coverage
@@ -50,7 +52,7 @@ The comprehensive test suite (`AccuracyTests.ts`) validates all numerical method
 - All 5 methods tested (DVR, Spectral, Matrix Numerov, FGH, QuantumBound)
 - **1.0% error tolerance**
 
-### 6. Double Square Wells
+### 6. Double Square Wells (Accuracy Tests)
 - **3 configurations tested:**
   - Symmetric, low barrier: 0.5nm wells, 0.3nm barrier, 30eV depth, 10eV barrier
   - Symmetric, medium barrier: 0.5nm wells, 0.5nm barrier, 40eV depth, 20eV barrier
@@ -58,6 +60,48 @@ The comprehensive test suite (`AccuracyTests.ts`) validates all numerical method
 - Grid sizes: 32, 64, 128 points (powers of 2)
 - Methods compared against DVR as reference
 - **1.0% error tolerance**
+
+### 7. Comprehensive Double Well Test Suite (`test-double-well.ts`)
+
+A dedicated test suite specifically for double quantum well potentials with **stringent validation** requirements:
+
+**23 comprehensive tests covering:**
+1. Parity alternation for ALL states (even, odd, even, odd...)
+2. Node count validation (state n has n nodes)
+3. Edge behavior (decay, continuity, no spurious nodes)
+4. Normalization (0.2% tolerance - very strict)
+5. Monotonically increasing energies
+6. Derivative continuity at outer edges (1.5% tolerance)
+7. Well width parameter variations
+8. Well depth parameter variations
+9. Barrier width parameter variations
+10. Small well width sensitivity
+11. Small well depth sensitivity
+12. Small barrier width sensitivity
+13. Systematic parameter sweeps
+14. Grid convergence (1500 grid points)
+15. Shallow well extreme parameters
+16. Deep well extreme parameters (many states)
+17. Very wide barrier (weak coupling)
+18. Very narrow barrier (strong coupling)
+19. **Orthogonality of eigenstates (1% tolerance)**
+20. **Wavefunction continuity at well boundaries**
+21. **Probability localization in wells (>70% required)**
+22. **Energy bounds validation (0 < E < V₀)**
+23. **Energy splitting consistency/tunneling effect**
+
+**Stringent Requirements:**
+- Edge decay tolerance: 0.5% (was 1%)
+- Normalization tolerance: 0.2% (was 0.5%)
+- Parity detection tolerance: 2% (was 5%)
+- Derivative continuity tolerance: 1.5% (was 3%)
+- Orthogonality tolerance: 1% (new)
+- Grid points: 1500 (was 1000)
+
+**Run the double well test suite:**
+```bash
+npm run test:double-well
+```
 
 ## Running Tests
 
@@ -224,9 +268,17 @@ This occurs when trying to run `node tests/run-terminal-tests.js` directly. The 
 
 **Solution**: Use `npm test` instead, which correctly runs the TypeScript files with tsx.
 
-### Legacy run-tests.js File
+### Specialized Tests
 
-The `run-tests.js` file is deprecated and expects compiled JavaScript files in a build directory, which this project doesn't generate. Use `npm test` or `run-terminal-tests.js` instead.
+In addition to the main test suite (`npm test`), you can run specialized tests:
+
+```bash
+# Run comprehensive double well test suite (23 stringent tests)
+npm run test:double-well
+
+# Run Coulomb potential verification tests
+npm run test:coulomb
+```
 
 ## Notes
 

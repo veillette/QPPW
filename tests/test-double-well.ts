@@ -4,15 +4,33 @@
  *
  * This consolidated test suite covers:
  * 1. Parity alternation (even, odd, even, odd...) for ALL states
- * 2. Proper edge behavior (continuity, decay, no spurious nodes)
- * 3. Large number of eigenstates (tests all found states, not just a few)
- * 4. Range of parameters (well width, depth, barrier width, particle mass)
- * 5. Parameter sensitivity (small tweaks produce small, consistent changes)
- * 6. Systematic parameter sweeps
- * 7. Consistency in number of eigenstates as parameters change
+ * 2. Node count validation (state n has n nodes)
+ * 3. Proper edge behavior (continuity, decay, no spurious nodes)
+ * 4. Normalization (all states properly normalized)
+ * 5. Monotonically increasing energies
+ * 6. Derivative continuity at outer edges
+ * 7-9. Parameter range tests (well width, depth, barrier width variations)
+ * 10-12. Parameter sensitivity (small changes produce consistent results)
+ * 13. Systematic parameter sweeps (state count consistency)
+ * 14. Grid convergence (energy stability with refinement)
+ * 15-18. Extreme parameter regimes (shallow/deep wells, wide/narrow barriers)
+ * 19. Orthogonality of eigenstates (NEW - stringent)
+ * 20. Wavefunction continuity at well boundaries (NEW - stringent)
+ * 21. Probability localization in wells (NEW - stringent)
+ * 22. Energy bounds validation (NEW - stringent)
+ * 23. Energy splitting consistency/tunneling (NEW - stringent)
+ *
+ * Stringent Requirements (tightened tolerances):
+ * - Edge decay: 0.5% (was 1%)
+ * - Normalization: 0.2% (was 0.5%)
+ * - Parity detection: 2% (was 5%)
+ * - Derivative continuity: 1.5% (was 3%)
+ * - Orthogonality: 1% (new)
+ * - Grid points: 1500 (was 1000)
  *
  * Usage:
  *   npx tsx --import ./tests/browser-globals.js tests/test-double-well.ts
+ *   or: npm run test:double-well
  */
 
 import { solveDoubleSquareWellAnalytical } from '../src/common/model/analytical-solutions/double-square-well.js';
@@ -26,12 +44,13 @@ let totalTests = 0;
 let passedTests = 0;
 let failedTests = 0;
 
-// Configuration for high-quality solutions
-const DEFAULT_GRID_POINTS = 1000;
-const EDGE_TOLERANCE = 0.01; // 1% for edge decay (tightened from 2%)
-const NORMALIZATION_TOLERANCE = 0.005; // 0.5% for normalization (tightened from 1%)
-const PARITY_TOLERANCE = 0.05; // 5% for parity detection (tightened from 10%)
-const DERIVATIVE_TOLERANCE = 0.03; // 3% for derivative continuity (tightened from 4%)
+// Configuration for high-quality solutions (more stringent requirements)
+const DEFAULT_GRID_POINTS = 1500;
+const EDGE_TOLERANCE = 0.005; // 0.5% for edge decay (further tightened)
+const NORMALIZATION_TOLERANCE = 0.002; // 0.2% for normalization (further tightened)
+const PARITY_TOLERANCE = 0.02; // 2% for parity detection (further tightened)
+const DERIVATIVE_TOLERANCE = 0.015; // 1.5% for derivative continuity (further tightened)
+const ORTHOGONALITY_TOLERANCE = 0.01; // 1% for orthogonality of eigenstates
 
 /**
  * Helper function to solve double well with convenient units (nm/eV)
@@ -237,6 +256,74 @@ function checkDerivativeContinuity(
   const derivOutside = -alpha;
 
   return Math.abs((derivInside - derivOutside) / derivOutside);
+}
+
+/**
+ * Check orthogonality between two wavefunctions
+ */
+function checkOrthogonality(x: number[], psi1: number[], psi2: number[]): number {
+  const dx = x[1] - x[0];
+  let overlap = 0;
+  for (let i = 0; i < psi1.length; i++) {
+    overlap += psi1[i] * psi2[i] * dx;
+  }
+  return Math.abs(overlap);
+}
+
+/**
+ * Check wavefunction continuity at a specific position
+ */
+function checkContinuity(x: number[], psi: number[], position: number): number {
+  // Find indices closest to position
+  let idx = 0;
+  for (let i = 0; i < x.length; i++) {
+    if (Math.abs(x[i] - position) < Math.abs(x[idx] - position)) {
+      idx = i;
+    }
+  }
+
+  if (idx === 0 || idx === x.length - 1) return 0;
+
+  // Check continuity by comparing derivative change
+  const leftDeriv = (psi[idx] - psi[idx - 1]) / (x[idx] - x[idx - 1]);
+  const rightDeriv = (psi[idx + 1] - psi[idx]) / (x[idx + 1] - x[idx]);
+
+  // Return relative change in derivative (0 = perfectly continuous)
+  const avgDeriv = (Math.abs(leftDeriv) + Math.abs(rightDeriv)) / 2;
+  if (avgDeriv < 1e-10) return 0;
+  return Math.abs(leftDeriv - rightDeriv) / avgDeriv;
+}
+
+/**
+ * Check that most probability is localized in the wells
+ */
+function checkLocalization(
+  x: number[],
+  psi: number[],
+  Linner: number,
+  Louter: number
+): { inWells: number; total: number; ratio: number } {
+  const dx = x[1] - x[0];
+  let probInWells = 0;
+  let probTotal = 0;
+
+  for (let i = 0; i < x.length; i++) {
+    const prob = psi[i] * psi[i] * dx;
+    probTotal += prob;
+
+    // Check if in wells (not in barrier or outside)
+    const absX = Math.abs(x[i]);
+    const inWell = (absX >= Linner && absX <= Louter);
+    if (inWell) {
+      probInWells += prob;
+    }
+  }
+
+  return {
+    inWells: probInWells,
+    total: probTotal,
+    ratio: probInWells / probTotal
+  };
 }
 
 console.log('═'.repeat(80));
@@ -895,6 +982,197 @@ try {
 }
 
 // =============================================================================
+// TEST 19: Orthogonality of Eigenstates
+// =============================================================================
+console.log('[Test 19] Orthogonality of Eigenstates');
+console.log('-'.repeat(80));
+try {
+  const result = solveDoubleWell(5.0, 0.5, 2.0, 1.0, 20, 1500);
+
+  console.log(`Found ${result.energies.length} states`);
+
+  let orthErrors = 0;
+  const numToCheck = Math.min(10, result.energies.length);
+
+  // Check orthogonality of all pairs
+  for (let i = 0; i < numToCheck; i++) {
+    for (let j = i + 1; j < numToCheck; j++) {
+      const overlap = checkOrthogonality(
+        result.xGrid,
+        result.wavefunctions[i],
+        result.wavefunctions[j]
+      );
+
+      if (overlap > ORTHOGONALITY_TOLERANCE) {
+        console.error(`  States ${i} and ${j}: overlap = ${overlap.toFixed(6)} (should be ~0)`);
+        orthErrors++;
+      }
+    }
+  }
+
+  assert(orthErrors === 0, `All ${numToCheck} states should be orthogonal to each other`);
+  console.log(`  ✓ All ${numToCheck} states are mutually orthogonal (overlap < ${ORTHOGONALITY_TOLERANCE})`);
+  console.log('  ✓ Test PASSED\n');
+} catch (error) {
+  console.error(`  ✗ Test FAILED: ${error}\n`);
+  process.exit(1);
+}
+
+// =============================================================================
+// TEST 20: Wavefunction Continuity at Well Boundaries
+// =============================================================================
+console.log('[Test 20] Wavefunction Continuity at Well Boundaries');
+console.log('-'.repeat(80));
+try {
+  const result = solveDoubleWell(5.0, 0.5, 2.0, 1.0, 20, 1500);
+
+  console.log(`Found ${result.energies.length} states`);
+
+  // Check continuity at all four boundaries
+  const boundaries = [
+    -result.Louter,  // Left outer boundary
+    -result.Linner,  // Left inner boundary (barrier edge)
+    result.Linner,   // Right inner boundary (barrier edge)
+    result.Louter    // Right outer boundary
+  ];
+
+  let contErrors = 0;
+  const numToCheck = Math.min(10, result.energies.length);
+
+  for (let i = 0; i < numToCheck; i++) {
+    for (const boundary of boundaries) {
+      const discontinuity = checkContinuity(result.xGrid, result.wavefunctions[i], boundary);
+
+      // Allow larger discontinuity tolerance at sharp potential changes
+      const tolerance = 0.5; // 50% derivative change allowed at boundaries
+      if (discontinuity > tolerance) {
+        console.error(`  State ${i} at x=${(boundary / NM_TO_M).toFixed(2)} nm: discontinuity = ${discontinuity.toFixed(3)}`);
+        contErrors++;
+      }
+    }
+  }
+
+  assert(contErrors === 0, `All ${numToCheck} states should have continuous wavefunctions at boundaries`);
+  console.log(`  ✓ All ${numToCheck} states have continuous wavefunctions at all boundaries`);
+  console.log('  ✓ Test PASSED\n');
+} catch (error) {
+  console.error(`  ✗ Test FAILED: ${error}\n`);
+  process.exit(1);
+}
+
+// =============================================================================
+// TEST 21: Probability Localization in Wells
+// =============================================================================
+console.log('[Test 21] Probability Localization in Wells');
+console.log('-'.repeat(80));
+try {
+  const result = solveDoubleWell(5.0, 0.5, 2.0, 1.0, 20, 1500);
+
+  console.log(`Found ${result.energies.length} states`);
+
+  let locErrors = 0;
+  const numToCheck = Math.min(10, result.energies.length);
+
+  for (let i = 0; i < numToCheck; i++) {
+    const loc = checkLocalization(
+      result.xGrid,
+      result.wavefunctions[i],
+      result.Linner,
+      result.Louter
+    );
+
+    // At least 70% of probability should be in the wells for bound states
+    const minRatio = 0.7;
+    if (loc.ratio < minRatio) {
+      console.error(`  State ${i}: ${(loc.ratio * 100).toFixed(1)}% in wells (should be > ${minRatio * 100}%)`);
+      locErrors++;
+    }
+  }
+
+  assert(locErrors === 0, `All ${numToCheck} states should have >70% probability in wells`);
+  console.log(`  ✓ All ${numToCheck} states have >70% probability density in the wells`);
+  console.log('  ✓ Test PASSED\n');
+} catch (error) {
+  console.error(`  ✗ Test FAILED: ${error}\n`);
+  process.exit(1);
+}
+
+// =============================================================================
+// TEST 22: Energy Bounds (All Energies Below Well Depth)
+// =============================================================================
+console.log('[Test 22] Energy Bounds - All Energies Below Well Depth');
+console.log('-'.repeat(80));
+try {
+  const wellDepth = 0.6; // eV
+  const result = solveDoubleWell(5.0, wellDepth, 2.0, 1.0, 20, 1500);
+
+  console.log(`Found ${result.energies.length} states`);
+  console.log(`Well depth: ${wellDepth} eV`);
+
+  let boundErrors = 0;
+  for (let i = 0; i < result.energies.length; i++) {
+    const energy = result.energies[i];
+
+    // All bound states must have E < V0 (well depth)
+    if (energy <= 0 || energy >= wellDepth) {
+      console.error(`  State ${i}: E = ${energy.toFixed(6)} eV (should be 0 < E < ${wellDepth})`);
+      boundErrors++;
+    }
+  }
+
+  assert(boundErrors === 0, `All ${result.energies.length} states should be properly bound (0 < E < V0)`);
+  console.log(`  ✓ All ${result.energies.length} states have energies within bounds: 0 < E < ${wellDepth} eV`);
+  console.log(`  ✓ Ground state: ${result.energies[0].toFixed(6)} eV`);
+  console.log(`  ✓ Highest state: ${result.energies[result.energies.length - 1].toFixed(6)} eV`);
+  console.log('  ✓ Test PASSED\n');
+} catch (error) {
+  console.error(`  ✗ Test FAILED: ${error}\n`);
+  process.exit(1);
+}
+
+// =============================================================================
+// TEST 23: Energy Splitting Consistency (Tunneling)
+// =============================================================================
+console.log('[Test 23] Energy Splitting Consistency (Tunneling Effect)');
+console.log('-'.repeat(80));
+try {
+  // Test with varying barrier widths - splitting should decrease exponentially
+  const barrierWidths = [0.5, 1.0, 2.0, 3.0];
+  const splittings: number[] = [];
+
+  for (const barrier of barrierWidths) {
+    const result = solveDoubleWell(3.0, 0.5, barrier, 1.0, 20, 1500);
+
+    if (result.energies.length >= 2) {
+      const splitting = Math.abs(result.energies[1] - result.energies[0]);
+      splittings.push(splitting);
+    }
+  }
+
+  console.log(`Barrier width (nm) | Splitting (eV) | Ratio to previous`);
+  console.log('-'.repeat(60));
+
+  let consistencyErrors = 0;
+  for (let i = 0; i < splittings.length; i++) {
+    const ratio = i > 0 ? splittings[i - 1] / splittings[i] : 0;
+    console.log(`  ${barrierWidths[i].toFixed(1).padStart(16)} | ${splittings[i].toExponential(4).padStart(14)} | ${i > 0 ? ratio.toFixed(2) : 'N/A'}`);
+
+    // Splitting should decrease as barrier increases (ratio > 1)
+    if (i > 0 && ratio < 1.0) {
+      console.error(`    ✗ Splitting increased with barrier width (should decrease)`);
+      consistencyErrors++;
+    }
+  }
+
+  assert(consistencyErrors === 0, 'Energy splitting should decrease monotonically with barrier width');
+  console.log('  ✓ Energy splitting decreases with barrier width (tunneling effect confirmed)');
+  console.log('  ✓ Test PASSED\n');
+} catch (error) {
+  console.error(`  ✗ Test FAILED: ${error}\n`);
+  process.exit(1);
+}
+
+// =============================================================================
 // FINAL SUMMARY
 // =============================================================================
 console.log('═'.repeat(80));
@@ -907,18 +1185,25 @@ console.log('═'.repeat(80));
 
 if (failedTests === 0) {
   console.log('\n✓ ALL TESTS PASSED!\n');
-  console.log('Comprehensive double well testing complete:');
-  console.log('  ✓ Parity alternation verified for ALL states');
-  console.log('  ✓ Edge behavior correct for ALL states');
+  console.log('Comprehensive double well testing complete (STRINGENT VALIDATION):');
+  console.log('  ✓ Parity alternation verified for ALL states (2% tolerance)');
+  console.log('  ✓ Edge behavior correct for ALL states (0.5% tolerance)');
   console.log('  ✓ Node count verified for ALL states');
-  console.log('  ✓ Normalization verified for ALL states');
+  console.log('  ✓ Normalization verified for ALL states (0.2% tolerance)');
   console.log('  ✓ Energy ordering verified for ALL states');
-  console.log('  ✓ Derivative continuity verified for ALL states');
+  console.log('  ✓ Derivative continuity verified for ALL states (1.5% tolerance)');
   console.log('  ✓ Parameter ranges thoroughly tested');
   console.log('  ✓ Parameter sensitivity verified');
   console.log('  ✓ Systematic parameter sweeps completed');
-  console.log('  ✓ Grid convergence verified');
+  console.log('  ✓ Grid convergence verified (1500 grid points)');
   console.log('  ✓ Extreme parameter regimes tested');
+  console.log('  ✓ Orthogonality of eigenstates verified (1% tolerance)');
+  console.log('  ✓ Wavefunction continuity at boundaries verified');
+  console.log('  ✓ Probability localization in wells verified (>70%)');
+  console.log('  ✓ Energy bounds validated (all E within well depth)');
+  console.log('  ✓ Energy splitting/tunneling consistency verified');
+  console.log('');
+  console.log('Total: 23 comprehensive tests covering all aspects of double well physics');
   console.log('');
   process.exit(0);
 } else {
