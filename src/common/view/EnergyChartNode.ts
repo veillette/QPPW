@@ -428,6 +428,8 @@ export class EnergyChartNode extends Node {
   public update(): void {
     const boundStates = this.model.getBoundStates();
     if (!boundStates) {
+      // Clear the chart if bound states cannot be calculated
+      this.clearChart();
       return;
     }
 
@@ -438,9 +440,36 @@ export class EnergyChartNode extends Node {
   }
 
   /**
+   * Clears all chart elements (potential curve, energy levels, etc.)
+   * Called when bound states cannot be calculated.
+   */
+  private clearChart(): void {
+    // Clear potential curve
+    this.potentialPath.shape = null;
+
+    // Clear energy level lines
+    this.energyLevelNodes.forEach((line) => {
+      this.plotContentNode.removeChild(line);
+    });
+    this.energyLevelNodes.clear();
+
+    // Clear energy labels
+    this.energyLabelNodes.forEach((label) => {
+      this.removeChild(label);
+    });
+    this.energyLabelNodes.clear();
+
+    // Hide total energy line
+    this.totalEnergyLine.visible = false;
+  }
+
+  /**
    * Updates the potential energy curve.
    */
   private updatePotentialCurve(boundStates: BoundStateResult): void {
+    // Clear the old shape explicitly
+    this.potentialPath.shape = null;
+
     const shape = new Shape();
     const xGrid = boundStates.xGrid;
 
@@ -698,7 +727,9 @@ export class EnergyChartNode extends Node {
     } else if (potentialType === PotentialType.ROSEN_MORSE) {
       // Draw Rosen-Morse potential: V(x) = -V_0 / cosh²(x/a) + V_1 * tanh(x/a)
       const centerX = xCenter;
-      const barrierHeight = this.model.barrierHeightProperty.value;
+      const barrierHeight = "barrierHeightProperty" in this.model
+        ? (this.model as OneWellModel).barrierHeightProperty.value
+        : 0;
       const numPoints = 200;
       let firstPoint = true;
 
@@ -722,7 +753,9 @@ export class EnergyChartNode extends Node {
     } else if (potentialType === PotentialType.ECKART) {
       // Draw Eckart potential: V(x) = V_0 / (1 + exp(x/a))² - V_1 / (1 + exp(x/a))
       const centerX = xCenter;
-      const barrierHeight = this.model.barrierHeightProperty.value;
+      const barrierHeight = "barrierHeightProperty" in this.model
+        ? (this.model as OneWellModel).barrierHeightProperty.value
+        : 0;
       const numPoints = 200;
       let firstPoint = true;
 

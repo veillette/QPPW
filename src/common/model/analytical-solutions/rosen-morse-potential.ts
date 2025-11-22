@@ -38,13 +38,20 @@ export function solveRosenMorsePotential(
 
   // Calculate dimensionless parameters (with x/a substitution)
   // λ = a * sqrt(2*m*V_0) / ℏ
-  // μ = V_1 * a / (2*ℏ * sqrt(2*m*V_0))
+  // μ = V_1 / (2 * sqrt(V_0 * ℏ²/(2*m*a²)))
+  // The correct formula for μ should make it dimensionless and scale as V1/sqrt(V0)
   const lambda = (a * Math.sqrt(2 * mass * V0)) / HBAR;
-  const mu = (V1 * a) / (2 * HBAR * Math.sqrt(2 * mass * V0));
+
+  // Corrected formula: mu should be dimensionless and proportional to V1/sqrt(V0)
+  // mu = (a * sqrt(2m) / (2*hbar)) * V1 / sqrt(V0)
+  const mu = (a * Math.sqrt(2 * mass) * V1) / (2 * HBAR * Math.sqrt(V0));
+
+  console.log(`Rosen-Morse parameters: lambda=${lambda.toFixed(3)}, mu=${mu.toFixed(3)}, |mu|=${Math.abs(mu).toFixed(3)}`);
+  console.log(`V0=${(V0 * 6.242e18).toFixed(3)} eV, V1=${(V1 * 6.242e18).toFixed(3)} eV`);
 
   // For bound states, we need λ > |μ|
   if (lambda <= Math.abs(mu)) {
-    throw new Error("Rosen-Morse potential too shallow to support bound states");
+    throw new Error(`Rosen-Morse potential: λ=${lambda.toFixed(3)} ≤ |μ|=${Math.abs(mu).toFixed(3)}. Increase well depth or decrease barrier height.`);
   }
 
   // Calculate the effective parameter for bound states
@@ -55,17 +62,23 @@ export function solveRosenMorsePotential(
   const actualNumStates = Math.min(numStates, nMax + 1);
 
   if (actualNumStates <= 0) {
-    throw new Error("Rosen-Morse potential too shallow to support bound states");
+    throw new Error("Rosen-Morse potential: No bound states available. Increase well depth or decrease barrier height.");
   }
 
   // Calculate energies
-  // E_n = -V_0 + (ℏ²/2ma²) * [(λ_eff - n - 1/2)² + μ²]
+  // Standard Rosen-Morse energy formula from original 1932 Rosen & Morse paper (Phys. Rev. 42, 210)
+  // For hyperbolic potential V(x) = -V₀/cosh²(x/a) + V₁·tanh(x/a)
+  // Energy eigenvalues: E_n = -(ℏ²/2ma²) * (λ_eff - n - 1/2)²
+  // where λ_eff = √(λ² - μ²), λ = a√(2mV₀)/ℏ, μ = aV₁√(2m)/(2ℏ√V₀)
+  // Ground state (n=0) has lowest energy, all states have E < 0 for the symmetric case
   const energies: number[] = [];
   const energyFactor = (HBAR * HBAR) / (2 * mass * a * a);
 
   for (let n = 0; n < actualNumStates; n++) {
-    const term = lambdaEff - n - 0.5;
-    const energy = -V0 + energyFactor * (term * term + mu * mu);
+    const s_n = lambdaEff - n - 0.5;
+    // Standard formula: E_n = -(ℏ²/2ma²) * s_n²
+    const energy = -energyFactor * s_n * s_n;
+
     energies.push(energy);
   }
 
