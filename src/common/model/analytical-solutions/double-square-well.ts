@@ -38,6 +38,26 @@ import QuantumConstants from "../QuantumConstants.js";
 import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
 
 /**
+ * Count the number of nodes (zero crossings) in a wavefunction.
+ * For bound states, the n-th eigenstate should have exactly n nodes.
+ *
+ * @param wavefunction - Wavefunction values on a grid
+ * @returns Number of nodes (zero crossings)
+ */
+function countNodes(wavefunction: number[]): number {
+  let nodeCount = 0;
+
+  for (let i = 0; i < wavefunction.length - 1; i++) {
+    // Check for sign change (node/zero crossing)
+    if (wavefunction[i] * wavefunction[i + 1] < 0) {
+      nodeCount++;
+    }
+  }
+
+  return nodeCount;
+}
+
+/**
  * Analytical solution for symmetric double square well potential.
  *
  * Solves the transcendental equations arising from boundary condition matching
@@ -162,6 +182,78 @@ export function solveDoubleSquareWellAnalytical(
     );
     wavefunctions.push(wf);
     energies.push(state.energy);
+  }
+
+  // CRITICAL VALIDATION: Check for missing low-lying states using node count
+  // The n-th eigenstate MUST have exactly n nodes
+  // Ground state (n=0): 0 nodes, First excited (n=1): 1 node, etc.
+  const missingStates: number[] = [];
+
+  for (let n = 0; n < Math.min(selectedStates.length, numStates); n++) {
+    const expectedNodes = n;
+    const actualNodes = countNodes(wavefunctions[n]);
+
+    if (actualNodes !== expectedNodes) {
+      missingStates.push(n);
+      console.warn(
+        `WARNING: State ${n} has ${actualNodes} nodes but should have ${expectedNodes} nodes!\n` +
+        `  This indicates a missing eigenvalue before this state.\n` +
+        `  Energy = ${energies[n].toExponential(6)} J\n` +
+        `  Parity = ${selectedStates[n].parity}\n` +
+        `  Expected sequence: n=0 (even, 0 nodes), n=1 (odd, 1 node), n=2 (even, 2 nodes), ...`
+      );
+    }
+  }
+
+  // Special check for doublet (first two states)
+  if (selectedStates.length >= 2) {
+    // Ground state MUST be even parity with 0 nodes
+    if (selectedStates[0].parity !== "even") {
+      console.warn(
+        `CRITICAL: Ground state has ${selectedStates[0].parity} parity but MUST be even!\n` +
+        `  This indicates the true ground state is missing.\n` +
+        `  Current ground state energy: ${energies[0].toExponential(6)} J`
+      );
+      missingStates.push(0);
+    }
+
+    // First excited state MUST be odd parity with 1 node
+    if (selectedStates[1].parity !== "odd") {
+      console.warn(
+        `CRITICAL: First excited state has ${selectedStates[1].parity} parity but MUST be odd!\n` +
+        `  This indicates the doublet partner is missing.\n` +
+        `  Current first excited state energy: ${energies[1].toExponential(6)} J`
+      );
+      missingStates.push(1);
+    }
+
+    // Check doublet energy splitting
+    const splitting = energies[1] - energies[0];
+    const splittingPercent = (splitting / V0) * 100;
+
+    if (splitting < 0) {
+      console.error(
+        `CRITICAL ERROR: First excited state energy is LOWER than ground state!\n` +
+        `  Ground state: ${energies[0].toExponential(6)} J (${selectedStates[0].parity})\n` +
+        `  First excited: ${energies[1].toExponential(6)} J (${selectedStates[1].parity})\n` +
+        `  This violates the variational principle and indicates missing states.`
+      );
+    } else if (splittingPercent > 50) {
+      console.warn(
+        `WARNING: Doublet splitting is unusually large (${splittingPercent.toFixed(2)}% of V₀).\n` +
+        `  This may indicate a missing state between the ground and first excited states.\n` +
+        `  Typical doublet splittings are much smaller due to tunneling suppression.`
+      );
+    }
+  }
+
+  if (missingStates.length > 0) {
+    console.warn(
+      `\n=== SUMMARY: Missing states detected at indices: ${missingStates.join(", ")} ===\n` +
+      `  Total states found: ${selectedStates.length}\n` +
+      `  States requested: ${numStates}\n` +
+      `  Recommendation: Increase search resolution or check potential parameters.`
+    );
   }
 
   return {
@@ -407,16 +499,43 @@ function findEvenParityDoubleWell(
   };
 
   // Search for roots in energy range
-  const Emin = 0;   // Well bottom
-  const Emax = V0;  // Barrier top (continuum threshold)
+  // Start slightly above zero to avoid numerical issues at E=0
+  const Emin = V0 * 1e-6;   // Tiny offset above well bottom
+  const Emax = V0 * 0.9999;  // Slightly below barrier top to avoid continuum
 
-  // Phase 1: Initial systematic search with bisection
+  // CRITICAL: Doublet search for ground state (even parity)
+  // The ground state in a double well MUST be even parity and is often very low in energy.
+  // Search the lowest 5% of energy range with ultra-fine resolution to ensure we find it.
+  const doubletSearchMax = Emin + (Emax - Emin) * 0.05;
+  const doubletSearchPoints = 3000;  // Extra-fine grid for doublet
+  const dE_doublet = (doubletSearchMax - Emin) / doubletSearchPoints;
+
+  for (let i = 0; i < doubletSearchPoints - 1; i++) {
+    const E1 = Emin + i * dE_doublet;
+    const E2 = Emin + (i + 1) * dE_doublet;
+
+    const f1 = transcendentalEquation(E1);
+    const f2 = transcendentalEquation(E2);
+
+    if (f1 * f2 < 0 && isFinite(f1) && isFinite(f2)) {
+      const root = solveBisection(transcendentalEquation, E1, E2, 1e-14, 150);
+      if (root !== null && isValidBoundState(root, Linner, L, V0, mass, "even")) {
+        // Check if this root is new (not already found)
+        const isNew = energies.every(existingRoot => Math.abs(root - existingRoot) > 1e-11);
+        if (isNew) {
+          energies.push(root);
+        }
+      }
+    }
+  }
+
+  // Phase 1: Initial systematic search with bisection (now starting after doublet region)
   const numSearchPoints = 1500;
-  const dE = (Emax - Emin) / numSearchPoints;
+  const dE = (Emax - doubletSearchMax) / numSearchPoints;
 
   for (let i = 0; i < numSearchPoints - 1; i++) {
-    const E1 = Emin + i * dE;
-    const E2 = Emin + (i + 1) * dE;
+    const E1 = doubletSearchMax + i * dE;
+    const E2 = doubletSearchMax + (i + 1) * dE;
 
     const f1 = transcendentalEquation(E1);
     const f2 = transcendentalEquation(E2);
@@ -518,15 +637,44 @@ function findOddParityDoubleWell(
     return lhs + rhs;
   };
 
-  // Phase 1: Initial systematic search
-  const Emin = 0;
-  const Emax = V0;
+  // Search for roots in energy range
+  // Start slightly above zero to avoid numerical issues at E=0
+  const Emin = V0 * 1e-6;   // Tiny offset above well bottom
+  const Emax = V0 * 0.9999;  // Slightly below barrier top to avoid continuum
+
+  // CRITICAL: Doublet search for first excited state (odd parity)
+  // The first excited state in a double well MUST be odd parity and is very close to ground state.
+  // Search the lowest 5% of energy range with ultra-fine resolution to ensure we find it.
+  const doubletSearchMax = Emin + (Emax - Emin) * 0.05;
+  const doubletSearchPoints = 3000;  // Extra-fine grid for doublet
+  const dE_doublet = (doubletSearchMax - Emin) / doubletSearchPoints;
+
+  for (let i = 0; i < doubletSearchPoints - 1; i++) {
+    const E1 = Emin + i * dE_doublet;
+    const E2 = Emin + (i + 1) * dE_doublet;
+
+    const f1 = transcendentalEquation(E1);
+    const f2 = transcendentalEquation(E2);
+
+    if (f1 * f2 < 0 && isFinite(f1) && isFinite(f2)) {
+      const root = solveBisection(transcendentalEquation, E1, E2, 1e-14, 150);
+      if (root !== null && isValidBoundState(root, Linner, L, V0, mass, "odd")) {
+        // Check if this root is new (not already found)
+        const isNew = energies.every(existingRoot => Math.abs(root - existingRoot) > 1e-11);
+        if (isNew) {
+          energies.push(root);
+        }
+      }
+    }
+  }
+
+  // Phase 1: Initial systematic search (now starting after doublet region)
   const numSearchPoints = 1500;
-  const dE = (Emax - Emin) / numSearchPoints;
+  const dE = (Emax - doubletSearchMax) / numSearchPoints;
 
   for (let i = 0; i < numSearchPoints - 1; i++) {
-    const E1 = Emin + i * dE;
-    const E2 = Emin + (i + 1) * dE;
+    const E1 = doubletSearchMax + i * dE;
+    const E2 = doubletSearchMax + (i + 1) * dE;
 
     const f1 = transcendentalEquation(E1);
     const f2 = transcendentalEquation(E2);
