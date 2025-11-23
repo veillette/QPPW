@@ -46,12 +46,18 @@ export function solveRosenMorsePotential(
   // mu = (a * sqrt(2m) / (2*hbar)) * V1 / sqrt(V0)
   const mu = (a * Math.sqrt(2 * mass) * V1) / (2 * HBAR * Math.sqrt(V0));
 
-  console.log(`Rosen-Morse parameters: lambda=${lambda.toFixed(3)}, mu=${mu.toFixed(3)}, |mu|=${Math.abs(mu).toFixed(3)}`);
-  console.log(`V0=${(V0 * 6.242e18).toFixed(3)} eV, V1=${(V1 * 6.242e18).toFixed(3)} eV`);
+  console.log(
+    `Rosen-Morse parameters: lambda=${lambda.toFixed(3)}, mu=${mu.toFixed(3)}, |mu|=${Math.abs(mu).toFixed(3)}`,
+  );
+  console.log(
+    `V0=${(V0 * 6.242e18).toFixed(3)} eV, V1=${(V1 * 6.242e18).toFixed(3)} eV`,
+  );
 
   // For bound states, we need λ > |μ|
   if (lambda <= Math.abs(mu)) {
-    throw new Error(`Rosen-Morse potential: λ=${lambda.toFixed(3)} ≤ |μ|=${Math.abs(mu).toFixed(3)}. Increase well depth or decrease barrier height.`);
+    throw new Error(
+      `Rosen-Morse potential: λ=${lambda.toFixed(3)} ≤ |μ|=${Math.abs(mu).toFixed(3)}. Increase well depth or decrease barrier height.`,
+    );
   }
 
   // Calculate the effective parameter for bound states
@@ -62,7 +68,9 @@ export function solveRosenMorsePotential(
   const actualNumStates = Math.min(numStates, nMax + 1);
 
   if (actualNumStates <= 0) {
-    throw new Error("Rosen-Morse potential: No bound states available. Increase well depth or decrease barrier height.");
+    throw new Error(
+      "Rosen-Morse potential: No bound states available. Increase well depth or decrease barrier height.",
+    );
   }
 
   // Calculate energies
@@ -102,7 +110,15 @@ export function solveRosenMorsePotential(
     const beta_jac = s + mu;
 
     // Normalization (with 1/a factor from variable change)
-    const normalization = Math.sqrt((1 / a) * (2 * s) / (factorial(n) * Math.exp(logGamma(n + alpha_jac + 1) + logGamma(n + beta_jac + 1) - logGamma(n + alpha_jac + beta_jac + 1))));
+    const normalization = Math.sqrt(
+      ((1 / a) * (2 * s)) /
+        (factorial(n) *
+          Math.exp(
+            logGamma(n + alpha_jac + 1) +
+              logGamma(n + beta_jac + 1) -
+              logGamma(n + alpha_jac + beta_jac + 1),
+          )),
+    );
 
     for (const x of xGrid) {
       const tanhVal = Math.tanh(x / a);
@@ -110,7 +126,11 @@ export function solveRosenMorsePotential(
 
       // Calculate wavefunction
       const jacobiPoly = jacobiPolynomial(n, alpha_jac, beta_jac, tanhVal);
-      const value = normalization * Math.pow(sechVal, s) * Math.exp(mu * tanhVal) * jacobiPoly;
+      const value =
+        normalization *
+        Math.pow(sechVal, s) *
+        Math.exp(mu * tanhVal) *
+        jacobiPoly;
 
       wavefunction.push(value);
     }

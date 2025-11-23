@@ -13,7 +13,11 @@
  *   Proc. R. Soc. A 472: 20150534. https://doi.org/10.1098/rspa.2015.0534
  */
 
-import { BoundStateResult, GridConfig, PotentialFunction } from "../PotentialFunction.js";
+import {
+  BoundStateResult,
+  GridConfig,
+  PotentialFunction,
+} from "../PotentialFunction.js";
 import { solveDVR } from "../DVRSolver.js";
 
 /**
@@ -23,7 +27,7 @@ import { solveDVR } from "../DVRSolver.js";
  * @param xGrid - Spatial grid (should be symmetric about x=0)
  * @returns true if wavefunction is predominantly odd-parity
  */
-function isOddParity(wavefunction: number[], xGrid: number[]): boolean {
+function isOddParity(wavefunction: number[], _xGrid: number[]): boolean {
   const midIdx = Math.floor(wavefunction.length / 2);
   const numSamples = Math.min(20, Math.floor(wavefunction.length / 4));
 
@@ -72,7 +76,13 @@ export function solveCoulomb1DNumerical(
   mass: number,
   numStates: number,
   gridConfig: GridConfig,
-  solver: (pot: PotentialFunction, mass: number, numStates: number, grid: GridConfig) => BoundStateResult = solveDVR
+  solver: (
+    pot: PotentialFunction,
+    mass: number,
+    numStates: number,
+    grid: GridConfig,
+    energiesOnly: false,
+  ) => BoundStateResult = solveDVR,
 ): BoundStateResult {
   const alpha = coulombStrength;
 
@@ -90,13 +100,23 @@ export function solveCoulomb1DNumerical(
   const numStatesToRequest = numStates * 3;
 
   // Solve on full domain
-  const result = solver(coulomb1DPotential, mass, numStatesToRequest, gridConfig);
+  const result = solver(
+    coulomb1DPotential,
+    mass,
+    numStatesToRequest,
+    gridConfig,
+    false,
+  );
 
   // Filter for odd-parity states
   const oddEnergies: number[] = [];
   const oddWavefunctions: number[][] = [];
 
-  for (let i = 0; i < result.energies.length && oddEnergies.length < numStates; i++) {
+  for (
+    let i = 0;
+    i < result.energies.length && oddEnergies.length < numStates;
+    i++
+  ) {
     if (isOddParity(result.wavefunctions[i], result.xGrid)) {
       oddEnergies.push(result.energies[i]);
       oddWavefunctions.push(result.wavefunctions[i]);
@@ -107,8 +127,8 @@ export function solveCoulomb1DNumerical(
   const indices = oddEnergies.map((_, i) => i);
   indices.sort((a, b) => oddEnergies[a] - oddEnergies[b]);
 
-  const sortedEnergies = indices.map(i => oddEnergies[i]);
-  const sortedWavefunctions = indices.map(i => oddWavefunctions[i]);
+  const sortedEnergies = indices.map((i) => oddEnergies[i]);
+  const sortedWavefunctions = indices.map((i) => oddWavefunctions[i]);
 
   return {
     energies: sortedEnergies,

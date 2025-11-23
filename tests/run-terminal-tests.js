@@ -12,13 +12,15 @@
  * Note: Browser globals are set up by the preload script (tests/browser-globals.js)
  */
 
-console.log('╔════════════════════════════════════════════════════════════╗');
-console.log('║     QPPW Quantum Mechanics Accuracy Test Suite            ║');
-console.log('║     Running in Terminal Mode                               ║');
-console.log('╚════════════════════════════════════════════════════════════╝\n');
+console.log("╔════════════════════════════════════════════════════════════╗");
+console.log("║     QPPW Quantum Mechanics Accuracy Test Suite            ║");
+console.log("║     Running in Terminal Mode                               ║");
+console.log("╚════════════════════════════════════════════════════════════╝\n");
 
 // Import and run tests
-const { runAccuracyTests } = await import('../src/common/model/AccuracyTests.js');
+const { runAccuracyTests } = await import(
+  "../src/common/model/AccuracyTests.js"
+);
 
 // Run the full test suite
 runAccuracyTests();

@@ -10,7 +10,11 @@
  */
 
 import QuantumConstants from "./QuantumConstants.js";
-import { BoundStateResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
+import {
+  BoundStateResult,
+  GridConfig,
+  PotentialFunction,
+} from "./PotentialFunction.js";
 import qppw from "../../QPPWNamespace.js";
 
 /**
@@ -52,7 +56,11 @@ export function solveNumerov(
   const energyStep = (energyMax - energyMin) / 1000;
   let prevSign = 0;
 
-  for (let E = energyMin; E <= energyMax && energies.length < numStates; E += energyStep) {
+  for (
+    let E = energyMin;
+    E <= energyMax && energies.length < numStates;
+    E += energyStep
+  ) {
     const psi = integrateNumerov(E, V, xGrid, dx, mass);
     const endValue = psi[numPoints - 1];
 
@@ -60,14 +68,7 @@ export function solveNumerov(
     const currentSign = Math.sign(endValue);
     if (prevSign !== 0 && currentSign !== prevSign) {
       // Refine energy using bisection
-      const refinedEnergy = refineEnergy(
-        E - energyStep,
-        E,
-        V,
-        xGrid,
-        dx,
-        mass,
-      );
+      const refinedEnergy = refineEnergy(E - energyStep, E, V, xGrid, dx, mass);
       energies.push(refinedEnergy);
 
       // Calculate normalized wavefunction
@@ -111,7 +112,7 @@ export function integrateNumerov(
   const k2 = V.map((v) => (2 * mass * (E - v)) / (HBAR * HBAR));
 
   // Calculate f_j = (h²/12) * k²(x_j)
-  const f = k2.map((k) => (dx * dx / 12) * k);
+  const f = k2.map((k) => ((dx * dx) / 12) * k);
 
   // Initial conditions (boundary condition: ψ(x_min) = 0)
   psi[0] = 0;
@@ -180,7 +181,7 @@ export function integrateNumerovFromCenter(
   const k2 = V.map((v) => (2 * mass * (E - v)) / (HBAR * HBAR));
 
   // Calculate f_j = (h²/12) * k²(x_j)
-  const f = k2.map((k) => (dx * dx / 12) * k);
+  const f = k2.map((k) => ((dx * dx) / 12) * k);
 
   // Initial conditions at x=0 based on parity
   // For shooting method from center with symmetric potential:

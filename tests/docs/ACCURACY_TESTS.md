@@ -9,6 +9,7 @@ The accuracy tests verify that all numerical methods produce results within acce
 ## Test Coverage
 
 The comprehensive test suite validates methods across:
+
 - **Multiple potential types**: Harmonic oscillator, finite square wells, 3D Coulomb, Morse potential, Pöschl-Teller potential, double wells
 - **Various grid sizes**: 32, 64, 128 points (all powers of 2)
 - **Different parameters**: Well depths, widths, barrier heights
@@ -25,11 +26,13 @@ E_n = ℏω(n + 1/2)
 ```
 
 where:
+
 - `n` = quantum number (0, 1, 2, ...)
 - `ℏ` = reduced Planck constant (1.054571817 × 10⁻³⁴ J·s)
 - `ω` = angular frequency
 
 **Test Parameters:**
+
 - Mass: Electron mass (9.109 × 10⁻³¹ kg)
 - Angular frequency: 10¹⁵ rad/s
 - Grid sizes: **32, 64, 128 points** (powers of 2)
@@ -43,12 +46,14 @@ where:
 Multiple configurations test various well depths and widths:
 
 **Configurations:**
+
 1. Shallow well: 1 nm width, 10 eV depth
 2. Deep well: 1 nm width, 50 eV depth
 3. Wide shallow: 2 nm width, 10 eV depth
 4. Narrow medium: 0.5 nm width, 30 eV depth
 
 **Test Parameters:**
+
 - Mass: Electron mass
 - Grid sizes: **32, 64, 128 points** (powers of 2)
 - Grid range: -2L to +2L (where L = well width)
@@ -67,6 +72,7 @@ E_n = -mα²/(2ℏ²n²)
 where α = e²/(4πε₀) is the Coulomb strength.
 
 **Test Parameters:**
+
 - Mass: Electron mass
 - Coulomb strength: e²/(4πε₀) = 2.307 × 10⁻²⁸ J·m
 - Grid sizes: **32, 64, 128 points** (powers of 2)
@@ -80,6 +86,7 @@ where α = e²/(4πε₀) is the Coulomb strength.
 Tests vibrational energy levels in anharmonic molecular potentials:
 
 **Test Parameters:**
+
 - Mass: Electron mass (or reduced mass for realistic molecules)
 - Dissociation energy: Realistic molecular values
 - Well width: Typical molecular bond length scale (~10⁻¹⁰ m)
@@ -93,6 +100,7 @@ Tests vibrational energy levels in anharmonic molecular potentials:
 Tests bound states in hyperbolic potential wells:
 
 **Test Parameters:**
+
 - Mass: Electron mass
 - Potential depth: Various values
 - Well width: ~10⁻¹⁰ m
@@ -106,11 +114,13 @@ Tests bound states in hyperbolic potential wells:
 Tests symmetric double wells with central barrier (has analytical solution):
 
 **Configurations:**
+
 1. Low barrier: 0.5 nm wells, 0.3 nm barrier, 30 eV depth, 10 eV barrier
 2. Medium barrier: 0.5 nm wells, 0.5 nm barrier, 40 eV depth, 20 eV barrier
 3. Wide wells: 0.6 nm wells, 0.4 nm barrier, 35 eV depth, 5 eV barrier
 
 **Test Parameters:**
+
 - Mass: Electron mass
 - Grid sizes: **32, 64, 128 points** (powers of 2)
 - States tested: Energy level pairs (even and odd parity states)
@@ -122,6 +132,7 @@ Tests symmetric double wells with central barrier (has analytical solution):
 ### Option 1: Browser-based Testing (Recommended)
 
 1. Build the project:
+
    ```bash
    npm run build
    ```
@@ -145,17 +156,21 @@ This outputs results to the terminal with full details including timing informat
 ### Option 3: Development Server
 
 1. Start the development server:
+
    ```bash
    npm start
    ```
 
 2. Open the browser console and run:
+
    ```javascript
    // Full comprehensive test suite
-   import('./common/model/AccuracyTests.js').then(m => m.runAccuracyTests());
+   import("./common/model/AccuracyTests.js").then((m) => m.runAccuracyTests());
 
    // Quick validation check
-   import('./common/model/AccuracyTests.js').then(m => m.runQuickAccuracyCheck());
+   import("./common/model/AccuracyTests.js").then((m) =>
+     m.runQuickAccuracyCheck(),
+   );
    ```
 
 ## Success Criteria
@@ -163,6 +178,7 @@ This outputs results to the terminal with full details including timing informat
 Each test is considered **PASSED** if the numerical result is within the stringent tolerance for that potential type. All tolerances are **≤ 1%**, with most tests requiring much better accuracy:
 
 **Tolerance Levels (Maximum Allowed Error):**
+
 - Harmonic Oscillator: **0.1%** - Extremely high accuracy required for smooth potentials
 - Finite Square Wells: **0.5%** - High accuracy despite discontinuities
 - 3D Coulomb Potential: **1.0%** - Maximum 1% error even with singularity
@@ -171,11 +187,13 @@ Each test is considered **PASSED** if the numerical result is within the stringe
 **Examples:**
 
 For harmonic oscillator (0.1% tolerance) with analytical ground state energy of 0.412967 eV:
+
 - ✓ Numerical result of 0.412900 eV is acceptable (0.016% error < 0.1%)
 - ✓ Numerical result of 0.412550 eV is acceptable (0.101% error ≈ 0.1%)
 - ✗ Numerical result of 0.412000 eV would fail (0.234% error > 0.1%)
 
 For finite square well (0.5% tolerance) with analytical energy of 10.000 eV:
+
 - ✓ Numerical result of 9.980 eV is acceptable (0.20% error < 0.5%)
 - ✓ Numerical result of 9.950 eV is acceptable (0.50% error = 0.5%)
 - ✗ Numerical result of 9.900 eV would fail (1.00% error > 0.5%)
@@ -283,6 +301,7 @@ All numerical methods produce consistent results across different potentials and
 ### Analytical Solutions
 
 The analytical solutions are implemented in:
+
 - `src/common/model/analytical-solutions/harmonic-oscillator.ts`
 - `src/common/model/analytical-solutions/infinite-square-well.ts`
 - `src/common/model/analytical-solutions/finite-square-well.ts`
@@ -308,6 +327,7 @@ If tests show errors exceeding 1%:
 ### Browser Console Errors
 
 If the browser shows module loading errors:
+
 1. Rebuild the project: `npm run build`
 2. Clear browser cache
 3. Check browser console for specific error messages
@@ -317,6 +337,7 @@ If the browser shows module loading errors:
 To add new test cases:
 
 1. Add a new test function in `AccuracyTests.ts`:
+
    ```typescript
    function testDVRNewPotential(): TestResult {
      // Implementation
@@ -324,6 +345,7 @@ To add new test cases:
    ```
 
 2. Call it from `runAccuracyTests()`:
+
    ```typescript
    results.push(testDVRNewPotential());
    ```

@@ -40,7 +40,11 @@ export function hermitePolynomial(n: number, x: number): number {
 /**
  * Calculate the associated Laguerre polynomial L_n^α(x) using recurrence relation.
  */
-export function associatedLaguerre(n: number, alpha: number, x: number): number {
+export function associatedLaguerre(
+  n: number,
+  alpha: number,
+  x: number,
+): number {
   if (n === 0) return 1;
   if (n === 1) return 1 + alpha - x;
 
@@ -60,7 +64,12 @@ export function associatedLaguerre(n: number, alpha: number, x: number): number 
 /**
  * Calculate the Jacobi polynomial P_n^(α,β)(x) using recurrence relation.
  */
-export function jacobiPolynomial(n: number, alpha: number, beta: number, x: number): number {
+export function jacobiPolynomial(
+  n: number,
+  alpha: number,
+  beta: number,
+  x: number,
+): number {
   if (n === 0) return 1;
   if (n === 1) return 0.5 * (alpha - beta + (alpha + beta + 2) * x);
 
@@ -70,7 +79,10 @@ export function jacobiPolynomial(n: number, alpha: number, beta: number, x: numb
   for (let k = 1; k < n; k++) {
     const a1 = 2 * (k + 1) * (k + alpha + beta + 1) * (2 * k + alpha + beta);
     const a2 = (2 * k + alpha + beta + 1) * (alpha * alpha - beta * beta);
-    const a3 = (2 * k + alpha + beta) * (2 * k + alpha + beta + 1) * (2 * k + alpha + beta + 2);
+    const a3 =
+      (2 * k + alpha + beta) *
+      (2 * k + alpha + beta + 1) *
+      (2 * k + alpha + beta + 2);
     const a4 = 2 * (k + alpha) * (k + beta) * (2 * k + alpha + beta + 2);
 
     const P_next = ((a2 + a3 * x) * P_curr - a4 * P_prev) / a1;
@@ -99,15 +111,9 @@ export function gamma(n: number): number {
   // Lanczos approximation coefficients (g=7, n=9)
   const g = 7;
   const coefficients = [
-    0.99999999999980993,
-    676.5203681218851,
-    -1259.1392167224028,
-    771.32342877765313,
-    -176.61502916214059,
-    12.507343278686905,
-    -0.13857109526572012,
-    9.9843695780195716e-6,
-    1.5056327351493116e-7
+    0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+    771.32342877765313, -176.61502916214059, 12.507343278686905,
+    -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7,
   ];
 
   // Use reflection formula for n < 0.5
@@ -157,13 +163,13 @@ export function logGamma(x: number): number {
 
   // Coefficients from Bernoulli numbers: B_{2k}/(2k*(2k-1))
   const correction =
-    1 / (12 * x) -                    // B_2/(1*2) = 1/12
-    1 / (360 * x2 * x) +              // B_4/(3*4) = -1/360
-    1 / (1260 * x4 * x) -             // B_6/(5*6) = 1/1260
-    1 / (1680 * x6 * x) +             // B_8/(7*8) = -1/1680
-    1 / (1188 * x8 * x) -             // B_10/(9*10) = 1/1188 (approx 5/5940)
-    691 / (360360 * x10 * x) +        // B_12/(11*12) = -691/360360
-    1 / (156 * x12 * x);              // B_14/(13*14) = 1/156 (approx 7/1092)
+    1 / (12 * x) - // B_2/(1*2) = 1/12
+    1 / (360 * x2 * x) + // B_4/(3*4) = -1/360
+    1 / (1260 * x4 * x) - // B_6/(5*6) = 1/1260
+    1 / (1680 * x6 * x) + // B_8/(7*8) = -1/1680
+    1 / (1188 * x8 * x) - // B_10/(9*10) = 1/1188 (approx 5/5940)
+    691 / (360360 * x10 * x) + // B_12/(11*12) = -691/360360
+    1 / (156 * x12 * x); // B_14/(13*14) = 1/156 (approx 7/1092)
 
   return (x - 0.5) * Math.log(x) - x + 0.5 * Math.log(2 * Math.PI) + correction;
 }
@@ -193,7 +199,7 @@ export function airyAi(x: number): number {
     let term2 = x;
     let sum2 = x;
     for (let k = 1; k <= 20; k++) {
-      term2 *= (x * x * x) / ((3 * k) * (3 * k + 1));
+      term2 *= (x * x * x) / (3 * k * (3 * k + 1));
       sum2 += term2;
       if (Math.abs(term2) < 1e-15) break;
     }
@@ -204,7 +210,7 @@ export function airyAi(x: number): number {
     // Ai(x) ≈ (1/(2√π)) * x^(-1/4) * exp(-ζ) * (1 - ...)
     // where ζ = (2/3) * x^(3/2)
     const zeta = (2.0 / 3.0) * Math.pow(x, 1.5);
-    const factor = 0.5 / Math.sqrt(Math.PI) * Math.pow(x, -0.25);
+    const factor = (0.5 / Math.sqrt(Math.PI)) * Math.pow(x, -0.25);
     return factor * Math.exp(-zeta);
   } else {
     // Asymptotic expansion for large negative x
@@ -212,7 +218,7 @@ export function airyAi(x: number): number {
     // where ζ = (2/3) * |x|^(3/2)
     const absX = Math.abs(x);
     const zeta = (2.0 / 3.0) * Math.pow(absX, 1.5);
-    const factor = 1.0 / Math.sqrt(Math.PI) * Math.pow(absX, -0.25);
+    const factor = (1.0 / Math.sqrt(Math.PI)) * Math.pow(absX, -0.25);
     return factor * Math.sin(zeta + Math.PI / 4);
   }
 }
@@ -242,7 +248,7 @@ export function airyBi(x: number): number {
     let term2 = x;
     let sum2 = x;
     for (let k = 1; k <= 20; k++) {
-      term2 *= (x * x * x) / ((3 * k) * (3 * k + 1));
+      term2 *= (x * x * x) / (3 * k * (3 * k + 1));
       sum2 += term2;
       if (Math.abs(term2) < 1e-15) break;
     }
@@ -253,7 +259,7 @@ export function airyBi(x: number): number {
     // Bi(x) ≈ (1/√π) * x^(-1/4) * exp(ζ)
     // where ζ = (2/3) * x^(3/2)
     const zeta = (2.0 / 3.0) * Math.pow(x, 1.5);
-    const factor = 1.0 / Math.sqrt(Math.PI) * Math.pow(x, -0.25);
+    const factor = (1.0 / Math.sqrt(Math.PI)) * Math.pow(x, -0.25);
     return factor * Math.exp(zeta);
   } else {
     // Asymptotic expansion for large negative x
@@ -261,7 +267,7 @@ export function airyBi(x: number): number {
     // where ζ = (2/3) * |x|^(3/2)
     const absX = Math.abs(x);
     const zeta = (2.0 / 3.0) * Math.pow(absX, 1.5);
-    const factor = 1.0 / Math.sqrt(Math.PI) * Math.pow(absX, -0.25);
+    const factor = (1.0 / Math.sqrt(Math.PI)) * Math.pow(absX, -0.25);
     return factor * Math.cos(zeta + Math.PI / 4);
   }
 }
@@ -281,4 +287,3 @@ export function airyBiPrime(x: number): number {
   const h = 1e-6;
   return (airyBi(x + h) - airyBi(x - h)) / (2 * h);
 }
-

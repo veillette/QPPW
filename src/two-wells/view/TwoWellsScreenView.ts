@@ -21,7 +21,10 @@ export class TwoWellsScreenView extends BaseScreenView {
     // - Allow Coulomb 1D and Double Square Well potential types
     this.createStandardLayout(model, {
       showParticleMass: false,
-      allowedPotentialTypes: [PotentialType.COULOMB_1D, PotentialType.DOUBLE_SQUARE_WELL],
+      allowedPotentialTypes: [
+        PotentialType.COULOMB_1D,
+        PotentialType.DOUBLE_SQUARE_WELL,
+      ],
     });
   }
 
@@ -34,16 +37,22 @@ export class TwoWellsScreenView extends BaseScreenView {
       fill: QPPWColors.textFillProperty,
     });
 
-    const descriptionText = new RichText(stringManager.twoWellsDescriptionStringProperty, {
-      font: new PhetFont(14),
-      fill: QPPWColors.textFillProperty,
-      maxWidth: 500,
-    });
+    const descriptionText = new RichText(
+      stringManager.twoWellsDescriptionStringProperty,
+      {
+        font: new PhetFont(14),
+        fill: QPPWColors.textFillProperty,
+        maxWidth: 500,
+      },
+    );
 
-    const keyConceptsTitle = new Text(stringManager.keyConceptsTitleStringProperty, {
-      font: new PhetFont({ size: 14, weight: "bold" }),
-      fill: QPPWColors.textFillProperty,
-    });
+    const keyConceptsTitle = new Text(
+      stringManager.keyConceptsTitleStringProperty,
+      {
+        font: new PhetFont({ size: 14, weight: "bold" }),
+        fill: QPPWColors.textFillProperty,
+      },
+    );
 
     const keyConceptsList = new RichText(
       stringManager.twoWellsKeyConceptsStringProperty,
@@ -51,13 +60,16 @@ export class TwoWellsScreenView extends BaseScreenView {
         font: new PhetFont(13),
         fill: QPPWColors.textFillProperty,
         maxWidth: 500,
-      }
+      },
     );
 
-    const interactionTitle = new Text(stringManager.interactionsTitleStringProperty, {
-      font: new PhetFont({ size: 14, weight: "bold" }),
-      fill: QPPWColors.textFillProperty,
-    });
+    const interactionTitle = new Text(
+      stringManager.interactionsTitleStringProperty,
+      {
+        font: new PhetFont({ size: 14, weight: "bold" }),
+        fill: QPPWColors.textFillProperty,
+      },
+    );
 
     const interactionsList = new RichText(
       stringManager.twoWellsInteractionsStringProperty,
@@ -65,7 +77,7 @@ export class TwoWellsScreenView extends BaseScreenView {
         font: new PhetFont(13),
         fill: QPPWColors.textFillProperty,
         maxWidth: 500,
-      }
+      },
     );
 
     return new VBox({
@@ -92,7 +104,7 @@ export class TwoWellsScreenView extends BaseScreenView {
         font: new PhetFont(13),
         fill: QPPWColors.textFillProperty,
         maxWidth: 600,
-      }
+      },
     );
 
     return new VBox({

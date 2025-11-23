@@ -27,9 +27,15 @@ export class ManyWellsModel extends BaseModel {
   public constructor() {
     super();
     // Initialize well parameters with default values
-    this.wellWidthProperty = new NumberProperty(1.0, { range: new Range(0.1, 6.0) }); // in nanometers (max 6 nm)
-    this.wellDepthProperty = new NumberProperty(5.0, { range: new Range(0.1, 15.0) }); // in eV
-    this.numberOfWellsProperty = new NumberProperty(5, { range: new Range(2, 20) }); // number of wells
+    this.wellWidthProperty = new NumberProperty(1.0, {
+      range: new Range(0.1, 6.0),
+    }); // in nanometers (max 6 nm)
+    this.wellDepthProperty = new NumberProperty(5.0, {
+      range: new Range(0.1, 15.0),
+    }); // in eV
+    this.numberOfWellsProperty = new NumberProperty(5, {
+      range: new Range(2, 20),
+    }); // number of wells
 
     // Initialize barrier parameters
     this.barrierWidthProperty = new NumberProperty(2); // in nanometers
@@ -46,7 +52,7 @@ export class ManyWellsModel extends BaseModel {
    * Called when the solver method changes.
    * @param _method - The new numerical method (unused)
    */
-   
+
   protected onSolverMethodChanged(_method: NumericalMethod): void {
     // No cached results to invalidate for many wells model yet
   }
@@ -108,8 +114,7 @@ export class ManyWellsModel extends BaseModel {
     // Simplified dispersion relation for a periodic potential
     // E(k) = E_0 + (hbar^2 * k^2) / (2m) + V_0 * cos(k * a)
     const E0 = (bandIndex + 1) * 2; // Base energy for this band
-    const kineticEnergy =
-      (hbar * hbar * k * k) / (2 * electronMass * eV);
+    const kineticEnergy = (hbar * hbar * k * k) / (2 * electronMass * eV);
     const periodicTerm =
       (this.wellDepthProperty.value / 4) * Math.cos(k * latticeConstantMeters);
 

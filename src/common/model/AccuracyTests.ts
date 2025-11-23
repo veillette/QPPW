@@ -22,7 +22,11 @@ import { solveCoulomb3DPotential } from "./analytical-solutions/coulomb-3d-poten
 import { solveMorsePotential } from "./analytical-solutions/morse-potential.js";
 import { solvePoschlTellerPotential } from "./analytical-solutions/poschl-teller-potential.js";
 import QuantumConstants from "./QuantumConstants.js";
-import { EnergyOnlyResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
+import {
+  EnergyOnlyResult,
+  GridConfig,
+  PotentialFunction,
+} from "./PotentialFunction.js";
 import Schrodinger1DSolver from "./Schrodinger1DSolver.js";
 import qppw from "../../QPPWNamespace.js";
 
@@ -56,14 +60,19 @@ function percentageError(numerical: number, analytical: number): number {
  */
 function testMethod(
   methodName: string,
-  solver: (pot: PotentialFunction, mass: number, numStates: number, grid: GridConfig) => EnergyOnlyResult,
+  solver: (
+    pot: PotentialFunction,
+    mass: number,
+    numStates: number,
+    grid: GridConfig,
+  ) => EnergyOnlyResult,
   potential: PotentialFunction,
   analyticalSolution: EnergyOnlyResult,
   mass: number,
   numStates: number,
   gridConfig: GridConfig,
   testName: string,
-  tolerance: number = 1.0
+  tolerance: number = 1.0,
 ): TestResult {
   const details: string[] = [];
 
@@ -77,10 +86,16 @@ function testMethod(
     let maxError = 0;
     let allPassed = true;
 
-    details.push(`Testing ${numStates} energy levels with ${gridConfig.numPoints} grid points:`);
+    details.push(
+      `Testing ${numStates} energy levels with ${gridConfig.numPoints} grid points:`,
+    );
     details.push(`Execution time: ${executionTime.toFixed(2)} ms`);
 
-    const numToTest = Math.min(numStates, numericalResult.energies.length, analyticalSolution.energies.length);
+    const numToTest = Math.min(
+      numStates,
+      numericalResult.energies.length,
+      analyticalSolution.energies.length,
+    );
 
     for (let n = 0; n < numToTest; n++) {
       const E_numerical = numericalResult.energies[n];
@@ -97,7 +112,7 @@ function testMethod(
       const status = passed ? "✓" : "✗";
       details.push(
         `  E_${n}: ${status} Num: ${E_numerical_eV.toFixed(6)} eV, ` +
-        `Ana: ${E_analytical_eV.toFixed(6)} eV, Err: ${error.toFixed(4)}%`
+          `Ana: ${E_analytical_eV.toFixed(6)} eV, Err: ${error.toFixed(4)}%`,
       );
     }
 
@@ -139,21 +154,87 @@ function testHarmonicOscillatorComprehensive(): TestResult[] {
       numPoints,
     };
 
-    const potential: PotentialFunction = (x: number) => 0.5 * springConstant * x * x;
-    const analytical = solveHarmonicOscillator(springConstant, mass, numStates, gridConfig);
+    const potential: PotentialFunction = (x: number) =>
+      0.5 * springConstant * x * x;
+    const analytical = solveHarmonicOscillator(
+      springConstant,
+      mass,
+      numStates,
+      gridConfig,
+    );
 
     // Test all methods - Harmonic oscillator should be very accurate (0.1% tolerance)
-    results.push(testMethod("DVR", solveDVR, potential, analytical, mass, numStates, gridConfig, `Harmonic Oscillator (N=${numPoints})`, 0.1));
-    results.push(testMethod("Spectral", solveSpectral, potential, analytical, mass, numStates, gridConfig, `Harmonic Oscillator (N=${numPoints})`, 0.1));
-    results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, numStates, gridConfig, `Harmonic Oscillator (N=${numPoints})`, 0.1));
+    results.push(
+      testMethod(
+        "DVR",
+        solveDVR,
+        potential,
+        analytical,
+        mass,
+        numStates,
+        gridConfig,
+        `Harmonic Oscillator (N=${numPoints})`,
+        0.1,
+      ),
+    );
+    results.push(
+      testMethod(
+        "Spectral",
+        solveSpectral,
+        potential,
+        analytical,
+        mass,
+        numStates,
+        gridConfig,
+        `Harmonic Oscillator (N=${numPoints})`,
+        0.1,
+      ),
+    );
+    results.push(
+      testMethod(
+        "MatrixNumerov",
+        solveMatrixNumerov,
+        potential,
+        analytical,
+        mass,
+        numStates,
+        gridConfig,
+        `Harmonic Oscillator (N=${numPoints})`,
+        0.1,
+      ),
+    );
 
     // FGH requires power of 2
     if (isPowerOfTwo(numPoints)) {
-      results.push(testMethod("FGH", solveFGH, potential, analytical, mass, numStates, gridConfig, `Harmonic Oscillator (N=${numPoints})`, 0.1));
+      results.push(
+        testMethod(
+          "FGH",
+          solveFGH,
+          potential,
+          analytical,
+          mass,
+          numStates,
+          gridConfig,
+          `Harmonic Oscillator (N=${numPoints})`,
+          0.1,
+        ),
+      );
     }
 
     // QuantumBoundStateSolver (shooting method) - use higher tolerance as it's less accurate
-    results.push(testMethod("QuantumBound", solveQuantumBound, potential, analytical, mass, numStates, gridConfig, `Harmonic Oscillator (N=${numPoints})`, 5.0));
+    results.push(
+      testMethod(
+        "QuantumBound",
+        solveQuantumBound,
+        potential,
+        analytical,
+        mass,
+        numStates,
+        gridConfig,
+        `Harmonic Oscillator (N=${numPoints})`,
+        5.0,
+      ),
+    );
   }
 
   return results;
@@ -170,9 +251,9 @@ function testFiniteSquareWellsComprehensive(): TestResult[] {
   // Different well configurations: [width in nm, depth in eV]
   // Using values within simulation range (width: 0.1-3 nm, depth: 0.1-15 eV)
   const configurations = [
-    { width: 1e-9, depth: 5 },    // Default simulation values
-    { width: 1e-9, depth: 10 },   // Medium depth well
-    { width: 2e-9, depth: 5 },    // Wide shallow well
+    { width: 1e-9, depth: 5 }, // Default simulation values
+    { width: 1e-9, depth: 10 }, // Medium depth well
+    { width: 2e-9, depth: 5 }, // Wide shallow well
     { width: 0.5e-9, depth: 15 }, // Narrow deep well
   ];
 
@@ -180,7 +261,8 @@ function testFiniteSquareWellsComprehensive(): TestResult[] {
     const wellWidth = config.width;
     const wellDepth = config.depth * QuantumConstants.EV_TO_JOULES;
 
-    for (const numPoints of [64, 128]) { // Use moderate grid sizes for finite wells (powers of 2)
+    for (const numPoints of [64, 128]) {
+      // Use moderate grid sizes for finite wells (powers of 2)
       const gridConfig: GridConfig = {
         xMin: -2 * wellWidth,
         xMax: 2 * wellWidth,
@@ -190,25 +272,79 @@ function testFiniteSquareWellsComprehensive(): TestResult[] {
       // Create finite square well potential
       const potential: PotentialFunction = (x: number) => {
         const halfWidth = wellWidth / 2;
-        return (x >= -halfWidth && x <= halfWidth) ? -wellDepth : 0;
+        return x >= -halfWidth && x <= halfWidth ? -wellDepth : 0;
       };
 
-      const analytical = solveFiniteSquareWell(wellWidth, wellDepth, mass, numStates, gridConfig);
+      const analytical = solveFiniteSquareWell(
+        wellWidth,
+        wellDepth,
+        mass,
+        numStates,
+        gridConfig,
+      );
 
       if (analytical.energies.length > 0) {
         const testName = `Finite Well (W=${(wellWidth * 1e9).toFixed(1)}nm, D=${config.depth}eV, N=${numPoints})`;
 
         // Finite wells should achieve 0.5% accuracy despite discontinuities
-        results.push(testMethod("DVR", solveDVR, potential, analytical, mass, numStates, gridConfig, testName, 0.5));
-        results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, numStates, gridConfig, testName, 0.5));
+        results.push(
+          testMethod(
+            "DVR",
+            solveDVR,
+            potential,
+            analytical,
+            mass,
+            numStates,
+            gridConfig,
+            testName,
+            0.5,
+          ),
+        );
+        results.push(
+          testMethod(
+            "MatrixNumerov",
+            solveMatrixNumerov,
+            potential,
+            analytical,
+            mass,
+            numStates,
+            gridConfig,
+            testName,
+            0.5,
+          ),
+        );
 
         // FGH for power-of-2 grids
         if (isPowerOfTwo(numPoints)) {
-          results.push(testMethod("FGH", solveFGH, potential, analytical, mass, numStates, gridConfig, testName, 0.5));
+          results.push(
+            testMethod(
+              "FGH",
+              solveFGH,
+              potential,
+              analytical,
+              mass,
+              numStates,
+              gridConfig,
+              testName,
+              0.5,
+            ),
+          );
         }
 
         // QuantumBoundStateSolver (shooting method) - use higher tolerance
-        results.push(testMethod("QuantumBound", solveQuantumBound, potential, analytical, mass, numStates, gridConfig, testName, 5.0));
+        results.push(
+          testMethod(
+            "QuantumBound",
+            solveQuantumBound,
+            potential,
+            analytical,
+            mass,
+            numStates,
+            gridConfig,
+            testName,
+            5.0,
+          ),
+        );
       }
     }
   }
@@ -233,28 +369,83 @@ function testCoulomb3DComprehensive(): TestResult[] {
     // Use appropriate grid for Coulomb potential (r > 0)
     const gridConfig: GridConfig = {
       xMin: 1e-12, // Small positive value to avoid singularity
-      xMax: 10e-9,  // 10 nm
+      xMax: 10e-9, // 10 nm
       numPoints,
     };
 
     const potential: PotentialFunction = (r: number) => {
       const r_abs = Math.abs(r);
-      return r_abs > 1e-12 ? -coulombStrength / r_abs : -coulombStrength / 1e-12;
+      return r_abs > 1e-12
+        ? -coulombStrength / r_abs
+        : -coulombStrength / 1e-12;
     };
 
-    const analytical = solveCoulomb3DPotential(coulombStrength, mass, numStates, gridConfig);
+    const analytical = solveCoulomb3DPotential(
+      coulombStrength,
+      mass,
+      numStates,
+      gridConfig,
+    );
     const testName = `3D Coulomb (Hydrogen, N=${numPoints})`;
 
     // Coulomb potential has singularity, but should still achieve 1% accuracy
-    results.push(testMethod("DVR", solveDVR, potential, analytical, mass, numStates, gridConfig, testName, 1.0));
-    results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, numStates, gridConfig, testName, 1.0));
+    results.push(
+      testMethod(
+        "DVR",
+        solveDVR,
+        potential,
+        analytical,
+        mass,
+        numStates,
+        gridConfig,
+        testName,
+        1.0,
+      ),
+    );
+    results.push(
+      testMethod(
+        "MatrixNumerov",
+        solveMatrixNumerov,
+        potential,
+        analytical,
+        mass,
+        numStates,
+        gridConfig,
+        testName,
+        1.0,
+      ),
+    );
 
     if (isPowerOfTwo(numPoints)) {
-      results.push(testMethod("FGH", solveFGH, potential, analytical, mass, numStates, gridConfig, testName, 1.0));
+      results.push(
+        testMethod(
+          "FGH",
+          solveFGH,
+          potential,
+          analytical,
+          mass,
+          numStates,
+          gridConfig,
+          testName,
+          1.0,
+        ),
+      );
     }
 
     // QuantumBoundStateSolver (shooting method) - use higher tolerance
-    results.push(testMethod("QuantumBound", solveQuantumBound, potential, analytical, mass, numStates, gridConfig, testName, 10.0));
+    results.push(
+      testMethod(
+        "QuantumBound",
+        solveQuantumBound,
+        potential,
+        analytical,
+        mass,
+        numStates,
+        gridConfig,
+        testName,
+        10.0,
+      ),
+    );
   }
 
   return results;
@@ -272,10 +463,10 @@ function testMorsePotentialComprehensive(): TestResult[] {
   // Morse potential configurations: [width parameter a in nm, dissociation energy in eV]
   // V(x) = D_e * (1 - exp(-(x - x_e)/a))^2
   const configurations = [
-    { width: 0.5e-9, depth: 5 },   // Default-like: narrow well, moderate depth
-    { width: 1.0e-9, depth: 10 },  // Wide well, deep potential
-    { width: 0.3e-9, depth: 8 },   // Narrow well, deep potential
-    { width: 1.5e-9, depth: 3 },   // Wide well, shallow potential
+    { width: 0.5e-9, depth: 5 }, // Default-like: narrow well, moderate depth
+    { width: 1.0e-9, depth: 10 }, // Wide well, deep potential
+    { width: 0.3e-9, depth: 8 }, // Narrow well, deep potential
+    { width: 1.5e-9, depth: 3 }, // Wide well, shallow potential
   ];
 
   for (const config of configurations) {
@@ -304,26 +495,64 @@ function testMorsePotentialComprehensive(): TestResult[] {
           equilibriumPosition,
           mass,
           numStates,
-          gridConfig
+          gridConfig,
         );
 
         if (analytical.energies.length > 0) {
           const testName = `Morse (a=${(wellWidth * 1e9).toFixed(1)}nm, D=${config.depth}eV, N=${numPoints})`;
 
           // Morse potential should achieve 0.5% accuracy
-          results.push(testMethod("DVR", solveDVR, potential, analytical, mass, numStates, gridConfig, testName, 0.5));
+          results.push(
+            testMethod(
+              "DVR",
+              solveDVR,
+              potential,
+              analytical,
+              mass,
+              numStates,
+              gridConfig,
+              testName,
+              0.5,
+            ),
+          );
 
           // FGH for power-of-2 grids
           if (isPowerOfTwo(numPoints)) {
-            results.push(testMethod("FGH", solveFGH, potential, analytical, mass, numStates, gridConfig, testName, 0.5));
+            results.push(
+              testMethod(
+                "FGH",
+                solveFGH,
+                potential,
+                analytical,
+                mass,
+                numStates,
+                gridConfig,
+                testName,
+                0.5,
+              ),
+            );
           }
 
           // QuantumBoundStateSolver (shooting method) - use higher tolerance
-          results.push(testMethod("QuantumBound", solveQuantumBound, potential, analytical, mass, numStates, gridConfig, testName, 5.0));
+          results.push(
+            testMethod(
+              "QuantumBound",
+              solveQuantumBound,
+              potential,
+              analytical,
+              mass,
+              numStates,
+              gridConfig,
+              testName,
+              5.0,
+            ),
+          );
         }
       } catch (error) {
         // Skip configurations that don't support bound states
-        console.log(`Skipping Morse config (a=${(wellWidth * 1e9).toFixed(1)}nm, D=${config.depth}eV): ${error}`);
+        console.log(
+          `Skipping Morse config (a=${(wellWidth * 1e9).toFixed(1)}nm, D=${config.depth}eV): ${error}`,
+        );
       }
     }
   }
@@ -343,10 +572,10 @@ function testPoschlTellerComprehensive(): TestResult[] {
   // Pöschl-Teller potential configurations: [width parameter a in nm, potential depth in eV]
   // V(x) = -V_0 / cosh²(x/a)
   const configurations = [
-    { width: 0.5e-9, depth: 5 },   // Default-like: narrow well, moderate depth
-    { width: 1.0e-9, depth: 10 },  // Wide well, deep potential
-    { width: 0.3e-9, depth: 12 },  // Narrow well, deep potential
-    { width: 1.5e-9, depth: 3 },   // Wide well, shallow potential
+    { width: 0.5e-9, depth: 5 }, // Default-like: narrow well, moderate depth
+    { width: 1.0e-9, depth: 10 }, // Wide well, deep potential
+    { width: 0.3e-9, depth: 12 }, // Narrow well, deep potential
+    { width: 1.5e-9, depth: 3 }, // Wide well, shallow potential
   ];
 
   for (const config of configurations) {
@@ -372,26 +601,64 @@ function testPoschlTellerComprehensive(): TestResult[] {
           wellWidth,
           mass,
           numStates,
-          gridConfig
+          gridConfig,
         );
 
         if (analytical.energies.length > 0) {
           const testName = `Pöschl-Teller (a=${(wellWidth * 1e9).toFixed(1)}nm, V₀=${config.depth}eV, N=${numPoints})`;
 
           // Pöschl-Teller potential should achieve 0.5% accuracy
-          results.push(testMethod("DVR", solveDVR, potential, analytical, mass, numStates, gridConfig, testName, 0.5));
+          results.push(
+            testMethod(
+              "DVR",
+              solveDVR,
+              potential,
+              analytical,
+              mass,
+              numStates,
+              gridConfig,
+              testName,
+              0.5,
+            ),
+          );
 
           // FGH for power-of-2 grids
           if (isPowerOfTwo(numPoints)) {
-            results.push(testMethod("FGH", solveFGH, potential, analytical, mass, numStates, gridConfig, testName, 0.5));
+            results.push(
+              testMethod(
+                "FGH",
+                solveFGH,
+                potential,
+                analytical,
+                mass,
+                numStates,
+                gridConfig,
+                testName,
+                0.5,
+              ),
+            );
           }
 
           // QuantumBoundStateSolver (shooting method) - use higher tolerance
-          results.push(testMethod("QuantumBound", solveQuantumBound, potential, analytical, mass, numStates, gridConfig, testName, 5.0));
+          results.push(
+            testMethod(
+              "QuantumBound",
+              solveQuantumBound,
+              potential,
+              analytical,
+              mass,
+              numStates,
+              gridConfig,
+              testName,
+              5.0,
+            ),
+          );
         }
       } catch (error) {
         // Skip configurations that don't support bound states
-        console.log(`Skipping Pöschl-Teller config (a=${(wellWidth * 1e9).toFixed(1)}nm, V₀=${config.depth}eV): ${error}`);
+        console.log(
+          `Skipping Pöschl-Teller config (a=${(wellWidth * 1e9).toFixed(1)}nm, V₀=${config.depth}eV): ${error}`,
+        );
       }
     }
   }
@@ -410,9 +677,14 @@ function testDoubleSquareWellsComprehensive(): TestResult[] {
   // Double well configurations: [well width, barrier width, well depth, barrier height]
   // Using values within simulation range (width: 0.1-3 nm, depth: 0.1-15 eV, separation: 0.05-0.7 nm)
   const configurations = [
-    { wellWidth: 1.0e-9, barrierWidth: 0.2e-9, wellDepth: 5, barrierHeight: 3 },   // Default simulation values
-    { wellWidth: 0.5e-9, barrierWidth: 0.3e-9, wellDepth: 10, barrierHeight: 5 },  // Narrow wells, medium barrier
-    { wellWidth: 1.5e-9, barrierWidth: 0.5e-9, wellDepth: 8, barrierHeight: 4 },   // Wide wells, medium barrier
+    { wellWidth: 1.0e-9, barrierWidth: 0.2e-9, wellDepth: 5, barrierHeight: 3 }, // Default simulation values
+    {
+      wellWidth: 0.5e-9,
+      barrierWidth: 0.3e-9,
+      wellDepth: 10,
+      barrierHeight: 5,
+    }, // Narrow wells, medium barrier
+    { wellWidth: 1.5e-9, barrierWidth: 0.5e-9, wellDepth: 8, barrierHeight: 4 }, // Wide wells, medium barrier
   ];
 
   for (const config of configurations) {
@@ -426,7 +698,8 @@ function testDoubleSquareWellsComprehensive(): TestResult[] {
 
       // Create double square well potential
       const wellDepth = config.wellDepth * QuantumConstants.EV_TO_JOULES;
-      const barrierHeight = config.barrierHeight * QuantumConstants.EV_TO_JOULES;
+      const barrierHeight =
+        config.barrierHeight * QuantumConstants.EV_TO_JOULES;
 
       const potential: PotentialFunction = (x: number) => {
         const halfBarrier = config.barrierWidth / 2;
@@ -450,22 +723,52 @@ function testDoubleSquareWellsComprehensive(): TestResult[] {
 
         // Test other methods against DVR (with timing) - methods should agree within 1%
         const numerovStart = performance.now();
-        const numerovResult = solveMatrixNumerov(potential, mass, numStates, gridConfig);
+        const numerovResult = solveMatrixNumerov(
+          potential,
+          mass,
+          numStates,
+          gridConfig,
+        );
         const numerovTime = performance.now() - numerovStart;
-        results.push(compareResults("MatrixNumerov", numerovResult, reference, testName, 1.0, numerovTime));
+        results.push(
+          compareResults(
+            "MatrixNumerov",
+            numerovResult,
+            reference,
+            testName,
+            1.0,
+            numerovTime,
+          ),
+        );
 
         if (isPowerOfTwo(numPoints)) {
           const fghStart = performance.now();
           const fghResult = solveFGH(potential, mass, numStates, gridConfig);
           const fghTime = performance.now() - fghStart;
-          results.push(compareResults("FGH", fghResult, reference, testName, 1.0, fghTime));
+          results.push(
+            compareResults("FGH", fghResult, reference, testName, 1.0, fghTime),
+          );
         }
 
         // QuantumBoundStateSolver (shooting method) - use higher tolerance
         const quantumBoundStart = performance.now();
-        const quantumBoundResult = solveQuantumBound(potential, mass, numStates, gridConfig);
+        const quantumBoundResult = solveQuantumBound(
+          potential,
+          mass,
+          numStates,
+          gridConfig,
+        );
         const quantumBoundTime = performance.now() - quantumBoundStart;
-        results.push(compareResults("QuantumBound", quantumBoundResult, reference, testName, 10.0, quantumBoundTime));
+        results.push(
+          compareResults(
+            "QuantumBound",
+            quantumBoundResult,
+            reference,
+            testName,
+            10.0,
+            quantumBoundTime,
+          ),
+        );
       } catch (error) {
         results.push({
           testName: `Double Well - ${testName}`,
@@ -491,7 +794,7 @@ function compareResults(
   reference: EnergyOnlyResult,
   testName: string,
   tolerance: number,
-  executionTime: number
+  executionTime: number,
 ): TestResult {
   const details: string[] = [];
   let maxError = 0;
@@ -516,7 +819,7 @@ function compareResults(
     const status = passed ? "✓" : "✗";
     details.push(
       `  E_${n}: ${status} Method: ${E_test_eV.toFixed(6)} eV, ` +
-      `DVR: ${E_ref_eV.toFixed(6)} eV, Err: ${error.toFixed(4)}%`
+        `DVR: ${E_ref_eV.toFixed(6)} eV, Err: ${error.toFixed(4)}%`,
     );
   }
 
@@ -550,7 +853,7 @@ function printTestResult(result: TestResult): void {
   console.log(maxErrorStr);
   console.log("");
 
-  result.details.forEach(detail => console.log(detail));
+  result.details.forEach((detail) => console.log(detail));
 }
 
 /**
@@ -560,7 +863,9 @@ export function runAccuracyTests(): void {
   console.log("========================================");
   console.log("Comprehensive Numerical Method Tests");
   console.log("========================================");
-  console.log("Testing: DVR, Spectral, Matrix Numerov, FGH, and QuantumBound (experimental)");
+  console.log(
+    "Testing: DVR, Spectral, Matrix Numerov, FGH, and QuantumBound (experimental)",
+  );
   console.log("Across multiple potentials and grid sizes");
   console.log("");
 
@@ -594,7 +899,7 @@ export function runAccuracyTests(): void {
   console.log("========================================");
 
   const totalTests = results.length;
-  const passedTests = results.filter(r => r.passed).length;
+  const passedTests = results.filter((r) => r.passed).length;
   const failedTests = totalTests - passedTests;
 
   console.log(`Total tests: ${totalTests}`);
@@ -603,11 +908,19 @@ export function runAccuracyTests(): void {
 
   // Timing statistics by method
   console.log("\n--- Performance Summary ---");
-  const methodStats = new Map<string, { total: number; count: number; min: number; max: number }>();
+  const methodStats = new Map<
+    string,
+    { total: number; count: number; min: number; max: number }
+  >();
 
-  results.forEach(result => {
+  results.forEach((result) => {
     if (!methodStats.has(result.method)) {
-      methodStats.set(result.method, { total: 0, count: 0, min: Infinity, max: 0 });
+      methodStats.set(result.method, {
+        total: 0,
+        count: 0,
+        min: Infinity,
+        max: 0,
+      });
     }
     const stats = methodStats.get(result.method)!;
     stats.total += result.executionTime;
@@ -619,12 +932,16 @@ export function runAccuracyTests(): void {
   methodStats.forEach((stats, method) => {
     const avg = stats.total / stats.count;
     console.log(`${method}:`);
-    console.log(`  Average: ${avg.toFixed(2)} ms | Min: ${stats.min.toFixed(2)} ms | Max: ${stats.max.toFixed(2)} ms | Total: ${stats.total.toFixed(2)} ms`);
+    console.log(
+      `  Average: ${avg.toFixed(2)} ms | Min: ${stats.min.toFixed(2)} ms | Max: ${stats.max.toFixed(2)} ms | Total: ${stats.total.toFixed(2)} ms`,
+    );
   });
 
   if (failedTests === 0) {
     console.log("\n✓ All tests passed!");
-    console.log("All numerical methods produce consistent results across different potentials and grid sizes.");
+    console.log(
+      "All numerical methods produce consistent results across different potentials and grid sizes.",
+    );
   } else {
     console.log("\n✗ Some tests failed!");
     console.log("Review the details above for failed tests.");
@@ -647,12 +964,54 @@ export function runQuickAccuracyCheck(): void {
   const omega = 1e15;
   const springConstant = mass * omega * omega;
   const gridConfig: GridConfig = { xMin: -5e-9, xMax: 5e-9, numPoints: 128 };
-  const potential: PotentialFunction = (x: number) => 0.5 * springConstant * x * x;
-  const analytical = solveHarmonicOscillator(springConstant, mass, 10, gridConfig);
+  const potential: PotentialFunction = (x: number) =>
+    0.5 * springConstant * x * x;
+  const analytical = solveHarmonicOscillator(
+    springConstant,
+    mass,
+    10,
+    gridConfig,
+  );
 
-  results.push(testMethod("DVR", solveDVR, potential, analytical, mass, 10, gridConfig, "Harmonic Oscillator", 0.1));
-  results.push(testMethod("MatrixNumerov", solveMatrixNumerov, potential, analytical, mass, 10, gridConfig, "Harmonic Oscillator", 0.1));
-  results.push(testMethod("QuantumBound", solveQuantumBound, potential, analytical, mass, 10, gridConfig, "Harmonic Oscillator", 0.1));
+  results.push(
+    testMethod(
+      "DVR",
+      solveDVR,
+      potential,
+      analytical,
+      mass,
+      10,
+      gridConfig,
+      "Harmonic Oscillator",
+      0.1,
+    ),
+  );
+  results.push(
+    testMethod(
+      "MatrixNumerov",
+      solveMatrixNumerov,
+      potential,
+      analytical,
+      mass,
+      10,
+      gridConfig,
+      "Harmonic Oscillator",
+      0.1,
+    ),
+  );
+  results.push(
+    testMethod(
+      "QuantumBound",
+      solveQuantumBound,
+      potential,
+      analytical,
+      mass,
+      10,
+      gridConfig,
+      "Harmonic Oscillator",
+      0.1,
+    ),
+  );
 
   // 2. Finite square well (using simulation-realistic values)
   const wellWidth = 1e-9;
@@ -660,19 +1019,49 @@ export function runQuickAccuracyCheck(): void {
   const gridConfig2: GridConfig = { xMin: -2e-9, xMax: 2e-9, numPoints: 128 };
   const potential2: PotentialFunction = (x: number) => {
     const halfWidth = wellWidth / 2;
-    return (x >= -halfWidth && x <= halfWidth) ? -wellDepth : 0;
+    return x >= -halfWidth && x <= halfWidth ? -wellDepth : 0;
   };
-  const analytical2 = solveFiniteSquareWell(wellWidth, wellDepth, mass, 10, gridConfig2);
+  const analytical2 = solveFiniteSquareWell(
+    wellWidth,
+    wellDepth,
+    mass,
+    10,
+    gridConfig2,
+  );
 
   if (analytical2.energies.length > 0) {
-    results.push(testMethod("DVR", solveDVR, potential2, analytical2, mass, 10, gridConfig2, "Finite Square Well", 0.5));
-    results.push(testMethod("QuantumBound", solveQuantumBound, potential2, analytical2, mass, 10, gridConfig2, "Finite Square Well", 0.5));
+    results.push(
+      testMethod(
+        "DVR",
+        solveDVR,
+        potential2,
+        analytical2,
+        mass,
+        10,
+        gridConfig2,
+        "Finite Square Well",
+        0.5,
+      ),
+    );
+    results.push(
+      testMethod(
+        "QuantumBound",
+        solveQuantumBound,
+        potential2,
+        analytical2,
+        mass,
+        10,
+        gridConfig2,
+        "Finite Square Well",
+        0.5,
+      ),
+    );
   }
 
   // Print results
   results.forEach(printTestResult);
 
-  const passed = results.filter(r => r.passed).length;
+  const passed = results.filter((r) => r.passed).length;
   const total = results.length;
 
   if (passed === total) {

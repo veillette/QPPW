@@ -185,14 +185,14 @@ export function solveTriangularPotential(
     let A: number, B: number;
 
     if (Math.abs(leftAi) > 1e-12) {
-      const ratio = -leftBi / leftAi;  // A/B
+      const ratio = -leftBi / leftAi; // A/B
       // Normalize: A = ratio/sqrt(1 + ratio²), B = 1/sqrt(1 + ratio²)
       const normFactor = 1.0 / Math.sqrt(1.0 + ratio * ratio);
       A = ratio * normFactor;
       B = normFactor;
     } else if (Math.abs(leftBi) > 1e-12) {
       // leftAi ≈ 0 means A can be anything, use B/A ratio instead
-      const ratio = -leftAi / leftBi;  // B/A
+      const ratio = -leftAi / leftBi; // B/A
       const normFactor = 1.0 / Math.sqrt(1.0 + ratio * ratio);
       A = normFactor;
       B = ratio * normFactor;
@@ -204,7 +204,7 @@ export function solveTriangularPotential(
 
     // Verify the solution doesn't blow up by checking the ratio A*Ai + B*Bi
     // at a point where z is moderately positive (but not too large)
-    const zTest = Math.min(zW, 3.0);  // Test at z=3 or zW, whichever is smaller
+    const zTest = Math.min(zW, 3.0); // Test at z=3 or zW, whichever is smaller
     if (zTest > 0) {
       const AiTest = airyAi(zTest);
       const BiTest = airyBi(zTest);
@@ -217,7 +217,7 @@ export function solveTriangularPotential(
         // Coefficients are causing blow-up, try to minimize Bi contribution
         // Use the asymptotic behavior: for decay, we need mostly Ai
         A = 1;
-        B = -A * airyAi(zTest) / airyBi(zTest);
+        B = (-A * airyAi(zTest)) / airyBi(zTest);
         // Re-normalize
         const norm = Math.sqrt(A * A + B * B);
         A /= norm;
@@ -256,12 +256,12 @@ export function solveTriangularPotential(
       } else if (x <= x0) {
         // Region II-a: classically allowed region (0 <= x <= x0)
         // Use full Airy combination here where both are well-behaved
-        const z = alpha * (x - x0);  // z <= 0 here
+        const z = alpha * (x - x0); // z <= 0 here
         psi = A * airyAi(z) + B * airyBi(z);
       } else if (x < width) {
         // Region II-b: classically forbidden within linear potential (x0 < x < width)
         // Use WKB/asymptotic decay to avoid Bi blow-up
-        const z = alpha * (x - x0);  // z > 0 here
+        const z = alpha * (x - x0); // z > 0 here
 
         // Use Ai-only with amplitude matched at turning point
         // Ai(z) for large z ~ exp(-2/3 * z^(3/2)) / (2*sqrt(pi)*z^(1/4))
@@ -277,7 +277,10 @@ export function solveTriangularPotential(
           const zeta = (2.0 / 3.0) * Math.pow(z, 1.5);
           const aiAt0 = airyAi(0);
           // Ai(z)/Ai(0) ~ (1/(2*sqrt(pi)*z^(1/4))) * exp(-zeta) / Ai(0)
-          const ratio = (1.0 / (2.0 * Math.sqrt(Math.PI) * Math.pow(z, 0.25))) * Math.exp(-zeta) / aiAt0;
+          const ratio =
+            ((1.0 / (2.0 * Math.sqrt(Math.PI) * Math.pow(z, 0.25))) *
+              Math.exp(-zeta)) /
+            aiAt0;
           psi = psiAtX0 * ratio;
         }
       } else {
@@ -293,7 +296,10 @@ export function solveTriangularPotential(
         } else {
           const zeta = (2.0 / 3.0) * Math.pow(zAtWidth, 1.5);
           const aiAt0 = airyAi(0);
-          const ratio = (1.0 / (2.0 * Math.sqrt(Math.PI) * Math.pow(zAtWidth, 0.25))) * Math.exp(-zeta) / aiAt0;
+          const ratio =
+            ((1.0 / (2.0 * Math.sqrt(Math.PI) * Math.pow(zAtWidth, 0.25))) *
+              Math.exp(-zeta)) /
+            aiAt0;
           psiAtWidth = psiAtX0 * ratio;
         }
 

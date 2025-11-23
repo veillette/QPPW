@@ -12,7 +12,12 @@
  */
 
 import QuantumConstants from "./QuantumConstants.js";
-import { BoundStateResult, EnergyOnlyResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
+import {
+  BoundStateResult,
+  EnergyOnlyResult,
+  GridConfig,
+  PotentialFunction,
+} from "./PotentialFunction.js";
 import {
   DotMatrix,
   diagonalize,
@@ -68,7 +73,9 @@ export function solveSpectral(
   // Map to physical domain [xMin, xMax]
   const domainMin = xMin;
   const domainMax = xMax;
-  const xGrid = xiGrid.map((xi) => ((domainMax - domainMin) * xi + (domainMax + domainMin)) / 2);
+  const xGrid = xiGrid.map(
+    (xi) => ((domainMax - domainMin) * xi + (domainMax + domainMin)) / 2,
+  );
 
   // Chebyshev differentiation matrix in [-1, 1]
   const D = chebyshevDifferentiationMatrix(N);
@@ -176,7 +183,11 @@ export function solveSpectral(
 
   const fineWavefunctions: number[][] = [];
   for (const wavefunction of wavefunctions) {
-    const { fineYValues } = cubicSplineInterpolation(xGrid, wavefunction, upsampleFactor);
+    const { fineYValues } = cubicSplineInterpolation(
+      xGrid,
+      wavefunction,
+      upsampleFactor,
+    );
     fineWavefunctions.push(fineYValues);
   }
 
@@ -229,7 +240,7 @@ function chebyshevDifferentiationMatrix(N: number): DotMatrix {
       } else {
         // Off-diagonal elements
         const sign = Math.pow(-1, i + j);
-        D.set(i, j, (c[i] / c[j]) * sign / (x[i] - x[j]));
+        D.set(i, j, ((c[i] / c[j]) * sign) / (x[i] - x[j]));
       }
     }
   }

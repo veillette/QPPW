@@ -11,27 +11,27 @@ globalThis.window = globalThis;
 
 // Location mock (required for scenerystack query parameters)
 globalThis.location = {
-  href: 'http://localhost',
-  search: '',
-  hash: '',
-  pathname: '/',
-  host: 'localhost',
-  hostname: 'localhost',
-  port: '',
-  protocol: 'http:',
-  origin: 'http://localhost'
+  href: "http://localhost",
+  search: "",
+  hash: "",
+  pathname: "/",
+  host: "localhost",
+  hostname: "localhost",
+  port: "",
+  protocol: "http:",
+  origin: "http://localhost",
 };
 
 // Navigator mock (use Object.defineProperty because navigator may be read-only)
 try {
-  Object.defineProperty(globalThis, 'navigator', {
+  Object.defineProperty(globalThis, "navigator", {
     value: {
-      userAgent: 'node',
-      platform: 'node',
-      language: 'en-US'
+      userAgent: "node",
+      platform: "node",
+      language: "en-US",
     },
     writable: true,
-    configurable: true
+    configurable: true,
   });
 } catch {
   // Navigator already exists and is read-only, that's fine
@@ -43,21 +43,21 @@ globalThis.document = {
     getContext: () => null,
     style: {},
     setAttribute: () => {},
-    appendChild: () => {}
+    appendChild: () => {},
   }),
   body: { appendChild: () => {} },
   documentElement: { style: {} },
   createElementNS: () => ({ setAttribute: () => {} }),
   createTextNode: () => ({}),
   querySelector: () => null,
-  querySelectorAll: () => []
+  querySelectorAll: () => [],
 };
 
 // Phet globals
 globalThis.phet = globalThis.phet || {};
 globalThis.phet.chipper = globalThis.phet.chipper || {};
 globalThis.phet.joist = globalThis.phet.joist || {};
-globalThis.phet.chipper.packageObject = { name: 'scenerystack' };
+globalThis.phet.chipper.packageObject = { name: "scenerystack" };
 globalThis.phet.chipper.queryParameters = {};
 
 // Animation frame polyfills
@@ -73,15 +73,17 @@ globalThis.Range = class Range {
 };
 
 // matchMedia mock (used by QPPWPreferences for reduced motion detection)
-globalThis.matchMedia = globalThis.matchMedia || function(query) {
-  return {
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: () => {},
-    removeListener: () => {},
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    dispatchEvent: () => true
+globalThis.matchMedia =
+  globalThis.matchMedia ||
+  function (query) {
+    return {
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => true,
+    };
   };
-};

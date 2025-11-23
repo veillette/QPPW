@@ -29,18 +29,21 @@ const NUM_BANDS = 4;
 const BAND_HEIGHT = 1.5;
 const BAND_TOP = ICON_HEIGHT * 0.3;
 const BAND_SPACING = (WELL_BOTTOM - BAND_TOP - BAND_HEIGHT) / (NUM_BANDS - 1);
-const BAND_Y_POSITIONS = Array.from({ length: NUM_BANDS }, (_, i) => BAND_TOP + i * BAND_SPACING);
+const BAND_Y_POSITIONS = Array.from(
+  { length: NUM_BANDS },
+  (_, i) => BAND_TOP + i * BAND_SPACING,
+);
 
 // Colors
-const BACKGROUND_GRADIENT_TOP = '#1a1a3a';
-const BACKGROUND_GRADIENT_BOTTOM = '#0a0a1f';
-const POTENTIAL_STROKE_COLOR = '#9696c8';
-const BARRIER_GRADIENT_EDGE = '#b43232';
-const BARRIER_GRADIENT_CENTER = '#ff6b3d';
-const BLOCH_WAVE_COLOR = '#00c8ff';
+const BACKGROUND_GRADIENT_TOP = "#1a1a3a";
+const BACKGROUND_GRADIENT_BOTTOM = "#0a0a1f";
+const POTENTIAL_STROKE_COLOR = "#9696c8";
+const BARRIER_GRADIENT_EDGE = "#b43232";
+const BARRIER_GRADIENT_CENTER = "#ff6b3d";
+const BLOCH_WAVE_COLOR = "#00c8ff";
 
 // Energy band colors
-const BAND_COLORS = ['#00ff96', '#ffff64', '#00c8ff', '#ff96ff'];
+const BAND_COLORS = ["#00ff96", "#ffff64", "#00c8ff", "#ff96ff"];
 
 // Line widths
 const POTENTIAL_LINE_WIDTH = 2;
@@ -99,15 +102,22 @@ export class ManyWellsScreenIcon extends ScreenIcon {
     for (let i = 0; i < NUM_WELLS - 1; i++) {
       const barrierX = startX + (i + 1) * WELL_WIDTH + i * BARRIER_WIDTH;
 
-      const barrierGradient = new LinearGradient(barrierX, 0, barrierX + BARRIER_WIDTH, 0)
+      const barrierGradient = new LinearGradient(
+        barrierX,
+        0,
+        barrierX + BARRIER_WIDTH,
+        0,
+      )
         .addColorStop(0, BARRIER_GRADIENT_EDGE)
         .addColorStop(0.5, BARRIER_GRADIENT_CENTER)
         .addColorStop(1, BARRIER_GRADIENT_EDGE);
 
-      barriers.push(new Rectangle(barrierX, WELL_TOP, BARRIER_WIDTH, WELL_DEPTH, {
-        fill: barrierGradient,
-        opacity: BARRIER_OPACITY,
-      }));
+      barriers.push(
+        new Rectangle(barrierX, WELL_TOP, BARRIER_WIDTH, WELL_DEPTH, {
+          fill: barrierGradient,
+          opacity: BARRIER_OPACITY,
+        }),
+      );
     }
 
     // Energy bands (multiple horizontal lines with gradient colors)
@@ -118,10 +128,18 @@ export class ManyWellsScreenIcon extends ScreenIcon {
       // Draw energy band across all wells
       for (let i = 0; i < NUM_WELLS; i++) {
         const wellX = startX + i * (WELL_WIDTH + BARRIER_WIDTH);
-        energyBands.push(new Rectangle(wellX + WELL_INNER_PADDING, BAND_Y_POSITIONS[band], bandInnerWidth, BAND_HEIGHT, {
-          fill: BAND_COLORS[band],
-          opacity: BASE_BAND_OPACITY - band * BAND_OPACITY_DECREMENT,
-        }));
+        energyBands.push(
+          new Rectangle(
+            wellX + WELL_INNER_PADDING,
+            BAND_Y_POSITIONS[band],
+            bandInnerWidth,
+            BAND_HEIGHT,
+            {
+              fill: BAND_COLORS[band],
+              opacity: BASE_BAND_OPACITY - band * BAND_OPACITY_DECREMENT,
+            },
+          ),
+        );
       }
     }
 
@@ -132,7 +150,11 @@ export class ManyWellsScreenIcon extends ScreenIcon {
     for (let i = 0; i < NUM_WELLS; i++) {
       const wellX = startX + i * (WELL_WIDTH + BARRIER_WIDTH);
 
-      for (let x = wellX + WELL_INNER_PADDING; x <= wellX + WELL_WIDTH - WELL_INNER_PADDING; x += 0.5) {
+      for (
+        let x = wellX + WELL_INNER_PADDING;
+        x <= wellX + WELL_WIDTH - WELL_INNER_PADDING;
+        x += 0.5
+      ) {
         const localX = (x - wellX) / WELL_WIDTH;
         const globalPhase = i * Math.PI;
         const amplitude = WAVE_AMPLITUDE * Math.sin(localX * Math.PI);

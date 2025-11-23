@@ -4,10 +4,7 @@
  */
 
 import { Node, Text, HBox, VBox, Rectangle } from "scenerystack/scenery";
-import {
-  TimeControlNode,
-  PhetFont,
-} from "scenerystack/scenery-phet";
+import { TimeControlNode, PhetFont } from "scenerystack/scenery-phet";
 
 import { DerivedProperty } from "scenerystack/axon";
 import { BaseModel } from "../model/BaseModel.js";
@@ -39,13 +36,20 @@ export class SimulationControlBar extends Node {
       fill: QPPWColors.textFillProperty,
     });
 
-    this.timeText = new Text(stringManager.timeFormatStringProperty.value.replace("{{time}}", "0.00"), {
-      font: new PhetFont({ size: 16, weight: "bold" }),
-      fill: QPPWColors.textFillProperty,
-    });
+    this.timeText = new Text(
+      stringManager.timeFormatStringProperty.value.replace("{{time}}", "0.00"),
+      {
+        font: new PhetFont({ size: 16, weight: "bold" }),
+        fill: QPPWColors.textFillProperty,
+      },
+    );
 
     this.model.timeProperty.link((time: number) => {
-      this.timeText.string = stringManager.timeFormatStringProperty.value.replace("{{time}}", time.toFixed(2));
+      this.timeText.string =
+        stringManager.timeFormatStringProperty.value.replace(
+          "{{time}}",
+          time.toFixed(2),
+        );
     });
 
     const timeDisplay = new VBox({
@@ -83,8 +87,7 @@ export class SimulationControlBar extends Node {
           fill: QPPWColors.textFillProperty,
         },
       },
-    })
-
+    });
 
     const playbackButtons = new HBox({
       spacing: 10,
@@ -94,7 +97,7 @@ export class SimulationControlBar extends Node {
     const playbackSection = new VBox({
       spacing: 8,
       align: "center",
-      children: [ playbackButtons],
+      children: [playbackButtons],
     });
 
     // Arrange all sections horizontally

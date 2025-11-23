@@ -167,7 +167,9 @@ export class StringManager {
 
   public constructor() {
     // Initialize all string properties with English defaults
-    this.titleStringProperty = new StringProperty("Quantum Physics: Potential Wells");
+    this.titleStringProperty = new StringProperty(
+      "Quantum Physics: Potential Wells",
+    );
 
     // Screen names
     this.oneWellStringProperty = new StringProperty("One Well");
@@ -210,49 +212,85 @@ export class StringManager {
     // Preferences strings
     this.preferencesStringProperty = new StringProperty("Preferences");
     this.numericalMethodStringProperty = new StringProperty("Numerical Method");
-    this.numericalMethodDescriptionStringProperty = new StringProperty("Choose the numerical method for solving the Schrödinger equation.");
+    this.numericalMethodDescriptionStringProperty = new StringProperty(
+      "Choose the numerical method for solving the Schrödinger equation.",
+    );
     this.numerovStringProperty = new StringProperty("Numerov Method");
-    this.numerovDescriptionStringProperty = new StringProperty("Traditional shooting method - accurate and stable for most potentials");
+    this.numerovDescriptionStringProperty = new StringProperty(
+      "Traditional shooting method - accurate and stable for most potentials",
+    );
     this.matrixNumerovStringProperty = new StringProperty("Matrix Numerov");
-    this.matrixNumerovDescriptionStringProperty = new StringProperty("Matrix diagonalization using Numerov formula - combines O(h⁴) accuracy with robustness");
-    this.dvrStringProperty = new StringProperty("DVR (Discrete Variable Representation)");
-    this.dvrDescriptionStringProperty = new StringProperty("Matrix diagonalization method - faster and more robust for complex potentials");
-    this.fghStringProperty = new StringProperty("FGH (Fourier Grid Hamiltonian)");
-    this.fghDescriptionStringProperty = new StringProperty("Plane wave basis method - natural for periodic systems with spectral accuracy");
+    this.matrixNumerovDescriptionStringProperty = new StringProperty(
+      "Matrix diagonalization using Numerov formula - combines O(h⁴) accuracy with robustness",
+    );
+    this.dvrStringProperty = new StringProperty(
+      "DVR (Discrete Variable Representation)",
+    );
+    this.dvrDescriptionStringProperty = new StringProperty(
+      "Matrix diagonalization method - faster and more robust for complex potentials",
+    );
+    this.fghStringProperty = new StringProperty(
+      "FGH (Fourier Grid Hamiltonian)",
+    );
+    this.fghDescriptionStringProperty = new StringProperty(
+      "Plane wave basis method - natural for periodic systems with spectral accuracy",
+    );
     this.spectralStringProperty = new StringProperty("Spectral (Chebyshev)");
-    this.spectralDescriptionStringProperty = new StringProperty("Chebyshev polynomial method - exponential convergence for smooth functions");
+    this.spectralDescriptionStringProperty = new StringProperty(
+      "Chebyshev polynomial method - exponential convergence for smooth functions",
+    );
     this.quantumBoundStringProperty = new StringProperty("Quantum Bound State");
-    this.quantumBoundDescriptionStringProperty = new StringProperty("Advanced shooting method with adaptive energy bracketing and secant refinement");
-    this.autoPauseWhenTabHiddenStringProperty = new StringProperty("Auto-pause when tab is hidden");
-    this.autoPauseDescriptionStringProperty = new StringProperty("Automatically pause the simulation when the browser tab is not visible");
+    this.quantumBoundDescriptionStringProperty = new StringProperty(
+      "Advanced shooting method with adaptive energy bracketing and secant refinement",
+    );
+    this.autoPauseWhenTabHiddenStringProperty = new StringProperty(
+      "Auto-pause when tab is hidden",
+    );
+    this.autoPauseDescriptionStringProperty = new StringProperty(
+      "Automatically pause the simulation when the browser tab is not visible",
+    );
     this.gridPointsStringProperty = new StringProperty("Grid Points");
-    this.gridPointsDescriptionStringProperty = new StringProperty("Number of grid points for numerical solvers. Higher values give more accurate results but slower computation.");
+    this.gridPointsDescriptionStringProperty = new StringProperty(
+      "Number of grid points for numerical solvers. Higher values give more accurate results but slower computation.",
+    );
 
     // Control Panel strings
     this.energyChartStringProperty = new StringProperty("Energy Chart");
     this.bottomChartStringProperty = new StringProperty("Bottom Chart");
     this.particleMassStringProperty = new StringProperty("Particle Mass");
-    this.wellConfigurationStringProperty = new StringProperty("Well Configuration");
+    this.wellConfigurationStringProperty = new StringProperty(
+      "Well Configuration",
+    );
     this.potentialWellStringProperty = new StringProperty("Potential Well:");
     this.displayStringProperty = new StringProperty("Display:");
-    this.waveFunctionViewsStringProperty = new StringProperty("Wave Function views:");
+    this.waveFunctionViewsStringProperty = new StringProperty(
+      "Wave Function views:",
+    );
 
     // Potential type strings
     this.squareInfiniteStringProperty = new StringProperty("Square (Infinite)");
     this.squareFiniteStringProperty = new StringProperty("Square (Finite)");
-    this.harmonicOscillatorStringProperty = new StringProperty("Harmonic Oscillator");
+    this.harmonicOscillatorStringProperty = new StringProperty(
+      "Harmonic Oscillator",
+    );
     this.morseStringProperty = new StringProperty("Morse");
     this.poschlTellerStringProperty = new StringProperty("Pöschl-Teller");
     this.rosenMorseStringProperty = new StringProperty("Rosen-Morse");
     this.eckartStringProperty = new StringProperty("Eckart");
-    this.asymmetricTriangleStringProperty = new StringProperty("Asymmetric Triangle");
+    this.asymmetricTriangleStringProperty = new StringProperty(
+      "Asymmetric Triangle",
+    );
     this.triangularStringProperty = new StringProperty("Triangular");
     this.coulomb1DStringProperty = new StringProperty("1D Coulomb");
     this.coulomb3DStringProperty = new StringProperty("3D Coulomb");
-    this.doubleSquareWellStringProperty = new StringProperty("Double Square Well");
+    this.doubleSquareWellStringProperty = new StringProperty(
+      "Double Square Well",
+    );
 
     // Display mode strings
-    this.probabilityDensityStringProperty = new StringProperty("Probability Density");
+    this.probabilityDensityStringProperty = new StringProperty(
+      "Probability Density",
+    );
     this.phaseColorStringProperty = new StringProperty("Phase (Color)");
     this.realPartStringProperty = new StringProperty("real part");
     this.imaginaryPartStringProperty = new StringProperty("imaginary part");
@@ -263,8 +301,12 @@ export class StringManager {
     this.energyEvStringProperty = new StringProperty("Energy (eV)");
     this.positionNmStringProperty = new StringProperty("Position (nm)");
     this.totalEnergyStringProperty = new StringProperty("Total Energy");
-    this.waveFunctionMagnitudeStringProperty = new StringProperty("Wave Function Magnitude");
-    this.energyLevelLabelStringProperty = new StringProperty("E{{level}} = {{value}} eV");
+    this.waveFunctionMagnitudeStringProperty = new StringProperty(
+      "Wave Function Magnitude",
+    );
+    this.energyLevelLabelStringProperty = new StringProperty(
+      "E{{level}} = {{value}} eV",
+    );
 
     // Units
     this.electronVoltsStringProperty = new StringProperty("eV");
@@ -276,17 +318,23 @@ export class StringManager {
 
     // Screen descriptions
     this.oneWellDescriptionStringProperty = new StringProperty(
-      "Explore quantum mechanics in a single potential well.\nAdjust the well parameters to see how energy levels change."
+      "Explore quantum mechanics in a single potential well.\nAdjust the well parameters to see how energy levels change.",
     );
     this.twoWellsDescriptionStringProperty = new StringProperty(
-      "Explore quantum tunneling in a double potential well.\nAdjust barrier parameters to see how tunneling probability changes.\nWatch particles tunnel through classically forbidden regions!"
+      "Explore quantum tunneling in a double potential well.\nAdjust barrier parameters to see how tunneling probability changes.\nWatch particles tunnel through classically forbidden regions!",
     );
     this.manyWellsDescriptionStringProperty = new StringProperty(
-      "Explore energy bands in a periodic potential.\nAdd or remove wells to see how energy bands form.\nThis demonstrates the foundation of solid-state physics!"
+      "Explore energy bands in a periodic potential.\nAdd or remove wells to see how energy bands form.\nThis demonstrates the foundation of solid-state physics!",
     );
-    this.oneWellSummaryStringProperty = new StringProperty("One Well screen shows a single quantum potential well with adjustable parameters.");
-    this.twoWellsSummaryStringProperty = new StringProperty("Two Wells screen demonstrates quantum tunneling between two potential wells.");
-    this.manyWellsSummaryStringProperty = new StringProperty("Many Wells screen demonstrates energy band formation in periodic potentials.");
+    this.oneWellSummaryStringProperty = new StringProperty(
+      "One Well screen shows a single quantum potential well with adjustable parameters.",
+    );
+    this.twoWellsSummaryStringProperty = new StringProperty(
+      "Two Wells screen demonstrates quantum tunneling between two potential wells.",
+    );
+    this.manyWellsSummaryStringProperty = new StringProperty(
+      "Many Wells screen demonstrates energy band formation in periodic potentials.",
+    );
 
     // Superposition strings
     this.superpositionStringProperty = new StringProperty("Superposition:");
@@ -296,12 +344,18 @@ export class StringManager {
     this.localizedWideStringProperty = new StringProperty("Localized wide");
     this.coherentStateStringProperty = new StringProperty("Coherent state");
     this.customStringProperty = new StringProperty("Custom...");
-    this.configureSuperpositionStringProperty = new StringProperty("Configure Superposition");
+    this.configureSuperpositionStringProperty = new StringProperty(
+      "Configure Superposition",
+    );
     this.amplitudeStringProperty = new StringProperty("Amplitude");
-    this.superpositionDialogTitleStringProperty = new StringProperty("Superposition Configuration");
+    this.superpositionDialogTitleStringProperty = new StringProperty(
+      "Superposition Configuration",
+    );
     this.closeStringProperty = new StringProperty("Close");
     this.displacementStringProperty = new StringProperty("Displacement");
-    this.superpositionInstructionsStringProperty = new StringProperty("Adjust the amplitude of each eigenstate in the superposition.\nThe sum of squared amplitudes should equal 1.");
+    this.superpositionInstructionsStringProperty = new StringProperty(
+      "Adjust the amplitude of each eigenstate in the superposition.\nThe sum of squared amplitudes should equal 1.",
+    );
     this.normalizationSumStringProperty = new StringProperty("Sum of |cᵢ|² = ");
     this.normalizeButtonStringProperty = new StringProperty("Normalize");
     this.okButtonStringProperty = new StringProperty("OK");
@@ -311,92 +365,94 @@ export class StringManager {
     this.keyConceptsTitleStringProperty = new StringProperty("Key Concepts:");
     this.oneWellKeyConceptsStringProperty = new StringProperty(
       "• Quantum confinement in a single potential well\n" +
-      "• Discrete energy levels (eigenstates)\n" +
-      "• Wave-particle duality\n" +
-      "• Probability density |ψ|²\n" +
-      "• Heisenberg Uncertainty Principle"
+        "• Discrete energy levels (eigenstates)\n" +
+        "• Wave-particle duality\n" +
+        "• Probability density |ψ|²\n" +
+        "• Heisenberg Uncertainty Principle",
     );
     this.interactionsTitleStringProperty = new StringProperty("Interactions:");
     this.oneWellInteractionsStringProperty = new StringProperty(
       "• Click energy levels to see eigenstates\n" +
-      "• Adjust potential well parameters\n" +
-      "• Try different potential types\n" +
-      "• Create wavepackets from superpositions\n" +
-      "• Watch time evolution of superposition states"
+        "• Adjust potential well parameters\n" +
+        "• Try different potential types\n" +
+        "• Create wavepackets from superpositions\n" +
+        "• Watch time evolution of superposition states",
     );
     this.oneWellEducationalContentStringProperty = new StringProperty(
       "Screen Overview:\n" +
-      "This screen demonstrates quantum confinement in a single potential well. Energy levels are quantized and the particle's wave function is described by standing wave patterns (eigenstates).\n\n" +
-      "Available Controls:\n" +
-      "• Potential Well Type: Select different quantum potential configurations\n" +
-      "• Energy Levels: Click on energy levels to view corresponding eigenstates\n" +
-      "• Superposition: Create wave packets by combining multiple eigenstates\n\n" +
-      "Learning Objectives:\n" +
-      "• Understand how quantum confinement leads to discrete energy levels\n" +
-      "• Explore the relationship between well parameters and eigenstate properties\n" +
-      "• Observe how uncertainty principle manifests in confined quantum systems"
+        "This screen demonstrates quantum confinement in a single potential well. Energy levels are quantized and the particle's wave function is described by standing wave patterns (eigenstates).\n\n" +
+        "Available Controls:\n" +
+        "• Potential Well Type: Select different quantum potential configurations\n" +
+        "• Energy Levels: Click on energy levels to view corresponding eigenstates\n" +
+        "• Superposition: Create wave packets by combining multiple eigenstates\n\n" +
+        "Learning Objectives:\n" +
+        "• Understand how quantum confinement leads to discrete energy levels\n" +
+        "• Explore the relationship between well parameters and eigenstate properties\n" +
+        "• Observe how uncertainty principle manifests in confined quantum systems",
     );
 
     // Educational content strings for Two Wells screen
     this.twoWellsKeyConceptsStringProperty = new StringProperty(
       "• Quantum tunneling through barriers\n" +
-      "• Energy level splitting\n" +
-      "• Symmetric and antisymmetric states\n" +
-      "• Tunneling probability\n" +
-      "• Time-dependent oscillations between wells"
+        "• Energy level splitting\n" +
+        "• Symmetric and antisymmetric states\n" +
+        "• Tunneling probability\n" +
+        "• Time-dependent oscillations between wells",
     );
     this.twoWellsInteractionsStringProperty = new StringProperty(
       "• Adjust barrier height and width\n" +
-      "• Change well separation distance\n" +
-      "• Select energy levels to see tunneling states\n" +
-      "• Create superpositions to watch tunneling dynamics\n" +
-      "• Observe how barrier parameters affect tunneling probability"
+        "• Change well separation distance\n" +
+        "• Select energy levels to see tunneling states\n" +
+        "• Create superpositions to watch tunneling dynamics\n" +
+        "• Observe how barrier parameters affect tunneling probability",
     );
     this.twoWellsEducationalContentStringProperty = new StringProperty(
       "Screen Overview:\n" +
-      "This screen demonstrates quantum tunneling in a double potential well. Particles can tunnel through classically forbidden barrier regions, leading to energy level splitting and oscillatory behavior.\n\n" +
-      "Available Controls:\n" +
-      "• Barrier Parameters: Adjust height and width to control tunneling probability\n" +
-      "• Well Separation: Change the distance between wells\n" +
-      "• Energy Levels: Click on split energy levels to view symmetric/antisymmetric states\n\n" +
-      "Learning Objectives:\n" +
-      "• Understand quantum tunneling and its dependence on barrier properties\n" +
-      "• Explore energy level splitting due to quantum coupling between wells\n" +
-      "• Observe time-dependent tunneling dynamics in superposition states"
+        "This screen demonstrates quantum tunneling in a double potential well. Particles can tunnel through classically forbidden barrier regions, leading to energy level splitting and oscillatory behavior.\n\n" +
+        "Available Controls:\n" +
+        "• Barrier Parameters: Adjust height and width to control tunneling probability\n" +
+        "• Well Separation: Change the distance between wells\n" +
+        "• Energy Levels: Click on split energy levels to view symmetric/antisymmetric states\n\n" +
+        "Learning Objectives:\n" +
+        "• Understand quantum tunneling and its dependence on barrier properties\n" +
+        "• Explore energy level splitting due to quantum coupling between wells\n" +
+        "• Observe time-dependent tunneling dynamics in superposition states",
     );
 
     // Educational content strings for Many Wells screen
     this.manyWellsKeyConceptsStringProperty = new StringProperty(
       "• Energy band formation\n" +
-      "• Allowed and forbidden energy bands\n" +
-      "• Band gap in periodic potentials\n" +
-      "• Bloch waves and crystal momentum\n" +
-      "• Foundation of solid-state physics\n" +
-      "• Conductors, semiconductors, and insulators"
+        "• Allowed and forbidden energy bands\n" +
+        "• Band gap in periodic potentials\n" +
+        "• Bloch waves and crystal momentum\n" +
+        "• Foundation of solid-state physics\n" +
+        "• Conductors, semiconductors, and insulators",
     );
     this.manyWellsInteractionsStringProperty = new StringProperty(
       "• Adjust number of potential wells\n" +
-      "• Change lattice constant (well spacing)\n" +
-      "• Modify well and barrier parameters\n" +
-      "• Select different energy bands\n" +
-      "• Observe band structure formation\n" +
-      "• Watch Bloch wave propagation"
+        "• Change lattice constant (well spacing)\n" +
+        "• Modify well and barrier parameters\n" +
+        "• Select different energy bands\n" +
+        "• Observe band structure formation\n" +
+        "• Watch Bloch wave propagation",
     );
     this.manyWellsEducationalContentStringProperty = new StringProperty(
       "Screen Overview:\n" +
-      "This screen demonstrates energy band formation in periodic potentials, the foundation of solid-state physics. As you add more wells, discrete energy levels spread into continuous bands separated by gaps.\n\n" +
-      "Available Controls:\n" +
-      "• Number of Wells: Add or remove wells to see band structure emerge\n" +
-      "• Lattice Constant: Adjust the periodic spacing of the potential\n" +
-      "• Band Selection: Select different energy bands to view Bloch states\n\n" +
-      "Learning Objectives:\n" +
-      "• Understand how periodic potentials create energy band structure\n" +
-      "• Explore the relationship between number of wells and band formation\n" +
-      "• Connect quantum mechanics to properties of solids (metals, semiconductors, insulators)"
+        "This screen demonstrates energy band formation in periodic potentials, the foundation of solid-state physics. As you add more wells, discrete energy levels spread into continuous bands separated by gaps.\n\n" +
+        "Available Controls:\n" +
+        "• Number of Wells: Add or remove wells to see band structure emerge\n" +
+        "• Lattice Constant: Adjust the periodic spacing of the potential\n" +
+        "• Band Selection: Select different energy bands to view Bloch states\n\n" +
+        "Learning Objectives:\n" +
+        "• Understand how periodic potentials create energy band structure\n" +
+        "• Explore the relationship between number of wells and band formation\n" +
+        "• Connect quantum mechanics to properties of solids (metals, semiconductors, insulators)",
     );
 
     // Chart axis labels
-    this.probabilityDensityAxisStringProperty = new StringProperty("Probability Density");
+    this.probabilityDensityAxisStringProperty = new StringProperty(
+      "Probability Density",
+    );
     this.positionNmAxisStringProperty = new StringProperty("Position (nm)");
 
     // Time format
@@ -428,11 +484,15 @@ export class StringManager {
     return {
       preferencesStringProperty: this.preferencesStringProperty,
       numericalMethodStringProperty: this.numericalMethodStringProperty,
-      numericalMethodDescriptionStringProperty: this.numericalMethodDescriptionStringProperty,
-      autoPauseWhenTabHiddenStringProperty: this.autoPauseWhenTabHiddenStringProperty,
-      autoPauseDescriptionStringProperty: this.autoPauseDescriptionStringProperty,
+      numericalMethodDescriptionStringProperty:
+        this.numericalMethodDescriptionStringProperty,
+      autoPauseWhenTabHiddenStringProperty:
+        this.autoPauseWhenTabHiddenStringProperty,
+      autoPauseDescriptionStringProperty:
+        this.autoPauseDescriptionStringProperty,
       gridPointsStringProperty: this.gridPointsStringProperty,
-      gridPointsDescriptionStringProperty: this.gridPointsDescriptionStringProperty,
+      gridPointsDescriptionStringProperty:
+        this.gridPointsDescriptionStringProperty,
     };
   }
 

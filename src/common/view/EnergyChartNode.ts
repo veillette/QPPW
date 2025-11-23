@@ -9,7 +9,13 @@ import { NumberProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
 import { Checkbox } from "scenerystack/sun";
-import { ChartTransform, ChartRectangle, AxisLine, TickMarkSet, TickLabelSet } from "scenerystack/bamboo";
+import {
+  ChartTransform,
+  ChartRectangle,
+  AxisLine,
+  TickMarkSet,
+  TickLabelSet,
+} from "scenerystack/bamboo";
 import { OneWellModel } from "../../one-well/model/OneWellModel.js";
 import { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
 import { PotentialType, BoundStateResult } from "../model/PotentialFunction.js";
@@ -25,7 +31,10 @@ const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RA
 // For potentials with V=0 at center (e.g., Harmonic Oscillator, Infinite Well): -5 to 15 eV
 // For potentials with V=0 at infinity (e.g., Finite Well, Coulomb): -15 to 5 eV
 // For Asymmetric Triangle: -5 to 15 eV (special case with shifted potential)
-function getEnergyAxisRange(potentialType: PotentialType): { min: number; max: number } {
+function getEnergyAxisRange(potentialType: PotentialType): {
+  min: number;
+  max: number;
+} {
   switch (potentialType) {
     case PotentialType.HARMONIC_OSCILLATOR:
       // V=0 at center, grows outward
@@ -93,18 +102,25 @@ export class EnergyChartNode extends Node {
   // Hover state
   private hoveredEnergyLevelIndex: number | null = null;
 
-  public constructor(model: OneWellModel | TwoWellsModel, options?: { width?: number; height?: number}) {
+  public constructor(
+    model: OneWellModel | TwoWellsModel,
+    options?: { width?: number; height?: number },
+  ) {
     super();
 
     this.model = model;
     this.chartWidth = options?.width ?? 600;
     this.chartHeight = options?.height ?? 300;
 
-    this.plotWidth = this.chartWidth - this.chartMargins.left - this.chartMargins.right;
-    this.plotHeight = this.chartHeight - this.chartMargins.top - this.chartMargins.bottom;
+    this.plotWidth =
+      this.chartWidth - this.chartMargins.left - this.chartMargins.right;
+    this.plotHeight =
+      this.chartHeight - this.chartMargins.top - this.chartMargins.bottom;
 
     // Initialize view range with values based on initial potential type
-    const initialEnergyRange = getEnergyAxisRange(model.potentialTypeProperty.value);
+    const initialEnergyRange = getEnergyAxisRange(
+      model.potentialTypeProperty.value,
+    );
     this.xMinProperty = new NumberProperty(-X_AXIS_RANGE_NM);
     this.xMaxProperty = new NumberProperty(X_AXIS_RANGE_NM);
     this.yMinProperty = new NumberProperty(initialEnergyRange.min);
@@ -138,7 +154,7 @@ export class EnergyChartNode extends Node {
         this.chartMargins.left,
         this.chartMargins.top,
         this.plotWidth,
-        this.plotHeight
+        this.plotHeight,
       ),
     });
     this.addChild(this.plotContentNode);
@@ -193,13 +209,18 @@ export class EnergyChartNode extends Node {
     const yMax = this.yMaxProperty.value;
     for (let energy = yMin; energy <= yMax; energy += 5) {
       if (energy !== yMin) {
-        const y = this.chartMargins.top + this.chartTransform.modelToViewY(energy);
+        const y =
+          this.chartMargins.top + this.chartTransform.modelToViewY(energy);
         const gridLine = new Line(
-          this.chartMargins.left, y,
-          this.chartMargins.left + this.plotWidth, y, {
-          stroke: QPPWColors.gridLineProperty,
-          lineWidth: 1,
-        });
+          this.chartMargins.left,
+          y,
+          this.chartMargins.left + this.plotWidth,
+          y,
+          {
+            stroke: QPPWColors.gridLineProperty,
+            lineWidth: 1,
+          },
+        );
         axesNode.addChild(gridLine);
       }
     }
@@ -207,23 +228,32 @@ export class EnergyChartNode extends Node {
     // Manual X-axis grid lines (GridLineSet causes hang)
     for (let pos = -X_AXIS_RANGE_NM; pos <= X_AXIS_RANGE_NM; pos += 2) {
       if (pos !== -X_AXIS_RANGE_NM) {
-        const x = this.chartMargins.left + this.chartTransform.modelToViewX(pos);
+        const x =
+          this.chartMargins.left + this.chartTransform.modelToViewX(pos);
         const gridLine = new Line(
-          x, this.chartMargins.top,
-          x, this.chartMargins.top + this.plotHeight, {
-          stroke: QPPWColors.gridLineProperty,
-          lineWidth: 1,
-        });
+          x,
+          this.chartMargins.top,
+          x,
+          this.chartMargins.top + this.plotHeight,
+          {
+            stroke: QPPWColors.gridLineProperty,
+            lineWidth: 1,
+          },
+        );
         axesNode.addChild(gridLine);
       }
     }
 
     // Y-axis at left edge using bamboo AxisLine (at model x=-4nm)
-    const yAxisLeftNode = new AxisLine(this.chartTransform, Orientation.VERTICAL, {
-      stroke: QPPWColors.axisProperty,
-      lineWidth: 2,
-      value: this.xMinProperty.value,
-    });
+    const yAxisLeftNode = new AxisLine(
+      this.chartTransform,
+      Orientation.VERTICAL,
+      {
+        stroke: QPPWColors.axisProperty,
+        lineWidth: 2,
+        value: this.xMinProperty.value,
+      },
+    );
     yAxisLeftNode.x = this.chartMargins.left;
     yAxisLeftNode.y = this.chartMargins.top;
     axesNode.addChild(yAxisLeftNode);
@@ -240,67 +270,97 @@ export class EnergyChartNode extends Node {
     axesNode.addChild(yAxisNode);
 
     // X-axis using bamboo AxisLine (at model y=0)
-    const xAxisNode = new AxisLine(this.chartTransform, Orientation.HORIZONTAL, {
-      stroke: QPPWColors.axisProperty,
-      lineWidth: 2,
-      value: 0,
-    });
+    const xAxisNode = new AxisLine(
+      this.chartTransform,
+      Orientation.HORIZONTAL,
+      {
+        stroke: QPPWColors.axisProperty,
+        lineWidth: 2,
+        value: 0,
+      },
+    );
     xAxisNode.x = this.chartMargins.left;
     xAxisNode.y = this.chartMargins.top;
     axesNode.addChild(xAxisNode);
 
     // X-axis at bottom using bamboo AxisLine (at model y=yMin)
-    const xAxisBottomNode = new AxisLine(this.chartTransform, Orientation.HORIZONTAL, {
-      stroke: QPPWColors.axisProperty,
-      lineWidth: 2,
-      value: this.yMinProperty.value,
-    });
+    const xAxisBottomNode = new AxisLine(
+      this.chartTransform,
+      Orientation.HORIZONTAL,
+      {
+        stroke: QPPWColors.axisProperty,
+        lineWidth: 2,
+        value: this.yMinProperty.value,
+      },
+    );
     xAxisBottomNode.x = this.chartMargins.left;
     xAxisBottomNode.y = this.chartMargins.top;
     axesNode.addChild(xAxisBottomNode);
 
     // Y-axis tick marks using bamboo TickMarkSet
-    const yTickMarksNode = new TickMarkSet(this.chartTransform, Orientation.VERTICAL, 5, {
-      edge: "min",
-      extent: 8,
-      stroke: QPPWColors.axisProperty,
-      lineWidth: 1,
-    });
+    const yTickMarksNode = new TickMarkSet(
+      this.chartTransform,
+      Orientation.VERTICAL,
+      5,
+      {
+        edge: "min",
+        extent: 8,
+        stroke: QPPWColors.axisProperty,
+        lineWidth: 1,
+      },
+    );
     yTickMarksNode.x = this.chartMargins.left;
     yTickMarksNode.y = this.chartMargins.top;
     axesNode.addChild(yTickMarksNode);
 
     // X-axis tick marks using bamboo TickMarkSet
-    const xTickMarksNode = new TickMarkSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
-      edge: "max",
-      extent: 8,
-      stroke: QPPWColors.axisProperty,
-      lineWidth: 1,
-    });
+    const xTickMarksNode = new TickMarkSet(
+      this.chartTransform,
+      Orientation.HORIZONTAL,
+      2,
+      {
+        edge: "max",
+        extent: 8,
+        stroke: QPPWColors.axisProperty,
+        lineWidth: 1,
+      },
+    );
     xTickMarksNode.x = this.chartMargins.left;
     xTickMarksNode.y = this.chartMargins.top + this.plotHeight;
     axesNode.addChild(xTickMarksNode);
 
     // Y-axis tick labels using bamboo TickLabelSet
-    const yTickLabelsNode = new TickLabelSet(this.chartTransform, Orientation.VERTICAL, 5, {
-      edge: "min",
-      createLabel: (value: number) => new Text(value.toFixed(0), {
-        font: new PhetFont(12),
-        fill: QPPWColors.labelFillProperty,
-      }),
-    });
+    const yTickLabelsNode = new TickLabelSet(
+      this.chartTransform,
+      Orientation.VERTICAL,
+      5,
+      {
+        edge: "min",
+        createLabel: (value: number) =>
+          new Text(value.toFixed(0), {
+            font: new PhetFont(12),
+            fill: QPPWColors.labelFillProperty,
+          }),
+      },
+    );
     yTickLabelsNode.x = this.chartMargins.left;
     yTickLabelsNode.y = this.chartMargins.top;
     axesNode.addChild(yTickLabelsNode);
 
     // X-axis tick labels using bamboo TickLabelSet
-    const xTickLabelsNode = new TickLabelSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
-      edge: "max",
-      createLabel: (value: number) => new Text(value.toFixed(0), {
-        font: new PhetFont(12),
-        fill: QPPWColors.labelFillProperty,
-      }),
-    });
+    const xTickLabelsNode = new TickLabelSet(
+      this.chartTransform,
+      Orientation.HORIZONTAL,
+      2,
+      {
+        edge: "max",
+        createLabel: (value: number) =>
+          new Text(value.toFixed(0), {
+            font: new PhetFont(12),
+            fill: QPPWColors.labelFillProperty,
+          }),
+      },
+    );
     xTickLabelsNode.x = this.chartMargins.left;
     xTickLabelsNode.y = this.chartMargins.top + this.plotHeight;
     axesNode.addChild(xTickLabelsNode);
@@ -334,26 +394,42 @@ export class EnergyChartNode extends Node {
       spacing: 5,
       align: "left",
       children: [
-        new Checkbox(this.model.showTotalEnergyProperty, new Text(stringManager.totalEnergyStringProperty, {
-          font: "12px sans-serif",
-          fill: QPPWColors.textFillProperty,
-        }), {
-          boxWidth: 15,
-        }),
-        new Checkbox(this.model.showPotentialEnergyProperty, new Text(stringManager.potentialEnergyStringProperty, {
-          font: "12px sans-serif",
-          fill: QPPWColors.textFillProperty,
-        }), {
-          boxWidth: 15,
-        }),
+        new Checkbox(
+          this.model.showTotalEnergyProperty,
+          new Text(stringManager.totalEnergyStringProperty, {
+            font: "12px sans-serif",
+            fill: QPPWColors.textFillProperty,
+          }),
+          {
+            boxWidth: 15,
+          },
+        ),
+        new Checkbox(
+          this.model.showPotentialEnergyProperty,
+          new Text(stringManager.potentialEnergyStringProperty, {
+            font: "12px sans-serif",
+            fill: QPPWColors.textFillProperty,
+          }),
+          {
+            boxWidth: 15,
+          },
+        ),
       ],
     });
 
-    const legendPanelNode = new Rectangle(0, 0, legendContentNode.width + 20, legendContentNode.height + 15, 5, 5, {
-      fill: QPPWColors.panelFillProperty,
-      stroke: QPPWColors.gridLineProperty,
-      lineWidth: 1,
-    });
+    const legendPanelNode = new Rectangle(
+      0,
+      0,
+      legendContentNode.width + 20,
+      legendContentNode.height + 15,
+      5,
+      5,
+      {
+        fill: QPPWColors.panelFillProperty,
+        stroke: QPPWColors.gridLineProperty,
+        lineWidth: 1,
+      },
+    );
 
     const legendNode = new Node({
       children: [legendPanelNode, legendContentNode],
@@ -380,7 +456,9 @@ export class EnergyChartNode extends Node {
     this.model.wellDepthProperty.link(() => this.update());
     this.model.wellOffsetProperty.link(() => this.update());
     this.model.particleMassProperty.link(() => this.update());
-    this.model.selectedEnergyLevelIndexProperty.link(() => this.updateSelection());
+    this.model.selectedEnergyLevelIndexProperty.link(() =>
+      this.updateSelection(),
+    );
     this.model.showTotalEnergyProperty.link((show: boolean) => {
       this.totalEnergyLine.visible = show;
     });
@@ -390,15 +468,21 @@ export class EnergyChartNode extends Node {
 
     // Link to wellSeparationProperty if available (TwoWellsModel only)
     if ("wellSeparationProperty" in this.model) {
-      (this.model as TwoWellsModel).wellSeparationProperty.link(() => this.update());
+      (this.model as TwoWellsModel).wellSeparationProperty.link(() =>
+        this.update(),
+      );
     }
 
     // Link to barrierHeightProperty and potentialOffsetProperty if available (OneWellModel only)
     if ("barrierHeightProperty" in this.model) {
-      (this.model as OneWellModel).barrierHeightProperty.link(() => this.update());
+      (this.model as OneWellModel).barrierHeightProperty.link(() =>
+        this.update(),
+      );
     }
     if ("potentialOffsetProperty" in this.model) {
-      (this.model as OneWellModel).potentialOffsetProperty.link(() => this.update());
+      (this.model as OneWellModel).potentialOffsetProperty.link(() =>
+        this.update(),
+      );
     }
   }
 
@@ -406,12 +490,16 @@ export class EnergyChartNode extends Node {
    * Updates the energy axis range based on the current potential type.
    */
   private updateEnergyAxisRange(): void {
-    const energyRange = getEnergyAxisRange(this.model.potentialTypeProperty.value);
+    const energyRange = getEnergyAxisRange(
+      this.model.potentialTypeProperty.value,
+    );
     this.yMinProperty.value = energyRange.min;
     this.yMaxProperty.value = energyRange.max;
 
     // Update the chart transform with new Y range
-    this.chartTransform.setModelYRange(new Range(energyRange.min, energyRange.max));
+    this.chartTransform.setModelYRange(
+      new Range(energyRange.min, energyRange.max),
+    );
 
     // Recreate axes with new range
     this.removeChild(this.axesNode);
@@ -479,7 +567,8 @@ export class EnergyChartNode extends Node {
     const wellDepth = this.model.wellDepthProperty.value;
 
     // Calculate the center of the xGrid for alignment
-    const xCenter = ((xGrid[0] + xGrid[xGrid.length - 1]) / 2) * QuantumConstants.M_TO_NM;
+    const xCenter =
+      ((xGrid[0] + xGrid[xGrid.length - 1]) / 2) * QuantumConstants.M_TO_NM;
 
     if (potentialType === PotentialType.INFINITE_WELL) {
       // Draw square well centered at x=0 (xCenter should be 0)
@@ -526,9 +615,12 @@ export class EnergyChartNode extends Node {
       let firstPoint = true;
 
       for (let i = 0; i < numPoints; i++) {
-        const x = (xGrid[0] + (xGrid[xGrid.length - 1] - xGrid[0]) * i / (numPoints - 1)) * QuantumConstants.M_TO_NM;
+        const x =
+          (xGrid[0] +
+            ((xGrid[xGrid.length - 1] - xGrid[0]) * i) / (numPoints - 1)) *
+          QuantumConstants.M_TO_NM;
         const dx = x - centerX;
-        const k = (2 * wellDepth) / (wellWidth * wellWidth / 4); // Spring constant
+        const k = (2 * wellDepth) / ((wellWidth * wellWidth) / 4); // Spring constant
         const V = 0.5 * k * dx * dx;
         const viewX = this.dataToViewX(x);
         const viewY = this.dataToViewY(V);
@@ -546,7 +638,7 @@ export class EnergyChartNode extends Node {
       // V(x) = F·x for x ≥ 0 (linear increasing)
       // where F = wellDepth/wellWidth (slope)
 
-      const F_eV_per_nm = (wellDepth / wellWidth); // slope in eV/nm
+      const F_eV_per_nm = wellDepth / wellWidth; // slope in eV/nm
       const y15eV = this.dataToViewY(15); // Display infinity as 15 eV
       const y0eV = this.dataToViewY(0);
 
@@ -558,7 +650,9 @@ export class EnergyChartNode extends Node {
       // Right region (x ≥ 0): linear increasing potential V = F·x
       const numPoints = 100;
       for (let i = 0; i <= numPoints; i++) {
-        const x = (xGrid[xGrid.length - 1] * i / numPoints) * QuantumConstants.M_TO_NM;
+        const x =
+          ((xGrid[xGrid.length - 1] * i) / numPoints) *
+          QuantumConstants.M_TO_NM;
         if (x >= 0) {
           const V = F_eV_per_nm * x;
           const viewX = this.dataToViewX(x);
@@ -574,9 +668,10 @@ export class EnergyChartNode extends Node {
       // V(x) = height + offset for x > width
 
       // Get the offset from potentialOffsetProperty (OneWellModel only)
-      const offset = "potentialOffsetProperty" in this.model
-        ? (this.model as OneWellModel).potentialOffsetProperty.value
-        : 0;
+      const offset =
+        "potentialOffsetProperty" in this.model
+          ? (this.model as OneWellModel).potentialOffsetProperty.value
+          : 0;
       const height = wellDepth;
       const barrierTop = height + offset;
       const slope = height / wellWidth; // eV/nm
@@ -594,7 +689,7 @@ export class EnergyChartNode extends Node {
       // Linear region (0 < x < width): V = offset + slope * x
       const numPoints = 50;
       for (let i = 1; i <= numPoints; i++) {
-        const x = (wellWidth * i / numPoints);
+        const x = (wellWidth * i) / numPoints;
         const V = offset + slope * x;
         const viewX = this.dataToViewX(x);
         const viewY = this.dataToViewY(V);
@@ -604,7 +699,10 @@ export class EnergyChartNode extends Node {
       // At x = width, we should be back at height + offset
       // Then continue as horizontal line to the right
       shape.lineTo(this.chartWidth - this.chartMargins.right, yBarrier);
-    } else if (potentialType === PotentialType.COULOMB_1D || potentialType === PotentialType.COULOMB_3D) {
+    } else if (
+      potentialType === PotentialType.COULOMB_1D ||
+      potentialType === PotentialType.COULOMB_3D
+    ) {
       // Draw Coulomb potential: V(x) = -k/|x| where k is determined by wellDepth
       // V→0 as x→∞, V→-wellDepth at some characteristic distance
       const centerX = xCenter;
@@ -615,7 +713,10 @@ export class EnergyChartNode extends Node {
       const k = wellDepth * (wellWidth / 2);
 
       for (let i = 0; i < numPoints; i++) {
-        const x = (xGrid[0] + (xGrid[xGrid.length - 1] - xGrid[0]) * i / (numPoints - 1)) * QuantumConstants.M_TO_NM;
+        const x =
+          (xGrid[0] +
+            ((xGrid[xGrid.length - 1] - xGrid[0]) * i) / (numPoints - 1)) *
+          QuantumConstants.M_TO_NM;
         const dx = x - centerX;
 
         // Avoid singularity at x=0
@@ -640,7 +741,8 @@ export class EnergyChartNode extends Node {
       // Convention: V=0 in wells, V=wellDepth in barrier
       // This matches the analytical solution convention
       // Wells are centered at ±(separation/2 + wellWidth/2)
-      const separation = (this.model as TwoWellsModel).wellSeparationProperty.value;
+      const separation = (this.model as TwoWellsModel).wellSeparationProperty
+        .value;
 
       const leftWellCenter = -(separation / 2 + wellWidth / 2);
       const rightWellCenter = separation / 2 + wellWidth / 2;
@@ -684,7 +786,10 @@ export class EnergyChartNode extends Node {
       let firstPoint = true;
 
       for (let i = 0; i < numPoints; i++) {
-        const x = (xGrid[0] + (xGrid[xGrid.length - 1] - xGrid[0]) * i / (numPoints - 1)) * QuantumConstants.M_TO_NM;
+        const x =
+          (xGrid[0] +
+            ((xGrid[xGrid.length - 1] - xGrid[0]) * i) / (numPoints - 1)) *
+          QuantumConstants.M_TO_NM;
         const dx = x - centerX;
         const exponent = Math.exp(-dx / wellWidth);
         // V(x) = D_e * (1 - e^(-dx/a))^2 - D_e
@@ -709,7 +814,10 @@ export class EnergyChartNode extends Node {
       let firstPoint = true;
 
       for (let i = 0; i < numPoints; i++) {
-        const x = (xGrid[0] + (xGrid[xGrid.length - 1] - xGrid[0]) * i / (numPoints - 1)) * QuantumConstants.M_TO_NM;
+        const x =
+          (xGrid[0] +
+            ((xGrid[xGrid.length - 1] - xGrid[0]) * i) / (numPoints - 1)) *
+          QuantumConstants.M_TO_NM;
         const dx = x - centerX;
         const coshVal = Math.cosh(dx / wellWidth);
         const V = -wellDepth / (coshVal * coshVal);
@@ -727,14 +835,18 @@ export class EnergyChartNode extends Node {
     } else if (potentialType === PotentialType.ROSEN_MORSE) {
       // Draw Rosen-Morse potential: V(x) = -V_0 / cosh²(x/a) + V_1 * tanh(x/a)
       const centerX = xCenter;
-      const barrierHeight = "barrierHeightProperty" in this.model
-        ? (this.model as OneWellModel).barrierHeightProperty.value
-        : 0;
+      const barrierHeight =
+        "barrierHeightProperty" in this.model
+          ? (this.model as OneWellModel).barrierHeightProperty.value
+          : 0;
       const numPoints = 200;
       let firstPoint = true;
 
       for (let i = 0; i < numPoints; i++) {
-        const x = (xGrid[0] + (xGrid[xGrid.length - 1] - xGrid[0]) * i / (numPoints - 1)) * QuantumConstants.M_TO_NM;
+        const x =
+          (xGrid[0] +
+            ((xGrid[xGrid.length - 1] - xGrid[0]) * i) / (numPoints - 1)) *
+          QuantumConstants.M_TO_NM;
         const dx = x - centerX;
         const coshVal = Math.cosh(dx / wellWidth);
         const tanhVal = Math.tanh(dx / wellWidth);
@@ -753,14 +865,18 @@ export class EnergyChartNode extends Node {
     } else if (potentialType === PotentialType.ECKART) {
       // Draw Eckart potential: V(x) = V_0 / (1 + exp(x/a))² - V_1 / (1 + exp(x/a))
       const centerX = xCenter;
-      const barrierHeight = "barrierHeightProperty" in this.model
-        ? (this.model as OneWellModel).barrierHeightProperty.value
-        : 0;
+      const barrierHeight =
+        "barrierHeightProperty" in this.model
+          ? (this.model as OneWellModel).barrierHeightProperty.value
+          : 0;
       const numPoints = 200;
       let firstPoint = true;
 
       for (let i = 0; i < numPoints; i++) {
-        const x = (xGrid[0] + (xGrid[xGrid.length - 1] - xGrid[0]) * i / (numPoints - 1)) * QuantumConstants.M_TO_NM;
+        const x =
+          (xGrid[0] +
+            ((xGrid[xGrid.length - 1] - xGrid[0]) * i) / (numPoints - 1)) *
+          QuantumConstants.M_TO_NM;
         const dx = x - centerX;
         const expVal = Math.exp(dx / wellWidth);
         const denom = 1 + expVal;
@@ -791,11 +907,14 @@ export class EnergyChartNode extends Node {
    */
   private updateEnergyLevelStyling(): void {
     this.energyLevelNodes.forEach((line, index) => {
-      const isSelected = index === this.model.selectedEnergyLevelIndexProperty.value;
+      const isSelected =
+        index === this.model.selectedEnergyLevelIndexProperty.value;
       const isHovered = index === this.hoveredEnergyLevelIndex;
 
-      line.stroke = isSelected ? QPPWColors.energyLevelSelectedProperty : QPPWColors.energyLevelProperty;
-      line.lineWidth = isSelected ? 4 : (isHovered ? 3 : 2);
+      line.stroke = isSelected
+        ? QPPWColors.energyLevelSelectedProperty
+        : QPPWColors.energyLevelProperty;
+      line.lineWidth = isSelected ? 4 : isHovered ? 3 : 2;
       line.opacity = isHovered ? 1 : 0.7;
     });
 
@@ -822,28 +941,39 @@ export class EnergyChartNode extends Node {
     this.energyLabelNodes.clear();
 
     // Create new energy level lines
-    const energies = boundStates.energies.map((e) => e * QuantumConstants.JOULES_TO_EV);
+    const energies = boundStates.energies.map(
+      (e) => e * QuantumConstants.JOULES_TO_EV,
+    );
     const x1 = this.chartMargins.left;
     const x2 = this.chartWidth - this.chartMargins.right;
 
     energies.forEach((energy, index) => {
       const y = this.dataToViewY(energy);
-      const isSelected = index === this.model.selectedEnergyLevelIndexProperty.value;
+      const isSelected =
+        index === this.model.selectedEnergyLevelIndexProperty.value;
       const isHovered = index === this.hoveredEnergyLevelIndex;
 
       const line = new Line(x1, y, x2, y, {
-        stroke: isSelected ? QPPWColors.energyLevelSelectedProperty : QPPWColors.energyLevelProperty,
-        lineWidth: isSelected ? 4 : (isHovered ? 3 : 2),
+        stroke: isSelected
+          ? QPPWColors.energyLevelSelectedProperty
+          : QPPWColors.energyLevelProperty,
+        lineWidth: isSelected ? 4 : isHovered ? 3 : 2,
         cursor: "pointer",
         opacity: isHovered ? 1 : 0.7,
       });
 
       // Create a wider invisible hit area to make the line easier to grab
       const hitAreaHeight = 10; // pixels above and below the line
-      const hitArea = new Rectangle(x1, y - hitAreaHeight, x2 - x1, hitAreaHeight * 2, {
-        fill: "transparent",
-        cursor: "pointer",
-      });
+      const hitArea = new Rectangle(
+        x1,
+        y - hitAreaHeight,
+        x2 - x1,
+        hitAreaHeight * 2,
+        {
+          fill: "transparent",
+          cursor: "pointer",
+        },
+      );
 
       // Add click handler to hit area
       hitArea.addInputListener({
@@ -871,8 +1001,8 @@ export class EnergyChartNode extends Node {
       // Use template string from i18n: "E{{level}} = {{value}} eV"
       const template = stringManager.energyLevelLabelStringProperty.value;
       const labelText = template
-        .replace('{{level}}', (index + 1).toString())
-        .replace('{{value}}', energy.toFixed(3));
+        .replace("{{level}}", (index + 1).toString())
+        .replace("{{value}}", energy.toFixed(3));
       const label = new Text(labelText, {
         font: "10px sans-serif",
         fill: QPPWColors.labelFillProperty,
@@ -901,7 +1031,9 @@ export class EnergyChartNode extends Node {
 
     // Hide zero line for Coulomb potentials to reduce clutter
     const potentialType = this.model.potentialTypeProperty.value;
-    this.zeroLine.visible = potentialType !== PotentialType.COULOMB_1D && potentialType !== PotentialType.COULOMB_3D;
+    this.zeroLine.visible =
+      potentialType !== PotentialType.COULOMB_1D &&
+      potentialType !== PotentialType.COULOMB_3D;
   }
 
   /**
@@ -910,7 +1042,8 @@ export class EnergyChartNode extends Node {
   private updateTotalEnergyLine(boundStates: BoundStateResult): void {
     const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
     if (selectedIndex >= 0 && selectedIndex < boundStates.energies.length) {
-      const energy = boundStates.energies[selectedIndex] * QuantumConstants.JOULES_TO_EV;
+      const energy =
+        boundStates.energies[selectedIndex] * QuantumConstants.JOULES_TO_EV;
       const y = this.dataToViewY(energy);
       this.totalEnergyLine.x1 = this.chartMargins.left;
       this.totalEnergyLine.y1 = y;

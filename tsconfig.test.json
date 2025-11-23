@@ -3,7 +3,9 @@
   "compilerOptions": {
     "paths": {
       "scenerystack": ["./tests/mock-scenerystack.js"],
-      "scenerystack/dot": ["./tests/mock-scenerystack.js"]
+      "scenerystack/dot": ["./tests/mock-scenerystack.js"],
+      "scenerystack/axon": ["./tests/mock-scenerystack.js"],
+      "scenerystack/tandem": ["./tests/mock-scenerystack.js"]
     }
   }
 }

@@ -9,7 +9,7 @@ export default [
   // Node.js globals for test files and scripts in root
   {
     files: ["*.js", "*.mjs", "*.ts"],
-    languageOptions: { globals: { ...globals.browser, ...globals.node } }
+    languageOptions: { globals: { ...globals.browser, ...globals.node } },
   },
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,

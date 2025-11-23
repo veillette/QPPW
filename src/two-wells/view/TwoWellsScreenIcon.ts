@@ -19,7 +19,8 @@ const WELL_TOP = ICON_HEIGHT * 0.16;
 const WELL_BOTTOM = ICON_HEIGHT * 0.8;
 const BARRIER_TOP = ICON_HEIGHT * 0.3;
 const CENTRAL_BARRIER_WIDTH = 16;
-const WELL_SECTION_WIDTH = (ICON_WIDTH - 2 * PADDING - CENTRAL_BARRIER_WIDTH) / 2;
+const WELL_SECTION_WIDTH =
+  (ICON_WIDTH - 2 * PADDING - CENTRAL_BARRIER_WIDTH) / 2;
 const LEFT_WELL_END = PADDING + WELL_SECTION_WIDTH;
 const RIGHT_WELL_START = LEFT_WELL_END + CENTRAL_BARRIER_WIDTH;
 
@@ -37,15 +38,15 @@ const LEFT_ENERGY_X = PADDING + 3;
 const RIGHT_ENERGY_X = RIGHT_WELL_START + 2;
 
 // Colors
-const BACKGROUND_GRADIENT_TOP = '#1a1a3a';
-const BACKGROUND_GRADIENT_BOTTOM = '#0a0a1f';
-const WELL_STROKE_COLOR = '#9696c8';
-const BARRIER_GRADIENT_EDGE = '#b43232';
-const BARRIER_GRADIENT_CENTER = '#ff6b3d';
-const LEFT_WAVE_COLOR = '#00c8ff';
-const RIGHT_WAVE_COLOR = '#ff9632';
-const TUNNEL_EFFECT_COLOR = '#a020f0';
-const ENERGY_LEVEL_COLOR = '#00ff96';
+const BACKGROUND_GRADIENT_TOP = "#1a1a3a";
+const BACKGROUND_GRADIENT_BOTTOM = "#0a0a1f";
+const WELL_STROKE_COLOR = "#9696c8";
+const BARRIER_GRADIENT_EDGE = "#b43232";
+const BARRIER_GRADIENT_CENTER = "#ff6b3d";
+const LEFT_WAVE_COLOR = "#00c8ff";
+const RIGHT_WAVE_COLOR = "#ff9632";
+const TUNNEL_EFFECT_COLOR = "#a020f0";
+const ENERGY_LEVEL_COLOR = "#00ff96";
 
 // Line widths
 const WELL_LINE_WIDTH = 2.5;
@@ -86,16 +87,27 @@ export class TwoWellsScreenIcon extends ScreenIcon {
     });
 
     // Central barrier with gradient
-    const barrierGradient = new LinearGradient(LEFT_WELL_END, 0, RIGHT_WELL_START, 0)
+    const barrierGradient = new LinearGradient(
+      LEFT_WELL_END,
+      0,
+      RIGHT_WELL_START,
+      0,
+    )
       .addColorStop(0, BARRIER_GRADIENT_EDGE)
       .addColorStop(0.5, BARRIER_GRADIENT_CENTER)
       .addColorStop(1, BARRIER_GRADIENT_EDGE);
 
     const barrierHeight = WELL_BOTTOM - BARRIER_TOP;
-    const barrier = new Rectangle(LEFT_WELL_END, BARRIER_TOP, CENTRAL_BARRIER_WIDTH, barrierHeight, {
-      fill: barrierGradient,
-      opacity: BARRIER_OPACITY,
-    });
+    const barrier = new Rectangle(
+      LEFT_WELL_END,
+      BARRIER_TOP,
+      CENTRAL_BARRIER_WIDTH,
+      barrierHeight,
+      {
+        fill: barrierGradient,
+        opacity: BARRIER_OPACITY,
+      },
+    );
 
     // Left well wave function
     const leftWaveStart = PADDING + 2;
@@ -142,18 +154,39 @@ export class TwoWellsScreenIcon extends ScreenIcon {
     });
 
     // Energy levels
-    const leftEnergy = new Rectangle(LEFT_ENERGY_X, ENERGY_LEVEL_Y, ENERGY_LEVEL_WIDTH, ENERGY_LEVEL_HEIGHT, {
-      fill: ENERGY_LEVEL_COLOR,
-      opacity: ENERGY_LEVEL_OPACITY,
-    });
+    const leftEnergy = new Rectangle(
+      LEFT_ENERGY_X,
+      ENERGY_LEVEL_Y,
+      ENERGY_LEVEL_WIDTH,
+      ENERGY_LEVEL_HEIGHT,
+      {
+        fill: ENERGY_LEVEL_COLOR,
+        opacity: ENERGY_LEVEL_OPACITY,
+      },
+    );
 
-    const rightEnergy = new Rectangle(RIGHT_ENERGY_X, ENERGY_LEVEL_Y, ENERGY_LEVEL_WIDTH, ENERGY_LEVEL_HEIGHT, {
-      fill: ENERGY_LEVEL_COLOR,
-      opacity: ENERGY_LEVEL_OPACITY,
-    });
+    const rightEnergy = new Rectangle(
+      RIGHT_ENERGY_X,
+      ENERGY_LEVEL_Y,
+      ENERGY_LEVEL_WIDTH,
+      ENERGY_LEVEL_HEIGHT,
+      {
+        fill: ENERGY_LEVEL_COLOR,
+        opacity: ENERGY_LEVEL_OPACITY,
+      },
+    );
 
     const iconNode = new Node({
-      children: [background, barrier, well, leftEnergy, rightEnergy, leftWave, rightWave, tunnelEffect],
+      children: [
+        background,
+        barrier,
+        well,
+        leftEnergy,
+        rightEnergy,
+        leftWave,
+        rightWave,
+        tunnelEffect,
+      ],
     });
 
     super(iconNode, {

@@ -42,7 +42,9 @@ export function solvePoschlTellerPotential(
   const actualNumStates = Math.min(numStates, nMax + 1);
 
   if (actualNumStates <= 0) {
-    throw new Error("Pöschl-Teller potential too shallow to support bound states");
+    throw new Error(
+      "Pöschl-Teller potential too shallow to support bound states",
+    );
   }
 
   // Calculate energies: E_n = -V_0 * [(λ - n - 1/2)/λ]²
@@ -50,7 +52,7 @@ export function solvePoschlTellerPotential(
   const energies: number[] = [];
   for (let n = 0; n < actualNumStates; n++) {
     const term = lambda - n - 0.5;
-    const energy = -V0 * (term * term) / (lambda * lambda);
+    const energy = (-V0 * (term * term)) / (lambda * lambda);
     energies.push(energy);
   }
 
@@ -72,7 +74,9 @@ export function solvePoschlTellerPotential(
     const alpha = lambda - n - 0.5;
 
     // Normalization (with 1/a factor from the variable change)
-    const normalization = Math.sqrt((1 / a) * (2 * alpha) / factorial(n)) * Math.sqrt(factorial(n));
+    const normalization =
+      Math.sqrt(((1 / a) * (2 * alpha)) / factorial(n)) *
+      Math.sqrt(factorial(n));
 
     for (const x of xGrid) {
       const tanhVal = Math.tanh(x / a);

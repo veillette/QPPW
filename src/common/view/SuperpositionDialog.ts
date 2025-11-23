@@ -93,10 +93,13 @@ export class SuperpositionDialog {
     configProperty: Property<SuperpositionConfig>,
     boundStateResult: BoundStateResult | null,
   ): Node {
-    const titleText = new Text(stringManager.superpositionDialogTitleStringProperty, {
-      font: new PhetFont({ size: 18, weight: "bold" }),
-      fill: QPPWColors.textFillProperty,
-    });
+    const titleText = new Text(
+      stringManager.superpositionDialogTitleStringProperty,
+      {
+        font: new PhetFont({ size: 18, weight: "bold" }),
+        fill: QPPWColors.textFillProperty,
+      },
+    );
 
     const descriptionText = new RichText(
       stringManager.superpositionInstructionsStringProperty,
@@ -109,7 +112,10 @@ export class SuperpositionDialog {
 
     // Determine how many states to show based on the current config
     const config = configProperty.value;
-    const numStates = Math.min(config.amplitudes.length, boundStateResult?.energies.length || 5);
+    const numStates = Math.min(
+      config.amplitudes.length,
+      boundStateResult?.energies.length || 5,
+    );
 
     // Create sliders for each amplitude
     const sliderNodes: Node[] = [];
@@ -182,8 +188,13 @@ export class SuperpositionDialog {
     });
 
     const updateNormalization = () => {
-      const sumSquared = this.amplitudeProperties.reduce((sum, prop) => sum + prop.value * prop.value, 0);
-      normalizationText.string = stringManager.normalizationSumStringProperty.value + sumSquared.toFixed(3);
+      const sumSquared = this.amplitudeProperties.reduce(
+        (sum, prop) => sum + prop.value * prop.value,
+        0,
+      );
+      normalizationText.string =
+        stringManager.normalizationSumStringProperty.value +
+        sumSquared.toFixed(3);
 
       // Change color if not normalized
       if (Math.abs(sumSquared - 1.0) > 0.01) {
@@ -204,7 +215,10 @@ export class SuperpositionDialog {
         fill: QPPWColors.textFillProperty,
       }),
       listener: () => {
-        const sumSquared = this.amplitudeProperties.reduce((sum, prop) => sum + prop.value * prop.value, 0);
+        const sumSquared = this.amplitudeProperties.reduce(
+          (sum, prop) => sum + prop.value * prop.value,
+          0,
+        );
         const normFactor = Math.sqrt(sumSquared);
 
         if (normFactor > 0) {
@@ -255,7 +269,13 @@ export class SuperpositionDialog {
     return new VBox({
       spacing: 15,
       align: "left",
-      children: [titleText, descriptionText, slidersVBox, normalizationRow, buttonRow],
+      children: [
+        titleText,
+        descriptionText,
+        slidersVBox,
+        normalizationRow,
+        buttonRow,
+      ],
     });
   }
 }

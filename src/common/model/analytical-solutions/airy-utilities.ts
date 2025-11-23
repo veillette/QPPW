@@ -12,14 +12,13 @@ import { airyAi } from "./math-utilities.js";
  * These are the first 30 zeros (negative values where Ai(z_n) = 0).
  */
 export const AIRY_ZEROS = [
-  -2.33810741046, -4.08794944413, -5.52055982810, -6.78670809007,
-  -7.94413358712, -9.02265085334, -10.0401743416, -11.0085243037,
-  -11.9360155632, -12.8287767529, -13.6914890352, -14.5278299518,
-  -15.3407550016, -16.1328355283, -16.9062914467, -17.6629059623,
-  -18.4040686682, -19.1316436363, -19.8471121589, -20.5516776771,
-  -21.2463345333, -21.9319076370, -22.6091606826, -23.2787913810,
-  -23.9414358498, -24.5976826013, -25.2480724088, -25.8930940959,
-  -26.5331934669, -27.1687726548
+  -2.33810741046, -4.08794944413, -5.5205598281, -6.78670809007, -7.94413358712,
+  -9.02265085334, -10.0401743416, -11.0085243037, -11.9360155632,
+  -12.8287767529, -13.6914890352, -14.5278299518, -15.3407550016,
+  -16.1328355283, -16.9062914467, -17.6629059623, -18.4040686682,
+  -19.1316436363, -19.8471121589, -20.5516776771, -21.2463345333, -21.931907637,
+  -22.6091606826, -23.278791381, -23.9414358498, -24.5976826013, -25.2480724088,
+  -25.8930940959, -26.5331934669, -27.1687726548,
 ];
 
 /**
@@ -57,7 +56,7 @@ export function getApproximateAiryZero(n: number): number {
 export function refineAiryZero(
   initialGuess: number,
   maxIterations: number = 10,
-  tolerance: number = 1e-10
+  tolerance: number = 1e-10,
 ): number {
   let z = initialGuess;
   const h = 1e-6; // Small step for numerical derivative
@@ -123,11 +122,15 @@ export function getAiryZero(n: number): number {
 export function calculateTriangularWellEnergy(
   airyZero: number,
   mass: number,
-  slope: number
+  slope: number,
 ): number {
   const { HBAR } = QuantumConstants;
   // Since z_n < 0, we have -z_n > 0, so E > 0
-  return -airyZero * Math.pow(HBAR * HBAR / (2 * mass), 1 / 3) * Math.pow(slope, 2 / 3);
+  return (
+    -airyZero *
+    Math.pow((HBAR * HBAR) / (2 * mass), 1 / 3) *
+    Math.pow(slope, 2 / 3)
+  );
 }
 
 /**
@@ -136,7 +139,10 @@ export function calculateTriangularWellEnergy(
  * @param gridConfig - Grid configuration with xMin, xMax, and numPoints
  * @returns Object containing xGrid array and dx spacing
  */
-export function generateGrid(gridConfig: GridConfig): { xGrid: number[]; dx: number } {
+export function generateGrid(gridConfig: GridConfig): {
+  xGrid: number[];
+  dx: number;
+} {
   const numPoints = gridConfig.numPoints;
   const dx = (gridConfig.xMax - gridConfig.xMin) / (numPoints - 1);
   const xGrid: number[] = [];
@@ -162,7 +168,7 @@ export function normalizeWavefunction(psiRaw: number[], dx: number): number[] {
   }
   const norm = 1 / Math.sqrt(normSq);
 
-  return psiRaw.map(psi => norm * psi);
+  return psiRaw.map((psi) => norm * psi);
 }
 
 /**
@@ -173,7 +179,10 @@ export function normalizeWavefunction(psiRaw: number[], dx: number): number[] {
  * @param stateIndex - Quantum state index (0 for ground state)
  * @returns Wavefunction with consistent sign convention
  */
-export function applySignConvention(wavefunction: number[], stateIndex: number): number[] {
+export function applySignConvention(
+  wavefunction: number[],
+  stateIndex: number,
+): number[] {
   // Find the maximum absolute value
   let maxAbsIndex = 0;
   let maxAbsValue = 0;
@@ -187,8 +196,8 @@ export function applySignConvention(wavefunction: number[], stateIndex: number):
   // For ground state (n=0), ensure it's positive
   // For excited states, use alternating convention based on state index
   const shouldBePositive = stateIndex % 2 === 0;
-  if ((wavefunction[maxAbsIndex] > 0) !== shouldBePositive) {
-    return wavefunction.map(psi => -psi);
+  if (wavefunction[maxAbsIndex] > 0 !== shouldBePositive) {
+    return wavefunction.map((psi) => -psi);
   }
 
   return wavefunction;
@@ -209,7 +218,7 @@ export function refineBisection(
   a: number,
   b: number,
   tolerance: number,
-  maxIterations: number
+  maxIterations: number,
 ): number | null {
   let fa = f(a);
   const fb = f(b);

@@ -3,8 +3,21 @@
  * This includes potential selection, display options, particle mass, and well parameters.
  */
 
-import { Node, Text, VBox, HBox, HSeparator, RichText } from "scenerystack/scenery";
-import { Panel, Checkbox, VerticalAquaRadioButtonGroup, ComboBox, HSlider } from "scenerystack/sun";
+import {
+  Node,
+  Text,
+  VBox,
+  HBox,
+  HSeparator,
+  RichText,
+} from "scenerystack/scenery";
+import {
+  Panel,
+  Checkbox,
+  VerticalAquaRadioButtonGroup,
+  ComboBox,
+  HSlider,
+} from "scenerystack/sun";
 import { Dimension2 } from "scenerystack/dot";
 import { OneWellModel } from "../../one-well/model/OneWellModel.js";
 import { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
@@ -55,7 +68,9 @@ export class ControlPanelNode extends Node {
     // Create all control groups
     const energyChartGroup = this.createEnergyChartGroup(listBoxParent);
     const bottomChartGroup = this.createBottomChartGroup();
-    const particleMassGroup = this.options.showParticleMass ? this.createParticleMassGroup() : null;
+    const particleMassGroup = this.options.showParticleMass
+      ? this.createParticleMassGroup()
+      : null;
     const wellConfigGroup = this.createWellConfigurationGroup();
 
     // Arrange groups vertically (only include particle mass if enabled)
@@ -203,7 +218,9 @@ export class ControlPanelNode extends Node {
 
     // Filter potential types if specified in options
     const potentialItems = this.options.allowedPotentialTypes
-      ? allPotentialItems.filter((item) => this.options.allowedPotentialTypes!.includes(item.value))
+      ? allPotentialItems.filter((item) =>
+          this.options.allowedPotentialTypes!.includes(item.value),
+        )
       : allPotentialItems;
 
     const potentialComboBox = new ComboBox(
@@ -222,10 +239,13 @@ export class ControlPanelNode extends Node {
       },
     );
 
-    const potentialLabelText = new Text(stringManager.potentialWellStringProperty, {
-      font: new PhetFont(14),
-      fill: QPPWColors.textFillProperty,
-    });
+    const potentialLabelText = new Text(
+      stringManager.potentialWellStringProperty,
+      {
+        font: new PhetFont(14),
+        fill: QPPWColors.textFillProperty,
+      },
+    );
 
     const potentialRowNode = new HBox({
       spacing: 10,
@@ -300,10 +320,13 @@ export class ControlPanelNode extends Node {
       },
     );
 
-    const superpositionLabelText = new Text(stringManager.superpositionStringProperty, {
-      font: new PhetFont(14),
-      fill: QPPWColors.textFillProperty,
-    });
+    const superpositionLabelText = new Text(
+      stringManager.superpositionStringProperty,
+      {
+        font: new PhetFont(14),
+        fill: QPPWColors.textFillProperty,
+      },
+    );
 
     const superpositionRowNode = new HBox({
       spacing: 10,
@@ -356,7 +379,8 @@ export class ControlPanelNode extends Node {
     }
 
     // Track the previous superposition type to revert if dialog is cancelled
-    let previousSuperpositionType: SuperpositionType = this.model.superpositionTypeProperty.value;
+    let previousSuperpositionType: SuperpositionType =
+      this.model.superpositionTypeProperty.value;
     let isHandlingDialogResult = false;
 
     // Open dialog when "Custom..." is selected
@@ -379,7 +403,8 @@ export class ControlPanelNode extends Node {
           () => {
             // Cancel button pressed - revert to previous selection
             isHandlingDialogResult = true;
-            this.model.superpositionTypeProperty.value = previousSuperpositionType;
+            this.model.superpositionTypeProperty.value =
+              previousSuperpositionType;
             isHandlingDialogResult = false;
           },
         );
@@ -456,10 +481,13 @@ export class ControlPanelNode extends Node {
     });
 
     // Wave function views checkboxes
-    const waveFunctionViewsLabel = new Text(stringManager.waveFunctionViewsStringProperty, {
-      font: new PhetFont(14),
-      fill: QPPWColors.textFillProperty,
-    });
+    const waveFunctionViewsLabel = new Text(
+      stringManager.waveFunctionViewsStringProperty,
+      {
+        font: new PhetFont(14),
+        fill: QPPWColors.textFillProperty,
+      },
+    );
 
     const realPartCheckbox = new Checkbox(
       this.model.showRealPartProperty,
@@ -770,8 +798,7 @@ export class ControlPanelNode extends Node {
     // Coulomb potentials have fixed spatial extent and don't use well width
     this.model.potentialTypeProperty.link((type: PotentialType) => {
       const needsWidth =
-        type !== PotentialType.COULOMB_1D &&
-        type !== PotentialType.COULOMB_3D;
+        type !== PotentialType.COULOMB_1D && type !== PotentialType.COULOMB_3D;
       widthRow.visible = needsWidth;
     });
 
@@ -794,8 +821,7 @@ export class ControlPanelNode extends Node {
     if (barrierHeightRow) {
       this.model.potentialTypeProperty.link((type: PotentialType) => {
         const needsBarrierHeight =
-          type === PotentialType.ROSEN_MORSE ||
-          type === PotentialType.ECKART;
+          type === PotentialType.ROSEN_MORSE || type === PotentialType.ECKART;
         barrierHeightRow!.visible = needsBarrierHeight;
       });
     }

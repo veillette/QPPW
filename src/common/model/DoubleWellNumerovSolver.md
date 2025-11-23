@@ -7,6 +7,7 @@ The `DoubleWellNumerovSolver` provides an optimized solution for finding energy 
 ## Key Features
 
 ### 1. **Intelligent Energy Search**
+
 Instead of blindly scanning the entire energy range, this solver uses physical insights:
 
 - **Single Well Approximation**: Estimates starting energies from the equivalent single finite square well
@@ -23,10 +24,12 @@ V(x) = 0    otherwise (barrier)
 ```
 
 Energy levels split due to quantum tunneling:
+
 - **Symmetric states**: ψ(-x) = ψ(x), lower energy (E⁺)
 - **Antisymmetric states**: ψ(-x) = -ψ(x), higher energy (E⁻)
 
 The splitting ΔE = E⁻ - E⁺ depends on:
+
 - Barrier width (well separation)
 - Tunneling probability (WKB approximation)
 - Energy level index
@@ -49,6 +52,7 @@ The splitting ΔE = E⁻ - E⁺ depends on:
 ### Automatic (Recommended)
 
 The solver is automatically used when:
+
 1. Potential type is `DOUBLE_SQUARE_WELL`
 2. Numerical method is set to `NUMEROV`
 
@@ -70,12 +74,12 @@ For direct use in custom code:
 import { solveDoubleWellNumerov } from "./DoubleWellNumerovSolver.js";
 
 const result = solveDoubleWellNumerov(
-  wellWidth,        // meters (e.g., 1e-9 for 1 nm)
-  wellDepth,        // Joules (e.g., 8e-19 for 5 eV)
-  wellSeparation,   // meters (e.g., 2e-10 for 0.2 nm)
-  mass,            // kg (ELECTRON_MASS = 9.109e-31 kg)
-  numStates,       // number of states to find
-  gridConfig       // { xMin, xMax, numPoints }
+  wellWidth, // meters (e.g., 1e-9 for 1 nm)
+  wellDepth, // Joules (e.g., 8e-19 for 5 eV)
+  wellSeparation, // meters (e.g., 2e-10 for 0.2 nm)
+  mass, // kg (ELECTRON_MASS = 9.109e-31 kg)
+  numStates, // number of states to find
+  gridConfig, // { xMin, xMax, numPoints }
 );
 
 // Result contains:
@@ -87,35 +91,39 @@ const result = solveDoubleWellNumerov(
 
 ## Advantages over Generic Numerov
 
-| Feature | Generic Numerov | Double Well Numerov |
-|---------|----------------|---------------------|
-| Energy search | Blind scan (1000 points) | Targeted search near estimates |
-| Success rate | ~70% for close wells | ~95% for all separations |
-| Speed | Slower (scans full range) | Faster (focused search) |
-| Physics insight | None | Uses single well + tunneling |
-| Level ordering | May miss states | Guaranteed sym/antisym pairs |
+| Feature         | Generic Numerov           | Double Well Numerov            |
+| --------------- | ------------------------- | ------------------------------ |
+| Energy search   | Blind scan (1000 points)  | Targeted search near estimates |
+| Success rate    | ~70% for close wells      | ~95% for all separations       |
+| Speed           | Slower (scans full range) | Faster (focused search)        |
+| Physics insight | None                      | Uses single well + tunneling   |
+| Level ordering  | May miss states           | Guaranteed sym/antisym pairs   |
 
 ## Parameter Recommendations
 
 ### Well Width (L)
+
 - **Typical**: 0.5-2.0 nm
 - **Effect**: Larger wells → more bound states
 
 ### Well Depth (V₀)
+
 - **Typical**: 2-10 eV
 - **Effect**: Deeper wells → more bound states, larger splitting
 
 ### Well Separation (d)
+
 - **Small** (d < L): Large splitting, strongly coupled
 - **Medium** (d ≈ L): Moderate splitting
 - **Large** (d > 2L): Small splitting, weakly coupled (approaches single well)
 
 ### Grid Configuration
+
 ```typescript
 const gridConfig = {
-  xMin: -4e-9,        // -4 nm
-  xMax: 4e-9,         // +4 nm
-  numPoints: 1000     // Good balance of accuracy and speed
+  xMin: -4e-9, // -4 nm
+  xMax: 4e-9, // +4 nm
+  numPoints: 1000, // Good balance of accuracy and speed
 };
 ```
 
@@ -127,10 +135,12 @@ For a finite square well, energy eigenvalues satisfy:
 **Odd parity**: -cot(ξ) = √((ξ₀/ξ)² - 1)
 
 where:
+
 - ξ = (L/2)√(2m(E+V₀)/ℏ²)
 - ξ₀ = (L/2)√(2mV₀/ℏ²)
 
 These are solved numerically using bisection in intervals:
+
 - Even: [nπ/2, (n+1)π/2] for n = 0, 2, 4, ...
 - Odd: [nπ/2, (n+1)π/2] for n = 1, 3, 5, ...
 
@@ -143,6 +153,7 @@ The energy splitting is estimated using:
 ```
 
 where:
+
 - κ = √(2m|E|/ℏ²) is the decay constant
 - d is the barrier width
 - E_single is the single well energy (negative)
@@ -170,15 +181,18 @@ This provides O(h⁶) local accuracy, much better than standard finite differenc
 ## Troubleshooting
 
 ### No states found
+
 - Well too shallow: Increase `wellDepth`
 - Wrong energy range: Check that barrier is properly defined
 - Grid too coarse: Increase `numPoints`
 
 ### Wrong parity detected
+
 - Adjust parity verification threshold in `verifyParity()`
 - Check grid symmetry (should be centered at x=0)
 
 ### Energy search fails
+
 - Increase `searchWindow` in `findEnergyNearEstimate()`
 - Check for numerical instabilities in potential function
 

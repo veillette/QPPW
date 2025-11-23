@@ -33,8 +33,8 @@
  *   or: npm run test:double-well
  */
 
-import { solveDoubleSquareWellAnalytical } from '../src/common/model/analytical-solutions/double-square-well.js';
-import QuantumConstants from '../src/common/model/QuantumConstants.js';
+import { solveDoubleSquareWellAnalytical } from "../src/common/model/analytical-solutions/double-square-well.js";
+import QuantumConstants from "../src/common/model/QuantumConstants.js";
 
 // Physical constants
 const { HBAR, ELECTRON_MASS, EV_TO_JOULES, NM_TO_M } = QuantumConstants;
@@ -61,7 +61,7 @@ function solveDoubleWell(
   barrierWidthNm: number,
   particleMassUnits: number = 1.0,
   numStates: number = 30,
-  gridPoints: number = DEFAULT_GRID_POINTS
+  gridPoints: number = DEFAULT_GRID_POINTS,
 ) {
   const wellWidth = wellWidthNm * NM_TO_M;
   const wellDepth = wellDepthEv * EV_TO_JOULES;
@@ -76,7 +76,7 @@ function solveDoubleWell(
   const gridConfig = {
     xMin: -gridRange,
     xMax: gridRange,
-    numPoints: gridPoints
+    numPoints: gridPoints,
   };
 
   const result = solveDoubleSquareWellAnalytical(
@@ -85,20 +85,20 @@ function solveDoubleWell(
     wellSeparation,
     mass,
     numStates,
-    gridConfig
+    gridConfig,
   );
 
   return {
-    energies: result.energies.map(E => E / EV_TO_JOULES),
+    energies: result.energies.map((E) => E / EV_TO_JOULES),
     wavefunctions: result.wavefunctions,
     xGrid: result.xGrid,
-    xNm: result.xGrid.map(x => x / NM_TO_M),
+    xNm: result.xGrid.map((x) => x / NM_TO_M),
     Linner: halfSeparation,
     Louter: outerEdge,
     wellWidth,
     wellDepth,
     wellSeparation,
-    mass
+    mass,
   };
 }
 
@@ -119,7 +119,7 @@ function assert(condition: boolean, message: string): void {
 /**
  * Detect parity from wavefunction symmetry
  */
-function detectParity(x: number[], psi: number[]): 'even' | 'odd' | 'mixed' {
+function detectParity(x: number[], psi: number[]): "even" | "odd" | "mixed" {
   const midIndex = Math.floor(x.length / 2);
 
   let symDiff = 0;
@@ -140,13 +140,13 @@ function detectParity(x: number[], psi: number[]): 'even' | 'odd' | 'mixed' {
   symDiff /= count;
   antiDiff /= count;
 
-  const maxMag = Math.max(...psi.map(v => Math.abs(v)));
+  const maxMag = Math.max(...psi.map((v) => Math.abs(v)));
   const relSymDiff = symDiff / maxMag;
   const relAntiDiff = antiDiff / maxMag;
 
-  if (relSymDiff < PARITY_TOLERANCE) return 'even';
-  if (relAntiDiff < PARITY_TOLERANCE) return 'odd';
-  return 'mixed';
+  if (relSymDiff < PARITY_TOLERANCE) return "even";
+  if (relAntiDiff < PARITY_TOLERANCE) return "odd";
+  return "mixed";
 }
 
 /**
@@ -182,7 +182,7 @@ function checkEdgeDecay(
   psi: number[],
   Louter: number,
   stateEnergy?: number,
-  wellDepth?: number
+  wellDepth?: number,
 ): {
   leftDecay: number;
   rightDecay: number;
@@ -221,7 +221,7 @@ function checkEdgeDecay(
     leftDecay,
     rightDecay,
     leftOk: leftDecay < tolerance,
-    rightOk: rightDecay < tolerance
+    rightOk: rightDecay < tolerance,
   };
 }
 
@@ -230,18 +230,18 @@ function checkEdgeDecay(
  */
 function checkDerivativeContinuity(
   E: number, // Energy in Joules
-  parity: 'even' | 'odd',
+  parity: "even" | "odd",
   Linner: number, // meters
   L: number, // well width in meters
   V0: number, // well depth in Joules
-  mass: number
+  mass: number,
 ): number {
   const k = Math.sqrt(2 * mass * E) / HBAR;
   const kappa = Math.sqrt(2 * mass * (V0 - E)) / HBAR;
   const alpha = kappa;
 
   let B: number, C: number;
-  if (parity === 'even') {
+  if (parity === "even") {
     B = Math.cosh(kappa * Linner);
     C = (kappa / k) * Math.sinh(kappa * Linner);
   } else {
@@ -261,7 +261,11 @@ function checkDerivativeContinuity(
 /**
  * Check orthogonality between two wavefunctions
  */
-function checkOrthogonality(x: number[], psi1: number[], psi2: number[]): number {
+function checkOrthogonality(
+  x: number[],
+  psi1: number[],
+  psi2: number[],
+): number {
   const dx = x[1] - x[0];
   let overlap = 0;
   for (let i = 0; i < psi1.length; i++) {
@@ -301,7 +305,7 @@ function checkLocalization(
   x: number[],
   psi: number[],
   Linner: number,
-  Louter: number
+  Louter: number,
 ): { inWells: number; total: number; ratio: number } {
   const dx = x[1] - x[0];
   let probInWells = 0;
@@ -313,7 +317,7 @@ function checkLocalization(
 
     // Check if in wells (not in barrier or outside)
     const absX = Math.abs(x[i]);
-    const inWell = (absX >= Linner && absX <= Louter);
+    const inWell = absX >= Linner && absX <= Louter;
     if (inWell) {
       probInWells += prob;
     }
@@ -322,40 +326,47 @@ function checkLocalization(
   return {
     inWells: probInWells,
     total: probTotal,
-    ratio: probInWells / probTotal
+    ratio: probInWells / probTotal,
   };
 }
 
-console.log('═'.repeat(80));
-console.log('  COMPREHENSIVE DOUBLE QUANTUM WELL TEST SUITE');
-console.log('═'.repeat(80));
-console.log('');
+console.log("═".repeat(80));
+console.log("  COMPREHENSIVE DOUBLE QUANTUM WELL TEST SUITE");
+console.log("═".repeat(80));
+console.log("");
 
 // =============================================================================
 // TEST 1: Parity Alternation for ALL States
 // =============================================================================
-console.log('[Test 1] Parity Alternation for ALL States');
-console.log('-'.repeat(80));
+console.log("[Test 1] Parity Alternation for ALL States");
+console.log("-".repeat(80));
 try {
   const result = solveDoubleWell(5.0, 0.4, 3.0, 1.0, 20, 1000);
 
   console.log(`Found ${result.energies.length} states`);
-  assert(result.energies.length >= 4, 'Should find at least 4 states');
+  assert(result.energies.length >= 4, "Should find at least 4 states");
 
-  const parities = result.wavefunctions.map(wf => detectParity(result.xGrid, wf));
+  const parities = result.wavefunctions.map((wf) =>
+    detectParity(result.xGrid, wf),
+  );
 
   let parityErrors = 0;
   for (let i = 0; i < parities.length; i++) {
-    const expected = i % 2 === 0 ? 'even' : 'odd';
+    const expected = i % 2 === 0 ? "even" : "odd";
     if (parities[i] !== expected) {
       console.error(`  State ${i}: expected ${expected}, got ${parities[i]}`);
       parityErrors++;
     }
   }
 
-  assert(parityErrors === 0, `All ${parities.length} states should alternate parity correctly`);
-  console.log(`  ✓ All ${parities.length} states have correct alternating parity: ${parities.slice(0, 8).join(', ')}${parities.length > 8 ? ', ...' : ''}`);
-  console.log('  ✓ Test PASSED\n');
+  assert(
+    parityErrors === 0,
+    `All ${parities.length} states should alternate parity correctly`,
+  );
+  console.log(
+    `  ✓ All ${parities.length} states have correct alternating parity: ${parities.slice(0, 8).join(", ")}${parities.length > 8 ? ", ..." : ""}`,
+  );
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -364,8 +375,8 @@ try {
 // =============================================================================
 // TEST 2: Node Count Matches State Index for ALL States
 // =============================================================================
-console.log('[Test 2] Node Count Matches State Index for ALL States');
-console.log('-'.repeat(80));
+console.log("[Test 2] Node Count Matches State Index for ALL States");
+console.log("-".repeat(80));
 try {
   const result = solveDoubleWell(5.0, 0.5, 2.0, 1.0, 20, 1000);
 
@@ -381,9 +392,14 @@ try {
     }
   }
 
-  assert(nodeErrors === 0, `All ${result.energies.length} states should have correct node count`);
-  console.log(`  ✓ All ${result.energies.length} states have correct node count (state n has n nodes)`);
-  console.log('  ✓ Test PASSED\n');
+  assert(
+    nodeErrors === 0,
+    `All ${result.energies.length} states should have correct node count`,
+  );
+  console.log(
+    `  ✓ All ${result.energies.length} states have correct node count (state n has n nodes)`,
+  );
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -392,8 +408,8 @@ try {
 // =============================================================================
 // TEST 3: Edge Behavior for ALL States
 // =============================================================================
-console.log('[Test 3] Edge Behavior (Decay, No Spurious Nodes) for ALL States');
-console.log('-'.repeat(80));
+console.log("[Test 3] Edge Behavior (Decay, No Spurious Nodes) for ALL States");
+console.log("-".repeat(80));
 try {
   const result = solveDoubleWell(5.0, 0.5, 2.0, 1.0, 20, 1200);
 
@@ -406,17 +422,24 @@ try {
       result.wavefunctions[i],
       result.Louter,
       result.energies[i],
-      0.5 // well depth in eV
+      0.5, // well depth in eV
     );
     if (!edgeInfo.leftOk || !edgeInfo.rightOk) {
-      console.error(`  State ${i}: left decay ${(edgeInfo.leftDecay * 100).toFixed(2)}%, right decay ${(edgeInfo.rightDecay * 100).toFixed(2)}%`);
+      console.error(
+        `  State ${i}: left decay ${(edgeInfo.leftDecay * 100).toFixed(2)}%, right decay ${(edgeInfo.rightDecay * 100).toFixed(2)}%`,
+      );
       edgeErrors++;
     }
   }
 
-  assert(edgeErrors === 0, `All ${result.energies.length} states should have proper edge decay`);
-  console.log(`  ✓ All ${result.energies.length} states decay properly at boundaries (< ${EDGE_TOLERANCE * 100}% of max)`);
-  console.log('  ✓ Test PASSED\n');
+  assert(
+    edgeErrors === 0,
+    `All ${result.energies.length} states should have proper edge decay`,
+  );
+  console.log(
+    `  ✓ All ${result.energies.length} states decay properly at boundaries (< ${EDGE_TOLERANCE * 100}% of max)`,
+  );
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -425,8 +448,8 @@ try {
 // =============================================================================
 // TEST 4: Normalization for ALL States
 // =============================================================================
-console.log('[Test 4] Normalization for ALL States');
-console.log('-'.repeat(80));
+console.log("[Test 4] Normalization for ALL States");
+console.log("-".repeat(80));
 try {
   const result = solveDoubleWell(5.0, 0.5, 2.0, 1.0, 20, 1000);
 
@@ -436,14 +459,21 @@ try {
   for (let i = 0; i < result.energies.length; i++) {
     const norm = checkNormalization(result.xGrid, result.wavefunctions[i]);
     if (Math.abs(norm - 1.0) > NORMALIZATION_TOLERANCE) {
-      console.error(`  State ${i}: normalization = ${norm.toFixed(6)} (should be ~1.0)`);
+      console.error(
+        `  State ${i}: normalization = ${norm.toFixed(6)} (should be ~1.0)`,
+      );
       normErrors++;
     }
   }
 
-  assert(normErrors === 0, `All ${result.energies.length} states should be normalized`);
-  console.log(`  ✓ All ${result.energies.length} states are properly normalized (within ${NORMALIZATION_TOLERANCE * 100}%)`);
-  console.log('  ✓ Test PASSED\n');
+  assert(
+    normErrors === 0,
+    `All ${result.energies.length} states should be normalized`,
+  );
+  console.log(
+    `  ✓ All ${result.energies.length} states are properly normalized (within ${NORMALIZATION_TOLERANCE * 100}%)`,
+  );
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -452,8 +482,8 @@ try {
 // =============================================================================
 // TEST 5: Monotonically Increasing Energies
 // =============================================================================
-console.log('[Test 5] Monotonically Increasing Energies for ALL States');
-console.log('-'.repeat(80));
+console.log("[Test 5] Monotonically Increasing Energies for ALL States");
+console.log("-".repeat(80));
 try {
   const result = solveDoubleWell(5.0, 0.5, 2.0, 1.0, 20, 1000);
 
@@ -463,14 +493,18 @@ try {
     const tolerance = 1e-10;
     assert(
       result.energies[i] >= result.energies[i - 1] - tolerance,
-      `E[${i}] = ${result.energies[i].toFixed(6)} should be >= E[${i-1}] = ${result.energies[i - 1].toFixed(6)}`
+      `E[${i}] = ${result.energies[i].toFixed(6)} should be >= E[${i - 1}] = ${result.energies[i - 1].toFixed(6)}`,
     );
   }
 
-  console.log(`  ✓ All ${result.energies.length} energies are monotonically increasing`);
+  console.log(
+    `  ✓ All ${result.energies.length} energies are monotonically increasing`,
+  );
   console.log(`  ✓ Ground state: ${result.energies[0].toFixed(6)} eV`);
-  console.log(`  ✓ Highest state: ${result.energies[result.energies.length - 1].toFixed(6)} eV`);
-  console.log('  ✓ Test PASSED\n');
+  console.log(
+    `  ✓ Highest state: ${result.energies[result.energies.length - 1].toFixed(6)} eV`,
+  );
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -479,8 +513,8 @@ try {
 // =============================================================================
 // TEST 6: Derivative Continuity at Edges for ALL States
 // =============================================================================
-console.log('[Test 6] Derivative Continuity at Outer Edges for ALL States');
-console.log('-'.repeat(80));
+console.log("[Test 6] Derivative Continuity at Outer Edges for ALL States");
+console.log("-".repeat(80));
 try {
   const result = solveDoubleWell(5.0, 0.5, 2.0, 1.0, 20, 1200);
 
@@ -488,25 +522,34 @@ try {
 
   let derivErrors = 0;
   for (let i = 0; i < result.energies.length; i++) {
-    const parity = detectParity(result.xGrid, result.wavefunctions[i]) as 'even' | 'odd';
+    const parity = detectParity(result.xGrid, result.wavefunctions[i]) as
+      | "even"
+      | "odd";
     const derivError = checkDerivativeContinuity(
       result.energies[i] * EV_TO_JOULES,
       parity,
       result.Linner,
       result.wellWidth,
       result.wellDepth,
-      result.mass
+      result.mass,
     );
 
     if (derivError > DERIVATIVE_TOLERANCE) {
-      console.error(`  State ${i}: derivative error ${(derivError * 100).toFixed(2)}%`);
+      console.error(
+        `  State ${i}: derivative error ${(derivError * 100).toFixed(2)}%`,
+      );
       derivErrors++;
     }
   }
 
-  assert(derivErrors === 0, `All ${result.energies.length} states should have continuous derivatives at edges`);
-  console.log(`  ✓ All ${result.energies.length} states have continuous derivatives at edges (< ${DERIVATIVE_TOLERANCE * 100}%)`);
-  console.log('  ✓ Test PASSED\n');
+  assert(
+    derivErrors === 0,
+    `All ${result.energies.length} states should have continuous derivatives at edges`,
+  );
+  console.log(
+    `  ✓ All ${result.energies.length} states have continuous derivatives at edges (< ${DERIVATIVE_TOLERANCE * 100}%)`,
+  );
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -515,8 +558,8 @@ try {
 // =============================================================================
 // TEST 7: Parameter Range - Well Width Variations
 // =============================================================================
-console.log('[Test 7] Parameter Range - Well Width Variations');
-console.log('-'.repeat(80));
+console.log("[Test 7] Parameter Range - Well Width Variations");
+console.log("-".repeat(80));
 try {
   const wellWidths = [1.0, 2.0, 3.0, 5.0, 8.0];
   const wellDepth = 0.8; // Use deeper well to ensure bound states exist
@@ -530,23 +573,25 @@ try {
     for (let i = 0; i < result.energies.length; i++) {
       assert(
         result.energies[i] > 0 && result.energies[i] < wellDepth,
-        `State ${i} energy ${result.energies[i].toFixed(6)} should be bound (0 < E < ${wellDepth})`
+        `State ${i} energy ${result.energies[i].toFixed(6)} should be bound (0 < E < ${wellDepth})`,
       );
     }
 
-    console.log(`  w=${width.toFixed(1)} nm: ${result.energies.length} states, E_0=${result.energies[0].toFixed(6)} eV`);
+    console.log(
+      `  w=${width.toFixed(1)} nm: ${result.energies.length} states, E_0=${result.energies[0].toFixed(6)} eV`,
+    );
   }
 
   // Wider wells should support more states
   for (let i = 1; i < statesCounts.length; i++) {
     assert(
       statesCounts[i] >= statesCounts[i - 1],
-      `Wider wells should support more or equal states: ${statesCounts[i]} >= ${statesCounts[i - 1]}`
+      `Wider wells should support more or equal states: ${statesCounts[i]} >= ${statesCounts[i - 1]}`,
     );
   }
 
-  console.log('  ✓ State count increases (or stays same) with well width');
-  console.log('  ✓ Test PASSED\n');
+  console.log("  ✓ State count increases (or stays same) with well width");
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -555,8 +600,8 @@ try {
 // =============================================================================
 // TEST 8: Parameter Range - Well Depth Variations
 // =============================================================================
-console.log('[Test 8] Parameter Range - Well Depth Variations');
-console.log('-'.repeat(80));
+console.log("[Test 8] Parameter Range - Well Depth Variations");
+console.log("-".repeat(80));
 try {
   const wellDepths = [0.1, 0.2, 0.4, 0.6, 0.8, 1.0];
   const statesCounts: number[] = [];
@@ -565,19 +610,21 @@ try {
     const result = solveDoubleWell(2.0, depth, 1.0, 1.0, 30, 1000);
     statesCounts.push(result.energies.length);
 
-    console.log(`  V₀=${depth.toFixed(1)} eV: ${result.energies.length} states, E_0=${result.energies[0].toFixed(6)} eV`);
+    console.log(
+      `  V₀=${depth.toFixed(1)} eV: ${result.energies.length} states, E_0=${result.energies[0].toFixed(6)} eV`,
+    );
   }
 
   // Deeper wells should support more states
   for (let i = 1; i < statesCounts.length; i++) {
     assert(
       statesCounts[i] >= statesCounts[i - 1],
-      `Deeper wells should support more or equal states: ${statesCounts[i]} >= ${statesCounts[i - 1]}`
+      `Deeper wells should support more or equal states: ${statesCounts[i]} >= ${statesCounts[i - 1]}`,
     );
   }
 
-  console.log('  ✓ State count increases (or stays same) with well depth');
-  console.log('  ✓ Test PASSED\n');
+  console.log("  ✓ State count increases (or stays same) with well depth");
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -586,8 +633,8 @@ try {
 // =============================================================================
 // TEST 9: Parameter Range - Barrier Width Variations
 // =============================================================================
-console.log('[Test 9] Parameter Range - Barrier Width Variations');
-console.log('-'.repeat(80));
+console.log("[Test 9] Parameter Range - Barrier Width Variations");
+console.log("-".repeat(80));
 try {
   const barrierWidths = [0.1, 0.3, 0.5, 1.0, 2.0, 4.0];
   const splittings: number[] = [];
@@ -598,7 +645,9 @@ try {
     if (result.energies.length >= 2) {
       const splitting = Math.abs(result.energies[1] - result.energies[0]);
       splittings.push(splitting);
-      console.log(`  barrier=${barrier.toFixed(1)} nm: ${result.energies.length} states, splitting=${splitting.toExponential(3)} eV`);
+      console.log(
+        `  barrier=${barrier.toFixed(1)} nm: ${result.energies.length} states, splitting=${splitting.toExponential(3)} eV`,
+      );
     }
   }
 
@@ -607,13 +656,15 @@ try {
     if (splittings[i - 1] > 1e-9 && splittings[i] > 1e-12) {
       assert(
         splittings[i] <= splittings[i - 1],
-        `Splitting should decrease with barrier width: ${splittings[i].toExponential(3)} <= ${splittings[i - 1].toExponential(3)}`
+        `Splitting should decrease with barrier width: ${splittings[i].toExponential(3)} <= ${splittings[i - 1].toExponential(3)}`,
       );
     }
   }
 
-  console.log('  ✓ Energy splitting decreases (or approaches zero) with barrier width');
-  console.log('  ✓ Test PASSED\n');
+  console.log(
+    "  ✓ Energy splitting decreases (or approaches zero) with barrier width",
+  );
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -622,20 +673,40 @@ try {
 // =============================================================================
 // TEST 10: Parameter Sensitivity - Small Well Width Changes
 // =============================================================================
-console.log('[Test 10] Parameter Sensitivity - Small Well Width Changes');
-console.log('-'.repeat(80));
+console.log("[Test 10] Parameter Sensitivity - Small Well Width Changes");
+console.log("-".repeat(80));
 try {
   const baseWidth = 2.0;
   const perturbation = 0.05; // 5% change
 
   const baseResult = solveDoubleWell(baseWidth, 0.5, 1.0, 1.0, 20, 1200);
-  const widerResult = solveDoubleWell(baseWidth * (1 + perturbation), 0.5, 1.0, 1.0, 20, 1200);
-  const narrowerResult = solveDoubleWell(baseWidth * (1 - perturbation), 0.5, 1.0, 1.0, 20, 1200);
+  const widerResult = solveDoubleWell(
+    baseWidth * (1 + perturbation),
+    0.5,
+    1.0,
+    1.0,
+    20,
+    1200,
+  );
+  const narrowerResult = solveDoubleWell(
+    baseWidth * (1 - perturbation),
+    0.5,
+    1.0,
+    1.0,
+    20,
+    1200,
+  );
 
-  const minStates = Math.min(baseResult.energies.length, widerResult.energies.length, narrowerResult.energies.length);
-  assert(minStates >= 3, 'Should have at least 3 states for comparison');
+  const minStates = Math.min(
+    baseResult.energies.length,
+    widerResult.energies.length,
+    narrowerResult.energies.length,
+  );
+  assert(minStates >= 3, "Should have at least 3 states for comparison");
 
-  console.log(`  Base width ${baseWidth} nm: ${baseResult.energies.length} states`);
+  console.log(
+    `  Base width ${baseWidth} nm: ${baseResult.energies.length} states`,
+  );
   console.log(`  Wider (+5%): ${widerResult.energies.length} states`);
   console.log(`  Narrower (-5%): ${narrowerResult.energies.length} states`);
 
@@ -644,18 +715,36 @@ try {
     const widerLower = widerResult.energies[i] < baseResult.energies[i];
     const narrowerHigher = narrowerResult.energies[i] > baseResult.energies[i];
 
-    assert(widerLower, `Wider well should give lower E[${i}]: ${widerResult.energies[i].toFixed(6)} < ${baseResult.energies[i].toFixed(6)}`);
-    assert(narrowerHigher, `Narrower well should give higher E[${i}]: ${narrowerResult.energies[i].toFixed(6)} > ${baseResult.energies[i].toFixed(6)}`);
+    assert(
+      widerLower,
+      `Wider well should give lower E[${i}]: ${widerResult.energies[i].toFixed(6)} < ${baseResult.energies[i].toFixed(6)}`,
+    );
+    assert(
+      narrowerHigher,
+      `Narrower well should give higher E[${i}]: ${narrowerResult.energies[i].toFixed(6)} > ${baseResult.energies[i].toFixed(6)}`,
+    );
 
-    const changeWider = ((widerResult.energies[i] - baseResult.energies[i]) / baseResult.energies[i] * 100);
-    const changeNarrower = ((narrowerResult.energies[i] - baseResult.energies[i]) / baseResult.energies[i] * 100);
+    const changeWider =
+      ((widerResult.energies[i] - baseResult.energies[i]) /
+        baseResult.energies[i]) *
+      100;
+    const changeNarrower =
+      ((narrowerResult.energies[i] - baseResult.energies[i]) /
+        baseResult.energies[i]) *
+      100;
 
-    console.log(`    E[${i}]: wider ${changeWider.toFixed(2)}%, narrower ${changeNarrower.toFixed(2)}%`);
+    console.log(
+      `    E[${i}]: wider ${changeWider.toFixed(2)}%, narrower ${changeNarrower.toFixed(2)}%`,
+    );
   }
 
-  console.log('  ✓ Small width changes produce small, consistent energy changes');
-  console.log('  ✓ Wider well → lower energies, narrower well → higher energies');
-  console.log('  ✓ Test PASSED\n');
+  console.log(
+    "  ✓ Small width changes produce small, consistent energy changes",
+  );
+  console.log(
+    "  ✓ Wider well → lower energies, narrower well → higher energies",
+  );
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -664,37 +753,73 @@ try {
 // =============================================================================
 // TEST 11: Parameter Sensitivity - Small Well Depth Changes
 // =============================================================================
-console.log('[Test 11] Parameter Sensitivity - Small Well Depth Changes');
-console.log('-'.repeat(80));
+console.log("[Test 11] Parameter Sensitivity - Small Well Depth Changes");
+console.log("-".repeat(80));
 try {
   const baseDepth = 0.5;
   const perturbation = 0.05; // 5% change
 
   const baseResult = solveDoubleWell(2.0, baseDepth, 1.0, 1.0, 20, 1200);
-  const deeperResult = solveDoubleWell(2.0, baseDepth * (1 + perturbation), 1.0, 1.0, 20, 1200);
-  const shallowerResult = solveDoubleWell(2.0, baseDepth * (1 - perturbation), 1.0, 1.0, 20, 1200);
+  const deeperResult = solveDoubleWell(
+    2.0,
+    baseDepth * (1 + perturbation),
+    1.0,
+    1.0,
+    20,
+    1200,
+  );
+  const shallowerResult = solveDoubleWell(
+    2.0,
+    baseDepth * (1 - perturbation),
+    1.0,
+    1.0,
+    20,
+    1200,
+  );
 
-  const minStates = Math.min(baseResult.energies.length, deeperResult.energies.length, shallowerResult.energies.length);
-  assert(minStates >= 3, 'Should have at least 3 states for comparison');
+  const minStates = Math.min(
+    baseResult.energies.length,
+    deeperResult.energies.length,
+    shallowerResult.energies.length,
+  );
+  assert(minStates >= 3, "Should have at least 3 states for comparison");
 
-  console.log(`  Base depth ${baseDepth} eV: ${baseResult.energies.length} states`);
+  console.log(
+    `  Base depth ${baseDepth} eV: ${baseResult.energies.length} states`,
+  );
   console.log(`  Deeper (+5%): ${deeperResult.energies.length} states`);
   console.log(`  Shallower (-5%): ${shallowerResult.energies.length} states`);
 
   // Check energy changes are small and consistent
   for (let i = 0; i < Math.min(5, minStates); i++) {
-    const changeDeeper = ((deeperResult.energies[i] - baseResult.energies[i]) / baseResult.energies[i] * 100);
-    const changeShallower = ((shallowerResult.energies[i] - baseResult.energies[i]) / baseResult.energies[i] * 100);
+    const changeDeeper =
+      ((deeperResult.energies[i] - baseResult.energies[i]) /
+        baseResult.energies[i]) *
+      100;
+    const changeShallower =
+      ((shallowerResult.energies[i] - baseResult.energies[i]) /
+        baseResult.energies[i]) *
+      100;
 
     // Check changes are reasonable (tightened from 20% to 15% for 5% parameter change)
-    assert(Math.abs(changeDeeper) < 15, `Deeper well change should be < 15% for E[${i}]`);
-    assert(Math.abs(changeShallower) < 15, `Shallower well change should be < 15% for E[${i}]`);
+    assert(
+      Math.abs(changeDeeper) < 15,
+      `Deeper well change should be < 15% for E[${i}]`,
+    );
+    assert(
+      Math.abs(changeShallower) < 15,
+      `Shallower well change should be < 15% for E[${i}]`,
+    );
 
-    console.log(`    E[${i}]: deeper ${changeDeeper.toFixed(2)}%, shallower ${changeShallower.toFixed(2)}%`);
+    console.log(
+      `    E[${i}]: deeper ${changeDeeper.toFixed(2)}%, shallower ${changeShallower.toFixed(2)}%`,
+    );
   }
 
-  console.log('  ✓ Small depth changes produce small, consistent energy changes');
-  console.log('  ✓ Test PASSED\n');
+  console.log(
+    "  ✓ Small depth changes produce small, consistent energy changes",
+  );
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -703,34 +828,70 @@ try {
 // =============================================================================
 // TEST 12: Parameter Sensitivity - Small Barrier Width Changes
 // =============================================================================
-console.log('[Test 12] Parameter Sensitivity - Small Barrier Width Changes');
-console.log('-'.repeat(80));
+console.log("[Test 12] Parameter Sensitivity - Small Barrier Width Changes");
+console.log("-".repeat(80));
 try {
   const baseBarrier = 1.0;
   const perturbation = 0.05; // 5% change
 
   const baseResult = solveDoubleWell(2.0, 0.5, baseBarrier, 1.0, 20, 1200);
-  const widerResult = solveDoubleWell(2.0, 0.5, baseBarrier * (1 + perturbation), 1.0, 20, 1200);
-  const narrowerResult = solveDoubleWell(2.0, 0.5, baseBarrier * (1 - perturbation), 1.0, 20, 1200);
+  const widerResult = solveDoubleWell(
+    2.0,
+    0.5,
+    baseBarrier * (1 + perturbation),
+    1.0,
+    20,
+    1200,
+  );
+  const narrowerResult = solveDoubleWell(
+    2.0,
+    0.5,
+    baseBarrier * (1 - perturbation),
+    1.0,
+    20,
+    1200,
+  );
 
-  const minStates = Math.min(baseResult.energies.length, widerResult.energies.length, narrowerResult.energies.length);
-  assert(minStates >= 2, 'Should have at least 2 states for comparison');
+  const minStates = Math.min(
+    baseResult.energies.length,
+    widerResult.energies.length,
+    narrowerResult.energies.length,
+  );
+  assert(minStates >= 2, "Should have at least 2 states for comparison");
 
-  console.log(`  Base barrier ${baseBarrier} nm: ${baseResult.energies.length} states`);
+  console.log(
+    `  Base barrier ${baseBarrier} nm: ${baseResult.energies.length} states`,
+  );
 
   // Check that changes are small and smooth
   for (let i = 0; i < Math.min(3, minStates); i++) {
-    const changeWider = ((widerResult.energies[i] - baseResult.energies[i]) / baseResult.energies[i] * 100);
-    const changeNarrower = ((narrowerResult.energies[i] - baseResult.energies[i]) / baseResult.energies[i] * 100);
+    const changeWider =
+      ((widerResult.energies[i] - baseResult.energies[i]) /
+        baseResult.energies[i]) *
+      100;
+    const changeNarrower =
+      ((narrowerResult.energies[i] - baseResult.energies[i]) /
+        baseResult.energies[i]) *
+      100;
 
-    assert(Math.abs(changeWider) < 10, `Barrier width change should be < 10% for E[${i}]`);
-    assert(Math.abs(changeNarrower) < 10, `Barrier width change should be < 10% for E[${i}]`);
+    assert(
+      Math.abs(changeWider) < 10,
+      `Barrier width change should be < 10% for E[${i}]`,
+    );
+    assert(
+      Math.abs(changeNarrower) < 10,
+      `Barrier width change should be < 10% for E[${i}]`,
+    );
 
-    console.log(`    E[${i}]: wider barrier ${changeWider.toFixed(2)}%, narrower barrier ${changeNarrower.toFixed(2)}%`);
+    console.log(
+      `    E[${i}]: wider barrier ${changeWider.toFixed(2)}%, narrower barrier ${changeNarrower.toFixed(2)}%`,
+    );
   }
 
-  console.log('  ✓ Small barrier width changes produce small, consistent energy changes');
-  console.log('  ✓ Test PASSED\n');
+  console.log(
+    "  ✓ Small barrier width changes produce small, consistent energy changes",
+  );
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -739,8 +900,8 @@ try {
 // =============================================================================
 // TEST 13: Systematic Parameter Sweep - State Count Consistency
 // =============================================================================
-console.log('[Test 13] Systematic Parameter Sweep - State Count Consistency');
-console.log('-'.repeat(80));
+console.log("[Test 13] Systematic Parameter Sweep - State Count Consistency");
+console.log("-".repeat(80));
 try {
   const wellWidths = [1.0, 2.0, 3.0];
   const wellDepths = [0.3, 0.5, 0.8];
@@ -757,11 +918,13 @@ try {
     }
   }
 
-  console.log('  Well Width | Well Depth | Barrier | States');
-  console.log('  ' + '-'.repeat(50));
+  console.log("  Well Width | Well Depth | Barrier | States");
+  console.log("  " + "-".repeat(50));
 
   for (const r of results) {
-    console.log(`    ${r.w.toFixed(1)} nm  |  ${r.d.toFixed(1)} eV  |  ${r.b.toFixed(1)} nm  |  ${r.states}`);
+    console.log(
+      `    ${r.w.toFixed(1)} nm  |  ${r.d.toFixed(1)} eV  |  ${r.b.toFixed(1)} nm  |  ${r.states}`,
+    );
   }
 
   // Check consistency: for same well parameters, state count should be stable
@@ -780,13 +943,13 @@ try {
     // For same well width/depth, state count should not vary wildly
     assert(
       variation <= 2,
-      `State count variation for ${key} should be <= 2 (got ${variation})`
+      `State count variation for ${key} should be <= 2 (got ${variation})`,
     );
   }
 
   console.log(`  ✓ Tested ${results.length} parameter combinations`);
-  console.log('  ✓ State counts are consistent across parameter variations');
-  console.log('  ✓ Test PASSED\n');
+  console.log("  ✓ State counts are consistent across parameter variations");
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -795,8 +958,10 @@ try {
 // =============================================================================
 // TEST 14: Grid Convergence
 // =============================================================================
-console.log('[Test 14] Grid Convergence - Energy Stability with Grid Refinement');
-console.log('-'.repeat(80));
+console.log(
+  "[Test 14] Grid Convergence - Energy Stability with Grid Refinement",
+);
+console.log("-".repeat(80));
 try {
   const gridSizes = [200, 400, 800, 1600];
   const groundEnergies: number[] = [];
@@ -804,15 +969,22 @@ try {
   for (const gridSize of gridSizes) {
     const result = solveDoubleWell(2.0, 0.5, 1.0, 1.0, 10, gridSize);
     groundEnergies.push(result.energies[0]);
-    console.log(`  Grid ${gridSize.toString().padStart(4)}: E_0 = ${result.energies[0].toFixed(8)} eV`);
+    console.log(
+      `  Grid ${gridSize.toString().padStart(4)}: E_0 = ${result.energies[0].toFixed(8)} eV`,
+    );
   }
 
   // Check convergence: final two energies should be very close
   const finalDiff = Math.abs(groundEnergies[3] - groundEnergies[2]);
-  assert(finalDiff < 0.001, `Grid should converge: difference ${finalDiff} < 0.001 eV`);
+  assert(
+    finalDiff < 0.001,
+    `Grid should converge: difference ${finalDiff} < 0.001 eV`,
+  );
 
-  console.log(`  ✓ Grid convergence achieved (final difference: ${finalDiff.toExponential(3)} eV)`);
-  console.log('  ✓ Test PASSED\n');
+  console.log(
+    `  ✓ Grid convergence achieved (final difference: ${finalDiff.toExponential(3)} eV)`,
+  );
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -821,28 +993,34 @@ try {
 // =============================================================================
 // TEST 15: Extreme Parameters - Shallow Wells
 // =============================================================================
-console.log('[Test 15] Extreme Parameters - Very Shallow Wells');
-console.log('-'.repeat(80));
+console.log("[Test 15] Extreme Parameters - Very Shallow Wells");
+console.log("-".repeat(80));
 try {
   const wellDepth = 0.1;
   const result = solveDoubleWell(3.0, wellDepth, 0.5, 1.0, 20, 1000);
 
-  assert(result.energies.length >= 1, 'Should find at least 1 state even in shallow wells');
+  assert(
+    result.energies.length >= 1,
+    "Should find at least 1 state even in shallow wells",
+  );
 
   for (let i = 0; i < result.energies.length; i++) {
     assert(
       result.energies[i] > 0 && result.energies[i] < wellDepth,
-      `State ${i} should be bound: 0 < ${result.energies[i].toFixed(6)} < ${wellDepth}`
+      `State ${i} should be bound: 0 < ${result.energies[i].toFixed(6)} < ${wellDepth}`,
     );
 
     const parity = detectParity(result.xGrid, result.wavefunctions[i]);
-    const expectedParity = i % 2 === 0 ? 'even' : 'odd';
-    assert(parity === expectedParity, `State ${i} should have ${expectedParity} parity`);
+    const expectedParity = i % 2 === 0 ? "even" : "odd";
+    assert(
+      parity === expectedParity,
+      `State ${i} should have ${expectedParity} parity`,
+    );
   }
 
   console.log(`  ✓ Found ${result.energies.length} state(s) in shallow wells`);
   console.log(`  ✓ All states are properly bound and have correct parity`);
-  console.log('  ✓ Test PASSED\n');
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -851,19 +1029,21 @@ try {
 // =============================================================================
 // TEST 16: Extreme Parameters - Deep Wells (Many States)
 // =============================================================================
-console.log('[Test 16] Extreme Parameters - Very Deep Wells (Many States)');
-console.log('-'.repeat(80));
+console.log("[Test 16] Extreme Parameters - Very Deep Wells (Many States)");
+console.log("-".repeat(80));
 try {
   const wellDepth = 2.0;
   const result = solveDoubleWell(5.0, wellDepth, 1.0, 1.0, 40, 1500);
 
-  assert(result.energies.length >= 10, 'Should find many states in deep wells');
+  assert(result.energies.length >= 10, "Should find many states in deep wells");
 
   console.log(`  Found ${result.energies.length} states`);
 
   // For very deep wells, verify states have consistent structure
   // The solver may skip low-lying states in deep wells, so we verify based on node count
-  let energyErrors = 0, parityErrors = 0, nodeConsistencyErrors = 0;
+  let energyErrors = 0,
+    parityErrors = 0,
+    nodeConsistencyErrors = 0;
   const nodeCounts: number[] = [];
 
   for (let i = 0; i < result.energies.length; i++) {
@@ -878,9 +1058,11 @@ try {
 
     // Check parity based on node count (node count determines parity)
     const parity = detectParity(result.xGrid, result.wavefunctions[i]);
-    const expectedParity = nodes % 2 === 0 ? 'even' : 'odd';
+    const expectedParity = nodes % 2 === 0 ? "even" : "odd";
     if (parity !== expectedParity) {
-      console.error(`  State ${i} (${nodes} nodes): expected ${expectedParity} parity, got ${parity}`);
+      console.error(
+        `  State ${i} (${nodes} nodes): expected ${expectedParity} parity, got ${parity}`,
+      );
       parityErrors++;
     }
   }
@@ -888,17 +1070,29 @@ try {
   // Verify node counts are strictly increasing
   for (let i = 1; i < nodeCounts.length; i++) {
     if (nodeCounts[i] <= nodeCounts[i - 1]) {
-      console.error(`  Node count not increasing: state ${i-1} has ${nodeCounts[i-1]} nodes, state ${i} has ${nodeCounts[i]} nodes`);
+      console.error(
+        `  Node count not increasing: state ${i - 1} has ${nodeCounts[i - 1]} nodes, state ${i} has ${nodeCounts[i]} nodes`,
+      );
       nodeConsistencyErrors++;
     }
   }
 
-  const allValid = (energyErrors === 0 && parityErrors === 0 && nodeConsistencyErrors === 0);
-  assert(allValid, `All ${result.energies.length} states should be valid (energy errors: ${energyErrors}, parity errors: ${parityErrors}, node consistency errors: ${nodeConsistencyErrors})`);
-  console.log(`  ✓ All ${result.energies.length} states are properly bound with correct parity for their node count`);
-  console.log(`  ✓ Node counts strictly increasing: ${nodeCounts.slice(0, 5).join(', ')}${nodeCounts.length > 5 ? ', ...' : ''}`);
-  console.log(`  ✓ Energy range: ${result.energies[0].toFixed(6)} to ${result.energies[result.energies.length - 1].toFixed(6)} eV`);
-  console.log('  ✓ Test PASSED\n');
+  const allValid =
+    energyErrors === 0 && parityErrors === 0 && nodeConsistencyErrors === 0;
+  assert(
+    allValid,
+    `All ${result.energies.length} states should be valid (energy errors: ${energyErrors}, parity errors: ${parityErrors}, node consistency errors: ${nodeConsistencyErrors})`,
+  );
+  console.log(
+    `  ✓ All ${result.energies.length} states are properly bound with correct parity for their node count`,
+  );
+  console.log(
+    `  ✓ Node counts strictly increasing: ${nodeCounts.slice(0, 5).join(", ")}${nodeCounts.length > 5 ? ", ..." : ""}`,
+  );
+  console.log(
+    `  ✓ Energy range: ${result.energies[0].toFixed(6)} to ${result.energies[result.energies.length - 1].toFixed(6)} eV`,
+  );
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -907,12 +1101,12 @@ try {
 // =============================================================================
 // TEST 17: Extreme Parameters - Very Wide Barrier (Weak Coupling)
 // =============================================================================
-console.log('[Test 17] Extreme Parameters - Very Wide Barrier (Weak Coupling)');
-console.log('-'.repeat(80));
+console.log("[Test 17] Extreme Parameters - Very Wide Barrier (Weak Coupling)");
+console.log("-".repeat(80));
 try {
   const result = solveDoubleWell(3.0, 0.5, 5.0, 1.0, 20, 1500);
 
-  assert(result.energies.length >= 2, 'Should find at least 2 states');
+  assert(result.energies.length >= 2, "Should find at least 2 states");
 
   // Energy splitting should be very small for wide barrier
   const splitting = Math.abs(result.energies[1] - result.energies[0]);
@@ -922,7 +1116,8 @@ try {
   // With very weak coupling, verify states exist with proper symmetry
   // Note: when barrier is very wide, states come in nearly-degenerate pairs
   // and the ordering of even/odd states may not follow strict alternation
-  let energyErrors = 0, definiteParityCount = 0;
+  let energyErrors = 0,
+    definiteParityCount = 0;
   const parities: string[] = [];
 
   for (let i = 0; i < Math.min(10, result.energies.length); i++) {
@@ -933,19 +1128,23 @@ try {
     // Check that states have definite parity (not mixed)
     const parity = detectParity(result.xGrid, result.wavefunctions[i]);
     parities.push(parity);
-    if (parity === 'even' || parity === 'odd') {
+    if (parity === "even" || parity === "odd") {
       definiteParityCount++;
     }
   }
 
-  assert(energyErrors === 0, 'All states should be bound');
-  assert(definiteParityCount === Math.min(10, result.energies.length),
-         `All states must have definite parity (not mixed): ${definiteParityCount}/${Math.min(10, result.energies.length)}`);
+  assert(energyErrors === 0, "All states should be bound");
+  assert(
+    definiteParityCount === Math.min(10, result.energies.length),
+    `All states must have definite parity (not mixed): ${definiteParityCount}/${Math.min(10, result.energies.length)}`,
+  );
 
-  console.log('  ✓ States found with very weak coupling (wide barrier)');
-  console.log(`  ✓ All states have definite parity: ${parities.join(', ')}`);
-  console.log('  ✓ Note: weak coupling may result in nearly-degenerate pairs with non-alternating order');
-  console.log('  ✓ Test PASSED\n');
+  console.log("  ✓ States found with very weak coupling (wide barrier)");
+  console.log(`  ✓ All states have definite parity: ${parities.join(", ")}`);
+  console.log(
+    "  ✓ Note: weak coupling may result in nearly-degenerate pairs with non-alternating order",
+  );
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -954,12 +1153,14 @@ try {
 // =============================================================================
 // TEST 18: Extreme Parameters - Very Narrow Barrier (Strong Coupling)
 // =============================================================================
-console.log('[Test 18] Extreme Parameters - Very Narrow Barrier (Strong Coupling)');
-console.log('-'.repeat(80));
+console.log(
+  "[Test 18] Extreme Parameters - Very Narrow Barrier (Strong Coupling)",
+);
+console.log("-".repeat(80));
 try {
   const result = solveDoubleWell(3.0, 0.5, 0.1, 1.0, 20, 1500);
 
-  assert(result.energies.length >= 2, 'Should find at least 2 states');
+  assert(result.energies.length >= 2, "Should find at least 2 states");
 
   // Energy splitting should be larger for narrow barrier
   const splitting = Math.abs(result.energies[1] - result.energies[0]);
@@ -969,13 +1170,16 @@ try {
   // All states should still have correct properties
   for (let i = 0; i < Math.min(6, result.energies.length); i++) {
     const parity = detectParity(result.xGrid, result.wavefunctions[i]);
-    const expectedParity = i % 2 === 0 ? 'even' : 'odd';
-    assert(parity === expectedParity, `State ${i} should have ${expectedParity} parity with narrow barrier`);
+    const expectedParity = i % 2 === 0 ? "even" : "odd";
+    assert(
+      parity === expectedParity,
+      `State ${i} should have ${expectedParity} parity with narrow barrier`,
+    );
   }
 
-  console.log('  ✓ States found with strong coupling (narrow barrier)');
-  console.log('  ✓ Parity alternation maintained despite strong coupling');
-  console.log('  ✓ Test PASSED\n');
+  console.log("  ✓ States found with strong coupling (narrow barrier)");
+  console.log("  ✓ Parity alternation maintained despite strong coupling");
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -984,8 +1188,8 @@ try {
 // =============================================================================
 // TEST 19: Orthogonality of Eigenstates
 // =============================================================================
-console.log('[Test 19] Orthogonality of Eigenstates');
-console.log('-'.repeat(80));
+console.log("[Test 19] Orthogonality of Eigenstates");
+console.log("-".repeat(80));
 try {
   const result = solveDoubleWell(5.0, 0.5, 2.0, 1.0, 20, 1500);
 
@@ -1000,19 +1204,26 @@ try {
       const overlap = checkOrthogonality(
         result.xGrid,
         result.wavefunctions[i],
-        result.wavefunctions[j]
+        result.wavefunctions[j],
       );
 
       if (overlap > ORTHOGONALITY_TOLERANCE) {
-        console.error(`  States ${i} and ${j}: overlap = ${overlap.toFixed(6)} (should be ~0)`);
+        console.error(
+          `  States ${i} and ${j}: overlap = ${overlap.toFixed(6)} (should be ~0)`,
+        );
         orthErrors++;
       }
     }
   }
 
-  assert(orthErrors === 0, `All ${numToCheck} states should be orthogonal to each other`);
-  console.log(`  ✓ All ${numToCheck} states are mutually orthogonal (overlap < ${ORTHOGONALITY_TOLERANCE})`);
-  console.log('  ✓ Test PASSED\n');
+  assert(
+    orthErrors === 0,
+    `All ${numToCheck} states should be orthogonal to each other`,
+  );
+  console.log(
+    `  ✓ All ${numToCheck} states are mutually orthogonal (overlap < ${ORTHOGONALITY_TOLERANCE})`,
+  );
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -1021,8 +1232,8 @@ try {
 // =============================================================================
 // TEST 20: Wavefunction Continuity at Well Boundaries
 // =============================================================================
-console.log('[Test 20] Wavefunction Continuity at Well Boundaries');
-console.log('-'.repeat(80));
+console.log("[Test 20] Wavefunction Continuity at Well Boundaries");
+console.log("-".repeat(80));
 try {
   const result = solveDoubleWell(5.0, 0.5, 2.0, 1.0, 20, 1500);
 
@@ -1030,10 +1241,10 @@ try {
 
   // Check continuity at all four boundaries
   const boundaries = [
-    -result.Louter,  // Left outer boundary
-    -result.Linner,  // Left inner boundary (barrier edge)
-    result.Linner,   // Right inner boundary (barrier edge)
-    result.Louter    // Right outer boundary
+    -result.Louter, // Left outer boundary
+    -result.Linner, // Left inner boundary (barrier edge)
+    result.Linner, // Right inner boundary (barrier edge)
+    result.Louter, // Right outer boundary
   ];
 
   let contErrors = 0;
@@ -1041,20 +1252,31 @@ try {
 
   for (let i = 0; i < numToCheck; i++) {
     for (const boundary of boundaries) {
-      const discontinuity = checkContinuity(result.xGrid, result.wavefunctions[i], boundary);
+      const discontinuity = checkContinuity(
+        result.xGrid,
+        result.wavefunctions[i],
+        boundary,
+      );
 
       // Allow larger discontinuity tolerance at sharp potential changes
       const tolerance = 0.5; // 50% derivative change allowed at boundaries
       if (discontinuity > tolerance) {
-        console.error(`  State ${i} at x=${(boundary / NM_TO_M).toFixed(2)} nm: discontinuity = ${discontinuity.toFixed(3)}`);
+        console.error(
+          `  State ${i} at x=${(boundary / NM_TO_M).toFixed(2)} nm: discontinuity = ${discontinuity.toFixed(3)}`,
+        );
         contErrors++;
       }
     }
   }
 
-  assert(contErrors === 0, `All ${numToCheck} states should have continuous wavefunctions at boundaries`);
-  console.log(`  ✓ All ${numToCheck} states have continuous wavefunctions at all boundaries`);
-  console.log('  ✓ Test PASSED\n');
+  assert(
+    contErrors === 0,
+    `All ${numToCheck} states should have continuous wavefunctions at boundaries`,
+  );
+  console.log(
+    `  ✓ All ${numToCheck} states have continuous wavefunctions at all boundaries`,
+  );
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -1063,8 +1285,8 @@ try {
 // =============================================================================
 // TEST 21: Probability Localization in Wells
 // =============================================================================
-console.log('[Test 21] Probability Localization in Wells');
-console.log('-'.repeat(80));
+console.log("[Test 21] Probability Localization in Wells");
+console.log("-".repeat(80));
 try {
   const result = solveDoubleWell(5.0, 0.5, 2.0, 1.0, 20, 1500);
 
@@ -1078,20 +1300,27 @@ try {
       result.xGrid,
       result.wavefunctions[i],
       result.Linner,
-      result.Louter
+      result.Louter,
     );
 
     // At least 70% of probability should be in the wells for bound states
     const minRatio = 0.7;
     if (loc.ratio < minRatio) {
-      console.error(`  State ${i}: ${(loc.ratio * 100).toFixed(1)}% in wells (should be > ${minRatio * 100}%)`);
+      console.error(
+        `  State ${i}: ${(loc.ratio * 100).toFixed(1)}% in wells (should be > ${minRatio * 100}%)`,
+      );
       locErrors++;
     }
   }
 
-  assert(locErrors === 0, `All ${numToCheck} states should have >70% probability in wells`);
-  console.log(`  ✓ All ${numToCheck} states have >70% probability density in the wells`);
-  console.log('  ✓ Test PASSED\n');
+  assert(
+    locErrors === 0,
+    `All ${numToCheck} states should have >70% probability in wells`,
+  );
+  console.log(
+    `  ✓ All ${numToCheck} states have >70% probability density in the wells`,
+  );
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -1100,8 +1329,8 @@ try {
 // =============================================================================
 // TEST 22: Energy Bounds (All Energies Below Well Depth)
 // =============================================================================
-console.log('[Test 22] Energy Bounds - All Energies Below Well Depth');
-console.log('-'.repeat(80));
+console.log("[Test 22] Energy Bounds - All Energies Below Well Depth");
+console.log("-".repeat(80));
 try {
   const wellDepth = 0.6; // eV
   const result = solveDoubleWell(5.0, wellDepth, 2.0, 1.0, 20, 1500);
@@ -1115,16 +1344,25 @@ try {
 
     // All bound states must have E < V0 (well depth)
     if (energy <= 0 || energy >= wellDepth) {
-      console.error(`  State ${i}: E = ${energy.toFixed(6)} eV (should be 0 < E < ${wellDepth})`);
+      console.error(
+        `  State ${i}: E = ${energy.toFixed(6)} eV (should be 0 < E < ${wellDepth})`,
+      );
       boundErrors++;
     }
   }
 
-  assert(boundErrors === 0, `All ${result.energies.length} states should be properly bound (0 < E < V0)`);
-  console.log(`  ✓ All ${result.energies.length} states have energies within bounds: 0 < E < ${wellDepth} eV`);
+  assert(
+    boundErrors === 0,
+    `All ${result.energies.length} states should be properly bound (0 < E < V0)`,
+  );
+  console.log(
+    `  ✓ All ${result.energies.length} states have energies within bounds: 0 < E < ${wellDepth} eV`,
+  );
   console.log(`  ✓ Ground state: ${result.energies[0].toFixed(6)} eV`);
-  console.log(`  ✓ Highest state: ${result.energies[result.energies.length - 1].toFixed(6)} eV`);
-  console.log('  ✓ Test PASSED\n');
+  console.log(
+    `  ✓ Highest state: ${result.energies[result.energies.length - 1].toFixed(6)} eV`,
+  );
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -1133,8 +1371,8 @@ try {
 // =============================================================================
 // TEST 23: Energy Splitting Consistency (Tunneling)
 // =============================================================================
-console.log('[Test 23] Energy Splitting Consistency (Tunneling Effect)');
-console.log('-'.repeat(80));
+console.log("[Test 23] Energy Splitting Consistency (Tunneling Effect)");
+console.log("-".repeat(80));
 try {
   // Test with varying barrier widths - splitting should decrease exponentially
   const barrierWidths = [0.5, 1.0, 2.0, 3.0];
@@ -1150,23 +1388,32 @@ try {
   }
 
   console.log(`Barrier width (nm) | Splitting (eV) | Ratio to previous`);
-  console.log('-'.repeat(60));
+  console.log("-".repeat(60));
 
   let consistencyErrors = 0;
   for (let i = 0; i < splittings.length; i++) {
     const ratio = i > 0 ? splittings[i - 1] / splittings[i] : 0;
-    console.log(`  ${barrierWidths[i].toFixed(1).padStart(16)} | ${splittings[i].toExponential(4).padStart(14)} | ${i > 0 ? ratio.toFixed(2) : 'N/A'}`);
+    console.log(
+      `  ${barrierWidths[i].toFixed(1).padStart(16)} | ${splittings[i].toExponential(4).padStart(14)} | ${i > 0 ? ratio.toFixed(2) : "N/A"}`,
+    );
 
     // Splitting should decrease as barrier increases (ratio > 1)
     if (i > 0 && ratio < 1.0) {
-      console.error(`    ✗ Splitting increased with barrier width (should decrease)`);
+      console.error(
+        `    ✗ Splitting increased with barrier width (should decrease)`,
+      );
       consistencyErrors++;
     }
   }
 
-  assert(consistencyErrors === 0, 'Energy splitting should decrease monotonically with barrier width');
-  console.log('  ✓ Energy splitting decreases with barrier width (tunneling effect confirmed)');
-  console.log('  ✓ Test PASSED\n');
+  assert(
+    consistencyErrors === 0,
+    "Energy splitting should decrease monotonically with barrier width",
+  );
+  console.log(
+    "  ✓ Energy splitting decreases with barrier width (tunneling effect confirmed)",
+  );
+  console.log("  ✓ Test PASSED\n");
 } catch (error) {
   console.error(`  ✗ Test FAILED: ${error}\n`);
   process.exit(1);
@@ -1175,38 +1422,44 @@ try {
 // =============================================================================
 // FINAL SUMMARY
 // =============================================================================
-console.log('═'.repeat(80));
-console.log('  TEST SUMMARY');
-console.log('═'.repeat(80));
+console.log("═".repeat(80));
+console.log("  TEST SUMMARY");
+console.log("═".repeat(80));
 console.log(`Total assertions: ${totalTests}`);
 console.log(`Passed: ${passedTests}`);
 console.log(`Failed: ${failedTests}`);
-console.log('═'.repeat(80));
+console.log("═".repeat(80));
 
 if (failedTests === 0) {
-  console.log('\n✓ ALL TESTS PASSED!\n');
-  console.log('Comprehensive double well testing complete (STRINGENT VALIDATION):');
-  console.log('  ✓ Parity alternation verified for ALL states (2% tolerance)');
-  console.log('  ✓ Edge behavior correct for ALL states (0.5% tolerance)');
-  console.log('  ✓ Node count verified for ALL states');
-  console.log('  ✓ Normalization verified for ALL states (0.2% tolerance)');
-  console.log('  ✓ Energy ordering verified for ALL states');
-  console.log('  ✓ Derivative continuity verified for ALL states (1.5% tolerance)');
-  console.log('  ✓ Parameter ranges thoroughly tested');
-  console.log('  ✓ Parameter sensitivity verified');
-  console.log('  ✓ Systematic parameter sweeps completed');
-  console.log('  ✓ Grid convergence verified (1500 grid points)');
-  console.log('  ✓ Extreme parameter regimes tested');
-  console.log('  ✓ Orthogonality of eigenstates verified (1% tolerance)');
-  console.log('  ✓ Wavefunction continuity at boundaries verified');
-  console.log('  ✓ Probability localization in wells verified (>70%)');
-  console.log('  ✓ Energy bounds validated (all E within well depth)');
-  console.log('  ✓ Energy splitting/tunneling consistency verified');
-  console.log('');
-  console.log('Total: 23 comprehensive tests covering all aspects of double well physics');
-  console.log('');
+  console.log("\n✓ ALL TESTS PASSED!\n");
+  console.log(
+    "Comprehensive double well testing complete (STRINGENT VALIDATION):",
+  );
+  console.log("  ✓ Parity alternation verified for ALL states (2% tolerance)");
+  console.log("  ✓ Edge behavior correct for ALL states (0.5% tolerance)");
+  console.log("  ✓ Node count verified for ALL states");
+  console.log("  ✓ Normalization verified for ALL states (0.2% tolerance)");
+  console.log("  ✓ Energy ordering verified for ALL states");
+  console.log(
+    "  ✓ Derivative continuity verified for ALL states (1.5% tolerance)",
+  );
+  console.log("  ✓ Parameter ranges thoroughly tested");
+  console.log("  ✓ Parameter sensitivity verified");
+  console.log("  ✓ Systematic parameter sweeps completed");
+  console.log("  ✓ Grid convergence verified (1500 grid points)");
+  console.log("  ✓ Extreme parameter regimes tested");
+  console.log("  ✓ Orthogonality of eigenstates verified (1% tolerance)");
+  console.log("  ✓ Wavefunction continuity at boundaries verified");
+  console.log("  ✓ Probability localization in wells verified (>70%)");
+  console.log("  ✓ Energy bounds validated (all E within well depth)");
+  console.log("  ✓ Energy splitting/tunneling consistency verified");
+  console.log("");
+  console.log(
+    "Total: 23 comprehensive tests covering all aspects of double well physics",
+  );
+  console.log("");
   process.exit(0);
 } else {
-  console.log('\n✗ SOME TESTS FAILED\n');
+  console.log("\n✗ SOME TESTS FAILED\n");
   process.exit(1);
 }

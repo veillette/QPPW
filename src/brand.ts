@@ -1,7 +1,11 @@
 // Load init.ts/assert.ts/splash.ts before we load brand information (especially since it includes images).
 import "./splash.js";
 
-import { brand, madeWithSceneryStackOnLight, madeWithSceneryStackOnDark } from "scenerystack/brand";
+import {
+  brand,
+  madeWithSceneryStackOnLight,
+  madeWithSceneryStackOnDark,
+} from "scenerystack/brand";
 import type { TBrand } from "scenerystack/brand";
 
 const Brand: TBrand = {

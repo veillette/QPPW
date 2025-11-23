@@ -6,10 +6,19 @@
 import { NumberProperty, Property } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { BaseModel } from "../../common/model/BaseModel.js";
-import Schrodinger1DSolver, { WellParameters, NumericalMethod } from "../../common/model/Schrodinger1DSolver.js";
-import { PotentialType, BoundStateResult } from "../../common/model/PotentialFunction.js";
+import Schrodinger1DSolver, {
+  WellParameters,
+  NumericalMethod,
+} from "../../common/model/Schrodinger1DSolver.js";
+import {
+  PotentialType,
+  BoundStateResult,
+} from "../../common/model/PotentialFunction.js";
 import QuantumConstants from "../../common/model/QuantumConstants.js";
-import { SuperpositionType, SuperpositionConfig } from "../../common/model/SuperpositionType.js";
+import {
+  SuperpositionType,
+  SuperpositionConfig,
+} from "../../common/model/SuperpositionType.js";
 import { calculateCoherentStateCoefficients } from "../../common/model/analytical-solutions/harmonic-oscillator.js";
 
 export type DisplayMode = "probabilityDensity" | "waveFunction" | "phaseColor";
@@ -56,21 +65,37 @@ export class OneWellModel extends BaseModel {
   public constructor() {
     super();
     // Initialize potential type (square/infinite well by default)
-    this.potentialTypeProperty = new Property<PotentialType>(PotentialType.INFINITE_WELL);
+    this.potentialTypeProperty = new Property<PotentialType>(
+      PotentialType.INFINITE_WELL,
+    );
 
     // Initialize well parameters with default values
-    this.wellWidthProperty = new NumberProperty(1.0, { range: new Range(0.1, 6.0) }); // in nanometers (max 6 nm)
-    this.wellDepthProperty = new NumberProperty(5.0, { range: new Range(0.1, 15.0) }); // in eV (within energy graph bounds)
-    this.wellOffsetProperty = new NumberProperty(0.5, { range: new Range(0.0, 1.0) }); // normalized position
-    this.barrierHeightProperty = new NumberProperty(0.5, { range: new Range(0.0, 10.0) }); // in eV (for Rosen-Morse and Eckart)
-    this.potentialOffsetProperty = new NumberProperty(0.0, { range: new Range(-5.0, 15.0) }); // in eV (for triangular potential)
+    this.wellWidthProperty = new NumberProperty(1.0, {
+      range: new Range(0.1, 6.0),
+    }); // in nanometers (max 6 nm)
+    this.wellDepthProperty = new NumberProperty(5.0, {
+      range: new Range(0.1, 15.0),
+    }); // in eV (within energy graph bounds)
+    this.wellOffsetProperty = new NumberProperty(0.5, {
+      range: new Range(0.0, 1.0),
+    }); // normalized position
+    this.barrierHeightProperty = new NumberProperty(0.5, {
+      range: new Range(0.0, 10.0),
+    }); // in eV (for Rosen-Morse and Eckart)
+    this.potentialOffsetProperty = new NumberProperty(0.0, {
+      range: new Range(-5.0, 15.0),
+    }); // in eV (for triangular potential)
 
     // Initialize particle mass (1.0 = electron mass)
-    this.particleMassProperty = new NumberProperty(1.0, { range: new Range(0.5, 1.1) }); // 0.5 to 1.1 times electron mass
+    this.particleMassProperty = new NumberProperty(1.0, {
+      range: new Range(0.5, 1.1),
+    }); // 0.5 to 1.1 times electron mass
 
     // Initialize energy level selection (ground state by default)
     // Use a large range to accommodate potentials with many states (up to 100)
-    this.selectedEnergyLevelIndexProperty = new NumberProperty(0, { range: new Range(0, 99) });
+    this.selectedEnergyLevelIndexProperty = new NumberProperty(0, {
+      range: new Range(0, 99),
+    });
     this.energyLevelProperty = new NumberProperty(0); // Deprecated
 
     // Initialize display settings
@@ -86,7 +111,9 @@ export class OneWellModel extends BaseModel {
 
     // Initialize superposition state
     // Default to PSI_K (single eigenstate) so selecting energy levels works properly
-    this.superpositionTypeProperty = new Property<SuperpositionType>(SuperpositionType.SINGLE);
+    this.superpositionTypeProperty = new Property<SuperpositionType>(
+      SuperpositionType.SINGLE,
+    );
     this.superpositionConfigProperty = new Property<SuperpositionConfig>({
       type: SuperpositionType.SINGLE,
       amplitudes: [1.0], // Default to ground state
@@ -94,7 +121,9 @@ export class OneWellModel extends BaseModel {
     });
 
     // Initialize coherent state displacement (0.5 nm default, range 0 to 2 nm)
-    this.coherentDisplacementProperty = new NumberProperty(0.5, { range: new Range(0.0, 2.0) });
+    this.coherentDisplacementProperty = new NumberProperty(0.5, {
+      range: new Range(0.0, 2.0),
+    });
 
     // Recalculate bound states when parameters change
     const invalidateCache = () => {
@@ -112,7 +141,9 @@ export class OneWellModel extends BaseModel {
     this.particleMassProperty.link(invalidateCache);
 
     // Update superposition coefficients when superposition type or coherent displacement changes
-    this.superpositionTypeProperty.link(() => this.updateSuperpositionCoefficients());
+    this.superpositionTypeProperty.link(() =>
+      this.updateSuperpositionCoefficients(),
+    );
     this.coherentDisplacementProperty.link(() => {
       if (this.superpositionTypeProperty.value === SuperpositionType.COHERENT) {
         this.updateSuperpositionCoefficients();
@@ -126,7 +157,7 @@ export class OneWellModel extends BaseModel {
    * but grid points changes do matter because they affect the wavefunction grid.
    * @param _method - The new numerical method (unused)
    */
-   
+
   protected onSolverMethodChanged(_method: NumericalMethod): void {
     // Invalidate the cached bound state result so wavefunctions are recalculated
     // with the new grid configuration
@@ -181,7 +212,11 @@ export class OneWellModel extends BaseModel {
     }
 
     // Return energy for quantum number n (1-indexed)
-    if (this.boundStateResult && n > 0 && n <= this.boundStateResult.energies.length) {
+    if (
+      this.boundStateResult &&
+      n > 0 &&
+      n <= this.boundStateResult.energies.length
+    ) {
       const energyJoules = this.boundStateResult.energies[n - 1];
       return Schrodinger1DSolver.joulesToEV(energyJoules);
     }
@@ -189,7 +224,12 @@ export class OneWellModel extends BaseModel {
     // Fallback to analytical formula if solver fails
     const L = this.wellWidthProperty.value * QuantumConstants.NM_TO_M;
     const energy =
-      (n * n * Math.PI * Math.PI * QuantumConstants.HBAR * QuantumConstants.HBAR) /
+      (n *
+        n *
+        Math.PI *
+        Math.PI *
+        QuantumConstants.HBAR *
+        QuantumConstants.HBAR) /
       (2 * QuantumConstants.ELECTRON_MASS * L * L);
     return Schrodinger1DSolver.joulesToEV(energy);
   }
@@ -212,45 +252,63 @@ export class OneWellModel extends BaseModel {
   private calculateBoundStates(): void {
     // All potentials now use wellWidth as a width parameter in nanometers (converted to meters)
     const wellWidth = this.wellWidthProperty.value * QuantumConstants.NM_TO_M; // width in meters
-    const wellDepth = this.wellDepthProperty.value * QuantumConstants.EV_TO_JOULES;
-    const mass = this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
+    const wellDepth =
+      this.wellDepthProperty.value * QuantumConstants.EV_TO_JOULES;
+    const mass =
+      this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
 
     // Calculate number of states based on potential type and energy range
     let numStates = 10; // Default for most potentials
 
     // For harmonic oscillator, calculate states up to 15 eV
-    if (this.potentialTypeProperty.value === PotentialType.HARMONIC_OSCILLATOR) {
+    if (
+      this.potentialTypeProperty.value === PotentialType.HARMONIC_OSCILLATOR
+    ) {
       const springConstant = (4 * wellDepth) / (wellWidth * wellWidth);
       const omega = Math.sqrt(springConstant / mass);
       const maxEnergy = 15 * QuantumConstants.EV_TO_JOULES; // 15 eV
       // E_n = ℏω(n + 1/2), solve for n: n = E/(ℏω) - 1/2
-      const maxN = Math.floor(maxEnergy / (QuantumConstants.HBAR * omega) - 0.5);
+      const maxN = Math.floor(
+        maxEnergy / (QuantumConstants.HBAR * omega) - 0.5,
+      );
       numStates = Math.max(1, Math.min(maxN + 1, 100)); // Cap at 100 for safety
     }
     // For infinite well, calculate states up to 15 eV
     else if (this.potentialTypeProperty.value === PotentialType.INFINITE_WELL) {
       const maxEnergy = 15 * QuantumConstants.EV_TO_JOULES; // 15 eV
       // E_n = (ℏ²π²n²)/(2mL²), solve for n
-      const maxN = Math.floor(Math.sqrt((2 * mass * wellWidth * wellWidth * maxEnergy) / (QuantumConstants.HBAR * QuantumConstants.HBAR * Math.PI * Math.PI)));
+      const maxN = Math.floor(
+        Math.sqrt(
+          (2 * mass * wellWidth * wellWidth * maxEnergy) /
+            (QuantumConstants.HBAR * QuantumConstants.HBAR * Math.PI * Math.PI),
+        ),
+      );
       numStates = Math.max(1, Math.min(maxN, 100)); // Cap at 100 for safety
     }
     // For finite well, estimate maximum number of bound states
     else if (this.potentialTypeProperty.value === PotentialType.FINITE_WELL) {
       // Approximate number of bound states: n_max ≈ (1/π) * sqrt(2mV₀L²/ℏ²)
       // Use generous estimate to ensure we get all states
-      const estimatedMax = Math.ceil((1 / Math.PI) * Math.sqrt((2 * mass * wellDepth * wellWidth * wellWidth) / (QuantumConstants.HBAR * QuantumConstants.HBAR)));
+      const estimatedMax = Math.ceil(
+        (1 / Math.PI) *
+          Math.sqrt(
+            (2 * mass * wellDepth * wellWidth * wellWidth) /
+              (QuantumConstants.HBAR * QuantumConstants.HBAR),
+          ),
+      );
       // Request more states than estimated to ensure we capture all bound states
       numStates = Math.max(10, Math.min(estimatedMax * 2, 100)); // At least 10, cap at 100
     }
     // For asymmetric triangle, calculate states that fit in the energy range
-    else if (this.potentialTypeProperty.value === PotentialType.ASYMMETRIC_TRIANGLE) {
+    else if (
+      this.potentialTypeProperty.value === PotentialType.ASYMMETRIC_TRIANGLE
+    ) {
       numStates = 80; // Asymmetric triangle may have many states, use larger number
     }
     // For triangular potential, calculate states based on well depth
     else if (this.potentialTypeProperty.value === PotentialType.TRIANGULAR) {
       numStates = 50; // Triangular well typically has fewer states than asymmetric
-    }
-    else {
+    } else {
       numStates = 80; // Use more states for other potentials
     }
 
@@ -285,7 +343,8 @@ export class OneWellModel extends BaseModel {
           break;
         case PotentialType.HARMONIC_OSCILLATOR:
           // Convert well depth to spring constant: k = mω² = m(4V₀/mL²) = 4V₀/L²
-          potentialParams.springConstant = (4 * wellDepth) / (wellWidth * wellWidth);
+          potentialParams.springConstant =
+            (4 * wellDepth) / (wellWidth * wellWidth);
           break;
         case PotentialType.MORSE:
           // Morse potential: V(x) = D_e * (1 - exp(-(x - x_e)/a))^2
@@ -304,14 +363,16 @@ export class OneWellModel extends BaseModel {
           // Rosen-Morse potential: V(x) = -V_0 / cosh²(x/a) + V_1 * tanh(x/a)
           // wellWidth is the width parameter 'a' in meters
           potentialParams.potentialDepth = wellDepth;
-          potentialParams.barrierHeight = this.barrierHeightProperty.value * QuantumConstants.EV_TO_JOULES;
+          potentialParams.barrierHeight =
+            this.barrierHeightProperty.value * QuantumConstants.EV_TO_JOULES;
           potentialParams.wellWidth = wellWidth; // width in meters
           break;
         case PotentialType.ECKART:
           // Eckart potential: V(x) = V_0 / (1 + exp(x/a))² - V_1 / (1 + exp(x/a))
           // wellWidth is the width parameter 'a' in meters
           potentialParams.potentialDepth = wellDepth;
-          potentialParams.barrierHeight = this.barrierHeightProperty.value * QuantumConstants.EV_TO_JOULES;
+          potentialParams.barrierHeight =
+            this.barrierHeightProperty.value * QuantumConstants.EV_TO_JOULES;
           potentialParams.wellWidth = wellWidth; // width in meters
           break;
         case PotentialType.ASYMMETRIC_TRIANGLE:
@@ -326,7 +387,8 @@ export class OneWellModel extends BaseModel {
           // V(x) = height + offset for x > width
           potentialParams.potentialDepth = wellDepth; // height in Joules
           potentialParams.wellWidth = wellWidth; // width in meters
-          potentialParams.energyOffset = this.potentialOffsetProperty.value * QuantumConstants.EV_TO_JOULES; // offset in Joules
+          potentialParams.energyOffset =
+            this.potentialOffsetProperty.value * QuantumConstants.EV_TO_JOULES; // offset in Joules
           break;
         case PotentialType.COULOMB_1D:
         case PotentialType.COULOMB_3D: {
@@ -336,7 +398,10 @@ export class OneWellModel extends BaseModel {
           // Energy then scales naturally with mass: E_n = -mα²/(2ℏ²n²)
           // With electron mass, this gives E_1 = -13.6 eV
           const coulombConstant = 8.9875517923e9; // Coulomb's constant in N·m²/C²
-          potentialParams.coulombStrength = coulombConstant * QuantumConstants.ELEMENTARY_CHARGE * QuantumConstants.ELEMENTARY_CHARGE;
+          potentialParams.coulombStrength =
+            coulombConstant *
+            QuantumConstants.ELEMENTARY_CHARGE *
+            QuantumConstants.ELEMENTARY_CHARGE;
           break;
         }
         default:
@@ -375,7 +440,11 @@ export class OneWellModel extends BaseModel {
       this.calculateBoundStates();
     }
 
-    if (this.boundStateResult && n > 0 && n <= this.boundStateResult.wavefunctions.length) {
+    if (
+      this.boundStateResult &&
+      n > 0 &&
+      n <= this.boundStateResult.wavefunctions.length
+    ) {
       return this.boundStateResult.wavefunctions[n - 1];
     }
 
@@ -393,7 +462,9 @@ export class OneWellModel extends BaseModel {
 
     if (this.boundStateResult) {
       // Convert from meters to nanometers
-      return this.boundStateResult.xGrid.map((x) => x * QuantumConstants.M_TO_NM);
+      return this.boundStateResult.xGrid.map(
+        (x) => x * QuantumConstants.M_TO_NM,
+      );
     }
 
     return null;
@@ -406,7 +477,10 @@ export class OneWellModel extends BaseModel {
    *
    * @returns Object with wavefunction array and energy (weighted average), or null
    */
-  public getSuperpositionWavefunction(): { wavefunction: number[]; energy: number } | null {
+  public getSuperpositionWavefunction(): {
+    wavefunction: number[];
+    energy: number;
+  } | null {
     if (!this.boundStateResult) {
       this.calculateBoundStates();
     }
@@ -440,7 +514,8 @@ export class OneWellModel extends BaseModel {
         }
 
         // Add weighted energy contribution
-        weightedEnergy += amplitude * amplitude * this.boundStateResult.energies[n];
+        weightedEnergy +=
+          amplitude * amplitude * this.boundStateResult.energies[n];
       }
     }
 
@@ -502,7 +577,9 @@ export class OneWellModel extends BaseModel {
           amplitudes[i] = 1;
         }
         // Normalize
-        const normNarrow = Math.sqrt(amplitudes.reduce((sum, a) => sum + a * a, 0));
+        const normNarrow = Math.sqrt(
+          amplitudes.reduce((sum, a) => sum + a * a, 0),
+        );
         amplitudes = amplitudes.map((a) => a / normNarrow);
         break;
       }
@@ -516,26 +593,34 @@ export class OneWellModel extends BaseModel {
           amplitudes[i] = 1;
         }
         // Normalize
-        const normWide = Math.sqrt(amplitudes.reduce((sum, a) => sum + a * a, 0));
+        const normWide = Math.sqrt(
+          amplitudes.reduce((sum, a) => sum + a * a, 0),
+        );
         amplitudes = amplitudes.map((a) => a / normWide);
         break;
       }
 
       case SuperpositionType.COHERENT: {
-        const wellWidth = this.wellWidthProperty.value * QuantumConstants.NM_TO_M;
-        const displacement = this.coherentDisplacementProperty.value * QuantumConstants.NM_TO_M;
+        const wellWidth =
+          this.wellWidthProperty.value * QuantumConstants.NM_TO_M;
+        const displacement =
+          this.coherentDisplacementProperty.value * QuantumConstants.NM_TO_M;
 
-        if (this.potentialTypeProperty.value === PotentialType.HARMONIC_OSCILLATOR) {
+        if (
+          this.potentialTypeProperty.value === PotentialType.HARMONIC_OSCILLATOR
+        ) {
           // True coherent state for harmonic oscillator
-          const wellDepth = this.wellDepthProperty.value * QuantumConstants.EV_TO_JOULES;
-          const mass = this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
+          const wellDepth =
+            this.wellDepthProperty.value * QuantumConstants.EV_TO_JOULES;
+          const mass =
+            this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
           const springConstant = (4 * wellDepth) / (wellWidth * wellWidth);
 
           const result = calculateCoherentStateCoefficients(
             displacement,
             springConstant,
             mass,
-            numStates
+            numStates,
           );
           amplitudes = result.amplitudes;
           phases = result.phases;
@@ -549,10 +634,17 @@ export class OneWellModel extends BaseModel {
           // For each eigenstate, compute its overlap with a position-localized state
           // We use the eigenfunction values at the displacement position as weights
           const displacementIndex = Math.round(
-            ((displacement + 4 * QuantumConstants.NM_TO_M) / (8 * QuantumConstants.NM_TO_M)) *
-            (this.boundStateResult!.xGrid.length - 1)
+            ((displacement + 4 * QuantumConstants.NM_TO_M) /
+              (8 * QuantumConstants.NM_TO_M)) *
+              (this.boundStateResult!.xGrid.length - 1),
           );
-          const clampedIndex = Math.max(0, Math.min(displacementIndex, this.boundStateResult!.xGrid.length - 1));
+          const clampedIndex = Math.max(
+            0,
+            Math.min(
+              displacementIndex,
+              this.boundStateResult!.xGrid.length - 1,
+            ),
+          );
 
           // Weight each eigenstate by its wavefunction value at the displacement position
           // and apply a Gaussian envelope in eigenstate index to create localization
@@ -561,10 +653,13 @@ export class OneWellModel extends BaseModel {
 
           for (let n = 0; n < numStates; n++) {
             if (n < this.boundStateResult!.wavefunctions.length) {
-              const psi_n_at_x = this.boundStateResult!.wavefunctions[n][clampedIndex];
+              const psi_n_at_x =
+                this.boundStateResult!.wavefunctions[n][clampedIndex];
 
               // Gaussian envelope in eigenstate space
-              const gaussianWeight = Math.exp(-Math.pow(n - n0, 2) / (2 * sigma * sigma));
+              const gaussianWeight = Math.exp(
+                -Math.pow(n - n0, 2) / (2 * sigma * sigma),
+              );
 
               // Combine position-based and Gaussian weights
               amplitudes[n] = psi_n_at_x * gaussianWeight;
@@ -574,7 +669,7 @@ export class OneWellModel extends BaseModel {
           // Normalize the amplitudes
           const norm = Math.sqrt(amplitudes.reduce((sum, a) => sum + a * a, 0));
           if (norm > 0) {
-            amplitudes = amplitudes.map(a => a / norm);
+            amplitudes = amplitudes.map((a) => a / norm);
           } else {
             // Fallback: if all amplitudes are zero, just use ground state
             amplitudes[0] = 1;
@@ -603,7 +698,10 @@ export class OneWellModel extends BaseModel {
       type,
       amplitudes,
       phases,
-      displacement: type === SuperpositionType.COHERENT ? this.coherentDisplacementProperty.value : undefined,
+      displacement:
+        type === SuperpositionType.COHERENT
+          ? this.coherentDisplacementProperty.value
+          : undefined,
     };
   }
 }
