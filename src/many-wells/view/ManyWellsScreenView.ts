@@ -6,7 +6,7 @@
 import { BaseScreenView } from "../../common/view/BaseScreenView.js";
 import { ManyWellsModel } from "../model/ManyWellsModel.js";
 import { ScreenViewOptions } from "scenerystack/sim";
-import { Node, Text, VBox} from "scenerystack/scenery";
+import { Node, Text, VBox } from "scenerystack/scenery";
 import { Panel } from "scenerystack/sun";
 import QPPWColors from "../../QPPWColors.js";
 import stringManager from "../../i18n/StringManager.js";
@@ -16,12 +16,11 @@ export class ManyWellsScreenView extends BaseScreenView {
   private readonly customControlPanel: Panel;
 
   public constructor(model: ManyWellsModel, options?: ScreenViewOptions) {
-    super( model,      options);
+    super(model, options);
 
     // Create container for the wells
     this.wellsContainer = new Node();
     this.addChild(this.wellsContainer);
-
 
     // Add title text
     const titleText = new Text(stringManager.manyWellsStringProperty, {

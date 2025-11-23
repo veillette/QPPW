@@ -16,8 +16,8 @@ const QPPWColors = {
 
   // Panel and control colors
   panelFillProperty: new ProfileColorProperty(qppw, "panelFill", {
-    default: new Color(10, 10, 30,0),
-    projector: new Color(245, 245, 250,0),
+    default: new Color(10, 10, 30, 0),
+    projector: new Color(245, 245, 250, 0),
   }),
 
   panelStrokeProperty: new ProfileColorProperty(qppw, "panelStroke", {
@@ -31,25 +31,41 @@ const QPPWColors = {
     projector: new Color(0, 100, 200), // Darker blue for projector
   }),
 
-  wavefunctionImaginaryProperty: new ProfileColorProperty(qppw, "wavefunctionImaginary", {
-    default: new Color(255, 100, 0), // Orange
-    projector: new Color(200, 80, 0), // Darker orange for projector
-  }),
+  wavefunctionImaginaryProperty: new ProfileColorProperty(
+    qppw,
+    "wavefunctionImaginary",
+    {
+      default: new Color(255, 100, 0), // Orange
+      projector: new Color(200, 80, 0), // Darker orange for projector
+    },
+  ),
 
-  wavefunctionProbabilityProperty: new ProfileColorProperty(qppw, "wavefunctionProbability", {
-    default: new Color(255, 200, 0), // Gold/yellow
-    projector: new Color(200, 150, 0), // Darker yellow for projector
-  }),
+  wavefunctionProbabilityProperty: new ProfileColorProperty(
+    qppw,
+    "wavefunctionProbability",
+    {
+      default: new Color(255, 200, 0), // Gold/yellow
+      projector: new Color(200, 150, 0), // Darker yellow for projector
+    },
+  ),
 
-  wavefunctionMagnitudeProperty: new ProfileColorProperty(qppw, "wavefunctionMagnitude", {
-    default: new Color(160, 32, 240), // Purple
-    projector: new Color(128, 0, 128), // Darker purple for projector
-  }),
+  wavefunctionMagnitudeProperty: new ProfileColorProperty(
+    qppw,
+    "wavefunctionMagnitude",
+    {
+      default: new Color(160, 32, 240), // Purple
+      projector: new Color(128, 0, 128), // Darker purple for projector
+    },
+  ),
 
-  wavefunctionProbabilityFillProperty: new ProfileColorProperty(qppw, "wavefunctionProbabilityFill", {
-    default: new Color(255, 215, 0, 0.2), // Semi-transparent gold
-    projector: new Color(200, 150, 0, 0.3), // Semi-transparent darker gold for projector
-  }),
+  wavefunctionProbabilityFillProperty: new ProfileColorProperty(
+    qppw,
+    "wavefunctionProbabilityFill",
+    {
+      default: new Color(255, 215, 0, 0.2), // Semi-transparent gold
+      projector: new Color(200, 150, 0, 0.3), // Semi-transparent darker gold for projector
+    },
+  ),
 
   // Potential well colors
   potentialWellProperty: new ProfileColorProperty(qppw, "potentialWell", {
@@ -68,10 +84,14 @@ const QPPWColors = {
     projector: new Color(0, 150, 100), // Darker green for projector
   }),
 
-  energyLevelSelectedProperty: new ProfileColorProperty(qppw, "energyLevelSelected", {
-    default: new Color(255, 255, 100), // Bright yellow
-    projector: new Color(200, 200, 0), // Darker yellow for projector
-  }),
+  energyLevelSelectedProperty: new ProfileColorProperty(
+    qppw,
+    "energyLevelSelected",
+    {
+      default: new Color(255, 255, 100), // Bright yellow
+      projector: new Color(200, 200, 0), // Darker yellow for projector
+    },
+  ),
 
   // Grid and axis colors
   gridLineProperty: new ProfileColorProperty(qppw, "gridLine", {
@@ -102,15 +122,23 @@ const QPPWColors = {
   }),
 
   // Control panel specific colors (for ComboBox, buttons, etc.)
-  controlPanelBackgroundColorProperty: new ProfileColorProperty(qppw, "controlPanelBackground", {
-    default: new Color(30, 30, 50), // Slightly lighter than main background
-    projector: new Color(250, 250, 255), // Almost white for projector
-  }),
+  controlPanelBackgroundColorProperty: new ProfileColorProperty(
+    qppw,
+    "controlPanelBackground",
+    {
+      default: new Color(30, 30, 50), // Slightly lighter than main background
+      projector: new Color(250, 250, 255), // Almost white for projector
+    },
+  ),
 
-  controlPanelStrokeColorProperty: new ProfileColorProperty(qppw, "controlPanelStroke", {
-    default: new Color(120, 120, 160), // Light purple-gray
-    projector: new Color(100, 100, 140), // Darker for projector
-  }),
+  controlPanelStrokeColorProperty: new ProfileColorProperty(
+    qppw,
+    "controlPanelStroke",
+    {
+      default: new Color(120, 120, 160), // Light purple-gray
+      projector: new Color(100, 100, 140), // Darker for projector
+    },
+  ),
 };
 
 export default QPPWColors;

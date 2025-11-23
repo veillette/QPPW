@@ -13,8 +13,15 @@
  */
 
 import QuantumConstants from "./QuantumConstants.js";
-import { BoundStateResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
-import { integrateNumerovFromCenter, normalizeWavefunction } from "./NumerovSolver.js";
+import {
+  BoundStateResult,
+  GridConfig,
+  PotentialFunction,
+} from "./PotentialFunction.js";
+import {
+  integrateNumerovFromCenter,
+  normalizeWavefunction,
+} from "./NumerovSolver.js";
 import qppw from "../../QPPWNamespace.js";
 
 /**
@@ -36,7 +43,6 @@ export function solveDoubleWellNumerov(
   numStates: number,
   gridConfig: GridConfig,
 ): BoundStateResult {
-
   // Create the double square well potential function
   // Wells centered at ±(separation/2 + wellWidth/2)
   const leftWellCenter = -(wellSeparation / 2 + wellWidth / 2);
@@ -87,7 +93,11 @@ export function solveDoubleWellNumerov(
   const energies: number[] = [];
   const wavefunctions: number[][] = [];
 
-  for (let i = 0; i < singleWellEnergies.length && energies.length < numStates; i++) {
+  for (
+    let i = 0;
+    i < singleWellEnergies.length && energies.length < numStates;
+    i++
+  ) {
     const E_single = singleWellEnergies[i];
 
     // Skip if energy is above the barrier (not bound)
@@ -127,7 +137,14 @@ export function solveDoubleWellNumerov(
 
     if (E_sym !== null && energies.length < numStates) {
       energies.push(E_sym);
-      const psi_sym = integrateNumerovFromCenter(E_sym, V, xGrid, dx, mass, "symmetric");
+      const psi_sym = integrateNumerovFromCenter(
+        E_sym,
+        V,
+        xGrid,
+        dx,
+        mass,
+        "symmetric",
+      );
       const normalized_psi_sym = normalizeWavefunction(psi_sym, dx);
       wavefunctions.push(normalized_psi_sym);
     }
@@ -148,7 +165,14 @@ export function solveDoubleWellNumerov(
 
     if (E_antisym !== null && energies.length < numStates) {
       energies.push(E_antisym);
-      const psi_antisym = integrateNumerovFromCenter(E_antisym, V, xGrid, dx, mass, "antisymmetric");
+      const psi_antisym = integrateNumerovFromCenter(
+        E_antisym,
+        V,
+        xGrid,
+        dx,
+        mass,
+        "antisymmetric",
+      );
       const normalized_psi_antisym = normalizeWavefunction(psi_antisym, dx);
       wavefunctions.push(normalized_psi_antisym);
     }
@@ -185,7 +209,7 @@ function estimateSingleWellEnergies(
   const halfL = L / 2;
 
   // Dimensionless parameter: ξ₀ = (L/2)√(2mV₀/ℏ²)
-  const xi0 = halfL * Math.sqrt(2 * mass * V0) / HBAR;
+  const xi0 = (halfL * Math.sqrt(2 * mass * V0)) / HBAR;
 
   // Maximum number of bound states
   const maxPossibleStates = Math.floor(xi0 / (Math.PI / 2)) + 1;
@@ -199,7 +223,7 @@ function estimateSingleWellEnergies(
 
   // Find energy levels by solving transcendental equations
   for (let n = 0; n < numStates; n++) {
-    const isEven = (n % 2 === 0);
+    const isEven = n % 2 === 0;
     const stateIndex = Math.floor(n / 2);
 
     let xi: number | null = null;
@@ -228,8 +252,8 @@ function estimateSingleWellEnergies(
  */
 function findEvenParityXi(xi0: number, stateIndex: number): number | null {
   const n = stateIndex * 2;
-  const xiMin = n * Math.PI / 2 + 0.01;
-  const xiMax = Math.min((n + 1) * Math.PI / 2 - 0.01, xi0);
+  const xiMin = (n * Math.PI) / 2 + 0.01;
+  const xiMax = Math.min(((n + 1) * Math.PI) / 2 - 0.01, xi0);
 
   if (xiMin >= xiMax) {
     return null;
@@ -248,8 +272,8 @@ function findEvenParityXi(xi0: number, stateIndex: number): number | null {
  */
 function findOddParityXi(xi0: number, stateIndex: number): number | null {
   const n = stateIndex * 2 + 1;
-  const xiMin = n * Math.PI / 2 + 0.01;
-  const xiMax = Math.min((n + 1) * Math.PI / 2 - 0.01, xi0);
+  const xiMin = (n * Math.PI) / 2 + 0.01;
+  const xiMax = Math.min(((n + 1) * Math.PI) / 2 - 0.01, xi0);
 
   if (xiMin >= xiMax) {
     return null;
@@ -337,9 +361,9 @@ function findEnergyNearEstimate(
   dx: number,
   mass: number,
   wellDepth: number,
-   
+
   _leftCenter: number,
-   
+
   _rightCenter: number,
 ): number | null {
   const energyMin = Math.max(0, energyEstimate - searchWindow); // Energy must be >= 0 (well bottom)
@@ -375,7 +399,6 @@ function findEnergyNearEstimate(
 
     // Detect sign change
     if (prevSign !== 0 && currentSign !== 0 && currentSign !== prevSign) {
-
       // Refine using bisection
       const refinedEnergy = refineEnergy(
         prevEnergy,
@@ -444,7 +467,14 @@ function refineEnergy(
 
   // Verify the solution has the correct parity
   const finalE = (Elow + Ehigh) / 2;
-  const finalPsi = integrateNumerovFromCenter(finalE, V, xGrid, dx, mass, parity);
+  const finalPsi = integrateNumerovFromCenter(
+    finalE,
+    V,
+    xGrid,
+    dx,
+    mass,
+    parity,
+  );
 
   if (!verifyParity(finalPsi, xGrid, parity)) {
     return null; // Wrong parity, reject
@@ -484,12 +514,13 @@ function verifyParity(
 
   // Normalize errors
   const maxAbs = Math.max(...psi.map(Math.abs));
-  symmetryError /= (numCheckPoints * maxAbs + 1e-10);
-  antisymmetryError /= (numCheckPoints * maxAbs + 1e-10);
+  symmetryError /= numCheckPoints * maxAbs + 1e-10;
+  antisymmetryError /= numCheckPoints * maxAbs + 1e-10;
 
   // Determine parity (threshold: 0.1)
   const isSymmetric = symmetryError < antisymmetryError && symmetryError < 0.1;
-  const isAntisymmetric = antisymmetryError < symmetryError && antisymmetryError < 0.1;
+  const isAntisymmetric =
+    antisymmetryError < symmetryError && antisymmetryError < 0.1;
 
   if (expectedParity === "symmetric") {
     return isSymmetric;

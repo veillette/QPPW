@@ -45,7 +45,14 @@ export interface GridConfig {
 /**
  * Valid solver method identifiers
  */
-export type SolverMethod = "analytical" | "numerov" | "matrix_numerov" | "dvr" | "fgh" | "spectral" | "quantum_bound";
+export type SolverMethod =
+  | "analytical"
+  | "numerov"
+  | "matrix_numerov"
+  | "dvr"
+  | "fgh"
+  | "spectral"
+  | "quantum_bound";
 
 /**
  * Result from solving the Schrödinger equation

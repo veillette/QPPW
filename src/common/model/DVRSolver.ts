@@ -10,8 +10,19 @@
  */
 
 import QuantumConstants from "./QuantumConstants.js";
-import { BoundStateResult, EnergyOnlyResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
-import { DotMatrix, diagonalize, normalizeWavefunction, matrixToArray, cubicSplineInterpolation } from "./LinearAlgebraUtils.js";
+import {
+  BoundStateResult,
+  EnergyOnlyResult,
+  GridConfig,
+  PotentialFunction,
+} from "./PotentialFunction.js";
+import {
+  DotMatrix,
+  diagonalize,
+  normalizeWavefunction,
+  matrixToArray,
+  cubicSplineInterpolation,
+} from "./LinearAlgebraUtils.js";
 import { standardizeWavefunction } from "./WavefunctionStandardization.js";
 import qppw from "../../QPPWNamespace.js";
 
@@ -140,7 +151,11 @@ export function solveDVR(
 
   const fineWavefunctions: number[][] = [];
   for (const wavefunction of wavefunctions) {
-    const { fineYValues } = cubicSplineInterpolation(xGrid, wavefunction, upsampleFactor);
+    const { fineYValues } = cubicSplineInterpolation(
+      xGrid,
+      wavefunction,
+      upsampleFactor,
+    );
     fineWavefunctions.push(fineYValues);
   }
 
@@ -161,7 +176,11 @@ export function solveDVR(
  * @param mass - Particle mass (kg)
  * @returns N×N kinetic energy matrix
  */
-function createKineticEnergyMatrix(N: number, dx: number, mass: number): DotMatrix {
+function createKineticEnergyMatrix(
+  N: number,
+  dx: number,
+  mass: number,
+): DotMatrix {
   const { HBAR } = QuantumConstants;
   const prefactor = (HBAR * HBAR) / (2 * mass * dx * dx);
 
@@ -170,12 +189,12 @@ function createKineticEnergyMatrix(N: number, dx: number, mass: number): DotMatr
     for (let j = 0; j < N; j++) {
       if (i === j) {
         // Diagonal elements
-        T.set(i, j, prefactor * (Math.PI * Math.PI) / 3);
+        T.set(i, j, (prefactor * (Math.PI * Math.PI)) / 3);
       } else {
         // Off-diagonal elements
         const diff = i - j;
         const sign = Math.pow(-1, diff);
-        T.set(i, j, prefactor * (2 * sign) / (diff * diff));
+        T.set(i, j, (prefactor * (2 * sign)) / (diff * diff));
       }
     }
   }

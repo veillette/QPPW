@@ -257,15 +257,32 @@ function rk45Step(
   f: (x: number) => number,
 ): { y1: number; y2: number } {
   // Butcher tableau coefficients for RK45
-  const a2 = 1/4, a3 = 3/8, a4 = 12/13, a5 = 1, a6 = 1/2;
-  const b21 = 1/4;
-  const b31 = 3/32, b32 = 9/32;
-  const b41 = 1932/2197, b42 = -7200/2197, b43 = 7296/2197;
-  const b51 = 439/216, b52 = -8, b53 = 3680/513, b54 = -845/4104;
-  const b61 = -8/27, b62 = 2, b63 = -3544/2565, b64 = 1859/4104, b65 = -11/40;
+  const a2 = 1 / 4,
+    a3 = 3 / 8,
+    a4 = 12 / 13,
+    a5 = 1,
+    a6 = 1 / 2;
+  const b21 = 1 / 4;
+  const b31 = 3 / 32,
+    b32 = 9 / 32;
+  const b41 = 1932 / 2197,
+    b42 = -7200 / 2197,
+    b43 = 7296 / 2197;
+  const b51 = 439 / 216,
+    b52 = -8,
+    b53 = 3680 / 513,
+    b54 = -845 / 4104;
+  const b61 = -8 / 27,
+    b62 = 2,
+    b63 = -3544 / 2565,
+    b64 = 1859 / 4104,
+    b65 = -11 / 40;
 
   // 4th order coefficients
-  const c1 = 25/216, c3 = 1408/2565, c4 = 2197/4104, c5 = -1/5;
+  const c1 = 25 / 216,
+    c3 = 1408 / 2565,
+    c4 = 2197 / 4104,
+    c5 = -1 / 5;
 
   // k1
   const k1_1 = h * y2;
@@ -297,10 +314,14 @@ function rk45Step(
 
   // k6 (computed for 5th-order accuracy but not used in 4th-order solution)
   // These intermediate values are needed for the full RK45 embedded method
-  const _y1_6 = y1 + b61 * k1_1 + b62 * k2_1 + b63 * k3_1 + b64 * k4_1 + b65 * k5_1;
-  const _y2_6 = y2 + b61 * k1_2 + b62 * k2_2 + b63 * k3_2 + b64 * k4_2 + b65 * k5_2;
+  const _y1_6 =
+    y1 + b61 * k1_1 + b62 * k2_1 + b63 * k3_1 + b64 * k4_1 + b65 * k5_1;
+  const _y2_6 =
+    y2 + b61 * k1_2 + b62 * k2_2 + b63 * k3_2 + b64 * k4_2 + b65 * k5_2;
   // Suppress unused variable warnings - these are kept for potential future 5th-order error estimation
-  void _y1_6; void _y2_6; void a6;
+  void _y1_6;
+  void _y2_6;
+  void a6;
 
   // 4th order solution
   const y1_new = y1 + c1 * k1_1 + c3 * k3_1 + c4 * k4_1 + c5 * k5_1;
@@ -324,11 +345,19 @@ export function computeWavefunctionRK45(
   mass: number,
   gridConfig: GridConfig,
 ): { wavefunction: number[]; xGrid: number[] } {
-  const result = computeWavefunctionsRK45([energy], potential, mass, gridConfig);
+  const result = computeWavefunctionsRK45(
+    [energy],
+    potential,
+    mass,
+    gridConfig,
+  );
   return {
     wavefunction: result.wavefunctions[0],
     xGrid: result.xGrid,
   };
 }
 
-qppw.register("WavefunctionRK45Solver", { computeWavefunctionsRK45, computeWavefunctionRK45 });
+qppw.register("WavefunctionRK45Solver", {
+  computeWavefunctionsRK45,
+  computeWavefunctionRK45,
+});

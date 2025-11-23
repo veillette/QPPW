@@ -148,6 +148,7 @@ npm test
 ```
 
 This command:
+
 - Runs comprehensive accuracy tests across 5 numerical methods (DVR, Spectral, Matrix Numerov, FGH, and QuantumBound)
 - Tests harmonic oscillator, finite square wells, 3D Coulomb potential, Morse potential, Pöschl-Teller potential, and double wells
 - Uses grid sizes of 32, 64, and 128 points
@@ -156,6 +157,7 @@ This command:
 - Provides a summary of passed/failed tests
 
 **Output includes:**
+
 - ✓/✗ Pass/fail indicators for each test
 - Numerical vs analytical energy comparisons
 - Error percentages for each energy level
@@ -179,6 +181,7 @@ start tests/accuracy-tests.html
 ```
 
 The browser test interface provides:
+
 - **Run Full Tests** button - Comprehensive test suite with multiple potentials and methods
 - **Run Quick Check** button - Rapid validation subset
 - Visual pass/fail indicators with color coding
@@ -218,6 +221,7 @@ import('/src/common/model/AccuracyTests.ts').then(m => m.runQuickAccuracyCheck()
 The project includes two comprehensive test suites:
 
 **1. Accuracy Tests** (`npm test`) - Validates all numerical methods against analytical solutions:
+
 - **Harmonic Oscillator** - 10 energy levels, 0.1% tolerance
 - **Finite Square Wells** (4 configurations) - 0.5% tolerance
 - **3D Coulomb/Hydrogen Atom** - 1.0% tolerance
@@ -228,6 +232,7 @@ The project includes two comprehensive test suites:
 - Multiple grid sizes (32, 64, 128 points)
 
 **2. Double Well Test Suite** (`npm run test:double-well`) - **23 stringent tests** for double quantum wells:
+
 - Parity alternation, node counting, edge behavior
 - Normalization (0.2% tolerance), energy ordering
 - Derivative continuity (1.5% tolerance)
@@ -253,6 +258,7 @@ The simulation is designed to be deployed as a single HTML file, making it easy 
 - Use offline in classrooms
 
 The included GitHub Actions workflow automates:
+
 - Type checking and linting
 - Building the simulation
 - Deployment to GitHub Pages

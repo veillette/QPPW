@@ -3,7 +3,11 @@
  * It provides common functionality for time evolution, simulation control, and solver configuration.
  */
 
-import { EnumerationProperty, NumberProperty, Property } from "scenerystack/axon";
+import {
+  EnumerationProperty,
+  NumberProperty,
+  Property,
+} from "scenerystack/axon";
 import { TimeSpeed } from "scenerystack";
 import Schrodinger1DSolver, { NumericalMethod } from "./Schrodinger1DSolver.js";
 import QPPWPreferences from "../../QPPWPreferences.js";
@@ -79,8 +83,12 @@ export abstract class BaseModel {
     try {
       if (this.isPlayingProperty.value || forced) {
         // Convert dt to femtoseconds and apply speed multiplier (only when playing normally)
-        const speedMultiplier = forced ? 1 : (this.timeSpeedProperty.value === TimeSpeed.SLOW ? 1/10 : 1);
-        const dtFemtoseconds = (dt) * speedMultiplier; // seconds to femtoseconds
+        const speedMultiplier = forced
+          ? 1
+          : this.timeSpeedProperty.value === TimeSpeed.SLOW
+            ? 1 / 10
+            : 1;
+        const dtFemtoseconds = dt * speedMultiplier; // seconds to femtoseconds
         this.timeProperty.value += dtFemtoseconds;
         // Quantum mechanical time evolution is handled in the view layer
       }

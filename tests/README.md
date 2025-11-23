@@ -19,12 +19,14 @@ The test directory contains only essential files:
 The comprehensive test suite (`AccuracyTests.ts`) validates all numerical methods (DVR, Spectral, Matrix Numerov, FGH, and QuantumBound) against analytical solutions across multiple potential types and grid sizes:
 
 ### 1. Harmonic Oscillator
+
 - Tests across grid sizes: 32, 64, 128 points
 - All 5 methods tested (DVR, Spectral, Matrix Numerov, FGH, QuantumBound)
 - Tests first 10 energy levels
 - **0.1% error tolerance**
 
 ### 2. Finite Square Wells
+
 - **4 configurations tested:**
   - Shallow well: 1nm width, 10eV depth
   - Deep well: 1nm width, 50eV depth
@@ -35,24 +37,28 @@ The comprehensive test suite (`AccuracyTests.ts`) validates all numerical method
 - **0.5% error tolerance**
 
 ### 3. 3D Coulomb Potential (Hydrogen Atom)
+
 - Tests the radial Schrödinger equation for s-waves (L=0)
 - Grid sizes: 32, 64, 128 points (powers of 2)
 - All 5 methods tested (DVR, Spectral, Matrix Numerov, FGH, QuantumBound)
 - **1.0% error tolerance**
 
 ### 4. Morse Potential
+
 - Tests vibrational energy levels for realistic molecular parameters
 - Grid sizes: 32, 64, 128 points (powers of 2)
 - All 5 methods tested (DVR, Spectral, Matrix Numerov, FGH, QuantumBound)
 - **1.0% error tolerance**
 
 ### 5. Pöschl-Teller Potential
+
 - Tests bound states in hyperbolic wells
 - Grid sizes: 32, 64, 128 points (powers of 2)
 - All 5 methods tested (DVR, Spectral, Matrix Numerov, FGH, QuantumBound)
 - **1.0% error tolerance**
 
 ### 6. Double Square Wells (Accuracy Tests)
+
 - **3 configurations tested:**
   - Symmetric, low barrier: 0.5nm wells, 0.3nm barrier, 30eV depth, 10eV barrier
   - Symmetric, medium barrier: 0.5nm wells, 0.5nm barrier, 40eV depth, 20eV barrier
@@ -66,6 +72,7 @@ The comprehensive test suite (`AccuracyTests.ts`) validates all numerical method
 A dedicated test suite specifically for double quantum well potentials with **stringent validation** requirements:
 
 **23 comprehensive tests covering:**
+
 1. Parity alternation for ALL states (even, odd, even, odd...)
 2. Node count validation (state n has n nodes)
 3. Edge behavior (decay, continuity, no spurious nodes)
@@ -91,6 +98,7 @@ A dedicated test suite specifically for double quantum well potentials with **st
 23. **Energy splitting consistency/tunneling effect**
 
 **Stringent Requirements:**
+
 - Edge decay tolerance: 0.5% (was 1%)
 - Normalization tolerance: 0.2% (was 0.5%)
 - Parity detection tolerance: 2% (was 5%)
@@ -99,6 +107,7 @@ A dedicated test suite specifically for double quantum well potentials with **st
 - Grid points: 1500 (was 1000)
 
 **Run the double well test suite:**
+
 ```bash
 npm run test:double-well
 ```
@@ -110,11 +119,13 @@ npm run test:double-well
 This provides a visual interface for running tests.
 
 1. **Start the development server** from the root directory:
+
    ```bash
    npm start
    ```
 
 2. **Open the test runner** in a web browser:
+
    ```bash
    # The dev server typically runs on http://localhost:5173
    # Navigate to: http://localhost:5173/tests/accuracy-tests.html
@@ -141,6 +152,7 @@ npm test
 ```
 
 This will execute the comprehensive test suite and display results in the terminal, including:
+
 - Pass/fail status for each test
 - Numerical vs analytical energy comparisons
 - Error percentages
@@ -152,6 +164,7 @@ This will execute the comprehensive test suite and display results in the termin
 Useful during active development.
 
 1. **Start the development server** from the root directory:
+
    ```bash
    npm start
    ```
@@ -159,12 +172,15 @@ Useful during active development.
 2. **Open your browser** and navigate to the local server URL (usually `http://localhost:5173`)
 
 3. **Open browser console** (F12 or Cmd+Option+I) and run:
+
    ```javascript
    // Run full comprehensive test suite
-   import('./common/model/AccuracyTests.js').then(m => m.runAccuracyTests());
+   import("./common/model/AccuracyTests.js").then((m) => m.runAccuracyTests());
 
    // Or run quick check only
-   import('./common/model/AccuracyTests.js').then(m => m.runQuickAccuracyCheck());
+   import("./common/model/AccuracyTests.js").then((m) =>
+     m.runQuickAccuracyCheck(),
+   );
    ```
 
 ### Method 4: Direct TypeScript Execution (Advanced)
@@ -193,6 +209,7 @@ The AccuracyTests module exports two main functions:
 ### Individual Test Output
 
 Each test reports:
+
 - **Status**: ✓ PASSED or ✗ FAILED
 - **Maximum error**: The largest percentage error found across all energy levels
 - **Execution time**: Time taken to solve in milliseconds
@@ -202,6 +219,7 @@ Each test reports:
   - Percentage error
 
 Example output:
+
 ```
 === DVR - Harmonic Oscillator (N=150) ===
 Status: ✓ PASSED
@@ -217,6 +235,7 @@ Execution time: 12.45 ms
 ### Performance Summary
 
 At the end of the test run, a performance summary shows timing statistics for each method:
+
 ```
 --- Performance Summary ---
 DVR:
@@ -230,6 +249,7 @@ FGH:
 ```
 
 This allows you to:
+
 - Compare performance across different methods
 - Identify which method is fastest for your use case
 - Track performance regressions over time
@@ -237,6 +257,7 @@ This allows you to:
 ### Error Tolerances
 
 All tests now use stringent tolerances with maximum 1% error:
+
 - **Harmonic Oscillator**: **0.1%** - Very well-behaved smooth potential, extremely high accuracy expected
 - **Finite Square Wells**: **0.5%** - Despite discontinuous potential, accurate methods achieve sub-1% error
 - **3D Coulomb**: **1.0%** - Singular potential at r=0, still achieves 1% accuracy with proper grid
@@ -260,6 +281,7 @@ See `docs/ACCURACY_TESTS.md` for more details on test design.
 ### Error: Cannot find module 'AccuracyTests.js'
 
 If you see an error like:
+
 ```
 Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/home/.../src/common/model/AccuracyTests.js'
 ```

@@ -49,7 +49,8 @@ export function solveCoulomb1DPotential(
   // Calculate energies: E_n = -mα²/(2ℏ²(n+1/2)²) for n = 0, 1, 2, ...
   const energies: number[] = [];
   for (let n = 0; n < numStates; n++) {
-    const energy = -(mass * alpha * alpha) / (2 * HBAR * HBAR * (n + 0.5) * (n + 0.5));
+    const energy =
+      -(mass * alpha * alpha) / (2 * HBAR * HBAR * (n + 0.5) * (n + 0.5));
     energies.push(energy);
   }
 
@@ -86,7 +87,7 @@ export function solveCoulomb1DPotential(
 
     for (const x of xGrid) {
       const absX = Math.abs(x);
-      const rho = 2 * absX / a_n;
+      const rho = (2 * absX) / a_n;
 
       // Wavefunction: ψ(x) = sign(x) * N * exp(-ρ/2) * L_n^1(ρ)
       // ODD parity: ψ(-x) = -ψ(x), which matches the energy formula E_n = -E_R/(n+1/2)²

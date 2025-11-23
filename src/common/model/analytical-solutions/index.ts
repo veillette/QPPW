@@ -52,5 +52,5 @@ qppw.register("AnalyticalSolutions", {
   solveCoulomb1DPotential,
   solveCoulomb3DPotential,
   solveTriangularPotential,
-  solveDoubleSquareWellAnalytical
+  solveDoubleSquareWellAnalytical,
 });

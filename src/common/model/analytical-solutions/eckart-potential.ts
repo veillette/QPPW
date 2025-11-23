@@ -40,7 +40,8 @@ export function solveEckartPotential(
   // α = a * sqrt(2*m*V_0) / ℏ
   // β = V_1 * a * sqrt(2*m) / (2*ℏ*sqrt(V_0))
   const alpha_param = (a * Math.sqrt(2 * mass * V0)) / HBAR;
-  const beta_param = (V1 * a * Math.sqrt(2 * mass)) / (2 * HBAR * Math.sqrt(V0));
+  const beta_param =
+    (V1 * a * Math.sqrt(2 * mass)) / (2 * HBAR * Math.sqrt(V0));
 
   // For bound states, we need certain conditions on α and β
   const s1 = -0.5 + Math.sqrt(0.25 + alpha_param);
@@ -89,9 +90,14 @@ export function solveEckartPotential(
 
     // Normalization (with 1/a factor from variable change)
     const normalization = Math.sqrt(
-      (1 / a) * factorial(n) *
-      Math.exp(logGamma(2*s2 - n) + logGamma(alpha_jac + beta_jac + n + 1) -
-               logGamma(n + alpha_jac + 1) - logGamma(n + beta_jac + 1))
+      (1 / a) *
+        factorial(n) *
+        Math.exp(
+          logGamma(2 * s2 - n) +
+            logGamma(alpha_jac + beta_jac + n + 1) -
+            logGamma(n + alpha_jac + 1) -
+            logGamma(n + beta_jac + 1),
+        ),
     );
 
     for (const x of xGrid) {
@@ -99,14 +105,15 @@ export function solveEckartPotential(
       const xiPlus1 = 1 + xi;
 
       // Jacobi polynomial argument
-      const jacobiArg = 1 - 2 * xi / xiPlus1;
+      const jacobiArg = 1 - (2 * xi) / xiPlus1;
       const jacobiPoly = jacobiPolynomial(n, alpha_jac, beta_jac, jacobiArg);
 
       // Calculate wavefunction
-      const value = normalization *
-                   Math.pow(xi, s2 - n) *
-                   Math.pow(xiPlus1, -s1 - s2 + n) *
-                   jacobiPoly;
+      const value =
+        normalization *
+        Math.pow(xi, s2 - n) *
+        Math.pow(xiPlus1, -s1 - s2 + n) *
+        jacobiPoly;
 
       wavefunction.push(value);
     }

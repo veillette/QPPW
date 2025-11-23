@@ -7,7 +7,9 @@ This document describes the implementation of the 1D time-independent Schröding
 ## Features
 
 ### Analytical Solutions
+
 For well-known potentials, the solver provides exact analytical solutions for **12 potentials**:
+
 - **Infinite Square Well**: $E_n = \frac{n^2 \pi^2 \hbar^2}{2mL^2}$
 - **Finite Square Well**: Transcendental equation solutions
 - **Harmonic Oscillator**: $E_n = \hbar\omega(n + \frac{1}{2})$
@@ -22,9 +24,11 @@ For well-known potentials, the solver provides exact analytical solutions for **
 - **Double Square Well**: Symmetric double well with parity-separated states
 
 ### Numerical Solutions
+
 For arbitrary potentials, six numerical methods are available:
 
 #### 1. Numerov Method (Shooting)
+
 - Higher-order finite-difference method with $O(h^6)$ error
 - Uses shooting method to find bound states
 - Iterative formula:
@@ -32,11 +36,13 @@ For arbitrary potentials, six numerical methods are available:
   where $f_j = \frac{h^2}{12}k^2(x_j)$ and $k^2(x) = \frac{2m(E-V(x))}{\hbar^2}$
 
 #### 2. Matrix Numerov Method
+
 - Matrix formulation of the Numerov algorithm
 - Converts the Schrödinger equation into an eigenvalue problem
 - Higher accuracy than shooting Numerov for most cases
 
 #### 3. Discrete Variable Representation (DVR) Method
+
 - Matrix diagonalization approach
 - Constructs Hamiltonian $H = T + V$
 - Potential energy: Diagonal matrix with $V_{ii} = V(x_i)$
@@ -44,16 +50,19 @@ For arbitrary potentials, six numerical methods are available:
   $$T_{ij} = \frac{\hbar^2}{2m\Delta x^2} \begin{cases} \frac{\pi^2}{3} & \text{for } i=j \\ \frac{2(-1)^{i-j}}{(i-j)^2} & \text{for } i \neq j \end{cases}$$
 
 #### 4. Fourier Grid Hamiltonian (FGH) Method
+
 - Uses FFT for kinetic energy evaluation
 - Efficient for periodic or smooth potentials
 - Scales as O(N log N) for kinetic energy
 
 #### 5. Spectral (Chebyshev) Method
+
 - Expands wavefunction in Chebyshev polynomials
 - High accuracy for smooth potentials
 - Well-suited for non-uniform grid spacing
 
 #### 6. QuantumBound Method (Experimental)
+
 - Alternative bound state solver implementation
 - Currently under development and testing
 - May provide improved accuracy for specific potential types
@@ -83,9 +92,11 @@ src/common/model/analytical-solutions/  # Analytical solvers for specific potent
 ### Basic Usage
 
 ```typescript
-import Schrodinger1DSolver, { NumericalMethod } from './common/model/Schrodinger1DSolver.js';
-import { PotentialType } from './common/model/PotentialFunction.js';
-import QuantumConstants from './common/model/QuantumConstants.js';
+import Schrodinger1DSolver, {
+  NumericalMethod,
+} from "./common/model/Schrodinger1DSolver.js";
+import { PotentialType } from "./common/model/PotentialFunction.js";
+import QuantumConstants from "./common/model/QuantumConstants.js";
 
 // Create solver instance
 const solver = new Schrodinger1DSolver(NumericalMethod.DVR);
@@ -93,25 +104,25 @@ const solver = new Schrodinger1DSolver(NumericalMethod.DVR);
 // Define grid
 const gridConfig = {
   xMin: 0,
-  xMax: 1e-9,  // 1 nm
-  numPoints: 200
+  xMax: 1e-9, // 1 nm
+  numPoints: 200,
 };
 
 // Solve for infinite well (analytical)
 const result = solver.solveAnalyticalIfPossible(
   {
     type: PotentialType.INFINITE_WELL,
-    wellWidth: 1e-9
+    wellWidth: 1e-9,
   },
   QuantumConstants.ELECTRON_MASS,
-  5,  // Number of states
-  gridConfig
+  5, // Number of states
+  gridConfig,
 );
 
 // Access results
 result.energies.forEach((E, n) => {
   const E_eV = Schrodinger1DSolver.joulesToEV(E);
-  console.log(`E_${n+1} = ${E_eV.toFixed(4)} eV`);
+  console.log(`E_${n + 1} = ${E_eV.toFixed(4)} eV`);
 });
 ```
 
@@ -122,7 +133,7 @@ result.energies.forEach((E, n) => {
 const potential = (x: number) => {
   // Finite square well
   if (x >= 0 && x <= 1e-9) {
-    return -Schrodinger1DSolver.eVToJoules(5);  // -5 eV
+    return -Schrodinger1DSolver.eVToJoules(5); // -5 eV
   }
   return 0;
 };
@@ -132,7 +143,7 @@ const result = solver.solveNumerical(
   potential,
   QuantumConstants.ELECTRON_MASS,
   5,
-  gridConfig
+  gridConfig,
 );
 ```
 
@@ -155,8 +166,8 @@ const energyEV = Schrodinger1DSolver.joulesToEV(1.602e-19);
 Users can select the numerical method through the preferences system:
 
 ```typescript
-import QPPWPreferences from './QPPWPreferences.js';
-import { NumericalMethod } from './common/model/Schrodinger1DSolver.js';
+import QPPWPreferences from "./QPPWPreferences.js";
+import { NumericalMethod } from "./common/model/Schrodinger1DSolver.js";
 
 // Get current method
 const method = QPPWPreferences.numericalMethodProperty.value;
@@ -171,13 +182,13 @@ The solver is integrated into the `OneWellModel` class:
 
 ```typescript
 // Get energy for quantum number n
-const energy = oneWellModel.getEnergyLevel(3);  // E_3 in eV
+const energy = oneWellModel.getEnergyLevel(3); // E_3 in eV
 
 // Get wavefunction
-const wavefunction = oneWellModel.getWavefunction(3);  // ψ_3(x)
+const wavefunction = oneWellModel.getWavefunction(3); // ψ_3(x)
 
 // Get spatial grid
-const xGrid = oneWellModel.getXGrid();  // x values in nm
+const xGrid = oneWellModel.getXGrid(); // x values in nm
 
 // Get all bound states
 const boundStates = oneWellModel.getBoundStates();
@@ -186,29 +197,35 @@ const boundStates = oneWellModel.getBoundStates();
 ## Performance Considerations
 
 ### Grid Resolution
+
 - More grid points → higher accuracy, slower computation
 - Typical range: 100-500 points
 - DVR method scales as O(N³) due to matrix diagonalization
 - Numerov method scales as O(N) per energy search
 
 ### Method Selection
+
 - **DVR**: Better for general potentials, finds all states simultaneously
 - **Numerov**: Better for deep wells, requires energy range specification
 
 ### Caching
+
 The `OneWellModel` caches results and recalculates only when parameters change.
 
 ## Mathematical Background
 
 ### Time-Independent Schrödinger Equation
+
 $$-\frac{\hbar^2}{2m}\frac{d^2\psi}{dx^2} + V(x)\psi = E\psi$$
 
 ### Bound State Conditions
+
 1. $\psi(x) \to 0$ as $x \to \pm\infty$
 2. $\psi$ and $d\psi/dx$ continuous
 3. $\int|\psi|^2 dx = 1$ (normalization)
 
 ### DVR Basis
+
 The DVR method uses a basis of delta functions on grid points, making the potential matrix diagonal while using the Colbert-Miller formula for exact kinetic energy in the DVR basis.
 
 ## References
@@ -217,16 +234,17 @@ The DVR method uses a basis of delta functions on grid points, making the potent
    - Numerov, B. (1924). "Note on the numerical integration of d²x/dt² = f(x,t)"
 
 2. **DVR Method**:
-   - Colbert, D. T., & Miller, W. H. (1992). "A novel discrete variable representation for quantum mechanical reactive scattering via the S-matrix Kohn method." *Journal of Chemical Physics*, 96(3), 1982-1991.
+   - Colbert, D. T., & Miller, W. H. (1992). "A novel discrete variable representation for quantum mechanical reactive scattering via the S-matrix Kohn method." _Journal of Chemical Physics_, 96(3), 1982-1991.
 
 3. **Quantum Mechanics**:
-   - Griffiths, D. J., & Schroeter, D. F. (2018). *Introduction to Quantum Mechanics* (3rd ed.). Cambridge University Press.
+   - Griffiths, D. J., & Schroeter, D. F. (2018). _Introduction to Quantum Mechanics_ (3rd ed.). Cambridge University Press.
 
 ## Visualization Features
 
 The solver is integrated with comprehensive visualization tools:
 
 ### Energy Chart
+
 - Displays potential energy curves for all potential types
 - Shows discrete energy levels as horizontal lines
 - Interactive selection of energy levels
@@ -234,12 +252,15 @@ The solver is integrated with comprehensive visualization tools:
 - Color-coded visualization with phase-dependent coloring
 
 ### Wavefunction Chart
+
 The simulation provides three visualization modes:
+
 1. **Probability Density** (`|ψ|²`): Shows the probability distribution
 2. **Wavefunction Components**: Real part, imaginary part, and magnitude
 3. **Phase Color**: Rainbow-colored visualization where hue represents quantum phase
 
 ### Chart Specifications
+
 - **Energy Chart**: 600×300 pixels with margins (left: 60, right: 20, top: 40, bottom: 50)
 - **Wavefunction Chart**: 600×140 pixels with margins (left: 60, right: 20, top: 10, bottom: 40)
 - Both charts share synchronized x-axis (Position in nm: -4 to +4 nm)
@@ -248,6 +269,7 @@ The simulation provides three visualization modes:
 ## Future Enhancements
 
 Potential improvements to consider:
+
 - Support for 2D/3D potentials
 - Time-dependent Schrödinger equation solver (partial implementation exists for phase evolution)
 - More analytical solutions (currently supports 10 potential types)

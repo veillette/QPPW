@@ -15,14 +15,16 @@ The Numerov solver reported **"0 sign changes"** for all energy searches, findin
 ### Original Code (src/common/model/NumerovSolver.ts:185-217)
 
 Used WKB-style initial conditions with hyperbolic functions:
+
 - `ψ(dx) = A × cosh(κ·dx)` for symmetric states
-- `ψ(dx) = sinh(κ·dx)` for antisymmetric states  
+- `ψ(dx) = sinh(κ·dx)` for antisymmetric states
 
 **Problem**: WKB approximation assumes slowly-varying potential, but at x=0 (center of double well with 0.2 nm separation), the potential changes rapidly from well (V=0) to barrier (V=5eV) over ~0.1 nm.
 
 ### Fixed Code
 
 Simplified to parity-based boundary conditions:
+
 - **Symmetric**: `ψ(0) = 1`, `ψ(dx) = 1` (flat, since ψ'(0) = 0 by symmetry)
 - **Antisymmetric**: `ψ(0) = 0`, `ψ(dx) = dx` (linear start from zero)
 
@@ -33,7 +35,7 @@ Simplified to parity-based boundary conditions:
 Calculated using finite square well transcendental equations:
 
 | State | Parity | Energy (eV) |
-|-------|--------|-------------|
+| ----- | ------ | ----------- |
 | 0     | even   | 0.271804    |
 | 1     | odd    | 1.077396    |
 | 2     | even   | 2.379206    |
@@ -44,7 +46,7 @@ Calculated using finite square well transcendental equations:
 Each single well level splits into symmetric/antisymmetric pair:
 
 | Level | E_single (eV) | ΔE (splitting) | E_sym (eV) | E_antisym (eV) |
-|-------|---------------|----------------|------------|----------------|
+| ----- | ------------- | -------------- | ---------- | -------------- |
 | 0     | 0.2718        | 32 neV         | ~0.27180   | ~0.27181       |
 | 1     | 1.0774        | 186 neV        | ~1.07731   | ~1.07749       |
 | 2     | 2.3792        | 863 neV        | ~2.37877   | ~2.37963       |
@@ -134,6 +136,7 @@ for (let i = 0; i < energies.length - 1; i += 2) {
 ```
 
 **Success Criteria**:
+
 - ✅ All errors < 1.0%
 - ✅ All errors < 0.01% (expected actual performance)
 - ✅ Sign changes detected (not 0)
@@ -161,10 +164,9 @@ Branch: `claude/fix-numerov-approach-01KMKuPJRrEu4xH137vzU6X8`
 
 ## Expected vs Before
 
-| Metric | Before (Broken) | After (Fixed) |
-|--------|----------------|---------------|
-| States found | 0 | 8 |
-| Sign changes | 0 | ~4-8 per state |
-| Accuracy | N/A | < 0.01% |
-| Success rate | 0% | ~100% |
-
+| Metric       | Before (Broken) | After (Fixed)  |
+| ------------ | --------------- | -------------- |
+| States found | 0               | 8              |
+| Sign changes | 0               | ~4-8 per state |
+| Accuracy     | N/A             | < 0.01%        |
+| Success rate | 0%              | ~100%          |

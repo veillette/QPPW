@@ -169,7 +169,7 @@ function shootFromLeft(
   const k2 = V.map((v) => (2 * mass * (energy - v)) / (HBAR * HBAR));
 
   // Calculate f_j = (h²/12) * k²(x_j)
-  const f = k2.map((k) => (dx * dx / 12) * k);
+  const f = k2.map((k) => ((dx * dx) / 12) * k);
 
   // Initial conditions: ψ(xMin) = 0, ψ(xMin + dx) = small value
   psi[0] = 0;
@@ -212,7 +212,7 @@ function shootFromRight(
   const k2 = V.map((v) => (2 * mass * (energy - v)) / (HBAR * HBAR));
 
   // Calculate f_j = (h²/12) * k²(x_j)
-  const f = k2.map((k) => (dx * dx / 12) * k);
+  const f = k2.map((k) => ((dx * dx) / 12) * k);
 
   // Initial conditions: ψ(xMax) = 0, ψ(xMax - dx) = small value
   psi[psi.length - 1] = 0;
@@ -222,7 +222,8 @@ function shootFromRight(
   // Rearranged formula: ψ_(j-1) = [(2 - 10f_j)ψ_j - (1+f_(j+1))ψ_(j+1)] / (1+f_(j-1))
   for (let j = N - 2; j > matchIndex; j--) {
     const psiIdx = j - matchIndex;
-    const numerator = (2 - 10 * f[j]) * psi[psiIdx] - (1 + f[j + 1]) * psi[psiIdx + 1];
+    const numerator =
+      (2 - 10 * f[j]) * psi[psiIdx] - (1 + f[j + 1]) * psi[psiIdx + 1];
     const denominator = 1 + f[j - 1];
     psi[psiIdx - 1] = numerator / denominator;
 
@@ -285,11 +286,19 @@ export function computeWavefunctionNumerov(
   mass: number,
   gridConfig: GridConfig,
 ): { wavefunction: number[]; xGrid: number[] } {
-  const result = computeWavefunctionsNumerov([energy], potential, mass, gridConfig);
+  const result = computeWavefunctionsNumerov(
+    [energy],
+    potential,
+    mass,
+    gridConfig,
+  );
   return {
     wavefunction: result.wavefunctions[0],
     xGrid: result.xGrid,
   };
 }
 
-qppw.register("WavefunctionNumerovSolver", { computeWavefunctionsNumerov, computeWavefunctionNumerov });
+qppw.register("WavefunctionNumerovSolver", {
+  computeWavefunctionsNumerov,
+  computeWavefunctionNumerov,
+});

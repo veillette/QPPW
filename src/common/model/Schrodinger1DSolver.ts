@@ -25,7 +25,7 @@ import {
   solveCoulomb1DPotential,
   solveCoulomb3DPotential,
   solveTriangularPotential,
-  solveDoubleSquareWellAnalytical
+  solveDoubleSquareWellAnalytical,
 } from "./analytical-solutions";
 import { solveNumerov } from "./NumerovSolver.js";
 import { solveMatrixNumerov } from "./MatrixNumerovSolver.js";
@@ -131,7 +131,10 @@ export class Schrodinger1DSolver {
         break;
 
       case PotentialType.FINITE_WELL:
-        if (wellParams.wellWidth !== undefined && wellParams.wellDepth !== undefined) {
+        if (
+          wellParams.wellWidth !== undefined &&
+          wellParams.wellDepth !== undefined
+        ) {
           return solveFiniteSquareWell(
             wellParams.wellWidth,
             wellParams.wellDepth,
@@ -333,7 +336,11 @@ export class Schrodinger1DSolver {
 
     // Step 1: Find energies (and optionally wavefunctions) using selected solver
     const coarseNumPoints = QPPWPreferences.gridPointsProperty.value;
-    const coarseGridConfig: GridConfig = { xMin, xMax, numPoints: coarseNumPoints };
+    const coarseGridConfig: GridConfig = {
+      xMin,
+      xMax,
+      numPoints: coarseNumPoints,
+    };
 
     let result: BoundStateResult;
 
@@ -367,31 +374,59 @@ export class Schrodinger1DSolver {
       );
     } else if (this.numericalMethod === NumericalMethod.MATRIX_NUMEROV) {
       // Matrix Numerov method
-      result = solveMatrixNumerov(potential, mass, numStates, coarseGridConfig, ENERGIES_ONLY);
+      result = solveMatrixNumerov(
+        potential,
+        mass,
+        numStates,
+        coarseGridConfig,
+        ENERGIES_ONLY,
+      );
     } else if (this.numericalMethod === NumericalMethod.DVR) {
       // DVR method
-      result = solveDVR(potential, mass, numStates, coarseGridConfig, ENERGIES_ONLY);
+      result = solveDVR(
+        potential,
+        mass,
+        numStates,
+        coarseGridConfig,
+        ENERGIES_ONLY,
+      );
     } else if (this.numericalMethod === NumericalMethod.FGH) {
       // Fourier Grid Hamiltonian method
-      result = solveFGH(potential, mass, numStates, coarseGridConfig, ENERGIES_ONLY);
+      result = solveFGH(
+        potential,
+        mass,
+        numStates,
+        coarseGridConfig,
+        ENERGIES_ONLY,
+      );
     } else if (this.numericalMethod === NumericalMethod.QUANTUM_BOUND) {
       // Advanced shooting method with adaptive bracketing
       result = solveQuantumBound(potential, mass, numStates, coarseGridConfig);
     } else {
       // Spectral (Chebyshev) method
-      result = solveSpectral(potential, mass, numStates, coarseGridConfig, ENERGIES_ONLY);
+      result = solveSpectral(
+        potential,
+        mass,
+        numStates,
+        coarseGridConfig,
+        ENERGIES_ONLY,
+      );
     }
 
     // Step 2: If ENERGIES_ONLY was true, compute wavefunctions on finer grid using Numerov
     // Otherwise, return the result directly from the solver
     if (ENERGIES_ONLY) {
-      const fineGridConfig: GridConfig = { xMin, xMax, numPoints: FINE_GRID_POINTS };
+      const fineGridConfig: GridConfig = {
+        xMin,
+        xMax,
+        numPoints: FINE_GRID_POINTS,
+      };
 
       const wavefunctionResult = computeWavefunctionsNumerov(
         result.energies,
         potential,
         mass,
-        fineGridConfig
+        fineGridConfig,
       );
 
       return {

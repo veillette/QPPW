@@ -11,13 +11,20 @@ import { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
 import { ManyWellsModel } from "../../many-wells/model/ManyWellsModel.js";
 import { EnergyChartNode } from "./EnergyChartNode.js";
 import { WaveFunctionChartNode } from "./WaveFunctionChartNode.js";
-import { ControlPanelNode, ControlPanelNodeOptions } from "./ControlPanelNode.js";
+import {
+  ControlPanelNode,
+  ControlPanelNodeOptions,
+} from "./ControlPanelNode.js";
 import { SimulationControlBar } from "./SimulationControlBar.js";
 import { BaseModel } from "../model/BaseModel.js";
 
 export abstract class BaseScreenView extends ScreenView {
   protected readonly resetAllButton: ResetAllButton;
-  protected readonly model: BaseModel | OneWellModel | TwoWellsModel | ManyWellsModel;
+  protected readonly model:
+    | BaseModel
+    | OneWellModel
+    | TwoWellsModel
+    | ManyWellsModel;
 
   // Common components (may be undefined for screens that don't use them)
   protected energyChart?: EnergyChartNode;
@@ -29,7 +36,7 @@ export abstract class BaseScreenView extends ScreenView {
 
   protected constructor(
     model: BaseModel | OneWellModel | TwoWellsModel | ManyWellsModel,
-    options?: ScreenViewOptions
+    options?: ScreenViewOptions,
   ) {
     super(options);
 
@@ -53,8 +60,10 @@ export abstract class BaseScreenView extends ScreenView {
    * @param model - The OneWellModel or TwoWellsModel instance
    * @param controlPanelOptions - Optional configuration for the control panel (e.g., hiding mass slider, filtering potential types)
    */
-  protected createStandardLayout(model: OneWellModel | TwoWellsModel, controlPanelOptions?: ControlPanelNodeOptions): void {
-
+  protected createStandardLayout(
+    model: OneWellModel | TwoWellsModel,
+    controlPanelOptions?: ControlPanelNodeOptions,
+  ): void {
     // Calculate layout dimensions
     const screenWidth = this.layoutBounds.width;
     const screenHeight = this.layoutBounds.height;
@@ -95,7 +104,11 @@ export abstract class BaseScreenView extends ScreenView {
     }
 
     // Create control panel with optional configuration
-    this.controlPanel = new ControlPanelNode(model, this.listBoxParent, controlPanelOptions);
+    this.controlPanel = new ControlPanelNode(
+      model,
+      this.listBoxParent,
+      controlPanelOptions,
+    );
     this.controlPanel.left = chartsWidth + margin * 2;
     this.controlPanel.top = margin;
 
@@ -145,7 +158,7 @@ export abstract class BaseScreenView extends ScreenView {
    * Subclasses should override this method to add screen-specific step logic.
    * @param dt - The time step in seconds
    */
-   
+
   public step(_dt: number): void {
     // Base implementation - subclasses should override
   }

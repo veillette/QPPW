@@ -55,8 +55,7 @@ export function solveHarmonicOscillator(
     for (const x of xGrid) {
       const xi = alpha * x;
       const hermite = hermitePolynomial(n, xi);
-      const value =
-        normalization * Math.exp(-xi * xi / 2) * hermite;
+      const value = normalization * Math.exp((-xi * xi) / 2) * hermite;
       wavefunction.push(value);
     }
     wavefunctions.push(wavefunction);
@@ -100,11 +99,11 @@ export function calculateCoherentStateCoefficients(
   const alpha = Math.sqrt((mass * omega) / (2 * HBAR)) * displacement;
 
   // Calculate coefficients: c_n = e^(-α²/2) * α^n / √n!
-  const prefactor = Math.exp(-alpha * alpha / 2);
+  const prefactor = Math.exp((-alpha * alpha) / 2);
   const amplitudes: number[] = [];
 
   for (let n = 0; n < numStates; n++) {
-    const coeff = prefactor * Math.pow(alpha, n) / Math.sqrt(factorial(n));
+    const coeff = (prefactor * Math.pow(alpha, n)) / Math.sqrt(factorial(n));
     amplitudes.push(coeff);
   }
 

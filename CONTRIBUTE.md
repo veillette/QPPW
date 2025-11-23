@@ -80,6 +80,7 @@ Write clear, descriptive commit messages:
 - Reference issues and pull requests liberally
 
 Examples:
+
 ```
 Add harmonic oscillator potential visualization
 Fix wave function normalization bug

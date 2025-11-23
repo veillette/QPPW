@@ -41,7 +41,7 @@ export function solveFiniteSquareWell(
   const halfL = L / 2;
 
   // Dimensionless parameter: ξ₀ = (L/2)√(2mV₀/ℏ²)
-  const xi0 = halfL * Math.sqrt(2 * mass * V0) / HBAR;
+  const xi0 = (halfL * Math.sqrt(2 * mass * V0)) / HBAR;
 
   // Maximum number of bound states (approximate)
   const maxStates = Math.floor(xi0 / (Math.PI / 2)) + 1;
@@ -112,8 +112,8 @@ export function solveFiniteSquareWell(
     const parity = parities[n];
 
     // Wave numbers
-    const k = Math.sqrt(2 * mass * (E + V0)) / HBAR;  // Inside the well
-    const kappa = Math.sqrt(-2 * mass * E) / HBAR;     // Outside the well
+    const k = Math.sqrt(2 * mass * (E + V0)) / HBAR; // Inside the well
+    const kappa = Math.sqrt(-2 * mass * E) / HBAR; // Outside the well
 
     // Determine normalization constant
     // For even states: ψ(x) = A cos(kx) inside, B exp(-κ|x|) outside
@@ -128,7 +128,7 @@ export function solveFiniteSquareWell(
       // Normalization integral
       const integral =
         2 * (halfL + Math.sin(2 * k * halfL) / (4 * k)) +
-        2 * B * B / (2 * kappa);
+        (2 * B * B) / (2 * kappa);
       normalization = 1 / Math.sqrt(integral);
     } else {
       // Match boundary conditions at x = L/2
@@ -138,7 +138,7 @@ export function solveFiniteSquareWell(
       // Normalization integral
       const integral =
         2 * (halfL - Math.sin(2 * k * halfL) / (4 * k)) +
-        2 * B * B / (2 * kappa);
+        (2 * B * B) / (2 * kappa);
       normalization = 1 / Math.sqrt(integral);
     }
 
@@ -188,8 +188,8 @@ export function solveFiniteSquareWell(
 function findEvenParityState(xi0: number, stateIndex: number): number | null {
   // Search in the interval [(n*π/2), ((n+1)*π/2)] where n is even
   const n = stateIndex * 2;
-  const xiMin = n * Math.PI / 2 + 0.001;
-  const xiMax = Math.min((n + 1) * Math.PI / 2 - 0.001, xi0);
+  const xiMin = (n * Math.PI) / 2 + 0.001;
+  const xiMax = Math.min(((n + 1) * Math.PI) / 2 - 0.001, xi0);
 
   if (xiMin >= xiMax) {
     // Well is not deep enough for this state
@@ -217,8 +217,18 @@ function findEvenParityState(xi0: number, stateIndex: number): number | null {
   // Method 2: Try Newton-Raphson with Lima's initial guess
   const limaGuess = getLimaApproximation(xi0, stateIndex, "even");
   if (limaGuess !== null && limaGuess > xiMin && limaGuess < xiMax) {
-    const newtonResult = solveNewtonRaphson(f, fDerivative, limaGuess, 1e-10, 50);
-    if (newtonResult !== null && newtonResult >= xiMin && newtonResult <= xiMax) {
+    const newtonResult = solveNewtonRaphson(
+      f,
+      fDerivative,
+      limaGuess,
+      1e-10,
+      50,
+    );
+    if (
+      newtonResult !== null &&
+      newtonResult >= xiMin &&
+      newtonResult <= xiMax
+    ) {
       return newtonResult;
     }
   }
@@ -252,8 +262,8 @@ function findEvenParityState(xi0: number, stateIndex: number): number | null {
 function findOddParityState(xi0: number, stateIndex: number): number | null {
   // Search in the interval [(n*π/2), ((n+1)*π/2)] where n is odd
   const n = stateIndex * 2 + 1;
-  const xiMin = n * Math.PI / 2 + 0.001;
-  const xiMax = Math.min((n + 1) * Math.PI / 2 - 0.001, xi0);
+  const xiMin = (n * Math.PI) / 2 + 0.001;
+  const xiMax = Math.min(((n + 1) * Math.PI) / 2 - 0.001, xi0);
 
   if (xiMin >= xiMax) {
     // Well is not deep enough for this state
@@ -281,8 +291,18 @@ function findOddParityState(xi0: number, stateIndex: number): number | null {
   // Method 2: Try Newton-Raphson with Lima's initial guess
   const limaGuess = getLimaApproximation(xi0, stateIndex, "odd");
   if (limaGuess !== null && limaGuess > xiMin && limaGuess < xiMax) {
-    const newtonResult = solveNewtonRaphson(f, fDerivative, limaGuess, 1e-10, 50);
-    if (newtonResult !== null && newtonResult >= xiMin && newtonResult <= xiMax) {
+    const newtonResult = solveNewtonRaphson(
+      f,
+      fDerivative,
+      limaGuess,
+      1e-10,
+      50,
+    );
+    if (
+      newtonResult !== null &&
+      newtonResult >= xiMin &&
+      newtonResult <= xiMax
+    ) {
       return newtonResult;
     }
   }
@@ -318,7 +338,7 @@ function solveBisection(
   xMin: number,
   xMax: number,
   tolerance: number,
-  maxIterations: number
+  maxIterations: number,
 ): number | null {
   let a = xMin;
   let b = xMax;
@@ -371,7 +391,7 @@ function solveNewtonRaphson(
   fPrime: (x: number) => number,
   x0: number,
   tolerance: number,
-  maxIterations: number
+  maxIterations: number,
 ): number | null {
   let x = x0;
 
@@ -417,7 +437,7 @@ function solveSecant(
   x0: number,
   x1: number,
   tolerance: number,
-  maxIterations: number
+  maxIterations: number,
 ): number | null {
   let xPrev = x0;
   let x = x1;
@@ -471,13 +491,13 @@ function solveSecant(
 function getLimaApproximation(
   xi0: number,
   stateIndex: number,
-  parity: "even" | "odd"
+  parity: "even" | "odd",
 ): number | null {
   // Determine which interval to search based on parity
   const n = parity === "even" ? stateIndex * 2 : stateIndex * 2 + 1;
 
   // Check if this state can exist
-  if (n * Math.PI / 2 >= xi0) {
+  if ((n * Math.PI) / 2 >= xi0) {
     return null;
   }
 
@@ -504,8 +524,8 @@ function getLimaApproximation(
   const vRefined = vApprox - correction * 0.5; // Simplified correction
 
   // Ensure result is in valid range
-  const xiMin = n * Math.PI / 2;
-  const xiMax = (n + 1) * Math.PI / 2;
+  const xiMin = (n * Math.PI) / 2;
+  const xiMax = ((n + 1) * Math.PI) / 2;
 
   if (vRefined >= xiMin && vRefined <= Math.min(xiMax, xi0)) {
     return vRefined;

@@ -6,10 +6,19 @@
 import { NumberProperty, Property } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { BaseModel } from "../../common/model/BaseModel.js";
-import Schrodinger1DSolver, { WellParameters, NumericalMethod } from "../../common/model/Schrodinger1DSolver.js";
-import { PotentialType, BoundStateResult } from "../../common/model/PotentialFunction.js";
+import Schrodinger1DSolver, {
+  WellParameters,
+  NumericalMethod,
+} from "../../common/model/Schrodinger1DSolver.js";
+import {
+  PotentialType,
+  BoundStateResult,
+} from "../../common/model/PotentialFunction.js";
 import QuantumConstants from "../../common/model/QuantumConstants.js";
-import { SuperpositionType, SuperpositionConfig } from "../../common/model/SuperpositionType.js";
+import {
+  SuperpositionType,
+  SuperpositionConfig,
+} from "../../common/model/SuperpositionType.js";
 import QPPWPreferences from "../../QPPWPreferences.js";
 
 export type DisplayMode = "probabilityDensity" | "waveFunction" | "phaseColor";
@@ -59,24 +68,42 @@ export class TwoWellsModel extends BaseModel {
   public constructor() {
     super();
     // Initialize potential type (double square well by default)
-    this.potentialTypeProperty = new Property<PotentialType>(PotentialType.DOUBLE_SQUARE_WELL);
+    this.potentialTypeProperty = new Property<PotentialType>(
+      PotentialType.DOUBLE_SQUARE_WELL,
+    );
 
     // Initialize well parameters with default values
-    this.wellWidthProperty = new NumberProperty(1.0, { range: new Range(0.1, 3.0) }); // in nanometers (0.1-3 nm for double square well)
-    this.wellDepthProperty = new NumberProperty(5.0, { range: new Range(0.1, 15.0) }); // in eV (0.1-15 eV for double square well)
-    this.wellOffsetProperty = new NumberProperty(0.5, { range: new Range(0.0, 1.0) }); // normalized position
-    this.wellSeparationProperty = new NumberProperty(0.2, { range: new Range(0.05, 0.7) }); // in nanometers (0.05-0.7 nm for double square well)
+    this.wellWidthProperty = new NumberProperty(1.0, {
+      range: new Range(0.1, 3.0),
+    }); // in nanometers (0.1-3 nm for double square well)
+    this.wellDepthProperty = new NumberProperty(5.0, {
+      range: new Range(0.1, 15.0),
+    }); // in eV (0.1-15 eV for double square well)
+    this.wellOffsetProperty = new NumberProperty(0.5, {
+      range: new Range(0.0, 1.0),
+    }); // normalized position
+    this.wellSeparationProperty = new NumberProperty(0.2, {
+      range: new Range(0.05, 0.7),
+    }); // in nanometers (0.05-0.7 nm for double square well)
 
     // Initialize barrier parameters
-    this.barrierHeightProperty = new NumberProperty(3, { range: new Range(0.1, 15.0) }); // in eV
-    this.barrierWidthProperty = new NumberProperty(2, { range: new Range(0.1, 5.0) }); // in nanometers
+    this.barrierHeightProperty = new NumberProperty(3, {
+      range: new Range(0.1, 15.0),
+    }); // in eV
+    this.barrierWidthProperty = new NumberProperty(2, {
+      range: new Range(0.1, 5.0),
+    }); // in nanometers
 
     // Initialize particle mass (1.0 = electron mass)
-    this.particleMassProperty = new NumberProperty(1.0, { range: new Range(0.5, 1.1) }); // 0.5 to 1.1 times electron mass
+    this.particleMassProperty = new NumberProperty(1.0, {
+      range: new Range(0.5, 1.1),
+    }); // 0.5 to 1.1 times electron mass
 
     // Initialize energy level selection (ground state by default)
     // Use a large range to accommodate potentials with many states (up to 100)
-    this.selectedEnergyLevelIndexProperty = new NumberProperty(0, { range: new Range(0, 99) });
+    this.selectedEnergyLevelIndexProperty = new NumberProperty(0, {
+      range: new Range(0, 99),
+    });
     this.energyLevelProperty = new NumberProperty(0); // Deprecated
 
     // Initialize display settings
@@ -94,7 +121,9 @@ export class TwoWellsModel extends BaseModel {
     this.tunnelingProbabilityProperty = new NumberProperty(0);
 
     // Initialize superposition state
-    this.superpositionTypeProperty = new Property<SuperpositionType>(SuperpositionType.SINGLE);
+    this.superpositionTypeProperty = new Property<SuperpositionType>(
+      SuperpositionType.SINGLE,
+    );
     this.superpositionConfigProperty = new Property<SuperpositionConfig>({
       type: SuperpositionType.PSI_I_PSI_J,
       amplitudes: [0.7, 0.7], // Default to equal superposition of first two states (normalized)
@@ -119,7 +148,7 @@ export class TwoWellsModel extends BaseModel {
    * Invalidates the cached bound state results.
    * @param _method - The new numerical method (unused but required by interface)
    */
-   
+
   protected onSolverMethodChanged(_method: NumericalMethod): void {
     this.boundStateResult = null; // Invalidate cache
   }
@@ -195,7 +224,9 @@ export class TwoWellsModel extends BaseModel {
       const E = energy * eV;
       const kappa = Math.sqrt((2 * electronMass * (V0 - E)) / (hbar * hbar));
 
-      this.tunnelingProbabilityProperty.value = Math.exp(-2 * kappa * barrierWidth);
+      this.tunnelingProbabilityProperty.value = Math.exp(
+        -2 * kappa * barrierWidth,
+      );
     }
   }
 
@@ -212,7 +243,11 @@ export class TwoWellsModel extends BaseModel {
     }
 
     // Return energy for quantum number n (1-indexed)
-    if (this.boundStateResult && n > 0 && n <= this.boundStateResult.energies.length) {
+    if (
+      this.boundStateResult &&
+      n > 0 &&
+      n <= this.boundStateResult.energies.length
+    ) {
       const energyJoules = this.boundStateResult.energies[n - 1];
       return Schrodinger1DSolver.joulesToEV(energyJoules);
     }
@@ -220,7 +255,12 @@ export class TwoWellsModel extends BaseModel {
     // Fallback to analytical formula if solver fails
     const L = this.wellWidthProperty.value * QuantumConstants.NM_TO_M;
     const energy =
-      (n * n * Math.PI * Math.PI * QuantumConstants.HBAR * QuantumConstants.HBAR) /
+      (n *
+        n *
+        Math.PI *
+        Math.PI *
+        QuantumConstants.HBAR *
+        QuantumConstants.HBAR) /
       (2 * QuantumConstants.ELECTRON_MASS * L * L);
     return Schrodinger1DSolver.joulesToEV(energy);
   }
@@ -242,7 +282,8 @@ export class TwoWellsModel extends BaseModel {
    */
   private calculateBoundStates(): void {
     const wellWidth = this.wellWidthProperty.value * QuantumConstants.NM_TO_M;
-    const mass = this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
+    const mass =
+      this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
 
     // Calculate number of states based on potential type and energy range
     let numStates = 10; // Default for most potentials
@@ -251,13 +292,18 @@ export class TwoWellsModel extends BaseModel {
     if (this.potentialTypeProperty.value === PotentialType.INFINITE_WELL) {
       const maxEnergy = 15 * QuantumConstants.EV_TO_JOULES; // 15 eV
       // E_n = (ℏ²π²n²)/(2mL²), solve for n
-      const maxN = Math.floor(Math.sqrt((2 * mass * wellWidth * wellWidth * maxEnergy) / (QuantumConstants.HBAR * QuantumConstants.HBAR * Math.PI * Math.PI)));
+      const maxN = Math.floor(
+        Math.sqrt(
+          (2 * mass * wellWidth * wellWidth * maxEnergy) /
+            (QuantumConstants.HBAR * QuantumConstants.HBAR * Math.PI * Math.PI),
+        ),
+      );
       numStates = Math.max(1, Math.min(maxN, 100)); // Cap at 100 for safety
-    }
-    else if (this.potentialTypeProperty.value === PotentialType.COULOMB_1D) {
+    } else if (this.potentialTypeProperty.value === PotentialType.COULOMB_1D) {
       numStates = 80; // Use more states for Coulomb potential
-    }
-    else if (this.potentialTypeProperty.value === PotentialType.DOUBLE_SQUARE_WELL) {
+    } else if (
+      this.potentialTypeProperty.value === PotentialType.DOUBLE_SQUARE_WELL
+    ) {
       numStates = 80; // Use more states for double well to capture splitting
     }
 
@@ -279,7 +325,7 @@ export class TwoWellsModel extends BaseModel {
       const method = this.solver.getNumericalMethod();
       let numGridPoints = QPPWPreferences.gridPointsProperty.value;
 
-      if (method === 'fgh') {
+      if (method === "fgh") {
         // FGH: round to nearest power of 2 for FFT efficiency
         numGridPoints = Math.pow(2, Math.round(Math.log2(numGridPoints)));
       }
@@ -308,13 +354,18 @@ export class TwoWellsModel extends BaseModel {
           // where k = 1/(4πε₀) ≈ 8.9875517923e9 N·m²/C²
           // α ≈ 2.307e-28 J·m for electron charge
           const coulombConstant = 8.9875517923e9; // Coulomb's constant in N·m²/C²
-          potentialParams.coulombStrength = coulombConstant * QuantumConstants.ELEMENTARY_CHARGE * QuantumConstants.ELEMENTARY_CHARGE;
+          potentialParams.coulombStrength =
+            coulombConstant *
+            QuantumConstants.ELEMENTARY_CHARGE *
+            QuantumConstants.ELEMENTARY_CHARGE;
           break;
         }
         case PotentialType.DOUBLE_SQUARE_WELL: {
           // For double square well, we need width, depth, and separation
-          potentialParams.wellDepth = this.wellDepthProperty.value * QuantumConstants.EV_TO_JOULES;
-          potentialParams.wellSeparation = this.wellSeparationProperty.value * QuantumConstants.NM_TO_M;
+          potentialParams.wellDepth =
+            this.wellDepthProperty.value * QuantumConstants.EV_TO_JOULES;
+          potentialParams.wellSeparation =
+            this.wellSeparationProperty.value * QuantumConstants.NM_TO_M;
           break;
         }
         default:
@@ -353,7 +404,11 @@ export class TwoWellsModel extends BaseModel {
       this.calculateBoundStates();
     }
 
-    if (this.boundStateResult && n > 0 && n <= this.boundStateResult.wavefunctions.length) {
+    if (
+      this.boundStateResult &&
+      n > 0 &&
+      n <= this.boundStateResult.wavefunctions.length
+    ) {
       return this.boundStateResult.wavefunctions[n - 1];
     }
 
@@ -371,7 +426,9 @@ export class TwoWellsModel extends BaseModel {
 
     if (this.boundStateResult) {
       // Convert from meters to nanometers
-      return this.boundStateResult.xGrid.map((x) => x * QuantumConstants.M_TO_NM);
+      return this.boundStateResult.xGrid.map(
+        (x) => x * QuantumConstants.M_TO_NM,
+      );
     }
 
     return null;

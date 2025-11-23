@@ -30,12 +30,12 @@ const WAVE_AMPLITUDE = 10;
 const PROBABILITY_AMPLITUDE = 18;
 
 // Colors
-const BACKGROUND_GRADIENT_TOP = '#1a1a3a';
-const BACKGROUND_GRADIENT_BOTTOM = '#0a0a1f';
-const WELL_STROKE_COLOR = '#9696c8';
-const WAVE_FUNCTION_COLOR = '#00c8ff';
-const PROBABILITY_FILL_COLOR = 'rgba(255, 200, 0, 0.4)';
-const ENERGY_LEVEL_COLOR = '#00ff96';
+const BACKGROUND_GRADIENT_TOP = "#1a1a3a";
+const BACKGROUND_GRADIENT_BOTTOM = "#0a0a1f";
+const WELL_STROKE_COLOR = "#9696c8";
+const WAVE_FUNCTION_COLOR = "#00c8ff";
+const PROBABILITY_FILL_COLOR = "rgba(255, 200, 0, 0.4)";
+const ENERGY_LEVEL_COLOR = "#00ff96";
 
 // Line widths
 const WELL_LINE_WIDTH = 3;
@@ -83,23 +83,35 @@ export class OneWellScreenIcon extends ScreenIcon {
     });
 
     // Create probability density fill
-    const probabilityShape = new Shape().moveTo(WAVE_PADDING, PROBABILITY_BASELINE);
+    const probabilityShape = new Shape().moveTo(
+      WAVE_PADDING,
+      PROBABILITY_BASELINE,
+    );
     for (let x = WAVE_PADDING; x <= WAVE_PADDING + WAVE_WIDTH; x += 1) {
       const normalizedX = (x - WAVE_PADDING) / WAVE_WIDTH;
-      const amplitude = Math.pow(Math.sin(normalizedX * Math.PI), 2) * PROBABILITY_AMPLITUDE;
+      const amplitude =
+        Math.pow(Math.sin(normalizedX * Math.PI), 2) * PROBABILITY_AMPLITUDE;
       probabilityShape.lineTo(x, PROBABILITY_BASELINE - amplitude);
     }
-    probabilityShape.lineTo(WAVE_PADDING + WAVE_WIDTH, PROBABILITY_BASELINE).close();
+    probabilityShape
+      .lineTo(WAVE_PADDING + WAVE_WIDTH, PROBABILITY_BASELINE)
+      .close();
 
     const probabilityFill = new Path(probabilityShape, {
       fill: PROBABILITY_FILL_COLOR,
     });
 
     // Energy level indicator
-    const energyLevel = new Rectangle(WAVE_PADDING + 2, ENERGY_LEVEL_Y, ENERGY_LEVEL_WIDTH, ENERGY_LEVEL_HEIGHT, {
-      fill: ENERGY_LEVEL_COLOR,
-      opacity: ENERGY_LEVEL_OPACITY,
-    });
+    const energyLevel = new Rectangle(
+      WAVE_PADDING + 2,
+      ENERGY_LEVEL_Y,
+      ENERGY_LEVEL_WIDTH,
+      ENERGY_LEVEL_HEIGHT,
+      {
+        fill: ENERGY_LEVEL_COLOR,
+        opacity: ENERGY_LEVEL_OPACITY,
+      },
+    );
 
     const iconNode = new Node({
       children: [background, probabilityFill, well, energyLevel, waveFunction],

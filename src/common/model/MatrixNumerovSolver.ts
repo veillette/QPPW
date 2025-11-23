@@ -20,8 +20,19 @@
  */
 
 import QuantumConstants from "./QuantumConstants.js";
-import { BoundStateResult, EnergyOnlyResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
-import { DotMatrix, diagonalize, normalizeWavefunction, matrixToArray, cubicSplineInterpolation } from "./LinearAlgebraUtils.js";
+import {
+  BoundStateResult,
+  EnergyOnlyResult,
+  GridConfig,
+  PotentialFunction,
+} from "./PotentialFunction.js";
+import {
+  DotMatrix,
+  diagonalize,
+  normalizeWavefunction,
+  matrixToArray,
+  cubicSplineInterpolation,
+} from "./LinearAlgebraUtils.js";
 import { standardizeWavefunction } from "./WavefunctionStandardization.js";
 import qppw from "../../QPPWNamespace.js";
 
@@ -106,13 +117,13 @@ export function solveMatrixNumerov(
   for (let i = 0; i < N; i++) {
     // Hamiltonian matrix H (kinetic + potential energy)
     // Diagonal term: 2/h² - (10h²/12)(2m/ℏ²)V_i
-    H.set(i, i, (2 / h2) - (10 * hFactor * V[i]));
+    H.set(i, i, 2 / h2 - 10 * hFactor * V[i]);
 
     // Off-diagonal terms (kinetic energy coupling)
     // Use average potential at adjacent grid points for symmetric matrix
     if (i > 0) {
       const avgV = (V[i - 1] + V[i]) / 2;
-      const offDiagValue = -(1 / h2) - (hFactor * avgV);
+      const offDiagValue = -(1 / h2) - hFactor * avgV;
       H.set(i, i - 1, offDiagValue);
       H.set(i - 1, i, offDiagValue); // Symmetric
     }
@@ -210,7 +221,11 @@ export function solveMatrixNumerov(
 
   const fineWavefunctions: number[][] = [];
   for (const wavefunction of wavefunctions) {
-    const { fineYValues } = cubicSplineInterpolation(xGrid, wavefunction, upsampleFactor);
+    const { fineYValues } = cubicSplineInterpolation(
+      xGrid,
+      wavefunction,
+      upsampleFactor,
+    );
     fineWavefunctions.push(fineYValues);
   }
 

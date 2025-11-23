@@ -32,7 +32,9 @@ export class OneWellScreenView extends BaseScreenView {
       PotentialType.COULOMB_3D,
     ];
 
-    this.createStandardLayout(model, { allowedPotentialTypes: allowedPotentials });
+    this.createStandardLayout(model, {
+      allowedPotentialTypes: allowedPotentials,
+    });
   }
 
   /**
@@ -44,16 +46,22 @@ export class OneWellScreenView extends BaseScreenView {
       fill: QPPWColors.textFillProperty,
     });
 
-    const descriptionText = new RichText(stringManager.oneWellDescriptionStringProperty, {
-      font: new PhetFont(14),
-      fill: QPPWColors.textFillProperty,
-      maxWidth: 500,
-    });
+    const descriptionText = new RichText(
+      stringManager.oneWellDescriptionStringProperty,
+      {
+        font: new PhetFont(14),
+        fill: QPPWColors.textFillProperty,
+        maxWidth: 500,
+      },
+    );
 
-    const keyConceptsTitle = new Text(stringManager.keyConceptsTitleStringProperty, {
-      font: new PhetFont({ size: 14, weight: "bold" }),
-      fill: QPPWColors.textFillProperty,
-    });
+    const keyConceptsTitle = new Text(
+      stringManager.keyConceptsTitleStringProperty,
+      {
+        font: new PhetFont({ size: 14, weight: "bold" }),
+        fill: QPPWColors.textFillProperty,
+      },
+    );
 
     const keyConceptsList = new RichText(
       stringManager.oneWellKeyConceptsStringProperty,
@@ -61,13 +69,16 @@ export class OneWellScreenView extends BaseScreenView {
         font: new PhetFont(13),
         fill: QPPWColors.textFillProperty,
         maxWidth: 500,
-      }
+      },
     );
 
-    const interactionTitle = new Text(stringManager.interactionsTitleStringProperty, {
-      font: new PhetFont({ size: 14, weight: "bold" }),
-      fill: QPPWColors.textFillProperty,
-    });
+    const interactionTitle = new Text(
+      stringManager.interactionsTitleStringProperty,
+      {
+        font: new PhetFont({ size: 14, weight: "bold" }),
+        fill: QPPWColors.textFillProperty,
+      },
+    );
 
     const interactionsList = new RichText(
       stringManager.oneWellInteractionsStringProperty,
@@ -75,7 +86,7 @@ export class OneWellScreenView extends BaseScreenView {
         font: new PhetFont(13),
         fill: QPPWColors.textFillProperty,
         maxWidth: 500,
-      }
+      },
     );
 
     return new VBox({
@@ -102,7 +113,7 @@ export class OneWellScreenView extends BaseScreenView {
         font: new PhetFont(13),
         fill: QPPWColors.textFillProperty,
         maxWidth: 600,
-      }
+      },
     );
 
     return new VBox({

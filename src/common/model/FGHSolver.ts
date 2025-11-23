@@ -13,7 +13,12 @@
  */
 
 import QuantumConstants from "./QuantumConstants.js";
-import { BoundStateResult, EnergyOnlyResult, GridConfig, PotentialFunction } from "./PotentialFunction.js";
+import {
+  BoundStateResult,
+  EnergyOnlyResult,
+  GridConfig,
+  PotentialFunction,
+} from "./PotentialFunction.js";
 import {
   DotMatrix,
   diagonalize,
@@ -75,7 +80,9 @@ export function solveFGH(
 
   // Kinetic energy in momentum space: T_k = ℏ²k²/(2m)
   const { HBAR } = QuantumConstants;
-  const T_k = waveNumberGrid.map((waveNumber) => (HBAR * HBAR * waveNumber * waveNumber) / (2 * mass));
+  const T_k = waveNumberGrid.map(
+    (waveNumber) => (HBAR * HBAR * waveNumber * waveNumber) / (2 * mass),
+  );
 
   // Potential energy in position space
   const V_x = xGrid.map(potential);
@@ -157,7 +164,11 @@ export function solveFGH(
 
   const fineWavefunctions: number[][] = [];
   for (const wavefunction of wavefunctions) {
-    const { fineYValues } = cubicSplineInterpolation(xGrid, wavefunction, upsampleFactor);
+    const { fineYValues } = cubicSplineInterpolation(
+      xGrid,
+      wavefunction,
+      upsampleFactor,
+    );
     fineWavefunctions.push(fineYValues);
   }
 
@@ -179,7 +190,11 @@ export function solveFGH(
  * @param V_x - Potential energy in position space
  * @returns N×N Hamiltonian matrix
  */
-function buildFGHHamiltonian(N: number, T_k: number[], V_x: number[]): DotMatrix {
+function buildFGHHamiltonian(
+  N: number,
+  T_k: number[],
+  V_x: number[],
+): DotMatrix {
   const H = new DotMatrix(N, N);
 
   // Build kinetic energy matrix by applying T_k in momentum space

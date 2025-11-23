@@ -391,10 +391,12 @@ export function extractInteriorMatrix(H: DotMatrix): DotMatrix {
  * @returns Object with eigenvalues array and eigenvectors (array of column vectors)
  */
 export function diagonalize(
-  matrix: DotMatrix | number[][]
+  matrix: DotMatrix | number[][],
 ): EigenDecompositionResult {
   // Convert to 2D array for Jacobi algorithm
-  const A = Array.isArray(matrix) ? matrix.map(row => [...row]) : matrixToArray(matrix);
+  const A = Array.isArray(matrix)
+    ? matrix.map((row) => [...row])
+    : matrixToArray(matrix);
   const N = A.length;
 
   // Initialize eigenvector matrix as identity
@@ -556,7 +558,7 @@ export function normalizeWavefunction(psi: number[], dx: number): number[] {
 export function normalizeWavefunctionChebyshev(
   psi: number[],
   xMin: number,
-  xMax: number
+  xMax: number,
 ): number[] {
   const N = psi.length;
 
@@ -604,7 +606,10 @@ export function complexAdd(a: ComplexNumber, b: ComplexNumber): ComplexNumber {
  * @param b - Second complex number
  * @returns Difference a - b
  */
-export function complexSubtract(a: ComplexNumber, b: ComplexNumber): ComplexNumber {
+export function complexSubtract(
+  a: ComplexNumber,
+  b: ComplexNumber,
+): ComplexNumber {
   return {
     real: a.real - b.real,
     imaginary: a.imaginary - b.imaginary,
@@ -618,7 +623,10 @@ export function complexSubtract(a: ComplexNumber, b: ComplexNumber): ComplexNumb
  * @param b - Second complex number
  * @returns Product a × b
  */
-export function complexMultiply(a: ComplexNumber, b: ComplexNumber): ComplexNumber {
+export function complexMultiply(
+  a: ComplexNumber,
+  b: ComplexNumber,
+): ComplexNumber {
   return {
     real: a.real * b.real - a.imaginary * b.imaginary,
     imaginary: a.real * b.imaginary + a.imaginary * b.real,
@@ -666,7 +674,10 @@ export function fft(x: ComplexNumber[]): ComplexNumber[] {
 
     const temp = complexMultiply(twiddle, fftOdd[frequencyIndex]);
     result[frequencyIndex] = complexAdd(fftEven[frequencyIndex], temp);
-    result[frequencyIndex + N / 2] = complexSubtract(fftEven[frequencyIndex], temp);
+    result[frequencyIndex + N / 2] = complexSubtract(
+      fftEven[frequencyIndex],
+      temp,
+    );
   }
 
   return result;
@@ -790,7 +801,8 @@ export function cubicSplineInterpolation(
 
   for (let i = 0; i < n - 1; i++) {
     c[i] = M[i];
-    b[i] = (yValues[i + 1] - yValues[i]) / h[i] - (h[i] * (M[i + 1] + 2 * M[i])) / 3;
+    b[i] =
+      (yValues[i + 1] - yValues[i]) / h[i] - (h[i] * (M[i + 1] + 2 * M[i])) / 3;
     d[i] = (M[i + 1] - M[i]) / (3 * h[i]);
   }
 

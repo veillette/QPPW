@@ -8,7 +8,13 @@ import { Shape } from "scenerystack/kite";
 import { NumberProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
-import { ChartTransform, ChartRectangle, AxisLine, TickMarkSet, TickLabelSet } from "scenerystack/bamboo";
+import {
+  ChartTransform,
+  ChartRectangle,
+  AxisLine,
+  TickMarkSet,
+  TickLabelSet,
+} from "scenerystack/bamboo";
 import { OneWellModel } from "../../one-well/model/OneWellModel.js";
 import { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
 import { BoundStateResult } from "../model/PotentialFunction.js";
@@ -60,15 +66,20 @@ export class WaveFunctionChartNode extends Node {
   // Flag to indicate if an update was requested while another update was in progress
   private updatePending: boolean = false;
 
-  public constructor(model: OneWellModel | TwoWellsModel, options?: { width?: number; height?: number }) {
+  public constructor(
+    model: OneWellModel | TwoWellsModel,
+    options?: { width?: number; height?: number },
+  ) {
     super();
 
     this.model = model;
     this.chartWidth = options?.width ?? 600;
     this.chartHeight = options?.height ?? 140;
 
-    this.plotWidth = this.chartWidth - this.chartMargins.left - this.chartMargins.right;
-    this.plotHeight = this.chartHeight - this.chartMargins.top - this.chartMargins.bottom;
+    this.plotWidth =
+      this.chartWidth - this.chartMargins.left - this.chartMargins.right;
+    this.plotHeight =
+      this.chartHeight - this.chartMargins.top - this.chartMargins.bottom;
 
     // Initialize view range (x-axis is fixed, y-axis will be updated based on data)
     this.xMinProperty = new NumberProperty(-X_AXIS_RANGE_NM);
@@ -104,7 +115,7 @@ export class WaveFunctionChartNode extends Node {
         this.chartMargins.left,
         this.chartMargins.top,
         this.plotWidth,
-        this.plotHeight
+        this.plotHeight,
       ),
     });
     this.addChild(this.plotContentNode);
@@ -184,23 +195,32 @@ export class WaveFunctionChartNode extends Node {
     // Manual X-axis grid lines (GridLineSet causes hang)
     for (let pos = -X_AXIS_RANGE_NM; pos <= X_AXIS_RANGE_NM; pos += 2) {
       if (pos !== -X_AXIS_RANGE_NM) {
-        const x = this.chartMargins.left + this.chartTransform.modelToViewX(pos);
+        const x =
+          this.chartMargins.left + this.chartTransform.modelToViewX(pos);
         const gridLine = new Line(
-          x, this.chartMargins.top,
-          x, this.chartMargins.top + this.plotHeight, {
-          stroke: QPPWColors.gridLineProperty,
-          lineWidth: 1,
-        });
+          x,
+          this.chartMargins.top,
+          x,
+          this.chartMargins.top + this.plotHeight,
+          {
+            stroke: QPPWColors.gridLineProperty,
+            lineWidth: 1,
+          },
+        );
         axesNode.addChild(gridLine);
       }
     }
 
     // Y-axis at left edge using bamboo AxisLine (at model x=-4nm)
-    const yAxisLeftNode = new AxisLine(this.chartTransform, Orientation.VERTICAL, {
-      stroke: QPPWColors.axisProperty,
-      lineWidth: 2,
-      value: this.xMinProperty.value,
-    });
+    const yAxisLeftNode = new AxisLine(
+      this.chartTransform,
+      Orientation.VERTICAL,
+      {
+        stroke: QPPWColors.axisProperty,
+        lineWidth: 2,
+        value: this.xMinProperty.value,
+      },
+    );
     yAxisLeftNode.x = this.chartMargins.left;
     yAxisLeftNode.y = this.chartMargins.top;
     axesNode.addChild(yAxisLeftNode);
@@ -217,46 +237,64 @@ export class WaveFunctionChartNode extends Node {
     axesNode.addChild(yAxisNode);
 
     // X-axis using bamboo AxisLine (at model y=0)
-    const xAxisNode = new AxisLine(this.chartTransform, Orientation.HORIZONTAL, {
-      stroke: QPPWColors.axisProperty,
-      lineWidth: 2,
-      value: 0,
-    });
+    const xAxisNode = new AxisLine(
+      this.chartTransform,
+      Orientation.HORIZONTAL,
+      {
+        stroke: QPPWColors.axisProperty,
+        lineWidth: 2,
+        value: 0,
+      },
+    );
     xAxisNode.x = this.chartMargins.left;
     xAxisNode.y = this.chartMargins.top;
     axesNode.addChild(xAxisNode);
 
     // X-axis tick marks using bamboo TickMarkSet
-    const xTickMarksNode = new TickMarkSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
-      edge: "max",
-      extent: 8,
-      stroke: QPPWColors.axisProperty,
-      lineWidth: 1,
-    });
+    const xTickMarksNode = new TickMarkSet(
+      this.chartTransform,
+      Orientation.HORIZONTAL,
+      2,
+      {
+        edge: "max",
+        extent: 8,
+        stroke: QPPWColors.axisProperty,
+        lineWidth: 1,
+      },
+    );
     xTickMarksNode.x = this.chartMargins.left;
     xTickMarksNode.y = this.chartMargins.top + this.plotHeight;
     axesNode.addChild(xTickMarksNode);
 
     // X-axis tick labels using bamboo TickLabelSet
-    const xTickLabelsNode = new TickLabelSet(this.chartTransform, Orientation.HORIZONTAL, 2, {
-      edge: "max",
-      createLabel: (value: number) => new Text(value.toFixed(0), {
-        font: new PhetFont(12),
-        fill: QPPWColors.labelFillProperty,
-      }),
-    });
+    const xTickLabelsNode = new TickLabelSet(
+      this.chartTransform,
+      Orientation.HORIZONTAL,
+      2,
+      {
+        edge: "max",
+        createLabel: (value: number) =>
+          new Text(value.toFixed(0), {
+            font: new PhetFont(12),
+            fill: QPPWColors.labelFillProperty,
+          }),
+      },
+    );
     xTickLabelsNode.x = this.chartMargins.left;
     xTickLabelsNode.y = this.chartMargins.top + this.plotHeight;
     axesNode.addChild(xTickLabelsNode);
 
     // Y-axis label (will be updated based on display mode)
-    this.yAxisLabel = new Text(stringManager.probabilityDensityAxisStringProperty, {
-      font: new PhetFont(14),
-      fill: QPPWColors.labelFillProperty,
-      rotation: -Math.PI / 2,
-      centerX: this.chartMargins.left - 40,
-      centerY: this.chartHeight / 2,
-    });
+    this.yAxisLabel = new Text(
+      stringManager.probabilityDensityAxisStringProperty,
+      {
+        font: new PhetFont(14),
+        fill: QPPWColors.labelFillProperty,
+        rotation: -Math.PI / 2,
+        centerX: this.chartMargins.left - 40,
+        centerY: this.chartHeight / 2,
+      },
+    );
     axesNode.addChild(this.yAxisLabel);
 
     // X-axis label
@@ -284,7 +322,9 @@ export class WaveFunctionChartNode extends Node {
 
     // Link to wellSeparationProperty if available (TwoWellsModel only)
     if ("wellSeparationProperty" in this.model) {
-      (this.model as TwoWellsModel).wellSeparationProperty.link(() => this.update());
+      (this.model as TwoWellsModel).wellSeparationProperty.link(() =>
+        this.update(),
+      );
     }
 
     // Update when grid points preference changes (affects wavefunction resolution)
@@ -316,13 +356,16 @@ export class WaveFunctionChartNode extends Node {
 
     // Update visibility of wave function components
     this.model.showRealPartProperty.link((show: boolean) => {
-      this.realPartPath.visible = show && this.model.displayModeProperty.value === "waveFunction";
+      this.realPartPath.visible =
+        show && this.model.displayModeProperty.value === "waveFunction";
     });
     this.model.showImaginaryPartProperty.link((show: boolean) => {
-      this.imaginaryPartPath.visible = show && this.model.displayModeProperty.value === "waveFunction";
+      this.imaginaryPartPath.visible =
+        show && this.model.displayModeProperty.value === "waveFunction";
     });
     this.model.showMagnitudeProperty.link((show: boolean) => {
-      this.magnitudePath.visible = show && this.model.displayModeProperty.value === "waveFunction";
+      this.magnitudePath.visible =
+        show && this.model.displayModeProperty.value === "waveFunction";
     });
   }
 
@@ -410,8 +453,12 @@ export class WaveFunctionChartNode extends Node {
    * Converts a number to Unicode subscript characters.
    */
   private toSubscript(num: number): string {
-    const subscriptDigits = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
-    return num.toString().split('').map(digit => subscriptDigits[parseInt(digit)]).join('');
+    const subscriptDigits = ["₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉"];
+    return num
+      .toString()
+      .split("")
+      .map((digit) => subscriptDigits[parseInt(digit)])
+      .join("");
   }
 
   /**
@@ -448,8 +495,12 @@ export class WaveFunctionChartNode extends Node {
           this.updateStateLabel();
         } else {
           // Display single eigenstate
-          const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
-          if (selectedIndex < 0 || selectedIndex >= boundStates.wavefunctions.length) {
+          const selectedIndex =
+            this.model.selectedEnergyLevelIndexProperty.value;
+          if (
+            selectedIndex < 0 ||
+            selectedIndex >= boundStates.wavefunctions.length
+          ) {
             return;
           }
 
@@ -469,9 +520,15 @@ export class WaveFunctionChartNode extends Node {
    * Updates the view range based on the data and updates the ChartTransform.
    * Note: X-axis range is fixed, only Y-axis is updated dynamically.
    */
-  private updateViewRange(boundStates: BoundStateResult, selectedIndex: number): void {
+  private updateViewRange(
+    boundStates: BoundStateResult,
+    selectedIndex: number,
+  ): void {
     // Calculate Y range based on wave function values
-    if (selectedIndex >= 0 && selectedIndex < boundStates.wavefunctions.length) {
+    if (
+      selectedIndex >= 0 &&
+      selectedIndex < boundStates.wavefunctions.length
+    ) {
       const wavefunction = boundStates.wavefunctions[selectedIndex];
       const maxAbs = Math.max(...wavefunction.map((v) => Math.abs(v)));
       const displayMode = this.model.displayModeProperty.value;
@@ -486,7 +543,9 @@ export class WaveFunctionChartNode extends Node {
     }
 
     // Update ChartTransform with new Y range (X range is fixed)
-    this.chartTransform.setModelYRange(new Range(this.yMinProperty.value, this.yMaxProperty.value));
+    this.chartTransform.setModelYRange(
+      new Range(this.yMinProperty.value, this.yMaxProperty.value),
+    );
   }
 
   /**
@@ -504,7 +563,8 @@ export class WaveFunctionChartNode extends Node {
       return;
     }
 
-    const config = (this.model as OneWellModel).superpositionConfigProperty.value;
+    const config = (this.model as OneWellModel).superpositionConfigProperty
+      .value;
     const numPoints = boundStates.xGrid.length;
 
     // Compute the current superposition wavefunction magnitude
@@ -547,7 +607,9 @@ export class WaveFunctionChartNode extends Node {
     }
 
     // Update ChartTransform with new Y range (X range is fixed)
-    this.chartTransform.setModelYRange(new Range(this.yMinProperty.value, this.yMaxProperty.value));
+    this.chartTransform.setModelYRange(
+      new Range(this.yMinProperty.value, this.yMaxProperty.value),
+    );
   }
 
   /**
@@ -560,7 +622,8 @@ export class WaveFunctionChartNode extends Node {
       return;
     }
 
-    const config = (this.model as OneWellModel).superpositionConfigProperty.value;
+    const config = (this.model as OneWellModel).superpositionConfigProperty
+      .value;
     const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
     const displayMode = this.model.displayModeProperty.value;
     const numPoints = boundStates.xGrid.length;
@@ -602,9 +665,13 @@ export class WaveFunctionChartNode extends Node {
       // |ψ|² = Real² + Imag²
       const probabilityDensity = new Array(numPoints);
       for (let i = 0; i < numPoints; i++) {
-        probabilityDensity[i] = realPart[i] * realPart[i] + imagPart[i] * imagPart[i];
+        probabilityDensity[i] =
+          realPart[i] * realPart[i] + imagPart[i] * imagPart[i];
       }
-      this.plotProbabilityDensityFromArray(boundStates.xGrid, probabilityDensity);
+      this.plotProbabilityDensityFromArray(
+        boundStates.xGrid,
+        probabilityDensity,
+      );
       this.probabilityDensityPath.visible = true;
       this.realPartPath.visible = false;
       this.imaginaryPartPath.visible = false;
@@ -622,12 +689,20 @@ export class WaveFunctionChartNode extends Node {
       // Display real, imaginary, and magnitude components
       const magnitude = new Array(numPoints);
       for (let i = 0; i < numPoints; i++) {
-        magnitude[i] = Math.sqrt(realPart[i] * realPart[i] + imagPart[i] * imagPart[i]);
+        magnitude[i] = Math.sqrt(
+          realPart[i] * realPart[i] + imagPart[i] * imagPart[i],
+        );
       }
-      this.plotSuperpositionComponents(boundStates.xGrid, realPart, imagPart, magnitude);
+      this.plotSuperpositionComponents(
+        boundStates.xGrid,
+        realPart,
+        imagPart,
+        magnitude,
+      );
       this.probabilityDensityPath.visible = false;
       this.realPartPath.visible = this.model.showRealPartProperty.value;
-      this.imaginaryPartPath.visible = this.model.showImaginaryPartProperty.value;
+      this.imaginaryPartPath.visible =
+        this.model.showImaginaryPartProperty.value;
       this.magnitudePath.visible = this.model.showMagnitudeProperty.value;
       this.phaseColorNode.visible = false;
     }
@@ -647,7 +722,10 @@ export class WaveFunctionChartNode extends Node {
   /**
    * Updates the wave function or probability density plot.
    */
-  private updateWaveFunction(boundStates: BoundStateResult, selectedIndex: number): void {
+  private updateWaveFunction(
+    boundStates: BoundStateResult,
+    selectedIndex: number,
+  ): void {
     const xGrid = boundStates.xGrid;
     const wavefunction = boundStates.wavefunctions[selectedIndex];
     const displayMode = this.model.displayModeProperty.value;
@@ -678,7 +756,8 @@ export class WaveFunctionChartNode extends Node {
       this.plotWaveFunctionComponents(xGrid, wavefunction, phase);
       this.probabilityDensityPath.visible = false;
       this.realPartPath.visible = this.model.showRealPartProperty.value;
-      this.imaginaryPartPath.visible = this.model.showImaginaryPartProperty.value;
+      this.imaginaryPartPath.visible =
+        this.model.showImaginaryPartProperty.value;
       this.magnitudePath.visible = this.model.showMagnitudeProperty.value;
       this.phaseColorNode.visible = false;
     }
@@ -687,7 +766,10 @@ export class WaveFunctionChartNode extends Node {
   /**
    * Plots the probability density with smooth curves.
    */
-  private plotProbabilityDensity(xGrid: number[], wavefunction: number[]): void {
+  private plotProbabilityDensity(
+    xGrid: number[],
+    wavefunction: number[],
+  ): void {
     const shape = new Shape();
 
     // Start at zero on the left
@@ -721,7 +803,9 @@ export class WaveFunctionChartNode extends Node {
     }
 
     // Close at zero on the right
-    const xEnd = this.dataToViewX(xGrid[xGrid.length - 1] * QuantumConstants.M_TO_NM);
+    const xEnd = this.dataToViewX(
+      xGrid[xGrid.length - 1] * QuantumConstants.M_TO_NM,
+    );
     shape.lineTo(xEnd, y0);
     shape.close();
 
@@ -731,7 +815,11 @@ export class WaveFunctionChartNode extends Node {
   /**
    * Plots wave function components (real, imaginary, magnitude) with smooth curves.
    */
-  private plotWaveFunctionComponents(xGrid: number[], wavefunction: number[], phase: number): void {
+  private plotWaveFunctionComponents(
+    xGrid: number[],
+    wavefunction: number[],
+    phase: number,
+  ): void {
     const realShape = new Shape();
     const imagShape = new Shape();
     const magShape = new Shape();
@@ -763,7 +851,10 @@ export class WaveFunctionChartNode extends Node {
     }
 
     // Draw smooth curves using quadratic bezier curves
-    const drawSmoothCurve = (shape: Shape, points: { x: number; y: number }[]) => {
+    const drawSmoothCurve = (
+      shape: Shape,
+      points: { x: number; y: number }[],
+    ) => {
       if (points.length > 0) {
         shape.moveTo(points[0].x, points[0].y);
 
@@ -794,14 +885,18 @@ export class WaveFunctionChartNode extends Node {
    * This creates a visualization where vertical strips are colored according to the local phase.
    * Reuses rectangle nodes from a pool to avoid creating/destroying nodes each frame.
    */
-  private plotPhaseColoredWavefunction(xGrid: number[], wavefunction: number[], globalPhase: number): void {
+  private plotPhaseColoredWavefunction(
+    xGrid: number[],
+    wavefunction: number[],
+    globalPhase: number,
+  ): void {
     const y0 = this.dataToViewY(0);
     const numStrips = xGrid.length - 1;
 
     // Ensure we have enough rectangles in the pool
     while (this.phaseColorStrips.length < numStrips) {
       const rect = new Rectangle(0, 0, 1, 1, {
-        fill: 'white',
+        fill: "white",
         stroke: null,
       });
       this.phaseColorStrips.push(rect);
@@ -858,7 +953,10 @@ export class WaveFunctionChartNode extends Node {
   /**
    * Plots probability density from a pre-computed array.
    */
-  private plotProbabilityDensityFromArray(xGrid: number[], probabilityDensity: number[]): void {
+  private plotProbabilityDensityFromArray(
+    xGrid: number[],
+    probabilityDensity: number[],
+  ): void {
     const shape = new Shape();
 
     // Start at zero on the left
@@ -891,7 +989,9 @@ export class WaveFunctionChartNode extends Node {
     }
 
     // Close at zero on the right
-    const xEnd = this.dataToViewX(xGrid[xGrid.length - 1] * QuantumConstants.M_TO_NM);
+    const xEnd = this.dataToViewX(
+      xGrid[xGrid.length - 1] * QuantumConstants.M_TO_NM,
+    );
     shape.lineTo(xEnd, y0);
     shape.close();
 
@@ -901,7 +1001,12 @@ export class WaveFunctionChartNode extends Node {
   /**
    * Plots superposition components (real, imaginary, magnitude) from arrays.
    */
-  private plotSuperpositionComponents(xGrid: number[], realPart: number[], imagPart: number[], magnitude: number[]): void {
+  private plotSuperpositionComponents(
+    xGrid: number[],
+    realPart: number[],
+    imagPart: number[],
+    magnitude: number[],
+  ): void {
     const realShape = new Shape();
     const imagShape = new Shape();
     const magShape = new Shape();
@@ -923,7 +1028,10 @@ export class WaveFunctionChartNode extends Node {
     }
 
     // Draw smooth curves using quadratic bezier curves
-    const drawSmoothCurve = (shape: Shape, points: { x: number; y: number }[]) => {
+    const drawSmoothCurve = (
+      shape: Shape,
+      points: { x: number; y: number }[],
+    ) => {
       if (points.length > 0) {
         shape.moveTo(points[0].x, points[0].y);
 
@@ -952,14 +1060,18 @@ export class WaveFunctionChartNode extends Node {
   /**
    * Plots phase-colored superposition from real and imaginary parts.
    */
-  private plotPhaseColoredSuperposition(xGrid: number[], realPart: number[], imagPart: number[]): void {
+  private plotPhaseColoredSuperposition(
+    xGrid: number[],
+    realPart: number[],
+    imagPart: number[],
+  ): void {
     const y0 = this.dataToViewY(0);
     const numStrips = xGrid.length - 1;
 
     // Ensure we have enough rectangles in the pool
     while (this.phaseColorStrips.length < numStrips) {
       const rect = new Rectangle(0, 0, 1, 1, {
-        fill: 'white',
+        fill: "white",
         stroke: null,
       });
       this.phaseColorStrips.push(rect);
@@ -1023,15 +1135,20 @@ export class WaveFunctionChartNode extends Node {
         if (boundStates) {
           // Check if we're displaying a superposition or a single eigenstate
           const superpositionType = this.model.superpositionTypeProperty.value;
-          const isSuperposition = superpositionType !== SuperpositionType.SINGLE;
+          const isSuperposition =
+            superpositionType !== SuperpositionType.SINGLE;
 
           if (isSuperposition && "superpositionConfigProperty" in this.model) {
             // Display superposition wavefunction with proper time evolution
             this.updateSuperpositionWavefunction();
           } else {
             // Display single eigenstate
-            const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
-            if (selectedIndex >= 0 && selectedIndex < boundStates.wavefunctions.length) {
+            const selectedIndex =
+              this.model.selectedEnergyLevelIndexProperty.value;
+            if (
+              selectedIndex >= 0 &&
+              selectedIndex < boundStates.wavefunctions.length
+            ) {
               this.updateWaveFunction(boundStates, selectedIndex);
             }
           }
