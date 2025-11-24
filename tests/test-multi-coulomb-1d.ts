@@ -34,7 +34,7 @@
  *   or: npm run test:multi-coulomb-1d
  */
 
-import { solveMultiCoulomb1D } from "../src/common/model/analytical-solutions/multi-coulomb-1d.js";
+import { solveMultiCoulomb1D } from "../src/common/model/analytical-solutions/";
 import Schrodinger1DSolver from "../src/common/model/Schrodinger1DSolver.js";
 import QuantumConstants from "../src/common/model/QuantumConstants.js";
 

@@ -6,14 +6,13 @@
 import { solveDVR } from "../src/common/model/DVRSolver.js";
 import { solveMatrixNumerov } from "../src/common/model/MatrixNumerovSolver.js";
 import { solveFGH } from "../src/common/model/FGHSolver.js";
-import { solveCoulomb1DPotential } from "../src/common/model/analytical-solutions/coulomb-1d-potential.js";
+import { solveCoulomb1DPotential } from "../src/common/model/analytical-solutions/";
 import {
   PotentialFunction,
   GridConfig,
 } from "../src/common/model/PotentialFunction.js";
 
 // Physical constants (SI units)
-const _HBAR = 1.054571817e-34; // Reduced Planck constant (J·s)
 const M_E = 9.1093837015e-31; // Electron mass (kg)
 const E_CHARGE = 1.602176634e-19; // Elementary charge (C)
 const EPSILON_0 = 8.8541878128e-12; // Vacuum permittivity (F/m)

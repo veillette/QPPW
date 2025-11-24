@@ -28,7 +28,7 @@
  *   or: npm run test:multi-square-well
  */
 
-import { solveMultiSquareWell } from "../src/common/model/analytical-solutions/multi-square-well.js";
+import { solveMultiSquareWell } from "../src/common/model/analytical-solutions";
 import Schrodinger1DSolver from "../src/common/model/Schrodinger1DSolver.js";
 import QuantumConstants from "../src/common/model/QuantumConstants.js";
 

@@ -9,7 +9,6 @@ import { solveFGH } from "../src/common/model/FGHSolver.js";
 import { solveCoulomb1DPotential } from "../src/common/model/analytical-solutions/coulomb-1d-potential.js";
 
 // Physical constants
-const _HBAR = 1.054571817e-34;
 const M_E = 9.1093837015e-31;
 const E_CHARGE = 1.602176634e-19;
 const EPSILON_0 = 8.8541878128e-12;
