@@ -21,6 +21,7 @@ import {
 import { Dimension2 } from "scenerystack/dot";
 import { OneWellModel } from "../../one-well/model/OneWellModel.js";
 import { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
+import { ManyWellsModel } from "../../many-wells/model/ManyWellsModel.js";
 import { PotentialType } from "../model/PotentialFunction.js";
 import { SuperpositionType } from "../model/SuperpositionType.js";
 import { SuperpositionDialog } from "./SuperpositionDialog.js";
@@ -46,11 +47,11 @@ interface ResolvedControlPanelNodeOptions {
 }
 
 export class ControlPanelNode extends Node {
-  private readonly model: OneWellModel | TwoWellsModel;
+  private readonly model: OneWellModel | TwoWellsModel | ManyWellsModel;
   private readonly options: ResolvedControlPanelNodeOptions;
 
   public constructor(
-    model: OneWellModel | TwoWellsModel,
+    model: OneWellModel | TwoWellsModel | ManyWellsModel,
     listBoxParent: Node,
     providedOptions?: ControlPanelNodeOptions,
   ) {
@@ -754,24 +755,24 @@ export class ControlPanelNode extends Node {
       });
     }
 
-    // Well Separation slider (only for double square well)
+    // Well Separation slider (only for double/multi square well and multi-Coulomb 1D)
     const separationValueText = new Text("", {
       font: new PhetFont(12),
       fill: QPPWColors.textFillProperty,
     });
 
-    // Check if the model has wellSeparationProperty (TwoWellsModel)
+    // Check if the model has wellSeparationProperty (TwoWellsModel or ManyWellsModel)
     let separationRow: Node | null = null;
     if ("wellSeparationProperty" in this.model) {
-      const twoWellsModel = this.model as TwoWellsModel;
+      const wellModel = this.model as TwoWellsModel | ManyWellsModel;
 
-      twoWellsModel.wellSeparationProperty.link((separation: number) => {
+      wellModel.wellSeparationProperty.link((separation: number) => {
         separationValueText.string = `${separation.toFixed(2)} nm`;
       });
 
       const separationSlider = new HSlider(
-        twoWellsModel.wellSeparationProperty,
-        twoWellsModel.wellSeparationProperty.range!,
+        wellModel.wellSeparationProperty,
+        wellModel.wellSeparationProperty.range!,
         {
           trackSize: new Dimension2(150, 4),
           thumbSize: new Dimension2(15, 30),
@@ -789,6 +790,47 @@ export class ControlPanelNode extends Node {
           new HBox({
             spacing: 10,
             children: [separationSlider, separationValueText],
+          }),
+        ],
+      });
+    }
+
+    // Number of Wells slider (only for multi-well potentials)
+    const numberOfWellsValueText = new Text("", {
+      font: new PhetFont(12),
+      fill: QPPWColors.textFillProperty,
+    });
+
+    // Check if the model has numberOfWellsProperty (ManyWellsModel)
+    let numberOfWellsRow: Node | null = null;
+    if ("numberOfWellsProperty" in this.model) {
+      const manyWellsModel = this.model as ManyWellsModel;
+
+      manyWellsModel.numberOfWellsProperty.link((numberOfWells: number) => {
+        numberOfWellsValueText.string = `${numberOfWells}`;
+      });
+
+      const numberOfWellsSlider = new HSlider(
+        manyWellsModel.numberOfWellsProperty,
+        manyWellsModel.numberOfWellsProperty.range!,
+        {
+          trackSize: new Dimension2(150, 4),
+          thumbSize: new Dimension2(15, 30),
+          constrainValue: (value: number) => Math.round(value), // Integer values only
+        },
+      );
+
+      numberOfWellsRow = new VBox({
+        spacing: 4,
+        align: "left",
+        children: [
+          new Text(stringManager.numberOfWellsStringProperty, {
+            font: new PhetFont(12),
+            fill: QPPWColors.textFillProperty,
+          }),
+          new HBox({
+            spacing: 10,
+            children: [numberOfWellsSlider, numberOfWellsValueText],
           }),
         ],
       });
@@ -813,7 +855,8 @@ export class ControlPanelNode extends Node {
         type === PotentialType.ECKART ||
         type === PotentialType.ASYMMETRIC_TRIANGLE ||
         type === PotentialType.TRIANGULAR ||
-        type === PotentialType.DOUBLE_SQUARE_WELL;
+        type === PotentialType.DOUBLE_SQUARE_WELL ||
+        type === PotentialType.MULTI_SQUARE_WELL;
       depthRow.visible = needsDepth;
     });
 
@@ -834,11 +877,24 @@ export class ControlPanelNode extends Node {
       });
     }
 
-    // Enable/disable separation slider based on potential type (only for double square well)
+    // Enable/disable separation slider based on potential type
     if (separationRow) {
       this.model.potentialTypeProperty.link((type: PotentialType) => {
-        const needsSeparation = type === PotentialType.DOUBLE_SQUARE_WELL;
+        const needsSeparation =
+          type === PotentialType.DOUBLE_SQUARE_WELL ||
+          type === PotentialType.MULTI_SQUARE_WELL ||
+          type === PotentialType.MULTI_COULOMB_1D;
         separationRow!.visible = needsSeparation;
+      });
+    }
+
+    // Enable/disable number of wells slider based on potential type
+    if (numberOfWellsRow) {
+      this.model.potentialTypeProperty.link((type: PotentialType) => {
+        const needsNumberOfWells =
+          type === PotentialType.MULTI_SQUARE_WELL ||
+          type === PotentialType.MULTI_COULOMB_1D;
+        numberOfWellsRow!.visible = needsNumberOfWells;
       });
     }
 
@@ -848,6 +904,9 @@ export class ControlPanelNode extends Node {
     }
     if (offsetRow) {
       children.push(offsetRow);
+    }
+    if (numberOfWellsRow) {
+      children.push(numberOfWellsRow);
     }
     if (separationRow) {
       children.push(separationRow);

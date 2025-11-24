@@ -27,6 +27,8 @@ import {
   solveTriangularPotential,
   solveDoubleSquareWellAnalytical,
 } from "./analytical-solutions";
+import { solveMultiSquareWell } from "./analytical-solutions/multi-square-well.js";
+import { solveMultiCoulomb1D } from "./analytical-solutions/multi-coulomb-1d.js";
 import { solveNumerov } from "./NumerovSolver.js";
 import { solveMatrixNumerov } from "./MatrixNumerovSolver.js";
 import { solveDVR } from "./DVRSolver.js";
@@ -70,6 +72,8 @@ export interface WellParameters {
   wellSeparation?: number;
   /** Energy offset for triangular potential (Joules) */
   energyOffset?: number;
+  /** Number of wells for multi-square well and multi-Coulomb 1D (1-10) */
+  numberOfWells?: number;
 }
 
 /**
@@ -291,6 +295,44 @@ export class Schrodinger1DSolver {
             mass,
             numStates,
             gridConfig,
+          );
+        }
+        break;
+
+      case PotentialType.MULTI_SQUARE_WELL:
+        if (
+          wellParams.numberOfWells !== undefined &&
+          wellParams.wellWidth !== undefined &&
+          wellParams.wellDepth !== undefined &&
+          wellParams.wellSeparation !== undefined
+        ) {
+          return solveMultiSquareWell(
+            wellParams.numberOfWells,
+            wellParams.wellWidth,
+            wellParams.wellDepth,
+            wellParams.wellSeparation,
+            mass,
+            numStates,
+            gridConfig,
+            this, // Pass solver instance for numerical methods
+          );
+        }
+        break;
+
+      case PotentialType.MULTI_COULOMB_1D:
+        if (
+          wellParams.numberOfWells !== undefined &&
+          wellParams.wellSeparation !== undefined &&
+          wellParams.coulombStrength !== undefined
+        ) {
+          return solveMultiCoulomb1D(
+            wellParams.numberOfWells,
+            wellParams.wellSeparation,
+            wellParams.coulombStrength,
+            mass,
+            numStates,
+            gridConfig,
+            this, // Pass solver instance for numerical methods
           );
         }
         break;

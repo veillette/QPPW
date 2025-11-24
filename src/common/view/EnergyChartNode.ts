@@ -62,6 +62,7 @@ function getEnergyAxisRange(potentialType: PotentialType): {
     case PotentialType.ECKART:
     case PotentialType.COULOMB_1D:
     case PotentialType.COULOMB_3D:
+    case PotentialType.MULTI_COULOMB_1D:
     case PotentialType.CUSTOM:
     default:
       // V=0 at infinity (wells with negative energy states)
@@ -70,7 +71,7 @@ function getEnergyAxisRange(potentialType: PotentialType): {
 }
 
 export class EnergyChartNode extends Node {
-  private readonly model: OneWellModel | TwoWellsModel;
+  private readonly model: OneWellModel | TwoWellsModel | import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel;
   private readonly chartWidth: number;
   private readonly chartHeight: number;
   private readonly chartMargins = { left: 60, right: 20, top: 40, bottom: 50 };
@@ -103,7 +104,7 @@ export class EnergyChartNode extends Node {
   private hoveredEnergyLevelIndex: number | null = null;
 
   public constructor(
-    model: OneWellModel | TwoWellsModel,
+    model: OneWellModel | TwoWellsModel | import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel,
     options?: { width?: number; height?: number },
   ) {
     super();
@@ -454,7 +455,9 @@ export class EnergyChartNode extends Node {
     });
     this.model.wellWidthProperty.link(() => this.update());
     this.model.wellDepthProperty.link(() => this.update());
-    this.model.wellOffsetProperty.link(() => this.update());
+    if ("wellOffsetProperty" in this.model) {
+      this.model.wellOffsetProperty.link(() => this.update());
+    }
     this.model.particleMassProperty.link(() => this.update());
     this.model.selectedEnergyLevelIndexProperty.link(() =>
       this.updateSelection(),

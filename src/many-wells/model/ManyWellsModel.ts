@@ -1,60 +1,142 @@
 /**
  * ManyWellsModel represents the physics model for multiple quantum potential wells.
- * It demonstrates energy bands and band gaps in a periodic potential (solid-state physics).
+ * Similar to TwoWellsModel but generalized to N wells (1-10).
+ * Supports multi-square wells and multi-Coulomb 1D potentials.
  */
 
-import { NumberProperty } from "scenerystack/axon";
+import { NumberProperty, Property } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { BaseModel } from "../../common/model/BaseModel.js";
-import { NumericalMethod } from "../../common/model/Schrodinger1DSolver.js";
+import Schrodinger1DSolver, {
+  WellParameters,
+  NumericalMethod,
+} from "../../common/model/Schrodinger1DSolver.js";
+import {
+  PotentialType,
+  BoundStateResult,
+} from "../../common/model/PotentialFunction.js";
+import QuantumConstants from "../../common/model/QuantumConstants.js";
+import {
+  SuperpositionType,
+  SuperpositionConfig,
+} from "../../common/model/SuperpositionType.js";
+import QPPWPreferences from "../../QPPWPreferences.js";
+
+export type DisplayMode = "probabilityDensity" | "waveFunction" | "phaseColor";
 
 export class ManyWellsModel extends BaseModel {
-  // Well parameters
-  public readonly wellWidthProperty: NumberProperty;
-  public readonly wellDepthProperty: NumberProperty;
+  // Potential type selection (limited to multi-well potentials)
+  public readonly potentialTypeProperty: Property<PotentialType>;
+
+  // Number of wells (1-10)
   public readonly numberOfWellsProperty: NumberProperty;
 
-  // Barrier parameters
-  public readonly barrierWidthProperty: NumberProperty;
-  public readonly barrierHeightProperty: NumberProperty;
+  // Well parameters (used for different potential types)
+  public readonly wellWidthProperty: NumberProperty;
+  public readonly wellDepthProperty: NumberProperty;
+  public readonly wellSeparationProperty: NumberProperty;
 
-  // Lattice parameter
-  public readonly latticeConstantProperty: NumberProperty;
+  // Particle properties
+  public readonly particleMassProperty: NumberProperty; // In units of electron mass
 
-  // Energy bands
-  public readonly selectedBandProperty: NumberProperty;
+  // Energy level selection
+  public readonly selectedEnergyLevelIndexProperty: NumberProperty; // 0-indexed
+  public readonly energyLevelProperty: NumberProperty; // Deprecated, kept for compatibility
+
+  // Display settings
+  public readonly displayModeProperty: Property<DisplayMode>;
+  public readonly showRealPartProperty: Property<boolean>;
+  public readonly showImaginaryPartProperty: Property<boolean>;
+  public readonly showMagnitudeProperty: Property<boolean>;
+  public readonly showPhaseProperty: Property<boolean>;
+
+  // Chart visibility
+  public readonly showTotalEnergyProperty: Property<boolean>;
+  public readonly showPotentialEnergyProperty: Property<boolean>;
+
+  // Superposition state
+  public readonly superpositionTypeProperty: Property<SuperpositionType>;
+  public readonly superpositionConfigProperty: Property<SuperpositionConfig>;
+
+  // Cached bound state results
+  protected boundStateResult: BoundStateResult | null = null;
 
   public constructor() {
     super();
+
+    // Initialize potential type (multi-square well by default)
+    this.potentialTypeProperty = new Property<PotentialType>(
+      PotentialType.MULTI_SQUARE_WELL,
+    );
+
+    // Initialize number of wells (default: 3 wells)
+    this.numberOfWellsProperty = new NumberProperty(3, {
+      range: new Range(1, 10),
+    });
+
     // Initialize well parameters with default values
     this.wellWidthProperty = new NumberProperty(1.0, {
-      range: new Range(0.1, 6.0),
-    }); // in nanometers (max 6 nm)
+      range: new Range(0.1, 3.0),
+    }); // in nanometers
     this.wellDepthProperty = new NumberProperty(5.0, {
       range: new Range(0.1, 15.0),
     }); // in eV
-    this.numberOfWellsProperty = new NumberProperty(5, {
-      range: new Range(2, 20),
-    }); // number of wells
+    this.wellSeparationProperty = new NumberProperty(0.2, {
+      range: new Range(0.05, 0.7),
+    }); // in nanometers (spacing between wells)
 
-    // Initialize barrier parameters
-    this.barrierWidthProperty = new NumberProperty(2); // in nanometers
-    this.barrierHeightProperty = new NumberProperty(3); // in eV
+    // Initialize particle mass (1.0 = electron mass)
+    this.particleMassProperty = new NumberProperty(1.0, {
+      range: new Range(0.5, 1.1),
+    }); // 0.5 to 1.1 times electron mass
 
-    // Initialize lattice constant (well width + barrier width)
-    this.latticeConstantProperty = new NumberProperty(12); // in nanometers
+    // Initialize energy level selection (ground state by default)
+    this.selectedEnergyLevelIndexProperty = new NumberProperty(0, {
+      range: new Range(0, 99),
+    });
+    this.energyLevelProperty = new NumberProperty(0); // Deprecated
 
-    // Initialize selected energy band
-    this.selectedBandProperty = new NumberProperty(0);
+    // Initialize display settings
+    this.displayModeProperty = new Property<DisplayMode>("probabilityDensity");
+    this.showRealPartProperty = new Property<boolean>(true);
+    this.showImaginaryPartProperty = new Property<boolean>(false);
+    this.showMagnitudeProperty = new Property<boolean>(false);
+    this.showPhaseProperty = new Property<boolean>(false);
+
+    // Initialize chart visibility
+    this.showTotalEnergyProperty = new Property<boolean>(true);
+    this.showPotentialEnergyProperty = new Property<boolean>(true);
+
+    // Initialize superposition state
+    this.superpositionTypeProperty = new Property<SuperpositionType>(
+      SuperpositionType.SINGLE,
+    );
+    this.superpositionConfigProperty = new Property<SuperpositionConfig>({
+      type: SuperpositionType.PSI_I_PSI_J,
+      amplitudes: [0.7, 0.7], // Default to equal superposition
+      phases: [0, 0],
+    });
+
+    // Recalculate bound states when parameters change
+    const invalidateCache = () => {
+      this.boundStateResult = null;
+    };
+
+    this.potentialTypeProperty.link(invalidateCache);
+    this.numberOfWellsProperty.link(invalidateCache);
+    this.wellWidthProperty.link(invalidateCache);
+    this.wellDepthProperty.link(invalidateCache);
+    this.wellSeparationProperty.link(invalidateCache);
+    this.particleMassProperty.link(invalidateCache);
   }
 
   /**
    * Called when the solver method changes.
-   * @param _method - The new numerical method (unused)
+   * Invalidates the cached bound state results.
+   * @param _method - The new numerical method (unused but required by interface)
    */
-
   protected onSolverMethodChanged(_method: NumericalMethod): void {
-    // No cached results to invalidate for many wells model yet
+    this.boundStateResult = null; // Invalidate cache
   }
 
   /**
@@ -71,13 +153,23 @@ export class ManyWellsModel extends BaseModel {
    */
   public override resetAll(): void {
     super.resetAll();
+    this.potentialTypeProperty.reset();
+    this.numberOfWellsProperty.reset();
     this.wellWidthProperty.reset();
     this.wellDepthProperty.reset();
-    this.numberOfWellsProperty.reset();
-    this.barrierWidthProperty.reset();
-    this.barrierHeightProperty.reset();
-    this.latticeConstantProperty.reset();
-    this.selectedBandProperty.reset();
+    this.wellSeparationProperty.reset();
+    this.particleMassProperty.reset();
+    this.selectedEnergyLevelIndexProperty.reset();
+    this.energyLevelProperty.reset();
+    this.displayModeProperty.reset();
+    this.showRealPartProperty.reset();
+    this.showImaginaryPartProperty.reset();
+    this.showMagnitudeProperty.reset();
+    this.showPhaseProperty.reset();
+    this.showTotalEnergyProperty.reset();
+    this.showPotentialEnergyProperty.reset();
+    this.superpositionTypeProperty.reset();
+    this.superpositionConfigProperty.reset();
   }
 
   /**
@@ -87,45 +179,162 @@ export class ManyWellsModel extends BaseModel {
    */
   public override step(dt: number, forced = false): void {
     super.step(dt, forced);
-    // Add Bloch wave dynamics here
+    // Add dynamics here if needed
   }
 
   /**
-   * Updates the lattice constant based on well and barrier widths.
-   */
-  public updateLatticeConstant(): void {
-    this.latticeConstantProperty.value =
-      this.wellWidthProperty.value + this.barrierWidthProperty.value;
-  }
-
-  /**
-   * Calculates the energy band structure for the periodic potential.
-   * This is a simplified model - full band structure requires numerical methods.
-   * @param bandIndex - The band index (0 for lowest band)
-   * @param k - The wave vector in the first Brillouin zone
+   * Calculates the energy eigenvalues for the current well parameters.
+   * @param n - The quantum number (1, 2, 3, ...)
    * @returns The energy in eV
    */
-  public getEnergyBand(bandIndex: number, k: number): number {
-    const hbar = 1.054571817e-34; // Reduced Planck constant (J·s)
-    const electronMass = 9.10938356e-31; // Electron mass (kg)
-    const latticeConstantMeters = this.latticeConstantProperty.value * 1e-9; // Lattice constant in meters
-    const eV = 1.602176634e-19; // Electron volt in joules
+  public getEnergyLevel(n: number): number {
+    // Ensure bound states are calculated
+    if (!this.boundStateResult) {
+      this.calculateBoundStates();
+    }
 
-    // Simplified dispersion relation for a periodic potential
-    // E(k) = E_0 + (hbar^2 * k^2) / (2m) + V_0 * cos(k * a)
-    const E0 = (bandIndex + 1) * 2; // Base energy for this band
-    const kineticEnergy = (hbar * hbar * k * k) / (2 * electronMass * eV);
-    const periodicTerm =
-      (this.wellDepthProperty.value / 4) * Math.cos(k * latticeConstantMeters);
+    // Return energy for quantum number n (1-indexed)
+    if (
+      this.boundStateResult &&
+      n > 0 &&
+      n <= this.boundStateResult.energies.length
+    ) {
+      const energyJoules = this.boundStateResult.energies[n - 1];
+      return Schrodinger1DSolver.joulesToEV(energyJoules);
+    }
 
-    return E0 + kineticEnergy + periodicTerm;
+    return 0;
   }
 
   /**
-   * Gets the number of energy bands to display.
+   * Get all bound state energies and wavefunctions for the current well.
+   * @returns BoundStateResult with energies (in eV) and wavefunctions
    */
-  public getNumberOfBands(): number {
-    // Show bands up to a reasonable energy
-    return Math.min(5, Math.floor(this.numberOfWellsProperty.value / 2) + 1);
+  public getBoundStates(): BoundStateResult | null {
+    if (!this.boundStateResult) {
+      this.calculateBoundStates();
+    }
+    return this.boundStateResult;
+  }
+
+  /**
+   * Calculate bound states using the Schrödinger solver.
+   * Results are cached until well parameters change.
+   */
+  private calculateBoundStates(): void {
+    const wellWidth = this.wellWidthProperty.value * QuantumConstants.NM_TO_M;
+    const mass =
+      this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
+
+    // Calculate number of states based on potential type
+    let numStates = 80; // Default for multi-well potentials
+
+    // Grid configuration
+    const CHART_DISPLAY_RANGE_NM = 4;
+    const method = this.solver.getNumericalMethod();
+    let numGridPoints = QPPWPreferences.gridPointsProperty.value;
+
+    if (method === "fgh") {
+      // FGH: round to nearest power of 2 for FFT efficiency
+      numGridPoints = Math.pow(2, Math.round(Math.log2(numGridPoints)));
+    }
+
+    const gridConfig = {
+      xMin: -CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
+      xMax: CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
+      numPoints: numGridPoints,
+    };
+
+    try {
+      // Build potential parameters based on type
+      const potentialParams: WellParameters = {
+        type: this.potentialTypeProperty.value,
+        numberOfWells: this.numberOfWellsProperty.value,
+        wellWidth: wellWidth,
+      };
+
+      // Add type-specific parameters
+      switch (this.potentialTypeProperty.value) {
+        case PotentialType.MULTI_SQUARE_WELL: {
+          potentialParams.wellDepth =
+            this.wellDepthProperty.value * QuantumConstants.EV_TO_JOULES;
+          potentialParams.wellSeparation =
+            this.wellSeparationProperty.value * QuantumConstants.NM_TO_M;
+          break;
+        }
+        case PotentialType.MULTI_COULOMB_1D: {
+          // For Coulomb potentials, use coulombStrength parameter α = k*e²
+          const coulombConstant = 8.9875517923e9; // Coulomb's constant in N·m²/C²
+          potentialParams.coulombStrength =
+            coulombConstant *
+            QuantumConstants.ELEMENTARY_CHARGE *
+            QuantumConstants.ELEMENTARY_CHARGE;
+          potentialParams.wellSeparation =
+            this.wellSeparationProperty.value * QuantumConstants.NM_TO_M;
+          break;
+        }
+        default:
+          break;
+      }
+
+      // Solve using the analytical (or numerical) solution
+      this.boundStateResult = this.solver.solveAnalyticalIfPossible(
+        potentialParams,
+        mass,
+        numStates,
+        gridConfig,
+      );
+
+      // Ensure selected energy level index is within bounds
+      if (this.boundStateResult) {
+        const maxIndex = this.boundStateResult.energies.length - 1;
+        if (this.selectedEnergyLevelIndexProperty.value > maxIndex) {
+          this.selectedEnergyLevelIndexProperty.value = Math.max(0, maxIndex);
+        }
+      }
+    } catch (error) {
+      console.error("Error calculating bound states:", error);
+      this.boundStateResult = null;
+    }
+  }
+
+  /**
+   * Get the wavefunction for a specific quantum number.
+   * @param n - The quantum number (1, 2, 3, ...)
+   * @returns Array of wavefunction values at grid points, or null if unavailable
+   */
+  public getWavefunction(n: number): number[] | null {
+    if (!this.boundStateResult) {
+      this.calculateBoundStates();
+    }
+
+    if (
+      this.boundStateResult &&
+      n > 0 &&
+      n <= this.boundStateResult.wavefunctions.length
+    ) {
+      return this.boundStateResult.wavefunctions[n - 1];
+    }
+
+    return null;
+  }
+
+  /**
+   * Get the spatial grid points for wavefunctions.
+   * @returns Array of x positions in nanometers
+   */
+  public getXGrid(): number[] | null {
+    if (!this.boundStateResult) {
+      this.calculateBoundStates();
+    }
+
+    if (this.boundStateResult) {
+      // Convert from meters to nanometers
+      return this.boundStateResult.xGrid.map(
+        (x) => x * QuantumConstants.M_TO_NM,
+      );
+    }
+
+    return null;
   }
 }
