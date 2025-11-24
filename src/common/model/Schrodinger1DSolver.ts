@@ -374,10 +374,11 @@ export class Schrodinger1DSolver {
     const ENERGIES_ONLY = false;
     const FINE_GRID_POINTS = 1000;
 
-    const { xMin, xMax } = gridConfig;
+    const { xMin, xMax, numPoints } = gridConfig;
 
     // Step 1: Find energies (and optionally wavefunctions) using selected solver
-    const coarseNumPoints = QPPWPreferences.gridPointsProperty.value;
+    // Use the requested grid size from gridConfig, or fall back to preferences
+    const coarseNumPoints = numPoints || QPPWPreferences.gridPointsProperty.value;
     const coarseGridConfig: GridConfig = {
       xMin,
       xMax,
