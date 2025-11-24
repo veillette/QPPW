@@ -10,17 +10,21 @@ This simulation allows users to explore the properties of quantum "particles" bo
 
 - **Real-time Quantum Simulation**: Solves the 1D Schrödinger equation numerically in real time with the mass set to the electron mass
 - **Interactive Potential Wells**: Click and drag directly on the potential energy diagram to modify well parameters
-- **Multiple Well Types**: Includes 12 analytically solvable potentials:
-  - Infinite and finite square wells
-  - Harmonic oscillator
-  - Morse potential (with width parameterization)
-  - Pöschl-Teller potential (with width parameterization)
-  - Rosen-Morse potential (available in codebase)
-  - Eckart potential (available in codebase)
-  - Asymmetric triangle potential
-  - Triangular potential
-  - Coulomb 1D and 3D potentials
-  - Double square well (for Two Wells screen)
+- **Multiple Well Types**: 12 analytically solvable potentials plus multi-well potentials:
+  - **Analytical Solutions (12 potentials)**:
+    - Infinite and finite square wells
+    - Harmonic oscillator
+    - Morse potential (with width parameterization)
+    - Pöschl-Teller potential (with width parameterization)
+    - Rosen-Morse potential (available in codebase)
+    - Eckart potential (available in codebase)
+    - Asymmetric triangle potential
+    - Triangular potential
+    - Coulomb 1D and 3D potentials
+    - Double square well (for Two Wells screen)
+  - **Numerical Multi-Well Potentials** (for Many Wells screen):
+    - Multi-square well (1-10 wells, solved numerically)
+    - Multi-Coulomb 1D (1-10 Coulomb centers, solved numerically)
 - **Comprehensive Visualizations**:
   - Wave functions (real and imaginary parts, magnitude)
   - Probability density with filled area visualization
@@ -88,6 +92,9 @@ This simulation is designed to help students understand:
     - Coulomb 1D and 3D
     - Asymmetric triangle and triangular potentials
     - Double square well
+  - **Multi-Well Potentials** (numerical):
+    - Multi-square well (1-10 wells)
+    - Multi-Coulomb 1D (1-10 centers)
   - **Numerical Methods**: For validation and extension
     - DVR (Discrete Variable Representation)
     - Spectral method
@@ -138,6 +145,19 @@ npm run build
 ### Testing
 
 The project includes comprehensive test suites to verify the accuracy of quantum mechanical calculations across all numerical methods and potential types.
+
+**Quick test commands:**
+
+```bash
+# Run all tests
+npm test
+
+# Run specialized tests
+npm run test:double-well        # Double well comprehensive tests
+npm run test:coulomb            # Coulomb potential verification
+npm run test:multi-square-well  # Multi-well square potential tests
+npm run test:multi-coulomb-1d   # Multi-Coulomb 1D tests
+```
 
 #### Method 1: Terminal-Based Tests (Fastest)
 

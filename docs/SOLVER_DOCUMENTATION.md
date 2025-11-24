@@ -19,9 +19,22 @@ For well-known potentials, the solver provides exact analytical solutions for **
 - **Eckart Potential**: Analytical solutions for barrier potentials
 - **Asymmetric Triangle**: Airy function solutions
 - **Triangular Potential**: Finite triangular well with Airy functions
-- **1D Coulomb**: $E_n = -\frac{m\alpha^2}{2\hbar^2 n^2}$
+- **1D Coulomb**: $E_n = -\frac{m\alpha^2}{2\hbar^2 (n + \frac{1}{2})^2}$ (odd-parity states only)
 - **3D Coulomb (Radial)**: Hydrogen-like energy levels
 - **Double Square Well**: Symmetric double well with parity-separated states
+
+### Multi-Well Potentials (Numerical Solutions)
+
+For complex multi-well systems, the solver uses numerical methods:
+
+- **Multi-Square Well**: Array of 1-10 finite square wells solved using DVR/FGH/Matrix Numerov
+  - Demonstrates band structure formation
+  - Shows quantum tunneling between multiple wells
+  - Transcendental equations become intractable for N > 2
+- **Multi-Coulomb 1D**: Array of 1-10 Coulomb centers solved numerically
+  - Models multi-atom quantum systems in 1D
+  - No closed-form analytical solution exists for N > 1
+  - Complex interference patterns between centers
 
 ### Numerical Solutions
 
@@ -85,7 +98,27 @@ src/common/model/
 └── SuperpositionType.ts         # Superposition type definitions
 
 src/common/model/analytical-solutions/  # Analytical solvers for specific potentials
+  ├── infinite-square-well.ts
+  ├── finite-square-well.ts
+  ├── harmonic-oscillator.ts
+  ├── morse-potential.ts
+  ├── poschl-teller-potential.ts
+  ├── rosen-morse-potential.ts
+  ├── eckart-potential.ts
+  ├── asymmetric-triangle-potential.ts
+  ├── triangular-potential.ts
+  ├── coulomb-1d-potential.ts
+  ├── coulomb-1d-numerical-wrapper.ts   # Numerical wrapper with odd-parity filtering
+  ├── coulomb-3d-potential.ts
+  ├── double-square-well.ts
+  ├── multi-square-well.ts              # Multi-well potentials (uses numerical solvers)
+  ├── multi-coulomb-1d.ts               # Multi-Coulomb centers (uses numerical solvers)
+  ├── airy-utilities.ts                 # Airy functions (Ai, Bi)
+  ├── math-utilities.ts                 # Special functions and polynomials
+  └── index.ts                          # Exports all solutions
 ```
+
+**Note**: While `multi-square-well.ts` and `multi-coulomb-1d.ts` are located in the `analytical-solutions` directory for organizational convenience, they create potential functions that are solved using numerical methods (DVR, FGH, Matrix Numerov), not analytical formulas.
 
 ## Usage
 
@@ -266,12 +299,56 @@ The simulation provides three visualization modes:
 - Both charts share synchronized x-axis (Position in nm: -4 to +4 nm)
 - Y-axis ranges automatically adjust based on potential type and selected state
 
+## Recent Enhancements (2024-2025)
+
+The solver has recently been enhanced with several new features:
+
+### Multi-Well Support
+
+- **Multi-Square Well**: Supports 1-10 finite square wells arranged periodically
+  - Demonstrates band structure formation
+  - Shows quantum tunneling between multiple wells
+  - Energy levels form bands as well count increases
+  - Available in the "Many Wells" screen
+
+- **Multi-Coulomb 1D**: Supports 1-10 Coulomb centers arranged periodically
+  - Models multi-atom quantum systems in 1D
+  - Shows complex interference patterns
+  - Demonstrates molecular orbital formation
+  - Available in the "Many Wells" screen
+
+### Coulomb 1D Improvements
+
+- **Odd-Parity Enforcement**: The 1D Coulomb potential now correctly enforces odd-parity wavefunctions
+  - All wavefunctions satisfy ψ(-x) = -ψ(x)
+  - Linear behavior at x=0 (ψ(x) ∝ x as x→0)
+  - Energy formula corrected: $E_n = -\frac{m\alpha^2}{2\hbar^2(n+1/2)^2}$
+  - Numerical wrapper available for validation
+
+### Enhanced Double Well Solver
+
+- **Improved Eigenvalue Detection**: Uses node-counting diagnostics for robust eigenvalue recovery
+- **Active Eigenvalue Recovery**: Adaptively searches for missing energy levels
+- **23 Comprehensive Tests**: Stringent validation suite ensures physical correctness
+  - Orthogonality testing
+  - Probability localization
+  - Energy splitting consistency
+  - Wavefunction continuity at boundaries
+
+### Test Infrastructure
+
+New test suites added:
+- `npm run test:multi-square-well` - Multi-well square potential validation
+- `npm run test:multi-coulomb-1d` - Multi-Coulomb 1D validation
+- `npm run test:double-well` - Comprehensive 23-test suite for double wells
+- `npm run test:coulomb` - Coulomb potential verification with near-zero behavior checks
+
 ## Future Enhancements
 
 Potential improvements to consider:
 
 - Support for 2D/3D potentials
 - Time-dependent Schrödinger equation solver (partial implementation exists for phase evolution)
-- More analytical solutions (currently supports 10 potential types)
+- More analytical solutions for exotic potentials
 - Adaptive grid refinement
 - GPU acceleration for large grids

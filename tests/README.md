@@ -300,7 +300,27 @@ npm run test:double-well
 
 # Run Coulomb potential verification tests
 npm run test:coulomb
+
+# Run multi-square well tests (NEW)
+npm run test:multi-square-well
+
+# Run multi-Coulomb 1D tests (NEW)
+npm run test:multi-coulomb-1d
 ```
+
+**New Test Suites:**
+
+- **Multi-Square Well Tests**: Validates the multi-well potential solver for 1-10 wells
+  - Tests energy band formation
+  - Verifies quantum tunneling between wells
+  - Checks wavefunction localization
+  - Validates against analytical solutions
+
+- **Multi-Coulomb 1D Tests**: Validates the multi-Coulomb center solver for 1-10 centers
+  - Tests molecular orbital formation
+  - Verifies energy level ordering
+  - Checks odd-parity enforcement for each center
+  - Validates interference patterns
 
 ## Notes
 

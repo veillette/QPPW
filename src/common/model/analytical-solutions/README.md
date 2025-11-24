@@ -13,7 +13,9 @@ Analytical solutions provide exact mathematical expressions for energy eigenvalu
 
 ### Available Potentials
 
-This module provides **12 analytical solutions**:
+This module provides **12 analytical solutions** plus 2 numerical multi-well potentials:
+
+**Analytical Solutions:**
 
 1. Infinite Square Well
 2. Finite Square Well
@@ -28,9 +30,16 @@ This module provides **12 analytical solutions**:
 11. Coulomb 3D Potential (Hydrogen Atom)
 12. Double Square Well
 
+**Multi-Well Potentials (Numerical):**
+
+13. Multi-Square Well - solved numerically using DVR/FGH/Matrix Numerov
+14. Multi-Coulomb 1D - solved numerically (no analytical solution exists)
+
 ### Implementation Details
 
 All analytical solutions are evaluated at **1000 grid points** for high-resolution visualization, independent of the user's grid preference setting. This ensures smooth, accurate wavefunction displays while numerical methods can use user-configurable grid sizes.
+
+**Note on Multi-Well Potentials**: While `multi-square-well.ts` and `multi-coulomb-1d.ts` are located in this directory for organizational convenience, they create potential functions that are **solved using numerical methods** (DVR, FGH, or Matrix Numerov), not analytical formulas. They are included here because they provide convenient interfaces for creating multi-well potentials, but the actual bound state solutions require numerical eigensolvers.
 
 **Note**: Rosen-Morse and Eckart potentials have been temporarily removed from the UI but remain available in the codebase for future use.
 
@@ -811,6 +820,167 @@ Eigenvalues are found using the **bisection method** applied to the transcendent
 
 ---
 
+## 13. Multi-Square Well (Numerical)
+
+**File**: `multi-square-well.ts`
+
+**⚠️ NUMERICAL SOLUTION**: This potential is solved using numerical methods (DVR, FGH, or Matrix Numerov), not analytical formulas. The transcendental equations for N > 2 wells become intractable.
+
+### Description
+
+The multi-square well consists of 1-10 finite square wells arranged periodically along the x-axis. This system demonstrates band structure formation, quantum tunneling between multiple wells, and the emergence of energy bands as the number of wells increases.
+
+### Potential
+
+For N wells with width w, depth V₀, and separation d:
+
+```
+V(x) = -V₀   for x in any well region
+V(x) = 0     for x in barrier regions or outside
+```
+
+The wells are arranged symmetrically about x = 0.
+
+### Parameters
+
+- `numberOfWells` (N): Number of wells (1-10)
+- `wellWidth` (w): Width of each individual well in meters
+- `wellDepth` (V₀): Depth of each well in Joules (positive value)
+- `wellSeparation` (d): Edge-to-edge separation between adjacent wells in meters
+- `mass` (m): Particle mass in kg
+- `numStates`: Number of energy levels to calculate
+- `gridConfig`: Grid configuration for wavefunction evaluation
+
+### Energy Eigenvalues
+
+Energy eigenvalues are found using **numerical methods** (DVR, FGH, or Matrix Numerov). The transcendental equations that arise from matching boundary conditions become extremely complex for N > 2 wells and have no practical closed-form solution.
+
+As N increases:
+
+- Energy levels split into bands
+- Bandwidth increases with increasing well count
+- Band gaps form between allowed energy bands
+- Demonstrates the formation of energy bands in periodic potentials
+
+### Wavefunctions
+
+Wavefunctions are constructed by matching:
+
+- Oscillatory solutions in wells: `ψ ∝ sin(kx)` or `cos(kx)`
+- Exponential solutions in barriers: `ψ ∝ exp(κx)` or `exp(-κx)`
+- Boundary conditions at each well-barrier interface
+
+For symmetric arrangements, wavefunctions have definite parity.
+
+### Numerical Methods
+
+This potential requires full numerical eigensolvers:
+
+- **DVR (Discrete Variable Representation)**: Recommended for general use
+- **FGH (Fourier Grid Hamiltonian)**: Efficient for smooth potentials
+- **Matrix Numerov**: Alternative finite-difference approach
+
+The solver constructs the full Hamiltonian matrix and diagonalizes it to find eigenvalues and eigenvectors.
+
+### Physical Significance
+
+- Models quantum dot arrays and superlattices
+- Demonstrates band structure formation in solids
+- Shows quantum tunneling in periodic potentials
+- Important for:
+  - Semiconductor superlattices
+  - Quantum cascade lasers
+  - Photonic crystals (optical analogue)
+  - Tight-binding models in solid state physics
+
+---
+
+## 14. Multi-Coulomb 1D (Numerical)
+
+**File**: `multi-coulomb-1d.ts`
+
+**⚠️ NUMERICAL SOLUTION**: This potential is solved using numerical methods (DVR, FGH, or Matrix Numerov). No closed-form analytical solution exists for N > 1 Coulomb centers in 1D.
+
+### Description
+
+The multi-Coulomb 1D potential consists of 1-10 Coulomb centers (1/|x-x_i| singularities) arranged periodically along the x-axis. This system models multi-atom quantum systems in one dimension, demonstrating molecular orbital formation and complex interference patterns.
+
+### Potential
+
+For N Coulomb centers at positions x_i with strength α:
+
+```
+V(x) = -α Σ(1/|x - x_i|)
+```
+
+The centers are arranged symmetrically about x = 0.
+
+### Parameters
+
+- `numberOfCenters` (N): Number of Coulomb centers (1-10)
+- `centerSeparation` (d): Separation between adjacent centers in meters
+- `coulombStrength` (α): Coulomb strength parameter in J·m
+- `mass` (m): Particle mass in kg
+- `numStates`: Number of energy levels to calculate
+- `gridConfig`: Grid configuration for wavefunction evaluation
+
+### Energy Eigenvalues
+
+Energy eigenvalues are found using **numerical methods only** (DVR, FGH, or Matrix Numerov). The multi-center Coulomb problem has **no general closed-form analytical solution** for N > 1 centers, but exhibits:
+
+- Energy level splitting proportional to coupling strength
+- Formation of molecular-like bonding and antibonding states
+- Complex energy level patterns for N > 2
+- For N = 1, reduces to the single 1D Coulomb potential (analytical)
+
+### Wavefunctions
+
+Wavefunctions exhibit:
+
+- **Odd parity at each Coulomb center**: ψ(x) must behave linearly near each singularity
+- Complex interference patterns between centers
+- Localization or delocalization depending on center separation
+- For wide separation: approximate single-center behavior
+- For close separation: strong hybridization and molecular orbital character
+
+### Important Notes
+
+Each Coulomb center imposes an **odd-parity constraint** similar to the single 1D Coulomb potential:
+
+- Wavefunctions must vanish at each center: ψ(x_i) = 0
+- Linear behavior near each center: ψ(x) ∝ (x - x_i) as x → x_i
+- Overall parity depends on arrangement symmetry
+
+### Numerical Methods
+
+This potential requires full numerical eigensolvers:
+
+- **DVR (Discrete Variable Representation)**: Recommended, handles singularities well
+- **FGH (Fourier Grid Hamiltonian)**: May have issues near singularities
+- **Matrix Numerov**: Alternative approach
+
+Special considerations:
+
+- Fine grid required near each singularity to resolve linear behavior
+- Careful handling of 1/|x-x_i| singularities with small cutoff
+- Validation against single-center analytical solution when N=1
+- Grid spacing must be small enough to capture wavefunction zeros at each center
+
+### Physical Significance
+
+- Models 1D molecular systems with multiple atoms
+- Demonstrates:
+  - Molecular orbital formation
+  - Bonding and antibonding states
+  - LCAO (Linear Combination of Atomic Orbitals) approximation
+  - Quantum interference in multi-center systems
+- Related to:
+  - Quantum wires with multiple impurities
+  - 1D molecular chains
+  - Theoretical studies of dimensional effects in chemistry
+
+---
+
 ## Mathematical Utilities
 
 **File**: `math-utilities.ts`
@@ -846,6 +1016,8 @@ import {
   solveInfiniteWell,
   solveHarmonicOscillator,
   solveCoulomb3DPotential,
+  solveMultiSquareWell,
+  solveMultiCoulomb1D,
 } from "./analytical-solutions";
 
 // Infinite square well
@@ -870,6 +1042,27 @@ const hydrogenResult = solveCoulomb3DPotential(
   9.109e-31, // electron mass
   3, // n = 1, 2, 3 states
   { xMin: 0, xMax: 1e-8, numPoints: 1000 },
+);
+
+// Multi-square well (NEW)
+const multiWellResult = solveMultiSquareWell(
+  5, // 5 wells
+  0.5e-9, // 0.5 nm well width
+  8e-19, // 5 eV well depth (in Joules)
+  0.3e-9, // 0.3 nm separation between wells
+  9.109e-31, // electron mass
+  10, // first 10 states
+  { xMin: -5e-9, xMax: 5e-9, numPoints: 1000 },
+);
+
+// Multi-Coulomb 1D (NEW)
+const multiCoulombResult = solveMultiCoulomb1D(
+  3, // 3 Coulomb centers
+  1e-9, // 1 nm separation between centers
+  2.307e-28, // Coulomb strength
+  9.109e-31, // electron mass
+  5, // first 5 states
+  { xMin: -5e-9, xMax: 5e-9, numPoints: 1000 },
 );
 ```
 
