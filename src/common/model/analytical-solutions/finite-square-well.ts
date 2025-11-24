@@ -1,6 +1,38 @@
 /**
  * Analytical solution for a finite square well.
  * V(x) = -V₀ for |x| < L/2, V(x) = 0 for |x| > L/2
+ *
+ * REFERENCES FOR TRANSCENDENTAL EQUATIONS:
+ * - Griffiths, D. J., & Schroeter, D. F. (2018). "Introduction to Quantum Mechanics" (3rd ed.).
+ *   Cambridge University Press. Section 2.6, pp. 68-75.
+ *   https://doi.org/10.1017/9781316995433
+ *   Derivation of transcendental equations from boundary condition matching.
+ *
+ * - Flügge, S. (1999). "Practical Quantum Mechanics". Springer.
+ *   Section I.3, pp. 17-22. https://doi.org/10.1007/978-3-642-61995-3
+ *   Detailed graphical and algebraic solutions of the transcendental equations.
+ *
+ * - Robinett, R. W. (1996). "Visualizing the solutions for the circular infinite well in
+ *   quantum and classical mechanics". American Journal of Physics, 64(4), 440-446.
+ *   https://doi.org/10.1119/1.18188
+ *   Graphical interpretation of transcendental equation solutions.
+ *
+ * - Lima, F. M. S. (2020). "A simpler graphical solution and an approximate formula for
+ *   energy eigenvalues in finite square quantum wells." American Journal of Physics, 88(11), 1019.
+ *   https://doi.org/10.1119/10.0001881
+ *   Novel approximation method used in this implementation for initial guesses.
+ *
+ * TRANSCENDENTAL EQUATIONS (from boundary condition matching):
+ * Define dimensionless parameters:
+ *   ξ = (L/2)√(2mE/ℏ²)         (wave number inside well)
+ *   η = (L/2)√(2m(V₀-E)/ℏ²)    (decay constant outside well)
+ *   ξ₀ = (L/2)√(2mV₀/ℏ²)       (maximum value, ξ² + η² = ξ₀²)
+ *
+ * Even parity solutions: tan(ξ) = η/ξ
+ * Odd parity solutions: -cot(ξ) = η/ξ
+ *
+ * These transcendental equations have no closed-form solution and must be solved numerically.
+ * The derivation follows from requiring wavefunction and derivative continuity at x = ±L/2.
  */
 
 import QuantumConstants from "../QuantumConstants.js";

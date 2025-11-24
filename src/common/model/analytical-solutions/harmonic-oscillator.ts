@@ -1,6 +1,34 @@
 /**
  * Analytical solution for a quantum harmonic oscillator.
  * V(x) = (1/2) * k * x^2 = (1/2) * m * ω^2 * x^2
+ *
+ * REFERENCES:
+ * - Griffiths, D. J., & Schroeter, D. F. (2018). "Introduction to Quantum Mechanics" (3rd ed.).
+ *   Cambridge University Press. Section 2.3, pp. 40-55.
+ *   https://doi.org/10.1017/9781316995433
+ *   Complete derivation using operator methods and Hermite polynomials.
+ *
+ * - Shankar, R. (1994). "Principles of Quantum Mechanics" (2nd ed.). Springer.
+ *   Section 7.3, pp. 164-182. https://doi.org/10.1007/978-1-4757-0576-8
+ *   Algebraic method using ladder operators.
+ *
+ * - Dirac, P. A. M. (1927). "The Quantum Theory of the Emission and Absorption of Radiation".
+ *   Proceedings of the Royal Society A, 114(767), 243-265.
+ *   https://doi.org/10.1098/rspa.1927.0039
+ *   Introduction of creation and annihilation operators.
+ *
+ * - Abramowitz, M., & Stegun, I. A. (1964). "Handbook of Mathematical Functions".
+ *   National Bureau of Standards. Section 22, pp. 773-802.
+ *   https://doi.org/10.1119/1.15378
+ *   Properties of Hermite polynomials used in wavefunctions.
+ *
+ * ENERGY EIGENVALUES:
+ *   E_n = ℏω(n + 1/2),  n = 0, 1, 2, ...
+ *   where ω = √(k/m)
+ *
+ * WAVEFUNCTIONS:
+ *   ψ_n(x) = (1/√(2^n n!)) · (mω/πℏ)^(1/4) · exp(-mωx²/(2ℏ)) · H_n(√(mω/ℏ) x)
+ *   where H_n are the Hermite polynomials
  */
 
 import QuantumConstants from "../QuantumConstants.js";

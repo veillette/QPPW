@@ -3,6 +3,40 @@
  * V(x) = V_0 / (1 + exp(x/a))² - V_1 / (1 + exp(x/a))
  *
  * This potential is useful for modeling molecular barriers and chemical reactions.
+ *
+ * REFERENCES:
+ * - Eckart, C. (1930). "The Penetration of a Potential Barrier by Electrons"
+ *   Physical Review, 35(11), 1303-1309.
+ *   https://doi.org/10.1103/PhysRev.35.1303
+ *   ORIGINAL PAPER: Introduced this potential for modeling barrier penetration.
+ *
+ * - Flügge, S. (1999). "Practical Quantum Mechanics". Springer.
+ *   Problem 40, pp. 97-99. https://doi.org/10.1007/978-3-642-61995-3
+ *   Detailed solution using hypergeometric functions.
+ *
+ * - Cooper, F., Khare, A., & Sukhatme, U. (1995). "Supersymmetry and quantum mechanics"
+ *   Physics Reports, 251(5-6), 267-385.
+ *   https://doi.org/10.1016/0370-1573(94)00080-M
+ *   Section 3.3, pp. 283-285: Eckart as a shape-invariant potential.
+ *
+ * - Natanzon, G. A. (1979). "General properties of potentials for which the Schrödinger equation
+ *   can be solved by means of hypergeometric functions". Theoretical and Mathematical Physics, 38(2), 146-153.
+ *   https://doi.org/10.1007/BF01016836
+ *   Classification including the Eckart potential.
+ *
+ * - Wei, H., & Xia, X. (1991). "Algebraic approach to energy spectra of quantum systems"
+ *   Journal of Physics A, 24(1), 151.
+ *   https://doi.org/10.1088/0305-4470/24/1/024
+ *   Algebraic solution methods.
+ *
+ * ENERGY EIGENVALUES:
+ *   E_n = -(ℏ²/2ma²)(s_2 - n)²,  n = 0, 1, 2, ..., n_max
+ *   where s_1 = -1/2 + √(1/4 + α), s_2 = -1/2 + √(1/4 + α - β)
+ *   α = a²(2mV_0)/ℏ², β = V_1·a·√(2m)/(2ℏ√V_0)
+ *
+ * WAVEFUNCTIONS:
+ *   ψ_n(ξ) = N_n · ξ^(s_2-n) · (1+ξ)^(-s_1-s_2+n) · P_n^(α,β)(1-2ξ/(1+ξ))
+ *   where ξ = exp(x/a) and P_n^(α,β) are Jacobi polynomials
  */
 
 import QuantumConstants from "../QuantumConstants.js";

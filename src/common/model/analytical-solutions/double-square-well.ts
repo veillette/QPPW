@@ -32,6 +32,35 @@
  *   k² = 2mE/ℏ²           (oscillatory in well, 0 < E < V₀)
  *   κ² = 2m(V₀ - E)/ℏ²    (exponential in barrier, E < V₀)
  *   α² = 2m(V₀ - E)/ℏ²    (same as κ for bound states)
+ *
+ * REFERENCES FOR TRANSCENDENTAL EQUATIONS:
+ * - Griffiths, D. J., & Schroeter, D. F. (2018). "Introduction to Quantum Mechanics" (3rd ed.).
+ *   Cambridge University Press. Problem 2.42, pp. 88-89.
+ *   https://doi.org/10.1017/9781316995433
+ *   Double well as an extension of the finite square well problem.
+ *
+ * - Cohen-Tannoudji, C., Diu, B., & Laloë, F. (1977). "Quantum Mechanics" (Vol. 1).
+ *   Wiley. Complement G_II, pp. 70-85.
+ *   Detailed treatment of double-well potential and tunneling doublets.
+ *
+ * - Razavy, M. (2003). "Quantum Theory of Tunneling". World Scientific.
+ *   Section 7.2, pp. 205-220. https://doi.org/10.1142/4984
+ *   Double-well potential and tunneling splitting derivation.
+ *
+ * - Merzbacher, E. (1998). "Quantum Mechanics" (3rd ed.). Wiley.
+ *   Section 7.4, pp. 90-95.
+ *   Piecewise constant potentials and boundary matching conditions.
+ *
+ * - Holstein, B. R. (1988). "Anomalies for pedestrians". American Journal of Physics, 61(2), 142-147.
+ *   https://doi.org/10.1119/1.17328
+ *   Double-well potential and tunneling in quantum field theory context.
+ *
+ * TRANSCENDENTAL EQUATIONS (from boundary condition matching at x = L_inner and x = L_outer):
+ * The derivation follows from requiring continuity of ψ and ψ' at all boundaries.
+ * Solutions must alternate in parity: ground state (even), 1st excited (odd), 2nd excited (even), etc.
+ * The "tunneling doublet" refers to the nearly-degenerate ground and first excited states.
+ *
+ * These equations have no closed-form solution and must be solved numerically using root-finding.
  */
 
 import QuantumConstants from "../QuantumConstants.js";
