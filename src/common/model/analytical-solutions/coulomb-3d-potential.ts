@@ -3,6 +3,39 @@
  * V(r) = -α/r
  *
  * This solves the radial Schrödinger equation for the hydrogen atom with L=0 (s-waves).
+ *
+ * REFERENCES:
+ * - Griffiths, D. J., & Schroeter, D. F. (2018). "Introduction to Quantum Mechanics" (3rd ed.).
+ *   Cambridge University Press. Section 4.2, pp. 139-150.
+ *   https://doi.org/10.1017/9781316995433
+ *   Complete derivation of hydrogen atom wavefunctions using series solutions.
+ *
+ * - Bethe, H. A., & Salpeter, E. E. (1957). "Quantum Mechanics of One- and Two-Electron Atoms".
+ *   Springer. Section 1-3, pp. 1-35.
+ *   https://doi.org/10.1007/978-3-662-12869-5
+ *   Classic comprehensive treatment of hydrogen-like atoms.
+ *
+ * - Schiff, L. I. (1968). "Quantum Mechanics" (3rd ed.). McGraw-Hill.
+ *   Section 16, pp. 88-97.
+ *   Derivation using separation of variables and associated Laguerre polynomials.
+ *
+ * - Pauli, W. (1926). "Über das Wasserstoffspektrum vom Standpunkt der neuen Quantenmechanik"
+ *   Zeitschrift für Physik, 36(5), 336-363.
+ *   https://doi.org/10.1007/BF01450175
+ *   One of the first solutions of the hydrogen atom using Schrödinger's equation.
+ *
+ * - Abramowitz, M., & Stegun, I. A. (1964). "Handbook of Mathematical Functions".
+ *   National Bureau of Standards. Section 13.4, pp. 509-515 and Section 22, pp. 773-802.
+ *   https://doi.org/10.1119/1.15378
+ *   Properties of associated Laguerre polynomials.
+ *
+ * ENERGY EIGENVALUES:
+ *   E_n = -mα²/(2ℏ²n²),  n = 1, 2, 3, ...
+ *   For electron in hydrogen: E_n = -13.6 eV/n² (Rydberg formula)
+ *
+ * RADIAL WAVEFUNCTIONS (L=0, s-states):
+ *   R_{n0}(r) = N_{n0} · (2/na₀)^(3/2) · exp(-r/na₀) · L^1_{n-1}(2r/na₀)
+ *   where a₀ = ℏ²/(mα) is the Bohr radius and L^1 are associated Laguerre polynomials
  */
 
 import QuantumConstants from "../QuantumConstants.js";

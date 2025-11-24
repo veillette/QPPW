@@ -2,6 +2,25 @@
  * Analytical solution for an infinite square well (particle in a box).
  * V(x) = 0 for -L/2 < x < L/2, V(x) = ∞ otherwise
  * The well is centered at x=0.
+ *
+ * REFERENCES:
+ * - Griffiths, D. J., & Schroeter, D. F. (2018). "Introduction to Quantum Mechanics" (3rd ed.).
+ *   Cambridge University Press. Section 2.2, pp. 31-39.
+ *   https://doi.org/10.1017/9781316995433
+ *
+ * - Liboff, R. L. (2003). "Introductory Quantum Mechanics" (4th ed.).
+ *   Addison-Wesley. Section 4.2, pp. 138-145.
+ *
+ * - Original formulation: Schrödinger, E. (1926). "Quantisierung als Eigenwertproblem"
+ *   (Quantization as an Eigenvalue Problem). Annalen der Physik, 384(4), 361-376.
+ *   https://doi.org/10.1002/andp.19263840404
+ *
+ * ENERGY EIGENVALUES:
+ *   E_n = (n² π² ℏ²) / (2 m L²),  n = 1, 2, 3, ...
+ *
+ * WAVEFUNCTIONS:
+ *   ψ_n(x) = √(2/L) sin(nπ(x + L/2)/L),  -L/2 ≤ x ≤ L/2
+ *   ψ_n(x) = 0,  |x| > L/2
  */
 
 import QuantumConstants from "../QuantumConstants.js";

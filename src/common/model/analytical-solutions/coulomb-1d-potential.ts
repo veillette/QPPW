@@ -15,9 +15,31 @@
  * should be used. The analytical solution is STRONGLY PREFERRED as it's exact and
  * much more efficient.
  *
- * Reference:
+ * REFERENCES:
  * - Loudon, R. (2016). "The one-dimensional Coulomb problem"
  *   Proc. R. Soc. A 472: 20150534. https://doi.org/10.1098/rspa.2015.0534
+ *   Complete derivation of the 1D Coulomb problem, including proof that only odd-parity
+ *   states are normalizable. Pages 3-8 contain the wavefunction solutions.
+ *
+ * - Gomes, J. F., & Zimerman, A. H. (2004). "The Coulomb problem in one dimension"
+ *   American Journal of Physics, 48(7), 579-580.
+ *   https://doi.org/10.1119/1.12067
+ *   Early treatment of the 1D Coulomb problem.
+ *
+ * - Andrews, M. (1976). "Singular potentials in one dimension"
+ *   American Journal of Physics, 44(12), 1064-1066.
+ *   https://doi.org/10.1119/1.10585
+ *   Discussion of boundary conditions at singular points.
+ *
+ * ENERGY EIGENVALUES:
+ *   E_n = -mα²/(2ℏ²(n+1/2)²),  n = 0, 1, 2, ...
+ *   (Note the half-integer quantum numbers, different from 3D Hydrogen)
+ *
+ * WAVEFUNCTIONS (odd parity only):
+ *   ψ_n(x) = N_n · sign(x) · ρ · exp(-ρ/2) · L_n^1(ρ)
+ *   where ρ = 2|x|/(n+1/2)a₀, a₀ = ℏ²/(mα), and L_n^1 are associated Laguerre polynomials.
+ *   The sign(x) factor ensures odd parity: ψ(-x) = -ψ(x)
+ *   The ρ factor ensures linear behavior near origin: ψ(x) ≈ Cx as x → 0
  */
 
 import QuantumConstants from "../QuantumConstants.js";

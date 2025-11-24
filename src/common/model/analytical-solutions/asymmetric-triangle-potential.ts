@@ -5,6 +5,46 @@
  *
  * This is the standard triangular well problem with an infinite wall at x=0.
  * The eigenvalues are related to the zeros of the Airy function Ai(z).
+ *
+ * REFERENCES:
+ * - Griffiths, D. J., & Schroeter, D. F. (2018). "Introduction to Quantum Mechanics" (3rd ed.).
+ *   Cambridge University Press. Problem 2.43, p. 89.
+ *   https://doi.org/10.1017/9781316995433
+ *   Linear potential with hard wall boundary condition.
+ *
+ * - Landau, L. D., & Lifshitz, E. M. (1977). "Quantum Mechanics: Non-Relativistic Theory" (3rd ed.).
+ *   Pergamon Press. Section 25, pp. 78-81.
+ *   Linear potential and WKB approximation.
+ *
+ * - Schiff, L. I. (1968). "Quantum Mechanics" (3rd ed.). McGraw-Hill.
+ *   Problem 14, pp. 269-270.
+ *   Exact solution using Airy functions.
+ *
+ * - Vallée, O., & Soares, M. (2004). "Airy Functions and Applications to Physics".
+ *   Imperial College Press. Chapter 5, pp. 115-145.
+ *   https://doi.org/10.1142/p345
+ *   Comprehensive treatment of Airy functions in quantum mechanics.
+ *
+ * - Abramowitz, M., & Stegun, I. A. (1964). "Handbook of Mathematical Functions".
+ *   National Bureau of Standards. Section 10.4, pp. 446-452; Table 10.13, p. 478.
+ *   https://doi.org/10.1119/1.15378
+ *   Zeros of Airy function Ai(z): z_n for n = 1, 2, 3, ...
+ *
+ * - Fröman, N., & Fröman, P. O. (1965). "JWKB Approximation: Contributions to the Theory".
+ *   North-Holland Publishing Company.
+ *   Connection formulas for linear turning points.
+ *
+ * ENERGY EIGENVALUES (exact):
+ *   E_n = (ℏ²/2m)^(1/3) · F^(2/3) · |z_n|
+ * where z_n is the n-th zero of the Airy function Ai(z) (all negative):
+ *   z_1 ≈ -2.338107, z_2 ≈ -4.087949, z_3 ≈ -5.520560, ...
+ *
+ * WAVEFUNCTIONS (exact):
+ *   ψ_n(x) = N_n · Ai(α(x - x_n))
+ * where α = (2mF/ℏ²)^(1/3), x_n = E_n/F is the classical turning point,
+ * and N_n is the normalization constant.
+ *
+ * Boundary condition: ψ(0) = 0 leads to Ai(-αx_n) = 0, giving αx_n = -z_n.
  */
 
 import { BoundStateResult, GridConfig } from "../PotentialFunction.js";

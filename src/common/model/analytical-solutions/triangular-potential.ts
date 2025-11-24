@@ -10,6 +10,42 @@
  * The solution involves Airy functions Ai(z) and Bi(z).
  *
  * Bound states exist when: offset < E < height + offset
+ *
+ * REFERENCES:
+ * - Griffiths, D. J., & Schroeter, D. F. (2018). "Introduction to Quantum Mechanics" (3rd ed.).
+ *   Cambridge University Press. Problem 2.44, pp. 89-90.
+ *   https://doi.org/10.1017/9781316995433
+ *   Triangular well using Airy function solutions.
+ *
+ * - Landau, L. D., & Lifshitz, E. M. (1977). "Quantum Mechanics: Non-Relativistic Theory" (3rd ed.).
+ *   Pergamon Press. Section 25, pp. 78-81.
+ *   Quasi-classical approximation for linear potential.
+ *
+ * - Miller, S. C., & Good, R. H. (1953). "A WKB-Type Approximation to the Schrödinger Equation"
+ *   Physical Review, 91(1), 174-179.
+ *   https://doi.org/10.1103/PhysRev.91.174
+ *   Connection formulas at linear turning points.
+ *
+ * - Vallée, O., & Soares, M. (2004). "Airy Functions and Applications to Physics".
+ *   Imperial College Press. Chapter 5, pp. 115-145.
+ *   https://doi.org/10.1142/p345
+ *   Comprehensive treatment of Airy functions in quantum mechanics.
+ *
+ * - Abramowitz, M., & Stegun, I. A. (1964). "Handbook of Mathematical Functions".
+ *   National Bureau of Standards. Section 10.4, pp. 446-452.
+ *   https://doi.org/10.1119/1.15378
+ *   Properties and zeros of Airy functions.
+ *
+ * SOLUTION USING AIRY FUNCTIONS:
+ * For linear potential V(x) = F·x + V₀, the Schrödinger equation becomes:
+ *   ψ''(x) + (2m/ℏ²)[E - F·x - V₀]ψ(x) = 0
+ * This is the Airy equation with solution:
+ *   ψ(x) = A·Ai(α(x - x₀)) + B·Bi(α(x - x₀))
+ * where α = (2mF/ℏ²)^(1/3), x₀ = (E - V₀)/F is the classical turning point
+ *
+ * TRANSCENDENTAL EQUATION (from boundary matching):
+ * Boundary conditions at x=0 and x=width lead to a transcendental equation
+ * that determines allowed energies. Must be solved numerically.
  */
 
 import QuantumConstants from "../QuantumConstants.js";

@@ -3,6 +3,34 @@
  * V(x) = -V_0 / cosh²(x/a)
  *
  * This potential is useful for modeling quantum wells and has exact solutions.
+ *
+ * REFERENCES:
+ * - Pöschl, G., & Teller, E. (1933). "Bemerkungen zur Quantenmechanik des anharmonischen Oszillators"
+ *   Zeitschrift für Physik, 83(3-4), 143-151.
+ *   https://doi.org/10.1007/BF01331132
+ *   ORIGINAL PAPER: Introduced this potential and its exact solutions.
+ *
+ * - Flügge, S. (1999). "Practical Quantum Mechanics". Springer.
+ *   Problem 39, pp. 95-97. https://doi.org/10.1007/978-3-642-61995-3
+ *   Detailed solution using Jacobi polynomials.
+ *
+ * - Cooper, F., Khare, A., & Sukhatme, U. (1995). "Supersymmetry and quantum mechanics"
+ *   Physics Reports, 251(5-6), 267-385.
+ *   https://doi.org/10.1016/0370-1573(94)00080-M
+ *   Section 3.2, pp. 281-283: Pöschl-Teller as a shape-invariant potential.
+ *
+ * - Natanzon, G. A. (1979). "General properties of potentials for which the Schrödinger equation
+ *   can be solved by means of hypergeometric functions". Theoretical and Mathematical Physics, 38(2), 146-153.
+ *   https://doi.org/10.1007/BF01016836
+ *   Classification of exactly solvable potentials including Pöschl-Teller.
+ *
+ * ENERGY EIGENVALUES:
+ *   E_n = -V_0 [(λ - n - 1/2)/λ]²,  n = 0, 1, 2, ..., n_max
+ *   where λ = a√(2mV_0)/ℏ and n_max = floor(λ - 1/2)
+ *
+ * WAVEFUNCTIONS:
+ *   ψ_n(x) = N_n · sech^(λ-n-1/2)(x/a) · P_n^(α,α)(tanh(x/a))
+ *   where α = λ - n - 1/2 and P_n^(α,α) are Jacobi polynomials
  */
 
 import QuantumConstants from "../QuantumConstants.js";

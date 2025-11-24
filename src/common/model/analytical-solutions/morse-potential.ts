@@ -4,6 +4,34 @@
  *
  * The Morse potential describes molecular vibrations more accurately than the harmonic oscillator
  * by including anharmonic effects and bond dissociation.
+ *
+ * REFERENCES:
+ * - Morse, P. M. (1929). "Diatomic Molecules According to the Wave Mechanics. II. Vibrational Levels".
+ *   Physical Review, 34(1), 57-64.
+ *   https://doi.org/10.1103/PhysRev.34.57
+ *   ORIGINAL PAPER: Introduced the Morse potential and derived exact solutions.
+ *
+ * - Flügge, S. (1999). "Practical Quantum Mechanics". Springer.
+ *   Problem 38, pp. 94-95. https://doi.org/10.1007/978-3-642-61995-3
+ *   Detailed solution procedure using associated Laguerre polynomials.
+ *
+ * - Cooper, I. L. (1993). "An Accurate Analytic Solution of the Morse Oscillator Problem".
+ *   Journal of Chemical Education, 70(11), 887.
+ *   https://doi.org/10.1021/ed070p887
+ *   Pedagogical treatment with explicit wavefunctions.
+ *
+ * - Dahl, J. P., & Springborg, M. (1988). "The Morse oscillator in position space, momentum space,
+ *   and phase space". Journal of Chemical Physics, 88(7), 4535-4547.
+ *   https://doi.org/10.1063/1.453761
+ *   Complete phase-space analysis of Morse oscillator.
+ *
+ * ENERGY EIGENVALUES:
+ *   E_n = ℏω(n + 1/2) - (ℏω)²(n + 1/2)²/(4D_e) - D_e,  n = 0, 1, 2, ..., n_max
+ *   where ω = (1/a)√(2D_e/m) and n_max = floor(a√(2mD_e)/ℏ - 1/2)
+ *
+ * WAVEFUNCTIONS:
+ *   ψ_n(z) = N_n · z^(λ-n-1/2) · exp(-z/2) · L_n^(2λ-2n-1)(z)
+ *   where z = 2λ exp(-(x-x_e)/a), λ = a√(2mD_e)/ℏ
  */
 
 import QuantumConstants from "../QuantumConstants.js";

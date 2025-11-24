@@ -3,6 +3,38 @@
  * V(x) = -V_0 / cosh²(x/a) + V_1 * tanh(x/a)
  *
  * This potential is useful for modeling molecular interactions and has exact solutions.
+ *
+ * REFERENCES:
+ * - Rosen, N., & Morse, P. M. (1932). "On the Vibrations of Polyatomic Molecules"
+ *   Physical Review, 42(2), 210-217.
+ *   https://doi.org/10.1103/PhysRev.42.210
+ *   ORIGINAL PAPER: Introduced this potential for molecular vibrations, pages 213-216.
+ *
+ * - Flügge, S. (1999). "Practical Quantum Mechanics". Springer.
+ *   Problem 41, pp. 99-100. https://doi.org/10.1007/978-3-642-61995-3
+ *   Detailed solution using hypergeometric functions.
+ *
+ * - Cooper, F., Khare, A., & Sukhatme, U. (1995). "Supersymmetry and quantum mechanics"
+ *   Physics Reports, 251(5-6), 267-385.
+ *   https://doi.org/10.1016/0370-1573(94)00080-M
+ *   Section 3.4, pp. 285-286: Rosen-Morse as a shape-invariant potential.
+ *
+ * - Gendenshtein, L. E. (1983). "Derivation of exact spectra of the Schrödinger equation by means
+ *   of supersymmetry". JETP Letters, 38(6), 356-359.
+ *   Supersymmetric approach to Rosen-Morse and related potentials.
+ *
+ * - Dong, S. H. (2007). "Factorization Method in Quantum Mechanics". Springer.
+ *   Chapter 4, pp. 85-98. https://doi.org/10.1007/978-1-4020-5796-0
+ *   Algebraic solution methods for the Rosen-Morse potential.
+ *
+ * ENERGY EIGENVALUES:
+ *   E_n = -(ℏ²/2ma²)(λ_eff - n - 1/2)²,  n = 0, 1, 2, ..., n_max
+ *   where λ_eff = √(λ² - μ²), λ = a√(2mV_0)/ℏ, μ = V_1·a√(2m)/(2ℏ√V_0)
+ *   Condition for bound states: λ > |μ|
+ *
+ * WAVEFUNCTIONS:
+ *   ψ_n(x) = N_n · sech^s(x/a) · exp(μ·tanh(x/a)) · P_n^(α,β)(tanh(x/a))
+ *   where s = λ_eff - n - 1/2, α = s - μ, β = s + μ, and P_n^(α,β) are Jacobi polynomials
  */
 
 import QuantumConstants from "../QuantumConstants.js";
