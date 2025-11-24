@@ -79,23 +79,28 @@ export function solveCoulomb1DPotential(
     const a_n = nEff * a0;
 
     // Normalization constant for 1D Coulomb
-    // For ψ_n(x) = N * exp(-|x|/a_n) * L_n^1(2|x|/a_n)
+    // For ψ_n(x) = N * ρ * exp(-ρ/2) * L_n^1(ρ) where ρ = 2|x|/a_n
     // with ∫_{-∞}^{∞} |ψ|² dx = 1
-    // Using ∫_0^∞ exp(-ρ) * |L_n^1(ρ)|² dρ = (n+1)
-    // Full integral: 2 * N² * (a_n/2) * (n+1) = N² * a_n * (n+1) = 1
-    const normalization = Math.sqrt(1.0 / (a_n * (n + 1)));
+    // Computing: ∫_{-∞}^{∞} |sign(x) * N * ρ * exp(-ρ/2) * L_n^1(ρ)|² dx
+    //          = 2 ∫_0^∞ |N * ρ * exp(-ρ/2) * L_n^1(ρ)|² * (a_n/2) dρ
+    //          = N² * a_n * ∫_0^∞ ρ² * exp(-ρ) * |L_n^1(ρ)|² dρ
+    // For L_n^1, the integral ∫_0^∞ ρ² * exp(-ρ) * |L_n^1(ρ)|² dρ = 2(n+1)²
+    // Therefore: N² * a_n * 2(n+1)² = 1
+    const normalization = Math.sqrt(1.0 / (2 * a_n * (n + 1) * (n + 1)));
 
     for (const x of xGrid) {
       const absX = Math.abs(x);
       const rho = (2 * absX) / a_n;
 
-      // Wavefunction: ψ(x) = sign(x) * N * exp(-ρ/2) * L_n^1(ρ)
+      // Wavefunction: ψ(x) = sign(x) * ρ * N * exp(-ρ/2) * L_n^1(ρ)
+      // The factor of ρ ensures linear behavior near x=0: ψ(x) ≈ C*x
       // ODD parity: ψ(-x) = -ψ(x), which matches the energy formula E_n = -E_R/(n+1/2)²
       const laguerre = associatedLaguerre(n, 1, rho);
-      const radialPart = normalization * Math.exp(-rho / 2) * laguerre;
+      const radialPart = normalization * rho * Math.exp(-rho / 2) * laguerre;
 
       // Apply sign(x) for odd parity
-      // Math.sign(0) = 0 ensures ψ(0) = 0, which is required for odd parity states
+      // Since radialPart ~ ρ ~ |x| near origin, and sign(x) * |x| = x,
+      // we get ψ(x) ~ x near the origin (linear behavior)
       const value = Math.sign(x) * radialPart;
 
       wavefunction.push(value);
