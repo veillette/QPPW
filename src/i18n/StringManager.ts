@@ -3,475 +3,47 @@
  * It provides StringProperty instances for all translatable strings in the application.
  */
 
-import { StringProperty } from "scenerystack/axon";
+import { LocalizedString, ReadOnlyProperty } from "scenerystack";
+import strings_en from "./strings_en.json";
+import strings_fr from "./strings_fr.json";
 
+/**
+ * Manages all localized strings for the simulation
+ */
 export class StringManager {
-  // Simulation title
-  public readonly titleStringProperty: StringProperty;
+  // The cached singleton instance
+  private static instance: StringManager;
 
-  // Screen names
-  public readonly oneWellStringProperty: StringProperty;
-  public readonly twoWellsStringProperty: StringProperty;
-  public readonly manyWellsStringProperty: StringProperty;
+  // All string properties organized by category
+  private readonly stringProperties;
 
-  // Common labels
-  public readonly energyStringProperty: StringProperty;
-  public readonly positionStringProperty: StringProperty;
-  public readonly wavefunctionStringProperty: StringProperty;
-  public readonly probabilityStringProperty: StringProperty;
-  public readonly potentialStringProperty: StringProperty;
-  public readonly potentialEnergyStringProperty: StringProperty;
+  /**
+   * Private constructor to enforce singleton pattern
+   */
+  private constructor() {
+    // Create localized string properties
+    this.stringProperties = LocalizedString.getNestedStringProperties({
+      en: strings_en,
+      fr: strings_fr,
+    });
+  }
 
-  // Controls
-  public readonly playStringProperty: StringProperty;
-  public readonly pauseStringProperty: StringProperty;
-  public readonly resetStringProperty: StringProperty;
-  public readonly stepStringProperty: StringProperty;
-
-  // One Well screen strings
-  public readonly singleWellStringProperty: StringProperty;
-  public readonly wellWidthStringProperty: StringProperty;
-  public readonly wellDepthStringProperty: StringProperty;
-
-  // Two Wells screen strings
-  public readonly doubleWellStringProperty: StringProperty;
-  public readonly barrierHeightStringProperty: StringProperty;
-  public readonly barrierWidthStringProperty: StringProperty;
-  public readonly potentialOffsetStringProperty: StringProperty;
-  public readonly tunnelingStringProperty: StringProperty;
-  public readonly wellSeparationStringProperty: StringProperty;
-
-  // Many Wells screen strings
-  public readonly multipleWellsStringProperty: StringProperty;
-  public readonly numberOfWellsStringProperty: StringProperty;
-  public readonly latticeConstantStringProperty: StringProperty;
-  public readonly energyBandsStringProperty: StringProperty;
-  public readonly electricFieldStringProperty: StringProperty;
-
-  // Preferences strings
-  public readonly preferencesStringProperty: StringProperty;
-  public readonly numericalMethodStringProperty: StringProperty;
-  public readonly numericalMethodDescriptionStringProperty: StringProperty;
-  public readonly numerovStringProperty: StringProperty;
-  public readonly numerovDescriptionStringProperty: StringProperty;
-  public readonly matrixNumerovStringProperty: StringProperty;
-  public readonly matrixNumerovDescriptionStringProperty: StringProperty;
-  public readonly dvrStringProperty: StringProperty;
-  public readonly dvrDescriptionStringProperty: StringProperty;
-  public readonly fghStringProperty: StringProperty;
-  public readonly fghDescriptionStringProperty: StringProperty;
-  public readonly spectralStringProperty: StringProperty;
-  public readonly spectralDescriptionStringProperty: StringProperty;
-  public readonly quantumBoundStringProperty: StringProperty;
-  public readonly quantumBoundDescriptionStringProperty: StringProperty;
-  public readonly autoPauseWhenTabHiddenStringProperty: StringProperty;
-  public readonly autoPauseDescriptionStringProperty: StringProperty;
-  public readonly gridPointsStringProperty: StringProperty;
-  public readonly gridPointsDescriptionStringProperty: StringProperty;
-
-  // Control Panel strings
-  public readonly energyChartStringProperty: StringProperty;
-  public readonly bottomChartStringProperty: StringProperty;
-  public readonly particleMassStringProperty: StringProperty;
-  public readonly wellConfigurationStringProperty: StringProperty;
-  public readonly potentialWellStringProperty: StringProperty;
-  public readonly displayStringProperty: StringProperty;
-  public readonly waveFunctionViewsStringProperty: StringProperty;
-
-  // Potential type strings
-  public readonly squareInfiniteStringProperty: StringProperty;
-  public readonly squareFiniteStringProperty: StringProperty;
-  public readonly harmonicOscillatorStringProperty: StringProperty;
-  public readonly morseStringProperty: StringProperty;
-  public readonly poschlTellerStringProperty: StringProperty;
-  public readonly rosenMorseStringProperty: StringProperty;
-  public readonly eckartStringProperty: StringProperty;
-  public readonly asymmetricTriangleStringProperty: StringProperty;
-  public readonly triangularStringProperty: StringProperty;
-  public readonly coulomb1DStringProperty: StringProperty;
-  public readonly coulomb3DStringProperty: StringProperty;
-  public readonly doubleSquareWellStringProperty: StringProperty;
-  public readonly multiSquareWellStringProperty: StringProperty;
-  public readonly multiCoulomb1DStringProperty: StringProperty;
-
-  // Display mode strings
-  public readonly probabilityDensityStringProperty: StringProperty;
-  public readonly phaseColorStringProperty: StringProperty;
-  public readonly realPartStringProperty: StringProperty;
-  public readonly imaginaryPartStringProperty: StringProperty;
-  public readonly magnitudeStringProperty: StringProperty;
-  public readonly phaseStringProperty: StringProperty;
-
-  // Axis labels
-  public readonly energyEvStringProperty: StringProperty;
-  public readonly positionNmStringProperty: StringProperty;
-  public readonly totalEnergyStringProperty: StringProperty;
-  public readonly waveFunctionMagnitudeStringProperty: StringProperty;
-  public readonly energyLevelLabelStringProperty: StringProperty;
-
-  // Units
-  public readonly electronVoltsStringProperty: StringProperty;
-  public readonly nanometersStringProperty: StringProperty;
-  public readonly electronMassStringProperty: StringProperty;
-
-  // Time display
-  public readonly timeStringProperty: StringProperty;
-
-  // Screen descriptions
-  public readonly oneWellDescriptionStringProperty: StringProperty;
-  public readonly twoWellsDescriptionStringProperty: StringProperty;
-  public readonly manyWellsDescriptionStringProperty: StringProperty;
-  public readonly oneWellSummaryStringProperty: StringProperty;
-  public readonly twoWellsSummaryStringProperty: StringProperty;
-  public readonly manyWellsSummaryStringProperty: StringProperty;
-
-  // Superposition strings
-  public readonly superpositionStringProperty: StringProperty;
-  public readonly psiIPsiJStringProperty: StringProperty;
-  public readonly psiKStringProperty: StringProperty;
-  public readonly localizedNarrowStringProperty: StringProperty;
-  public readonly localizedWideStringProperty: StringProperty;
-  public readonly coherentStateStringProperty: StringProperty;
-  public readonly customStringProperty: StringProperty;
-  public readonly configureSuperpositionStringProperty: StringProperty;
-  public readonly amplitudeStringProperty: StringProperty;
-  public readonly superpositionDialogTitleStringProperty: StringProperty;
-  public readonly closeStringProperty: StringProperty;
-  public readonly displacementStringProperty: StringProperty;
-  public readonly superpositionInstructionsStringProperty: StringProperty;
-  public readonly normalizationSumStringProperty: StringProperty;
-  public readonly normalizeButtonStringProperty: StringProperty;
-  public readonly okButtonStringProperty: StringProperty;
-  public readonly cancelButtonStringProperty: StringProperty;
-
-  // Educational content strings for One Well screen
-  public readonly keyConceptsTitleStringProperty: StringProperty;
-  public readonly oneWellKeyConceptsStringProperty: StringProperty;
-  public readonly interactionsTitleStringProperty: StringProperty;
-  public readonly oneWellInteractionsStringProperty: StringProperty;
-  public readonly oneWellEducationalContentStringProperty: StringProperty;
-
-  // Educational content strings for Two Wells screen
-  public readonly twoWellsKeyConceptsStringProperty: StringProperty;
-  public readonly twoWellsInteractionsStringProperty: StringProperty;
-  public readonly twoWellsEducationalContentStringProperty: StringProperty;
-
-  // Educational content strings for Many Wells screen
-  public readonly manyWellsKeyConceptsStringProperty: StringProperty;
-  public readonly manyWellsInteractionsStringProperty: StringProperty;
-  public readonly manyWellsEducationalContentStringProperty: StringProperty;
-
-  // Chart axis labels
-  public readonly probabilityDensityAxisStringProperty: StringProperty;
-  public readonly positionNmAxisStringProperty: StringProperty;
-
-  // Time format
-  public readonly timeFormatStringProperty: StringProperty;
-
-  public constructor() {
-    // Initialize all string properties with English defaults
-    this.titleStringProperty = new StringProperty(
-      "Quantum Physics: Potential Wells",
-    );
-
-    // Screen names
-    this.oneWellStringProperty = new StringProperty("One Well");
-    this.twoWellsStringProperty = new StringProperty("Two Wells");
-    this.manyWellsStringProperty = new StringProperty("Many Wells");
-
-    // Common labels
-    this.energyStringProperty = new StringProperty("Energy");
-    this.positionStringProperty = new StringProperty("Position");
-    this.wavefunctionStringProperty = new StringProperty("Wavefunction");
-    this.probabilityStringProperty = new StringProperty("Probability");
-    this.potentialStringProperty = new StringProperty("Potential");
-    this.potentialEnergyStringProperty = new StringProperty("Potential Energy");
-
-    // Controls
-    this.playStringProperty = new StringProperty("Play");
-    this.pauseStringProperty = new StringProperty("Pause");
-    this.resetStringProperty = new StringProperty("Reset");
-    this.stepStringProperty = new StringProperty("Step");
-
-    // One Well screen strings
-    this.singleWellStringProperty = new StringProperty("Single Well");
-    this.wellWidthStringProperty = new StringProperty("Well Width");
-    this.wellDepthStringProperty = new StringProperty("Well Depth");
-
-    // Two Wells screen strings
-    this.doubleWellStringProperty = new StringProperty("Double Well");
-    this.barrierHeightStringProperty = new StringProperty("Barrier Height");
-    this.barrierWidthStringProperty = new StringProperty("Barrier Width");
-    this.potentialOffsetStringProperty = new StringProperty("Potential Offset");
-    this.tunnelingStringProperty = new StringProperty("Tunneling");
-    this.wellSeparationStringProperty = new StringProperty("Well Separation");
-
-    // Many Wells screen strings
-    this.multipleWellsStringProperty = new StringProperty("Multiple Wells");
-    this.numberOfWellsStringProperty = new StringProperty("Number of Wells");
-    this.latticeConstantStringProperty = new StringProperty("Lattice Constant");
-    this.energyBandsStringProperty = new StringProperty("Energy Bands");
-    this.electricFieldStringProperty = new StringProperty("Electric Field");
-
-    // Preferences strings
-    this.preferencesStringProperty = new StringProperty("Preferences");
-    this.numericalMethodStringProperty = new StringProperty("Numerical Method");
-    this.numericalMethodDescriptionStringProperty = new StringProperty(
-      "Choose the numerical method for solving the Schrödinger equation.",
-    );
-    this.numerovStringProperty = new StringProperty("Numerov Method");
-    this.numerovDescriptionStringProperty = new StringProperty(
-      "Traditional shooting method - accurate and stable for most potentials",
-    );
-    this.matrixNumerovStringProperty = new StringProperty("Matrix Numerov");
-    this.matrixNumerovDescriptionStringProperty = new StringProperty(
-      "Matrix diagonalization using Numerov formula - combines O(h⁴) accuracy with robustness",
-    );
-    this.dvrStringProperty = new StringProperty(
-      "DVR (Discrete Variable Representation)",
-    );
-    this.dvrDescriptionStringProperty = new StringProperty(
-      "Matrix diagonalization method - faster and more robust for complex potentials",
-    );
-    this.fghStringProperty = new StringProperty(
-      "FGH (Fourier Grid Hamiltonian)",
-    );
-    this.fghDescriptionStringProperty = new StringProperty(
-      "Plane wave basis method - natural for periodic systems with spectral accuracy",
-    );
-    this.spectralStringProperty = new StringProperty("Spectral (Chebyshev)");
-    this.spectralDescriptionStringProperty = new StringProperty(
-      "Chebyshev polynomial method - exponential convergence for smooth functions",
-    );
-    this.quantumBoundStringProperty = new StringProperty("Quantum Bound State");
-    this.quantumBoundDescriptionStringProperty = new StringProperty(
-      "Advanced shooting method with adaptive energy bracketing and secant refinement",
-    );
-    this.autoPauseWhenTabHiddenStringProperty = new StringProperty(
-      "Auto-pause when tab is hidden",
-    );
-    this.autoPauseDescriptionStringProperty = new StringProperty(
-      "Automatically pause the simulation when the browser tab is not visible",
-    );
-    this.gridPointsStringProperty = new StringProperty("Grid Points");
-    this.gridPointsDescriptionStringProperty = new StringProperty(
-      "Number of grid points for numerical solvers. Higher values give more accurate results but slower computation.",
-    );
-
-    // Control Panel strings
-    this.energyChartStringProperty = new StringProperty("Energy Chart");
-    this.bottomChartStringProperty = new StringProperty("Bottom Chart");
-    this.particleMassStringProperty = new StringProperty("Particle Mass");
-    this.wellConfigurationStringProperty = new StringProperty(
-      "Well Configuration",
-    );
-    this.potentialWellStringProperty = new StringProperty("Potential Well:");
-    this.displayStringProperty = new StringProperty("Display:");
-    this.waveFunctionViewsStringProperty = new StringProperty(
-      "Wave Function views:",
-    );
-
-    // Potential type strings
-    this.squareInfiniteStringProperty = new StringProperty("Square (Infinite)");
-    this.squareFiniteStringProperty = new StringProperty("Square (Finite)");
-    this.harmonicOscillatorStringProperty = new StringProperty(
-      "Harmonic Oscillator",
-    );
-    this.morseStringProperty = new StringProperty("Morse");
-    this.poschlTellerStringProperty = new StringProperty("Pöschl-Teller");
-    this.rosenMorseStringProperty = new StringProperty("Rosen-Morse");
-    this.eckartStringProperty = new StringProperty("Eckart");
-    this.asymmetricTriangleStringProperty = new StringProperty(
-      "Asymmetric Triangle",
-    );
-    this.triangularStringProperty = new StringProperty("Triangular");
-    this.coulomb1DStringProperty = new StringProperty("1D Coulomb");
-    this.coulomb3DStringProperty = new StringProperty("3D Coulomb");
-    this.doubleSquareWellStringProperty = new StringProperty(
-      "Double Square Well",
-    );
-    this.multiSquareWellStringProperty = new StringProperty(
-      "Multi-Square Well",
-    );
-    this.multiCoulomb1DStringProperty = new StringProperty("Multi-Coulomb 1D");
-
-    // Display mode strings
-    this.probabilityDensityStringProperty = new StringProperty(
-      "Probability Density",
-    );
-    this.phaseColorStringProperty = new StringProperty("Phase (Color)");
-    this.realPartStringProperty = new StringProperty("real part");
-    this.imaginaryPartStringProperty = new StringProperty("imaginary part");
-    this.magnitudeStringProperty = new StringProperty("magnitude");
-    this.phaseStringProperty = new StringProperty("phase");
-
-    // Axis labels
-    this.energyEvStringProperty = new StringProperty("Energy (eV)");
-    this.positionNmStringProperty = new StringProperty("Position (nm)");
-    this.totalEnergyStringProperty = new StringProperty("Total Energy");
-    this.waveFunctionMagnitudeStringProperty = new StringProperty(
-      "Wave Function Magnitude",
-    );
-    this.energyLevelLabelStringProperty = new StringProperty(
-      "E{{level}} = {{value}} eV",
-    );
-
-    // Units
-    this.electronVoltsStringProperty = new StringProperty("eV");
-    this.nanometersStringProperty = new StringProperty("nm");
-    this.electronMassStringProperty = new StringProperty("m_e");
-
-    // Time display
-    this.timeStringProperty = new StringProperty("Time:");
-
-    // Screen descriptions
-    this.oneWellDescriptionStringProperty = new StringProperty(
-      "Explore quantum mechanics in a single potential well.\nAdjust the well parameters to see how energy levels change.",
-    );
-    this.twoWellsDescriptionStringProperty = new StringProperty(
-      "Explore quantum tunneling in a double potential well.\nAdjust barrier parameters to see how tunneling probability changes.\nWatch particles tunnel through classically forbidden regions!",
-    );
-    this.manyWellsDescriptionStringProperty = new StringProperty(
-      "Explore energy bands in a periodic potential.\nAdd or remove wells to see how energy bands form.\nThis demonstrates the foundation of solid-state physics!",
-    );
-    this.oneWellSummaryStringProperty = new StringProperty(
-      "One Well screen shows a single quantum potential well with adjustable parameters.",
-    );
-    this.twoWellsSummaryStringProperty = new StringProperty(
-      "Two Wells screen demonstrates quantum tunneling between two potential wells.",
-    );
-    this.manyWellsSummaryStringProperty = new StringProperty(
-      "Many Wells screen demonstrates energy band formation in periodic potentials.",
-    );
-
-    // Superposition strings
-    this.superpositionStringProperty = new StringProperty("Superposition:");
-    this.psiIPsiJStringProperty = new StringProperty("ψₙ, ψₘ");
-    this.psiKStringProperty = new StringProperty("ψₖ");
-    this.localizedNarrowStringProperty = new StringProperty("Localized narrow");
-    this.localizedWideStringProperty = new StringProperty("Localized wide");
-    this.coherentStateStringProperty = new StringProperty("Coherent state");
-    this.customStringProperty = new StringProperty("Custom...");
-    this.configureSuperpositionStringProperty = new StringProperty(
-      "Configure Superposition",
-    );
-    this.amplitudeStringProperty = new StringProperty("Amplitude");
-    this.superpositionDialogTitleStringProperty = new StringProperty(
-      "Superposition Configuration",
-    );
-    this.closeStringProperty = new StringProperty("Close");
-    this.displacementStringProperty = new StringProperty("Displacement");
-    this.superpositionInstructionsStringProperty = new StringProperty(
-      "Adjust the amplitude of each eigenstate in the superposition.\nThe sum of squared amplitudes should equal 1.",
-    );
-    this.normalizationSumStringProperty = new StringProperty("Sum of |cᵢ|² = ");
-    this.normalizeButtonStringProperty = new StringProperty("Normalize");
-    this.okButtonStringProperty = new StringProperty("OK");
-    this.cancelButtonStringProperty = new StringProperty("Cancel");
-
-    // Educational content strings for One Well screen
-    this.keyConceptsTitleStringProperty = new StringProperty("Key Concepts:");
-    this.oneWellKeyConceptsStringProperty = new StringProperty(
-      "• Quantum confinement in a single potential well\n" +
-        "• Discrete energy levels (eigenstates)\n" +
-        "• Wave-particle duality\n" +
-        "• Probability density |ψ|²\n" +
-        "• Heisenberg Uncertainty Principle",
-    );
-    this.interactionsTitleStringProperty = new StringProperty("Interactions:");
-    this.oneWellInteractionsStringProperty = new StringProperty(
-      "• Click energy levels to see eigenstates\n" +
-        "• Adjust potential well parameters\n" +
-        "• Try different potential types\n" +
-        "• Create wavepackets from superpositions\n" +
-        "• Watch time evolution of superposition states",
-    );
-    this.oneWellEducationalContentStringProperty = new StringProperty(
-      "Screen Overview:\n" +
-        "This screen demonstrates quantum confinement in a single potential well. Energy levels are quantized and the particle's wave function is described by standing wave patterns (eigenstates).\n\n" +
-        "Available Controls:\n" +
-        "• Potential Well Type: Select different quantum potential configurations\n" +
-        "• Energy Levels: Click on energy levels to view corresponding eigenstates\n" +
-        "• Superposition: Create wave packets by combining multiple eigenstates\n\n" +
-        "Learning Objectives:\n" +
-        "• Understand how quantum confinement leads to discrete energy levels\n" +
-        "• Explore the relationship between well parameters and eigenstate properties\n" +
-        "• Observe how uncertainty principle manifests in confined quantum systems",
-    );
-
-    // Educational content strings for Two Wells screen
-    this.twoWellsKeyConceptsStringProperty = new StringProperty(
-      "• Quantum tunneling through barriers\n" +
-        "• Energy level splitting\n" +
-        "• Symmetric and antisymmetric states\n" +
-        "• Tunneling probability\n" +
-        "• Time-dependent oscillations between wells",
-    );
-    this.twoWellsInteractionsStringProperty = new StringProperty(
-      "• Adjust barrier height and width\n" +
-        "• Change well separation distance\n" +
-        "• Select energy levels to see tunneling states\n" +
-        "• Create superpositions to watch tunneling dynamics\n" +
-        "• Observe how barrier parameters affect tunneling probability",
-    );
-    this.twoWellsEducationalContentStringProperty = new StringProperty(
-      "Screen Overview:\n" +
-        "This screen demonstrates quantum tunneling in a double potential well. Particles can tunnel through classically forbidden barrier regions, leading to energy level splitting and oscillatory behavior.\n\n" +
-        "Available Controls:\n" +
-        "• Barrier Parameters: Adjust height and width to control tunneling probability\n" +
-        "• Well Separation: Change the distance between wells\n" +
-        "• Energy Levels: Click on split energy levels to view symmetric/antisymmetric states\n\n" +
-        "Learning Objectives:\n" +
-        "• Understand quantum tunneling and its dependence on barrier properties\n" +
-        "• Explore energy level splitting due to quantum coupling between wells\n" +
-        "• Observe time-dependent tunneling dynamics in superposition states",
-    );
-
-    // Educational content strings for Many Wells screen
-    this.manyWellsKeyConceptsStringProperty = new StringProperty(
-      "• Energy band formation\n" +
-        "• Allowed and forbidden energy bands\n" +
-        "• Band gap in periodic potentials\n" +
-        "• Bloch waves and crystal momentum\n" +
-        "• Foundation of solid-state physics\n" +
-        "• Conductors, semiconductors, and insulators",
-    );
-    this.manyWellsInteractionsStringProperty = new StringProperty(
-      "• Adjust number of potential wells\n" +
-        "• Change lattice constant (well spacing)\n" +
-        "• Modify well and barrier parameters\n" +
-        "• Select different energy bands\n" +
-        "• Observe band structure formation\n" +
-        "• Watch Bloch wave propagation",
-    );
-    this.manyWellsEducationalContentStringProperty = new StringProperty(
-      "Screen Overview:\n" +
-        "This screen demonstrates energy band formation in periodic potentials, the foundation of solid-state physics. As you add more wells, discrete energy levels spread into continuous bands separated by gaps.\n\n" +
-        "Available Controls:\n" +
-        "• Number of Wells: Add or remove wells to see band structure emerge\n" +
-        "• Lattice Constant: Adjust the periodic spacing of the potential\n" +
-        "• Band Selection: Select different energy bands to view Bloch states\n\n" +
-        "Learning Objectives:\n" +
-        "• Understand how periodic potentials create energy band structure\n" +
-        "• Explore the relationship between number of wells and band formation\n" +
-        "• Connect quantum mechanics to properties of solids (metals, semiconductors, insulators)",
-    );
-
-    // Chart axis labels
-    this.probabilityDensityAxisStringProperty = new StringProperty(
-      "Probability Density",
-    );
-    this.positionNmAxisStringProperty = new StringProperty("Position (nm)");
-
-    // Time format
-    this.timeFormatStringProperty = new StringProperty("{{time}} fs");
+  /**
+   * Get the singleton instance of StringManager
+   * @returns The StringManager instance
+   */
+  public static getInstance(): StringManager {
+    if (!StringManager.instance) {
+      StringManager.instance = new StringManager();
+    }
+    return StringManager.instance;
   }
 
   /**
    * Gets the title string property for the simulation.
    */
-  public getTitleStringProperty(): StringProperty {
-    return this.titleStringProperty;
+  public getTitleStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.titleStringProperty;
   }
 
   /**
@@ -479,9 +51,9 @@ export class StringManager {
    */
   public getScreenNames() {
     return {
-      oneWellStringProperty: this.oneWellStringProperty,
-      twoWellsStringProperty: this.twoWellsStringProperty,
-      manyWellsStringProperty: this.manyWellsStringProperty,
+      oneWellStringProperty: this.stringProperties.oneWellScreenStringProperty,
+      twoWellsStringProperty: this.stringProperties.twoWellsScreenStringProperty,
+      manyWellsStringProperty: this.stringProperties.manyWellsScreenStringProperty,
     };
   }
 
@@ -490,17 +62,17 @@ export class StringManager {
    */
   public getPreferencesLabels() {
     return {
-      preferencesStringProperty: this.preferencesStringProperty,
-      numericalMethodStringProperty: this.numericalMethodStringProperty,
+      preferencesStringProperty: this.stringProperties.preferencesStringProperty,
+      numericalMethodStringProperty: this.stringProperties.numericalMethodStringProperty,
       numericalMethodDescriptionStringProperty:
-        this.numericalMethodDescriptionStringProperty,
+        this.stringProperties.numericalMethodDescriptionStringProperty,
       autoPauseWhenTabHiddenStringProperty:
-        this.autoPauseWhenTabHiddenStringProperty,
+        this.stringProperties.autoPauseWhenTabHiddenStringProperty,
       autoPauseDescriptionStringProperty:
-        this.autoPauseDescriptionStringProperty,
-      gridPointsStringProperty: this.gridPointsStringProperty,
+        this.stringProperties.autoPauseDescriptionStringProperty,
+      gridPointsStringProperty: this.stringProperties.gridPointsStringProperty,
       gridPointsDescriptionStringProperty:
-        this.gridPointsDescriptionStringProperty,
+        this.stringProperties.gridPointsDescriptionStringProperty,
     };
   }
 
@@ -509,12 +81,12 @@ export class StringManager {
    */
   public getNumericalMethodNames() {
     return {
-      numerovStringProperty: this.numerovStringProperty,
-      matrixNumerovStringProperty: this.matrixNumerovStringProperty,
-      dvrStringProperty: this.dvrStringProperty,
-      fghStringProperty: this.fghStringProperty,
-      spectralStringProperty: this.spectralStringProperty,
-      quantumBoundStringProperty: this.quantumBoundStringProperty,
+      numerovStringProperty: this.stringProperties.numerovStringProperty,
+      matrixNumerovStringProperty: this.stringProperties.matrixNumerovStringProperty,
+      dvrStringProperty: this.stringProperties.dvrStringProperty,
+      fghStringProperty: this.stringProperties.fghStringProperty,
+      spectralStringProperty: this.stringProperties.spectralStringProperty,
+      quantumBoundStringProperty: this.stringProperties.quantumBoundStringProperty,
     };
   }
 
@@ -523,16 +95,506 @@ export class StringManager {
    */
   public getNumericalMethodDescriptions() {
     return {
-      numerovStringProperty: this.numerovDescriptionStringProperty,
-      matrixNumerovStringProperty: this.matrixNumerovDescriptionStringProperty,
-      dvrStringProperty: this.dvrDescriptionStringProperty,
-      fghStringProperty: this.fghDescriptionStringProperty,
-      spectralStringProperty: this.spectralDescriptionStringProperty,
-      quantumBoundStringProperty: this.quantumBoundDescriptionStringProperty,
+      numerovStringProperty: this.stringProperties.numerovDescriptionStringProperty,
+      matrixNumerovStringProperty: this.stringProperties.matrixNumerovDescriptionStringProperty,
+      dvrStringProperty: this.stringProperties.dvrDescriptionStringProperty,
+      fghStringProperty: this.stringProperties.fghDescriptionStringProperty,
+      spectralStringProperty: this.stringProperties.spectralDescriptionStringProperty,
+      quantumBoundStringProperty: this.stringProperties.quantumBoundDescriptionStringProperty,
     };
+  }
+
+  // Getter methods for individual string properties
+  // These provide direct access to commonly used strings
+
+  get titleStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.titleStringProperty;
+  }
+
+  get oneWellStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.oneWellScreenStringProperty;
+  }
+
+  get twoWellsStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.twoWellsScreenStringProperty;
+  }
+
+  get manyWellsStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.manyWellsScreenStringProperty;
+  }
+
+  get energyStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.energyStringProperty;
+  }
+
+  get positionStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.positionStringProperty;
+  }
+
+  get wavefunctionStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.waveFunctionStringProperty;
+  }
+
+  get probabilityStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.probabilityDensityStringProperty;
+  }
+
+  get potentialStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.potentialStringProperty;
+  }
+
+  get potentialEnergyStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.potentialEnergyStringProperty;
+  }
+
+  get playStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.playStringProperty;
+  }
+
+  get pauseStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.pauseStringProperty;
+  }
+
+  get resetStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.resetStringProperty;
+  }
+
+  get stepStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.stepStringProperty;
+  }
+
+  get singleWellStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.singleWellStringProperty;
+  }
+
+  get wellWidthStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.wellWidthStringProperty;
+  }
+
+  get wellDepthStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.wellDepthStringProperty;
+  }
+
+  get doubleWellStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.doubleWellStringProperty;
+  }
+
+  get barrierHeightStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.barrierHeightStringProperty;
+  }
+
+  get barrierWidthStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.barrierWidthStringProperty;
+  }
+
+  get potentialOffsetStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.potentialOffsetStringProperty;
+  }
+
+  get tunnelingStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.tunnelingStringProperty;
+  }
+
+  get wellSeparationStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.wellSeparationStringProperty;
+  }
+
+  get multipleWellsStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.multipleWellsStringProperty;
+  }
+
+  get numberOfWellsStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.numberOfWellsStringProperty;
+  }
+
+  get latticeConstantStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.latticeConstantStringProperty;
+  }
+
+  get energyBandsStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.energyBandsStringProperty;
+  }
+
+  get electricFieldStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.electricFieldStringProperty;
+  }
+
+  get preferencesStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.preferencesStringProperty;
+  }
+
+  get numericalMethodStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.numericalMethodStringProperty;
+  }
+
+  get numericalMethodDescriptionStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.numericalMethodDescriptionStringProperty;
+  }
+
+  get numerovStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.numerovStringProperty;
+  }
+
+  get numerovDescriptionStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.numerovDescriptionStringProperty;
+  }
+
+  get matrixNumerovStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.matrixNumerovStringProperty;
+  }
+
+  get matrixNumerovDescriptionStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.matrixNumerovDescriptionStringProperty;
+  }
+
+  get dvrStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.dvrStringProperty;
+  }
+
+  get dvrDescriptionStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.dvrDescriptionStringProperty;
+  }
+
+  get fghStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.fghStringProperty;
+  }
+
+  get fghDescriptionStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.fghDescriptionStringProperty;
+  }
+
+  get spectralStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.spectralStringProperty;
+  }
+
+  get spectralDescriptionStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.spectralDescriptionStringProperty;
+  }
+
+  get quantumBoundStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.quantumBoundStringProperty;
+  }
+
+  get quantumBoundDescriptionStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.quantumBoundDescriptionStringProperty;
+  }
+
+  get autoPauseWhenTabHiddenStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.autoPauseWhenTabHiddenStringProperty;
+  }
+
+  get autoPauseDescriptionStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.autoPauseDescriptionStringProperty;
+  }
+
+  get gridPointsStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.gridPointsStringProperty;
+  }
+
+  get gridPointsDescriptionStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.gridPointsDescriptionStringProperty;
+  }
+
+  get energyChartStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.energyChartStringProperty;
+  }
+
+  get bottomChartStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.bottomChartStringProperty;
+  }
+
+  get particleMassStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.particleMassStringProperty;
+  }
+
+  get wellConfigurationStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.wellConfigurationStringProperty;
+  }
+
+  get potentialWellStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.potentialWellStringProperty;
+  }
+
+  get displayStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.displayStringProperty;
+  }
+
+  get waveFunctionViewsStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.waveFunctionViewsStringProperty;
+  }
+
+  get squareInfiniteStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.squareInfiniteStringProperty;
+  }
+
+  get squareFiniteStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.squareFiniteStringProperty;
+  }
+
+  get harmonicOscillatorStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.harmonicOscillatorStringProperty;
+  }
+
+  get morseStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.morseStringProperty;
+  }
+
+  get poschlTellerStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.poschlTellerStringProperty;
+  }
+
+  get rosenMorseStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.rosenMorseStringProperty;
+  }
+
+  get eckartStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.eckartStringProperty;
+  }
+
+  get asymmetricTriangleStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.asymmetricTriangleStringProperty;
+  }
+
+  get triangularStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.triangularStringProperty;
+  }
+
+  get coulomb1DStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.coulomb1DStringProperty;
+  }
+
+  get coulomb3DStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.coulomb3DStringProperty;
+  }
+
+  get doubleSquareWellStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.doubleSquareWellStringProperty;
+  }
+
+  get multiSquareWellStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.multiSquareWellStringProperty;
+  }
+
+  get multiCoulomb1DStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.multiCoulomb1DStringProperty;
+  }
+
+  get probabilityDensityStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.probabilityDensityStringProperty;
+  }
+
+  get phaseColorStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.phaseColorStringProperty;
+  }
+
+  get realPartStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.realPartStringProperty;
+  }
+
+  get imaginaryPartStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.imaginaryPartStringProperty;
+  }
+
+  get magnitudeStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.magnitudeStringProperty;
+  }
+
+  get phaseStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.phaseStringProperty;
+  }
+
+  get energyEvStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.energyEvStringProperty;
+  }
+
+  get positionNmStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.positionNmStringProperty;
+  }
+
+  get totalEnergyStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.totalEnergyStringProperty;
+  }
+
+  get waveFunctionMagnitudeStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.waveFunctionMagnitudeStringProperty;
+  }
+
+  get energyLevelLabelStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.energyLevelLabelStringProperty;
+  }
+
+  get electronVoltsStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.electronVoltsStringProperty;
+  }
+
+  get nanometersStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.nanometersStringProperty;
+  }
+
+  get electronMassStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.electronMassStringProperty;
+  }
+
+  get timeStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.timeStringProperty;
+  }
+
+  get oneWellDescriptionStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.oneWellDescriptionStringProperty;
+  }
+
+  get twoWellsDescriptionStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.twoWellsDescriptionStringProperty;
+  }
+
+  get manyWellsDescriptionStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.manyWellsDescriptionStringProperty;
+  }
+
+  get oneWellSummaryStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.oneWellSummaryStringProperty;
+  }
+
+  get twoWellsSummaryStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.twoWellsSummaryStringProperty;
+  }
+
+  get manyWellsSummaryStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.manyWellsSummaryStringProperty;
+  }
+
+  get superpositionStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.superpositionStringProperty;
+  }
+
+  get psiIPsiJStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.psiIPsiJStringProperty;
+  }
+
+  get psiKStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.psiKStringProperty;
+  }
+
+  get localizedNarrowStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.localizedNarrowStringProperty;
+  }
+
+  get localizedWideStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.localizedWideStringProperty;
+  }
+
+  get coherentStateStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.coherentStateStringProperty;
+  }
+
+  get customStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.customStringProperty;
+  }
+
+  get configureSuperpositionStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.configureSuperpositionStringProperty;
+  }
+
+  get amplitudeStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.amplitudeStringProperty;
+  }
+
+  get superpositionDialogTitleStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.superpositionDialogTitleStringProperty;
+  }
+
+  get closeStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.closeStringProperty;
+  }
+
+  get displacementStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.displacementStringProperty;
+  }
+
+  get superpositionInstructionsStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.superpositionInstructionsStringProperty;
+  }
+
+  get normalizationSumStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.normalizationSumStringProperty;
+  }
+
+  get normalizeButtonStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.normalizeButtonStringProperty;
+  }
+
+  get okButtonStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.okButtonStringProperty;
+  }
+
+  get cancelButtonStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.cancelButtonStringProperty;
+  }
+
+  get keyConceptsTitleStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.keyConceptsStringProperty;
+  }
+
+  get oneWellKeyConceptsStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.oneWellKeyConceptsStringProperty;
+  }
+
+  get interactionsTitleStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.interactionsStringProperty;
+  }
+
+  get oneWellInteractionsStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.oneWellInteractionsStringProperty;
+  }
+
+  get oneWellEducationalContentStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.oneWellEducationalContentStringProperty;
+  }
+
+  get twoWellsKeyConceptsStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.twoWellsKeyConceptsStringProperty;
+  }
+
+  get twoWellsInteractionsStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.twoWellsInteractionsStringProperty;
+  }
+
+  get twoWellsEducationalContentStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.twoWellsEducationalContentStringProperty;
+  }
+
+  get manyWellsKeyConceptsStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.manyWellsKeyConceptsStringProperty;
+  }
+
+  get manyWellsInteractionsStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.manyWellsInteractionsStringProperty;
+  }
+
+  get manyWellsEducationalContentStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.manyWellsEducationalContentStringProperty;
+  }
+
+  get probabilityDensityAxisStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.probabilityDensityAxisStringProperty;
+  }
+
+  get positionNmAxisStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.positionNmAxisStringProperty;
+  }
+
+  get timeFormatStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.timeFormatStringProperty;
+  }
+
+  /**
+   * Get all raw string properties
+   * This can be used if direct access is needed to a specific string property
+   */
+  public getAllStringProperties(): typeof this.stringProperties {
+    return this.stringProperties;
   }
 }
 
-// Create and export a singleton instance
-const stringManager = new StringManager();
-export default stringManager;
+// Export singleton instance as default
+export default StringManager.getInstance();
