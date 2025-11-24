@@ -57,11 +57,11 @@ export abstract class BaseScreenView extends ScreenView {
   /**
    * Creates the standard quantum well layout with charts, control panel, and simulation controls.
    * This should be called by subclasses that use the standard layout.
-   * @param model - The OneWellModel or TwoWellsModel instance
+   * @param model - The OneWellModel, TwoWellsModel, or ManyWellsModel instance
    * @param controlPanelOptions - Optional configuration for the control panel (e.g., hiding mass slider, filtering potential types)
    */
   protected createStandardLayout(
-    model: OneWellModel | TwoWellsModel,
+    model: OneWellModel | TwoWellsModel | ManyWellsModel,
     controlPanelOptions?: ControlPanelNodeOptions,
   ): void {
     // Calculate layout dimensions

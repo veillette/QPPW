@@ -19,6 +19,8 @@ export enum PotentialType {
   COULOMB_1D = "coulomb1D",
   COULOMB_3D = "coulomb3D",
   DOUBLE_SQUARE_WELL = "doubleSquareWell",
+  MULTI_SQUARE_WELL = "multiSquareWell",
+  MULTI_COULOMB_1D = "multiCoulomb1D",
   TRIANGULAR = "triangular",
   CUSTOM = "custom",
 }
