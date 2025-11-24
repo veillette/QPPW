@@ -15,14 +15,6 @@
  *   https://doi.org/10.1007/978-3-662-12869-5
  *   Classic comprehensive treatment of hydrogen-like atoms.
  *
- * - Schiff, L. I. (1968). "Quantum Mechanics" (3rd ed.). McGraw-Hill.
- *   Section 16, pp. 88-97.
- *   Derivation using separation of variables and associated Laguerre polynomials.
- *
- * - Pauli, W. (1926). "Über das Wasserstoffspektrum vom Standpunkt der neuen Quantenmechanik"
- *   Zeitschrift für Physik, 36(5), 336-363.
- *   https://doi.org/10.1007/BF01450175
- *   One of the first solutions of the hydrogen atom using Schrödinger's equation.
  *
  * - Abramowitz, M., & Stegun, I. A. (1964). "Handbook of Mathematical Functions".
  *   National Bureau of Standards. Section 13.4, pp. 509-515 and Section 22, pp. 773-802.

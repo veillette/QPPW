@@ -12,10 +12,6 @@
  *   https://doi.org/10.1017/9781316995433
  *   Linear potential with hard wall boundary condition.
  *
- * - Landau, L. D., & Lifshitz, E. M. (1977). "Quantum Mechanics: Non-Relativistic Theory" (3rd ed.).
- *   Pergamon Press. Section 25, pp. 78-81.
- *   Linear potential and WKB approximation.
- *
  * - Schiff, L. I. (1968). "Quantum Mechanics" (3rd ed.). McGraw-Hill.
  *   Problem 14, pp. 269-270.
  *   Exact solution using Airy functions.
@@ -30,9 +26,6 @@
  *   https://doi.org/10.1119/1.15378
  *   Zeros of Airy function Ai(z): z_n for n = 1, 2, 3, ...
  *
- * - Fröman, N., & Fröman, P. O. (1965). "JWKB Approximation: Contributions to the Theory".
- *   North-Holland Publishing Company.
- *   Connection formulas for linear turning points.
  *
  * ENERGY EIGENVALUES (exact):
  *   E_n = (ℏ²/2m)^(1/3) · F^(2/3) · |z_n|
