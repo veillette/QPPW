@@ -24,8 +24,12 @@ const gridConfig = {
 const result = solveCoulomb1DPotential(ALPHA_H, M_E, 1, gridConfig);
 
 console.log("=== 1D Coulomb Near x=0 ===\n");
-console.log(`Grid: ${gridConfig.numPoints} points from ${(gridConfig.xMin * 1e10).toFixed(3)} to ${(gridConfig.xMax * 1e10).toFixed(3)} Å`);
-console.log(`Grid spacing: ${((gridConfig.xMax - gridConfig.xMin) / (gridConfig.numPoints - 1) * 1e10).toFixed(4)} Å\n`);
+console.log(
+  `Grid: ${gridConfig.numPoints} points from ${(gridConfig.xMin * 1e10).toFixed(3)} to ${(gridConfig.xMax * 1e10).toFixed(3)} Å`,
+);
+console.log(
+  `Grid spacing: ${(((gridConfig.xMax - gridConfig.xMin) / (gridConfig.numPoints - 1)) * 1e10).toFixed(4)} Å\n`,
+);
 
 // Find the middle of the grid (x=0 or closest to it)
 const midIdx = Math.floor(result.xGrid.length / 2);
@@ -43,7 +47,7 @@ for (let i = midIdx - 10; i <= midIdx + 10; i++) {
   const ratio = Math.abs(x) > 1e-15 ? Math.abs(psi / x) : 0;
 
   console.log(
-    `  ${i.toString().padStart(5)} | ${(x * 1e10).toFixed(7).padStart(11)} | ${psi.toExponential(2).padStart(8)} | ${ratio.toExponential(2).padStart(9)}`
+    `  ${i.toString().padStart(5)} | ${(x * 1e10).toFixed(7).padStart(11)} | ${psi.toExponential(2).padStart(8)} | ${ratio.toExponential(2).padStart(9)}`,
   );
 }
 
@@ -51,8 +55,15 @@ for (let i = midIdx - 10; i <= midIdx + 10; i++) {
 console.log("\n=== Analysis ===\n");
 
 // Take points very close to x=0 but not exactly at x=0
-const testIndices = [midIdx - 3, midIdx - 2, midIdx - 1, midIdx + 1, midIdx + 2, midIdx + 3];
-const ratios = testIndices.map(i => {
+const testIndices = [
+  midIdx - 3,
+  midIdx - 2,
+  midIdx - 1,
+  midIdx + 1,
+  midIdx + 2,
+  midIdx + 3,
+];
+const ratios = testIndices.map((i) => {
   const x = result.xGrid[i];
   const psi = wf[i];
   return psi / x; // Should be approximately constant if ψ ~ x
@@ -62,12 +73,15 @@ console.log("ψ(x)/x values (should be constant if ψ ~ C*x):");
 for (let i = 0; i < testIndices.length; i++) {
   const idx = testIndices[i];
   const x = result.xGrid[idx];
-  console.log(`  x = ${(x * 1e10).toFixed(6).padStart(9)} Å: ψ/x = ${ratios[i].toExponential(4)}`);
+  console.log(
+    `  x = ${(x * 1e10).toFixed(6).padStart(9)} Å: ψ/x = ${ratios[i].toExponential(4)}`,
+  );
 }
 
 // Check standard deviation of ratios
 const meanRatio = ratios.reduce((sum, r) => sum + r, 0) / ratios.length;
-const variance = ratios.reduce((sum, r) => sum + (r - meanRatio) ** 2, 0) / ratios.length;
+const variance =
+  ratios.reduce((sum, r) => sum + (r - meanRatio) ** 2, 0) / ratios.length;
 const stdDev = Math.sqrt(variance);
 const relativeStdDev = (stdDev / Math.abs(meanRatio)) * 100;
 
@@ -88,13 +102,18 @@ console.log("\n=== Derivative Check ===\n");
 console.log("Left derivative (approaching 0 from left):");
 const dx = result.xGrid[1] - result.xGrid[0];
 const leftDerivative = (wf[midIdx] - wf[midIdx - 1]) / dx;
-console.log(`  dψ/dx at x ≈ ${(result.xGrid[midIdx - 1] * 1e10).toFixed(6)} Å: ${leftDerivative.toExponential(4)}`);
+console.log(
+  `  dψ/dx at x ≈ ${(result.xGrid[midIdx - 1] * 1e10).toFixed(6)} Å: ${leftDerivative.toExponential(4)}`,
+);
 
 console.log("\nRight derivative (approaching 0 from right):");
 const rightDerivative = (wf[midIdx + 1] - wf[midIdx]) / dx;
-console.log(`  dψ/dx at x ≈ ${(result.xGrid[midIdx] * 1e10).toFixed(6)} Å: ${rightDerivative.toExponential(4)}`);
+console.log(
+  `  dψ/dx at x ≈ ${(result.xGrid[midIdx] * 1e10).toFixed(6)} Å: ${rightDerivative.toExponential(4)}`,
+);
 
-const derivativeRatio = Math.abs((leftDerivative - rightDerivative) / leftDerivative) * 100;
+const derivativeRatio =
+  Math.abs((leftDerivative - rightDerivative) / leftDerivative) * 100;
 console.log(`\nDerivative difference: ${derivativeRatio.toFixed(2)}%`);
 
 if (derivativeRatio < 10) {

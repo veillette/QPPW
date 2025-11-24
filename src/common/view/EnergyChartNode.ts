@@ -77,7 +77,10 @@ function getEnergyAxisRange(potentialType: PotentialType): {
 }
 
 export class EnergyChartNode extends Node {
-  private readonly model: OneWellModel | TwoWellsModel | import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel;
+  private readonly model:
+    | OneWellModel
+    | TwoWellsModel
+    | import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel;
   private readonly chartWidth: number;
   private readonly chartHeight: number;
   private readonly chartMargins = { left: 60, right: 20, top: 40, bottom: 50 };
@@ -110,7 +113,10 @@ export class EnergyChartNode extends Node {
   private hoveredEnergyLevelIndex: number | null = null;
 
   public constructor(
-    model: OneWellModel | TwoWellsModel | import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel,
+    model:
+      | OneWellModel
+      | TwoWellsModel
+      | import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel,
     options?: { width?: number; height?: number },
   ) {
     super();
@@ -484,7 +490,8 @@ export class EnergyChartNode extends Node {
 
     // Link to numberOfWellsProperty and electricFieldProperty if available (ManyWellsModel only)
     if ("numberOfWellsProperty" in this.model) {
-      const manyWellsModel = this.model as import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel;
+      const manyWellsModel = this
+        .model as import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel;
       manyWellsModel.numberOfWellsProperty.link(() => this.update());
       if ("electricFieldProperty" in manyWellsModel) {
         manyWellsModel.electricFieldProperty.link(() => this.update());
@@ -914,16 +921,20 @@ export class EnergyChartNode extends Node {
       // Draw multi-square well (generalization of double square well)
       // Convention: V=0 in wells, V=wellDepth in barrier
       // Import ManyWellsModel to access numberOfWellsProperty
-      const manyWellsModel = this.model as import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel;
-      const numberOfWells = "numberOfWellsProperty" in manyWellsModel
-        ? manyWellsModel.numberOfWellsProperty.value
-        : 3;
-      const separationParam = "wellSeparationProperty" in manyWellsModel
-        ? manyWellsModel.wellSeparationProperty.value
-        : 0.2;
-      const electricField = "electricFieldProperty" in manyWellsModel
-        ? manyWellsModel.electricFieldProperty.value
-        : 0.0;
+      const manyWellsModel = this
+        .model as import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel;
+      const numberOfWells =
+        "numberOfWellsProperty" in manyWellsModel
+          ? manyWellsModel.numberOfWellsProperty.value
+          : 3;
+      const separationParam =
+        "wellSeparationProperty" in manyWellsModel
+          ? manyWellsModel.wellSeparationProperty.value
+          : 0.2;
+      const electricField =
+        "electricFieldProperty" in manyWellsModel
+          ? manyWellsModel.electricFieldProperty.value
+          : 0.0;
 
       // Calculate the natural total span needed
       const maxVisibleRange = 7.5; // Use 7.5nm of the 8nm available range (leave small margins)
@@ -933,7 +944,9 @@ export class EnergyChartNode extends Node {
       let effectiveWellWidth = wellWidth;
 
       // Calculate what the total span would be
-      const naturalSpan = numberOfWells * effectiveWellWidth + (numberOfWells - 1) * effectiveSeparation;
+      const naturalSpan =
+        numberOfWells * effectiveWellWidth +
+        (numberOfWells - 1) * effectiveSeparation;
 
       // If it exceeds the visible range, scale everything down proportionally
       if (naturalSpan > maxVisibleRange) {
@@ -943,7 +956,9 @@ export class EnergyChartNode extends Node {
       }
 
       // Calculate total span and center the wells
-      const totalSpan = numberOfWells * effectiveWellWidth + (numberOfWells - 1) * effectiveSeparation;
+      const totalSpan =
+        numberOfWells * effectiveWellWidth +
+        (numberOfWells - 1) * effectiveSeparation;
       const startX = -totalSpan / 2;
 
       // Helper function to get potential with electric field tilt
@@ -951,41 +966,67 @@ export class EnergyChartNode extends Node {
 
       // Start from left at barrier height (with field tilt)
       const leftmostX = this.xMinProperty.value;
-      shape.moveTo(this.chartMargins.left, this.dataToViewY(getV(leftmostX, wellDepth)));
+      shape.moveTo(
+        this.chartMargins.left,
+        this.dataToViewY(getV(leftmostX, wellDepth)),
+      );
 
       // Draw each well
       for (let i = 0; i < numberOfWells; i++) {
-        const wellLeft = startX + i * (effectiveWellWidth + effectiveSeparation);
+        const wellLeft =
+          startX + i * (effectiveWellWidth + effectiveSeparation);
         const wellRight = wellLeft + effectiveWellWidth;
 
         // Drop into well (with field tilt)
-        shape.lineTo(this.dataToViewX(wellLeft), this.dataToViewY(getV(wellLeft, wellDepth)));
-        shape.lineTo(this.dataToViewX(wellLeft), this.dataToViewY(getV(wellLeft, 0)));
-        shape.lineTo(this.dataToViewX(wellRight), this.dataToViewY(getV(wellRight, 0)));
-        shape.lineTo(this.dataToViewX(wellRight), this.dataToViewY(getV(wellRight, wellDepth)));
+        shape.lineTo(
+          this.dataToViewX(wellLeft),
+          this.dataToViewY(getV(wellLeft, wellDepth)),
+        );
+        shape.lineTo(
+          this.dataToViewX(wellLeft),
+          this.dataToViewY(getV(wellLeft, 0)),
+        );
+        shape.lineTo(
+          this.dataToViewX(wellRight),
+          this.dataToViewY(getV(wellRight, 0)),
+        );
+        shape.lineTo(
+          this.dataToViewX(wellRight),
+          this.dataToViewY(getV(wellRight, wellDepth)),
+        );
 
         // Barrier between wells (except after last well)
         if (i < numberOfWells - 1) {
           const barrierRight = wellRight + effectiveSeparation;
-          shape.lineTo(this.dataToViewX(barrierRight), this.dataToViewY(getV(barrierRight, wellDepth)));
+          shape.lineTo(
+            this.dataToViewX(barrierRight),
+            this.dataToViewY(getV(barrierRight, wellDepth)),
+          );
         }
       }
 
       // Right outside region (with field tilt)
       const rightmostX = this.xMaxProperty.value;
-      shape.lineTo(this.chartWidth - this.chartMargins.right, this.dataToViewY(getV(rightmostX, wellDepth)));
+      shape.lineTo(
+        this.chartWidth - this.chartMargins.right,
+        this.dataToViewY(getV(rightmostX, wellDepth)),
+      );
     } else if (potentialType === PotentialType.MULTI_COULOMB_1D) {
       // Draw multi-Coulomb 1D potential (multiple Coulomb centers)
-      const manyWellsModel = this.model as import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel;
-      const numberOfWells = "numberOfWellsProperty" in manyWellsModel
-        ? manyWellsModel.numberOfWellsProperty.value
-        : 3;
-      const separationParam = "wellSeparationProperty" in manyWellsModel
-        ? manyWellsModel.wellSeparationProperty.value
-        : 0.2;
-      const electricField = "electricFieldProperty" in manyWellsModel
-        ? manyWellsModel.electricFieldProperty.value
-        : 0.0;
+      const manyWellsModel = this
+        .model as import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel;
+      const numberOfWells =
+        "numberOfWellsProperty" in manyWellsModel
+          ? manyWellsModel.numberOfWellsProperty.value
+          : 3;
+      const separationParam =
+        "wellSeparationProperty" in manyWellsModel
+          ? manyWellsModel.wellSeparationProperty.value
+          : 0.2;
+      const electricField =
+        "electricFieldProperty" in manyWellsModel
+          ? manyWellsModel.electricFieldProperty.value
+          : 0.0;
 
       const numPoints = 200;
       let firstPoint = true;

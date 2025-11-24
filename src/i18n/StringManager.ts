@@ -293,9 +293,7 @@ export class StringManager {
     this.multiSquareWellStringProperty = new StringProperty(
       "Multi-Square Well",
     );
-    this.multiCoulomb1DStringProperty = new StringProperty(
-      "Multi-Coulomb 1D",
-    );
+    this.multiCoulomb1DStringProperty = new StringProperty("Multi-Coulomb 1D");
 
     // Display mode strings
     this.probabilityDensityStringProperty = new StringProperty(

@@ -61,7 +61,10 @@ export function createMultiSquareWellPotential(
     }
 
     // Check if x is between wells (barrier region)
-    if (x > wellBoundaries[0].left && x < wellBoundaries[numberOfWells - 1].right) {
+    if (
+      x > wellBoundaries[0].left &&
+      x < wellBoundaries[numberOfWells - 1].right
+    ) {
       return wellDepth; // Inside barrier
     }
 

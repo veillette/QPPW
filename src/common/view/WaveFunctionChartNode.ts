@@ -29,7 +29,10 @@ import QPPWPreferences from "../../QPPWPreferences.js";
 const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
 
 export class WaveFunctionChartNode extends Node {
-  private readonly model: OneWellModel | TwoWellsModel | import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel;
+  private readonly model:
+    | OneWellModel
+    | TwoWellsModel
+    | import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel;
   private readonly chartWidth: number;
   private readonly chartHeight: number;
   private readonly chartMargins = { left: 60, right: 20, top: 10, bottom: 40 };
@@ -67,7 +70,10 @@ export class WaveFunctionChartNode extends Node {
   private updatePending: boolean = false;
 
   public constructor(
-    model: OneWellModel | TwoWellsModel | import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel,
+    model:
+      | OneWellModel
+      | TwoWellsModel
+      | import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel,
     options?: { width?: number; height?: number },
   ) {
     super();
