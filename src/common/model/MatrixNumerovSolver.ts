@@ -7,12 +7,13 @@
  *
  * The TISE is: -ℏ²/(2m) d²ψ/dx² + V(x)ψ = Eψ
  *
- * The Numerov formula gives:
- * ψ_{i-1} - 2ψ_i + ψ_{i+1} = (h²/12)[f_{i-1}ψ_{i-1} + 10f_iψ_i + f_{i+1}ψ_{i+1}]
- * where f_i = h²·2m(E-V_i)/ℏ²
- *
- * Rearranging yields a generalized eigenvalue problem: H·ψ = E·S·ψ
- * where H includes kinetic and potential terms, and S is the Numerov overlap matrix.
+ * Following Walker's formulation, this is recast as a standard eigenvalue problem:
+ * [-ℏ²/(2m) * B^{-1} * A + V] * ψ = E * ψ
+ * where:
+ * - A = (I_{-1} - 2I_0 + I_1)/d² is the discrete second derivative operator
+ * - B = (I_{-1} + 10I_0 + I_1)/12 is the Numerov overlap matrix
+ * - The factor B^{-1} * A gives the Numerov representation of the second derivative
+ * - The negative sign accounts for the kinetic energy operator
  *
  * References:
  * - T. G. Walker, "Matrix Numerov method for solving Schrödinger's equation"
@@ -86,67 +87,55 @@ export function solveMatrixNumerov(
   const N = numPoints;
   const { HBAR } = QuantumConstants;
 
-  // Construct the generalized eigenvalue problem: H·ψ = E·S·ψ
+  // Following Walker (Am. J. Phys. 80, 1017 (2012)), equation (5):
+  // [ℏ²/(2m) * B^{-1} * A + V] * ψ = E * ψ
   //
-  // From the Numerov formula, we derive:
-  // H is the Hamiltonian matrix (kinetic + potential terms)
-  // S is the overlap matrix (accounts for Numerov corrections)
+  // where:
+  // - A = (I_{-1} - 2I_0 + I_1)/d² is the second derivative operator
+  // - B = (I_{-1} + 10I_0 + I_1)/12 is the Numerov overlap matrix
+  // - V = diag(...V_i...) is the potential energy
 
-  // Physical constants
-  const coeff = (2 * mass) / (HBAR * HBAR);
   const h2 = dx * dx;
 
-  // Initialize matrices using dot's Matrix class
-  const H = new DotMatrix(N, N);
-  const S = new DotMatrix(N, N);
+  // Initialize matrices
+  const A = new DotMatrix(N, N);
+  const B = new DotMatrix(N, N);
 
-  // Construct matrices using Numerov formulation
-  // From Numerov formula: ψ_{i-1} - 2ψ_i + ψ_{i+1} = (h²/12)[f_{i-1}ψ_{i-1} + 10f_iψ_i + f_{i+1}ψ_{i+1}]
-  // where f_i = (2m/ℏ²)(E - V_i)
-  //
-  // After dividing by h² and rearranging:
-  // H·ψ = E·S·ψ where:
-  // - H contains kinetic (1/h²) and potential terms
-  // - S contains overlap corrections (no h² factor!)
-
-  // Factor for H matrix potential terms (includes h²)
-  const hFactor = (h2 / 12) * coeff;
-  // Factor for S matrix overlap terms (no h²!)
-  const sFactor = coeff / 12;
-
+  // Construct A = (I_{-1} - 2I_0 + I_1)/d²
   for (let i = 0; i < N; i++) {
-    // Hamiltonian matrix H (kinetic + potential energy)
-    // Diagonal term: 2/h² - (10h²/12)(2m/ℏ²)V_i
-    H.set(i, i, 2 / h2 - 10 * hFactor * V[i]);
-
-    // Off-diagonal terms (kinetic energy coupling)
-    // Use average potential at adjacent grid points for symmetric matrix
+    A.set(i, i, -2 / h2);
     if (i > 0) {
-      const avgV = (V[i - 1] + V[i]) / 2;
-      const offDiagValue = -(1 / h2) - hFactor * avgV;
-      H.set(i, i - 1, offDiagValue);
-      H.set(i - 1, i, offDiagValue); // Symmetric
-    }
-
-    // Overlap matrix S (Numerov correction terms)
-    // S_ii = (10/12)(2m/ℏ²), S_ij = (1/12)(2m/ℏ²)
-    S.set(i, i, 10 * sFactor);
-
-    if (i > 0) {
-      S.set(i, i - 1, sFactor);
-      S.set(i - 1, i, sFactor); // Symmetric
+      A.set(i, i - 1, 1 / h2);
+      A.set(i - 1, i, 1 / h2);
     }
   }
 
-  // Solve generalized eigenvalue problem: H·v = λ·S·v
-  // Transform to standard form: (S^(-1)·H)·v = λ·v
-  // Use dot's Matrix.inverse() and Matrix.times()
-  const Sinv = S.inverse();
-  const SinvH = Sinv.times(H) as DotMatrix;
+  // Construct B = (I_{-1} + 10I_0 + I_1)/12
+  for (let i = 0; i < N; i++) {
+    B.set(i, i, 10 / 12);
+    if (i > 0) {
+      B.set(i, i - 1, 1 / 12);
+      B.set(i - 1, i, 1 / 12);
+    }
+  }
+
+  // Compute Hamiltonian H = -ℏ²/(2m) * B^{-1} * A + V
+  // Note: The minus sign is crucial! The discrete second derivative operator A
+  // has the opposite sign convention from the kinetic energy operator.
+  const Binv = B.inverse();
+  const BinvA = Binv.times(A) as DotMatrix;
+  const kineticFactor = -(HBAR * HBAR) / (2 * mass); // Negative!
+  const T = BinvA.copy().timesEquals(kineticFactor); // Kinetic energy operator
+
+  // Add potential energy (diagonal)
+  const H = T.copy();
+  for (let i = 0; i < N; i++) {
+    H.set(i, i, H.get(i, i) + V[i]);
+  }
 
   // Convert to array and diagonalize to get eigenvalues and eigenvectors
-  const SinvHArray = matrixToArray(SinvH);
-  const eigen = diagonalize(SinvHArray);
+  const HArray = matrixToArray(H);
+  const eigen = diagonalize(HArray);
 
   // Sort eigenvalues by energy
   const sortedIndices = eigen.eigenvalues

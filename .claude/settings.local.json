@@ -20,7 +20,9 @@
       "Bash(node:*)",
       "Bash(npm install:*)",
       "Bash(npx eslint:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "WebFetch(domain:pages.physics.wisc.edu)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []
