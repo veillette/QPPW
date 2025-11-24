@@ -5,7 +5,7 @@
 import { solveCoulomb1DPotential } from "../src/common/model/analytical-solutions/coulomb-1d-potential.js";
 
 // Physical constants (SI units)
-const HBAR = 1.054571817e-34; // Reduced Planck constant (J·s)
+const _HBAR = 1.054571817e-34; // Reduced Planck constant (J·s)
 const M_E = 9.1093837015e-31; // Electron mass (kg)
 const E_CHARGE = 1.602176634e-19; // Elementary charge (C)
 const EPSILON_0 = 8.8541878128e-12; // Vacuum permittivity (F/m)
