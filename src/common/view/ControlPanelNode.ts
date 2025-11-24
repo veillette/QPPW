@@ -215,6 +215,22 @@ export class ControlPanelNode extends Node {
             fill: QPPWColors.textFillProperty,
           }),
       },
+      {
+        value: PotentialType.MULTI_SQUARE_WELL,
+        createNode: () =>
+          new Text(stringManager.multiSquareWellStringProperty, {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
+      },
+      {
+        value: PotentialType.MULTI_COULOMB_1D,
+        createNode: () =>
+          new Text(stringManager.multiCoulomb1DStringProperty, {
+            font: new PhetFont(14),
+            fill: QPPWColors.textFillProperty,
+          }),
+      },
     ];
 
     // Filter potential types if specified in options
@@ -898,6 +914,55 @@ export class ControlPanelNode extends Node {
       });
     }
 
+    // Electric Field slider (only for ManyWellsModel)
+    const electricFieldValueText = new Text("", {
+      font: new PhetFont(12),
+      fill: QPPWColors.textFillProperty,
+    });
+
+    let electricFieldRow: Node | null = null;
+    if ("electricFieldProperty" in this.model) {
+      const manyWellsModel = this.model as ManyWellsModel;
+
+      manyWellsModel.electricFieldProperty.link((field: number) => {
+        electricFieldValueText.string = `${field.toFixed(3)} eV/nm`;
+      });
+
+      const electricFieldSlider = new HSlider(
+        manyWellsModel.electricFieldProperty,
+        manyWellsModel.electricFieldProperty.range!,
+        {
+          trackSize: new Dimension2(150, 4),
+          thumbSize: new Dimension2(15, 30),
+        },
+      );
+
+      electricFieldRow = new VBox({
+        spacing: 4,
+        align: "left",
+        children: [
+          new Text(stringManager.electricFieldStringProperty, {
+            font: new PhetFont(12),
+            fill: QPPWColors.textFillProperty,
+          }),
+          new HBox({
+            spacing: 10,
+            children: [electricFieldSlider, electricFieldValueText],
+          }),
+        ],
+      });
+    }
+
+    // Enable/disable electric field slider based on potential type
+    if (electricFieldRow) {
+      this.model.potentialTypeProperty.link((type: PotentialType) => {
+        const needsElectricField =
+          type === PotentialType.MULTI_SQUARE_WELL ||
+          type === PotentialType.MULTI_COULOMB_1D;
+        electricFieldRow!.visible = needsElectricField;
+      });
+    }
+
     const children: Node[] = [titleText, widthRow, depthRow];
     if (barrierHeightRow) {
       children.push(barrierHeightRow);
@@ -910,6 +975,9 @@ export class ControlPanelNode extends Node {
     }
     if (separationRow) {
       children.push(separationRow);
+    }
+    if (electricFieldRow) {
+      children.push(electricFieldRow);
     }
 
     return new VBox({

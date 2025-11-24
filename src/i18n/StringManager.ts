@@ -46,6 +46,7 @@ export class StringManager {
   public readonly numberOfWellsStringProperty: StringProperty;
   public readonly latticeConstantStringProperty: StringProperty;
   public readonly energyBandsStringProperty: StringProperty;
+  public readonly electricFieldStringProperty: StringProperty;
 
   // Preferences strings
   public readonly preferencesStringProperty: StringProperty;
@@ -90,6 +91,8 @@ export class StringManager {
   public readonly coulomb1DStringProperty: StringProperty;
   public readonly coulomb3DStringProperty: StringProperty;
   public readonly doubleSquareWellStringProperty: StringProperty;
+  public readonly multiSquareWellStringProperty: StringProperty;
+  public readonly multiCoulomb1DStringProperty: StringProperty;
 
   // Display mode strings
   public readonly probabilityDensityStringProperty: StringProperty;
@@ -208,6 +211,7 @@ export class StringManager {
     this.numberOfWellsStringProperty = new StringProperty("Number of Wells");
     this.latticeConstantStringProperty = new StringProperty("Lattice Constant");
     this.energyBandsStringProperty = new StringProperty("Energy Bands");
+    this.electricFieldStringProperty = new StringProperty("Electric Field");
 
     // Preferences strings
     this.preferencesStringProperty = new StringProperty("Preferences");
@@ -285,6 +289,12 @@ export class StringManager {
     this.coulomb3DStringProperty = new StringProperty("3D Coulomb");
     this.doubleSquareWellStringProperty = new StringProperty(
       "Double Square Well",
+    );
+    this.multiSquareWellStringProperty = new StringProperty(
+      "Multi-Square Well",
+    );
+    this.multiCoulomb1DStringProperty = new StringProperty(
+      "Multi-Coulomb 1D",
     );
 
     // Display mode strings

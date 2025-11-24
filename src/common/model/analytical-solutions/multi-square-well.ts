@@ -18,6 +18,7 @@
  */
 
 import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
+import Schrodinger1DSolver from "../Schrodinger1DSolver.js";
 
 /**
  * Create a multi-square well potential function.
@@ -93,7 +94,7 @@ export function solveMultiSquareWell(
   mass: number,
   numStates: number,
   gridConfig: GridConfig,
-  solver: any, // Numerical solver instance
+  solver: Schrodinger1DSolver, // Numerical solver instance
 ): BoundStateResult {
   // Create the potential function
   const potential = createMultiSquareWellPotential(

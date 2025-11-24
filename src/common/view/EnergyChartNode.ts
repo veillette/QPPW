@@ -53,6 +53,13 @@ function getEnergyAxisRange(potentialType: PotentialType): {
       // Energy reference: V=0 in wells, V=wellDepth in barrier
       // Bound states have positive energies (between 0 and wellDepth)
       return { min: 0, max: 20 };
+    case PotentialType.MULTI_SQUARE_WELL:
+      // Multi-square well (generalization of double square well)
+      // Energy reference: V=0 in wells, V=wellDepth in barrier
+      return { min: -5, max: 15 };
+    case PotentialType.MULTI_COULOMB_1D:
+      // Multi-Coulomb 1D potential with V=0 at infinity
+      return { min: -15, max: 5 };
     case PotentialType.MORSE:
       // Morse potential: V=0 at dissociation limit (infinity), V=-De at bottom
       return { min: -15, max: 5 };
@@ -62,7 +69,6 @@ function getEnergyAxisRange(potentialType: PotentialType): {
     case PotentialType.ECKART:
     case PotentialType.COULOMB_1D:
     case PotentialType.COULOMB_3D:
-    case PotentialType.MULTI_COULOMB_1D:
     case PotentialType.CUSTOM:
     default:
       // V=0 at infinity (wells with negative energy states)
@@ -469,11 +475,20 @@ export class EnergyChartNode extends Node {
       this.potentialPath.visible = show;
     });
 
-    // Link to wellSeparationProperty if available (TwoWellsModel only)
+    // Link to wellSeparationProperty if available (TwoWellsModel and ManyWellsModel)
     if ("wellSeparationProperty" in this.model) {
       (this.model as TwoWellsModel).wellSeparationProperty.link(() =>
         this.update(),
       );
+    }
+
+    // Link to numberOfWellsProperty and electricFieldProperty if available (ManyWellsModel only)
+    if ("numberOfWellsProperty" in this.model) {
+      const manyWellsModel = this.model as import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel;
+      manyWellsModel.numberOfWellsProperty.link(() => this.update());
+      if ("electricFieldProperty" in manyWellsModel) {
+        manyWellsModel.electricFieldProperty.link(() => this.update());
+      }
     }
 
     // Link to barrierHeightProperty and potentialOffsetProperty if available (OneWellModel only)
@@ -887,6 +902,140 @@ export class EnergyChartNode extends Node {
 
         const viewX = this.dataToViewX(x);
         const viewY = this.dataToViewY(V);
+
+        if (firstPoint) {
+          shape.moveTo(viewX, viewY);
+          firstPoint = false;
+        } else {
+          shape.lineTo(viewX, viewY);
+        }
+      }
+    } else if (potentialType === PotentialType.MULTI_SQUARE_WELL) {
+      // Draw multi-square well (generalization of double square well)
+      // Convention: V=0 in wells, V=wellDepth in barrier
+      // Import ManyWellsModel to access numberOfWellsProperty
+      const manyWellsModel = this.model as import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel;
+      const numberOfWells = "numberOfWellsProperty" in manyWellsModel
+        ? manyWellsModel.numberOfWellsProperty.value
+        : 3;
+      const separationParam = "wellSeparationProperty" in manyWellsModel
+        ? manyWellsModel.wellSeparationProperty.value
+        : 0.2;
+      const electricField = "electricFieldProperty" in manyWellsModel
+        ? manyWellsModel.electricFieldProperty.value
+        : 0.0;
+
+      // Calculate the natural total span needed
+      const maxVisibleRange = 7.5; // Use 7.5nm of the 8nm available range (leave small margins)
+
+      // Start with a base scaling for separation
+      let effectiveSeparation = separationParam * 10;
+      let effectiveWellWidth = wellWidth;
+
+      // Calculate what the total span would be
+      const naturalSpan = numberOfWells * effectiveWellWidth + (numberOfWells - 1) * effectiveSeparation;
+
+      // If it exceeds the visible range, scale everything down proportionally
+      if (naturalSpan > maxVisibleRange) {
+        const scaleFactor = maxVisibleRange / naturalSpan;
+        effectiveSeparation *= scaleFactor;
+        effectiveWellWidth *= scaleFactor;
+      }
+
+      // Calculate total span and center the wells
+      const totalSpan = numberOfWells * effectiveWellWidth + (numberOfWells - 1) * effectiveSeparation;
+      const startX = -totalSpan / 2;
+
+      // Helper function to get potential with electric field tilt
+      const getV = (x: number, baseV: number) => baseV - electricField * x;
+
+      // Start from left at barrier height (with field tilt)
+      const leftmostX = this.xMinProperty.value;
+      shape.moveTo(this.chartMargins.left, this.dataToViewY(getV(leftmostX, wellDepth)));
+
+      // Draw each well
+      for (let i = 0; i < numberOfWells; i++) {
+        const wellLeft = startX + i * (effectiveWellWidth + effectiveSeparation);
+        const wellRight = wellLeft + effectiveWellWidth;
+
+        // Drop into well (with field tilt)
+        shape.lineTo(this.dataToViewX(wellLeft), this.dataToViewY(getV(wellLeft, wellDepth)));
+        shape.lineTo(this.dataToViewX(wellLeft), this.dataToViewY(getV(wellLeft, 0)));
+        shape.lineTo(this.dataToViewX(wellRight), this.dataToViewY(getV(wellRight, 0)));
+        shape.lineTo(this.dataToViewX(wellRight), this.dataToViewY(getV(wellRight, wellDepth)));
+
+        // Barrier between wells (except after last well)
+        if (i < numberOfWells - 1) {
+          const barrierRight = wellRight + effectiveSeparation;
+          shape.lineTo(this.dataToViewX(barrierRight), this.dataToViewY(getV(barrierRight, wellDepth)));
+        }
+      }
+
+      // Right outside region (with field tilt)
+      const rightmostX = this.xMaxProperty.value;
+      shape.lineTo(this.chartWidth - this.chartMargins.right, this.dataToViewY(getV(rightmostX, wellDepth)));
+    } else if (potentialType === PotentialType.MULTI_COULOMB_1D) {
+      // Draw multi-Coulomb 1D potential (multiple Coulomb centers)
+      const manyWellsModel = this.model as import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel;
+      const numberOfWells = "numberOfWellsProperty" in manyWellsModel
+        ? manyWellsModel.numberOfWellsProperty.value
+        : 3;
+      const separationParam = "wellSeparationProperty" in manyWellsModel
+        ? manyWellsModel.wellSeparationProperty.value
+        : 0.2;
+      const electricField = "electricFieldProperty" in manyWellsModel
+        ? manyWellsModel.electricFieldProperty.value
+        : 0.0;
+
+      const numPoints = 200;
+      let firstPoint = true;
+
+      // Calculate positions of Coulomb centers
+      // Ensure they fit within the visible range of -4nm to 4nm
+      const maxVisibleRange = 7.5; // Use 7.5nm of the 8nm available range
+
+      // Start with base scaling
+      let effectiveSeparation = separationParam * 10;
+
+      // Calculate natural span
+      const naturalSpan = (numberOfWells - 1) * effectiveSeparation;
+
+      // Scale down if needed to fit within visible range
+      if (naturalSpan > maxVisibleRange) {
+        effectiveSeparation = maxVisibleRange / (numberOfWells - 1);
+      }
+
+      const totalSpan = (numberOfWells - 1) * effectiveSeparation;
+      const centers: number[] = [];
+      for (let i = 0; i < numberOfWells; i++) {
+        centers.push(-totalSpan / 2 + i * effectiveSeparation);
+      }
+
+      // Scale factor for Coulomb strength
+      const k = wellDepth * (wellWidth / 2);
+
+      for (let i = 0; i < numPoints; i++) {
+        const x =
+          (xGrid[0] +
+            ((xGrid[xGrid.length - 1] - xGrid[0]) * i) / (numPoints - 1)) *
+          QuantumConstants.M_TO_NM;
+
+        // Sum contributions from all Coulomb centers
+        let V = 0;
+        for (const center of centers) {
+          const dx = x - center;
+          const distance = Math.max(Math.abs(dx), 0.01); // Avoid singularity
+          V += -k / distance;
+        }
+
+        // Add electric field tilt: V_field(x) = -E * x
+        V += -electricField * x;
+
+        // Clamp V to reasonable range for display
+        const VClamped = Math.max(V, this.yMinProperty.value);
+
+        const viewX = this.dataToViewX(x);
+        const viewY = this.dataToViewY(VClamped);
 
         if (firstPoint) {
           shape.moveTo(viewX, viewY);

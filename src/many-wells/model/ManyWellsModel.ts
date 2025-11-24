@@ -36,6 +36,9 @@ export class ManyWellsModel extends BaseModel {
   public readonly wellDepthProperty: NumberProperty;
   public readonly wellSeparationProperty: NumberProperty;
 
+  // Electric field (eV/nm) - creates a linear tilt in the potential
+  public readonly electricFieldProperty: NumberProperty;
+
   // Particle properties
   public readonly particleMassProperty: NumberProperty; // In units of electron mass
 
@@ -85,6 +88,11 @@ export class ManyWellsModel extends BaseModel {
       range: new Range(0.05, 0.7),
     }); // in nanometers (spacing between wells)
 
+    // Initialize electric field (default: 0, range: ±0.625 eV/nm for ±5eV tilt over 8nm)
+    this.electricFieldProperty = new NumberProperty(0.0, {
+      range: new Range(-0.625, 0.625),
+    }); // in eV/nm
+
     // Initialize particle mass (1.0 = electron mass)
     this.particleMassProperty = new NumberProperty(1.0, {
       range: new Range(0.5, 1.1),
@@ -127,6 +135,7 @@ export class ManyWellsModel extends BaseModel {
     this.wellWidthProperty.link(invalidateCache);
     this.wellDepthProperty.link(invalidateCache);
     this.wellSeparationProperty.link(invalidateCache);
+    this.electricFieldProperty.link(invalidateCache);
     this.particleMassProperty.link(invalidateCache);
   }
 
@@ -227,7 +236,7 @@ export class ManyWellsModel extends BaseModel {
       this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
 
     // Calculate number of states based on potential type
-    let numStates = 80; // Default for multi-well potentials
+    const numStates = 80; // Default for multi-well potentials
 
     // Grid configuration
     const CHART_DISPLAY_RANGE_NM = 4;

@@ -29,6 +29,8 @@
     "test": "tsx --tsconfig tsconfig.test.json --import ./tests/browser-globals.js tests/run-terminal-tests.js",
     "test:double-well": "tsx --tsconfig tsconfig.test.json --import ./tests/browser-globals.js tests/test-double-well.ts",
     "test:coulomb": "tsx --tsconfig tsconfig.test.json --import ./tests/browser-globals.js tests/verify-coulomb.ts",
+    "test:multi-square-well": "tsx --tsconfig tsconfig.test.json --import ./tests/browser-globals.js tests/test-multi-square-well.ts",
+    "test:multi-coulomb-1d": "tsx --tsconfig tsconfig.test.json --import ./tests/browser-globals.js tests/test-multi-coulomb-1d.ts",
     "lint": "npx eslint .",
     "lint:fix": "npx eslint --fix .",
     "format": "npx prettier --write .",
