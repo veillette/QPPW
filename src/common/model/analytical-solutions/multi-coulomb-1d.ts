@@ -23,13 +23,14 @@ import Schrodinger1DSolver from "../Schrodinger1DSolver.js";
 
 /**
  * Create a multi-Coulomb 1D potential function.
+ * (Internal helper)
  *
  * @param numberOfCenters - Number of Coulomb centers (1 to 10)
  * @param centerSpacing - Spacing between adjacent centers in meters
  * @param coulombStrength - Coulomb strength parameter α in J·m
  * @returns Potential function V(x) in Joules
  */
-export function createMultiCoulomb1DPotential(
+function createMultiCoulomb1DPotential(
   numberOfCenters: number,
   centerSpacing: number,
   coulombStrength: number,
@@ -136,47 +137,4 @@ export function solveMultiCoulomb1D(
       method: "analytical",
     };
   }
-}
-
-/**
- * Get the geometry information for visualization.
- * Returns the positions of Coulomb centers for plotting.
- *
- * @param numberOfCenters - Number of Coulomb centers
- * @param centerSpacing - Spacing between adjacent centers in meters
- * @returns Object with center positions and total span
- */
-export function getMultiCoulomb1DGeometry(
-  numberOfCenters: number,
-  centerSpacing: number,
-): {
-  centerPositions: number[];
-  totalSpan: number;
-} {
-  const centerPositions: number[] = [];
-
-  if (numberOfCenters === 1) {
-    centerPositions.push(0);
-  } else if (numberOfCenters % 2 === 1) {
-    // Odd number: center at x = 0
-    centerPositions.push(0);
-    for (let i = 1; i <= Math.floor(numberOfCenters / 2); i++) {
-      centerPositions.push(i * centerSpacing);
-      centerPositions.push(-i * centerSpacing);
-    }
-  } else {
-    // Even number: symmetric around x = 0
-    for (let i = 0; i < numberOfCenters / 2; i++) {
-      const pos = (i + 0.5) * centerSpacing;
-      centerPositions.push(pos);
-      centerPositions.push(-pos);
-    }
-  }
-
-  centerPositions.sort((a, b) => a - b);
-
-  const totalSpan =
-    numberOfCenters > 1 ? (numberOfCenters - 1) * centerSpacing : 0;
-
-  return { centerPositions, totalSpan };
 }

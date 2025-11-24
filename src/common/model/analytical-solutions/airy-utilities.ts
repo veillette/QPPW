@@ -36,24 +36,26 @@ export function calculateAiryAlpha(mass: number, slope: number): number {
 /**
  * Asymptotic approximation for Airy zeros when n >= 30
  * z_n ≈ -(3π(4n-1)/8)^(2/3)
+ * (Internal helper)
  *
  * @param n - Zero index (1-indexed, so first zero is n=1)
  * @returns Approximate value of the n-th Airy zero
  */
-export function getApproximateAiryZero(n: number): number {
+function getApproximateAiryZero(n: number): number {
   return -Math.pow((3 * Math.PI * (4 * n - 1)) / 8, 2 / 3);
 }
 
 /**
  * Refine an Airy zero using Newton-Raphson method.
  * Finds z where Ai(z) = 0.
+ * (Internal helper)
  *
  * @param initialGuess - Initial estimate for the zero
  * @param maxIterations - Maximum number of Newton-Raphson iterations
  * @param tolerance - Convergence tolerance
  * @returns Refined value of the Airy zero
  */
-export function refineAiryZero(
+function refineAiryZero(
   initialGuess: number,
   maxIterations: number = 10,
   tolerance: number = 1e-10,

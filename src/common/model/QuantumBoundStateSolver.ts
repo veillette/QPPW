@@ -58,9 +58,9 @@ const CACHE_SIZE_LIMIT = 100;
 // ============================================================================
 
 /**
- * Solver configuration options
+ * Solver configuration options (internal)
  */
-export type SolverConfig = {
+type SolverConfig = {
   maxIterations?: number;
   convergenceTolerance?: number;
   energyTolerance?: number;
@@ -74,9 +74,9 @@ export type SolverConfig = {
 };
 
 /**
- * Detailed solution information
+ * Detailed solution information (internal)
  */
-export type QuantumState = {
+type QuantumState = {
   energy: number;
   waveFunction: number[];
   nodes: number;
@@ -115,9 +115,9 @@ type CacheEntry<T> = {
 };
 
 /**
- * Custom exception for solver errors
+ * Custom exception for solver errors (internal)
  */
-export class QuantumSolverException extends Error {
+class QuantumSolverException extends Error {
   constructor(
     message: string,
     public readonly code: string = "QUANTUM_SOLVER_ERROR",
@@ -130,9 +130,9 @@ export class QuantumSolverException extends Error {
 
 /**
  * Exception thrown when attempting to find a bound state that doesn't exist
- * (energy exceeds maximum potential)
+ * (energy exceeds maximum potential) (internal)
  */
-export class InvalidBoundStateException extends Error {
+class InvalidBoundStateException extends Error {
   constructor(
     message: string,
     public readonly stateNumber: number,

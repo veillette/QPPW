@@ -252,26 +252,6 @@ export interface EigenDecompositionResult {
 }
 
 /**
- * Convert a 2D number array to a dot Matrix.
- *
- * @param array - 2D array in row-major order
- * @returns Matrix object
- */
-export function arrayToMatrix(array: number[][]): DotMatrix {
-  const m = array.length;
-  const n = array[0]?.length ?? 0;
-  const flat: number[] = [];
-
-  for (let i = 0; i < m; i++) {
-    for (let j = 0; j < n; j++) {
-      flat.push(array[i][j]);
-    }
-  }
-
-  return new DotMatrix(m, n, flat);
-}
-
-/**
  * Convert a dot Matrix to a 2D number array.
  *
  * @param matrix - Matrix object
@@ -290,68 +270,6 @@ export function matrixToArray(matrix: DotMatrix): number[][] {
   }
 
   return array;
-}
-
-/**
- * Create a zero matrix of size N×N.
- *
- * @param N - Matrix dimension
- * @returns N×N zero matrix
- */
-export function createZeroMatrix(N: number): DotMatrix {
-  return new DotMatrix(N, N);
-}
-
-/**
- * Create an identity matrix of size N×N.
- *
- * @param N - Matrix dimension
- * @returns N×N identity matrix
- */
-export function createIdentityMatrix(N: number): DotMatrix {
-  return DotMatrix.identity(N, N);
-}
-
-/**
- * Create a diagonal matrix from an array of values.
- *
- * @param values - Array of diagonal values
- * @returns Diagonal matrix
- */
-export function createDiagonalMatrix(values: number[]): DotMatrix {
-  return DotMatrix.diagonalMatrix(values);
-}
-
-/**
- * Add two matrices using dot's Matrix.plus().
- *
- * @param A - First matrix
- * @param B - Second matrix
- * @returns Sum A + B
- */
-export function addMatrices(A: DotMatrix, B: DotMatrix): DotMatrix {
-  return A.plus(B);
-}
-
-/**
- * Multiply two matrices using dot's Matrix.times().
- *
- * @param A - First matrix
- * @param B - Second matrix
- * @returns Product A × B
- */
-export function multiplyMatrices(A: DotMatrix, B: DotMatrix): DotMatrix {
-  return A.times(B);
-}
-
-/**
- * Compute the inverse of a matrix using dot's Matrix.inverse().
- *
- * @param A - Matrix to invert
- * @returns Inverse matrix A^(-1)
- */
-export function invertMatrix(A: DotMatrix): DotMatrix {
-  return A.inverse();
 }
 
 /**
@@ -586,13 +504,13 @@ export function normalizeWavefunctionChebyshev(
 }
 
 /**
- * Complex number addition.
+ * Complex number addition (internal helper).
  *
  * @param a - First complex number
  * @param b - Second complex number
  * @returns Sum a + b
  */
-export function complexAdd(a: ComplexNumber, b: ComplexNumber): ComplexNumber {
+function complexAdd(a: ComplexNumber, b: ComplexNumber): ComplexNumber {
   return {
     real: a.real + b.real,
     imaginary: a.imaginary + b.imaginary,
@@ -600,16 +518,13 @@ export function complexAdd(a: ComplexNumber, b: ComplexNumber): ComplexNumber {
 }
 
 /**
- * Complex number subtraction.
+ * Complex number subtraction (internal helper).
  *
  * @param a - First complex number
  * @param b - Second complex number
  * @returns Difference a - b
  */
-export function complexSubtract(
-  a: ComplexNumber,
-  b: ComplexNumber,
-): ComplexNumber {
+function complexSubtract(a: ComplexNumber, b: ComplexNumber): ComplexNumber {
   return {
     real: a.real - b.real,
     imaginary: a.imaginary - b.imaginary,
@@ -617,16 +532,13 @@ export function complexSubtract(
 }
 
 /**
- * Complex number multiplication.
+ * Complex number multiplication (internal helper).
  *
  * @param a - First complex number
  * @param b - Second complex number
  * @returns Product a × b
  */
-export function complexMultiply(
-  a: ComplexNumber,
-  b: ComplexNumber,
-): ComplexNumber {
+function complexMultiply(a: ComplexNumber, b: ComplexNumber): ComplexNumber {
   return {
     real: a.real * b.real - a.imaginary * b.imaginary,
     imaginary: a.real * b.imaginary + a.imaginary * b.real,
@@ -835,23 +747,13 @@ export function cubicSplineInterpolation(
 }
 
 qppw.register("LinearAlgebraUtils", {
-  arrayToMatrix,
   matrixToArray,
-  createZeroMatrix,
-  createIdentityMatrix,
-  createDiagonalMatrix,
-  addMatrices,
-  multiplyMatrices,
-  invertMatrix,
   symmetrizeMatrix,
   extractInteriorMatrix,
   diagonalize,
   normalizeWavefunction,
   normalizeWavefunctionChebyshev,
   cubicSplineInterpolation,
-  complexAdd,
-  complexSubtract,
-  complexMultiply,
   fft,
   ifft,
   fftFreq,
