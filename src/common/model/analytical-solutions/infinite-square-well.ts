@@ -29,6 +29,7 @@ import {
   GridConfig,
   PotentialFunction,
 } from "../PotentialFunction.js";
+import { AnalyticalSolution } from "./AnalyticalSolution.js";
 
 /**
  * Create the potential function for an infinite square well.
@@ -179,6 +180,62 @@ export function calculateInfiniteWellWavefunctionSecondDerivative(
   }
 
   return secondDerivative;
+}
+
+/**
+ * Class-based implementation of infinite square well analytical solution.
+ * Extends the AnalyticalSolution abstract base class.
+ */
+export class InfiniteSquareWellSolution extends AnalyticalSolution {
+  constructor(
+    private wellWidth: number,
+    private mass: number,
+  ) {
+    super();
+  }
+
+  solve(numStates: number, gridConfig: GridConfig): BoundStateResult {
+    return solveInfiniteWell(this.wellWidth, this.mass, numStates, gridConfig);
+  }
+
+  createPotential(): PotentialFunction {
+    return createInfiniteWellPotential(this.wellWidth);
+  }
+
+  calculateClassicalProbability(
+    energy: number,
+    mass: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateInfiniteWellClassicalProbability(
+      this.wellWidth,
+      energy,
+      mass,
+      xGrid,
+    );
+  }
+
+  calculateWavefunctionZeros(
+    stateIndex: number,
+    _energy: number,
+  ): number[] {
+    return calculateInfiniteWellWavefunctionZeros(this.wellWidth, stateIndex);
+  }
+
+  calculateTurningPoints(energy: number): { left: number; right: number } {
+    return calculateInfiniteWellTurningPoints(this.wellWidth, energy);
+  }
+
+  calculateWavefunctionSecondDerivative(
+    stateIndex: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateInfiniteWellWavefunctionSecondDerivative(
+      this.wellWidth,
+      stateIndex,
+      xGrid,
+    );
+  }
 }
 
 /**

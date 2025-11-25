@@ -40,8 +40,94 @@
  */
 
 import QuantumConstants from "../QuantumConstants.js";
-import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
+import { BoundStateResult, GridConfig, PotentialFunction } from "../PotentialFunction.js";
 import { jacobiPolynomial, factorial, logGamma } from "./math-utilities.js";
+import { AnalyticalSolution } from "./AnalyticalSolution.js";
+
+/**
+ * Class-based implementation of Eckart potential analytical solution.
+ * Extends the AnalyticalSolution abstract base class.
+ */
+export class EckartPotentialSolution extends AnalyticalSolution {
+  constructor(
+    private potentialDepth: number,
+    private barrierHeight: number,
+    private wellWidth: number,
+    private mass: number,
+  ) {
+    super();
+  }
+
+  solve(numStates: number, gridConfig: GridConfig): BoundStateResult {
+    return solveEckartPotential(
+      this.potentialDepth,
+      this.barrierHeight,
+      this.wellWidth,
+      this.mass,
+      numStates,
+      gridConfig,
+    );
+  }
+
+  createPotential(): PotentialFunction {
+    return createEckartPotential(
+      this.potentialDepth,
+      this.barrierHeight,
+      this.wellWidth,
+    );
+  }
+
+  calculateClassicalProbability(
+    energy: number,
+    mass: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateEckartPotentialClassicalProbability(
+      this.potentialDepth,
+      this.barrierHeight,
+      this.wellWidth,
+      energy,
+      mass,
+      xGrid,
+    );
+  }
+
+  calculateWavefunctionZeros(
+    stateIndex: number,
+    _energy: number,
+  ): number[] {
+    return calculateEckartPotentialWavefunctionZeros(
+      this.potentialDepth,
+      this.barrierHeight,
+      this.wellWidth,
+      this.mass,
+      stateIndex,
+    );
+  }
+
+  calculateTurningPoints(energy: number): { left: number; right: number } {
+    return calculateEckartPotentialTurningPoints(
+      this.potentialDepth,
+      this.barrierHeight,
+      this.wellWidth,
+      energy,
+    );
+  }
+
+  calculateWavefunctionSecondDerivative(
+    stateIndex: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateEckartPotentialWavefunctionSecondDerivative(
+      this.potentialDepth,
+      this.barrierHeight,
+      this.wellWidth,
+      this.mass,
+      stateIndex,
+      xGrid,
+    );
+  }
+}
 
 /**
  * Analytical solution for the Eckart potential.

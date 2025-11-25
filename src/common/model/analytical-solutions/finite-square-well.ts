@@ -41,6 +41,7 @@ import {
   GridConfig,
   PotentialFunction,
 } from "../PotentialFunction.js";
+import { AnalyticalSolution } from "./AnalyticalSolution.js";
 
 /**
  * Create the potential function for a finite square well.
@@ -281,6 +282,117 @@ export function calculateFiniteWellWavefunctionSecondDerivative(
   }
 
   return secondDerivative;
+}
+
+/**
+ * Class-based implementation of finite square well analytical solution.
+ * Extends the AnalyticalSolution abstract base class.
+ */
+export class FiniteSquareWellSolution extends AnalyticalSolution {
+  private parities: ("even" | "odd")[] = [];
+
+  constructor(
+    private wellWidth: number,
+    private wellDepth: number,
+    private mass: number,
+  ) {
+    super();
+  }
+
+  solve(numStates: number, gridConfig: GridConfig): BoundStateResult {
+    const result = solveFiniteSquareWell(
+      this.wellWidth,
+      this.wellDepth,
+      this.mass,
+      numStates,
+      gridConfig,
+    );
+    // Store parities for later use in class methods
+    // Alternate between even and odd based on state index
+    this.parities = [];
+    for (let i = 0; i < result.energies.length; i++) {
+      this.parities.push(i % 2 === 0 ? "even" : "odd");
+    }
+    return result;
+  }
+
+  createPotential(): PotentialFunction {
+    return createFiniteWellPotential(this.wellWidth, this.wellDepth);
+  }
+
+  calculateClassicalProbability(
+    energy: number,
+    mass: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateFiniteWellClassicalProbability(
+      this.wellWidth,
+      this.wellDepth,
+      energy,
+      mass,
+      xGrid,
+    );
+  }
+
+  calculateWavefunctionZeros(
+    stateIndex: number,
+    energy: number,
+  ): number[] {
+    const parity = this.parities[stateIndex] || (stateIndex % 2 === 0 ? "even" : "odd");
+    return calculateFiniteWellWavefunctionZeros(
+      this.wellWidth,
+      this.wellDepth,
+      this.mass,
+      energy,
+      parity,
+    );
+  }
+
+  calculateTurningPoints(energy: number): { left: number; right: number } {
+    return calculateFiniteWellTurningPoints(
+      this.wellWidth,
+      this.wellDepth,
+      energy,
+    );
+  }
+
+  calculateWavefunctionSecondDerivative(
+    stateIndex: number,
+    xGrid: number[],
+  ): number[] {
+    // We need energy to calculate the second derivative
+    // For now, we'll need to solve to get energies or use a cached value
+    // This is a limitation - we'll use the parity from the stored array
+    const parity = this.parities[stateIndex] || (stateIndex % 2 === 0 ? "even" : "odd");
+
+    // We need the energy, so we'll need to solve if we haven't already
+    // For simplicity, compute it on the fly
+    const { HBAR } = QuantumConstants;
+    const xi0 = (this.wellWidth / 2 * Math.sqrt(2 * this.mass * this.wellDepth)) / HBAR;
+
+    let xi: number | null = null;
+    if (parity === "even") {
+      xi = findEvenParityState(xi0, Math.floor(stateIndex / 2));
+    } else {
+      xi = findOddParityState(xi0, Math.floor(stateIndex / 2));
+    }
+
+    if (xi === null) {
+      // Return zeros if we can't find the energy
+      return new Array(xGrid.length).fill(0);
+    }
+
+    const energy = (HBAR * HBAR * xi * xi) / (2 * this.mass * (this.wellWidth / 2) * (this.wellWidth / 2)) - this.wellDepth;
+
+    return calculateFiniteWellWavefunctionSecondDerivative(
+      this.wellWidth,
+      this.wellDepth,
+      this.mass,
+      energy,
+      parity,
+      xGrid,
+    );
+  }
 }
 
 /**

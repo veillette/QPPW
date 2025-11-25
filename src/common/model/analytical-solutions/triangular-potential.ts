@@ -49,7 +49,7 @@
  */
 
 import QuantumConstants from "../QuantumConstants.js";
-import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
+import { BoundStateResult, GridConfig, PotentialFunction } from "../PotentialFunction.js";
 import { airyAi, airyBi, airyAiPrime, airyBiPrime } from "./math-utilities.js";
 import {
   calculateAiryAlpha,
@@ -58,6 +58,97 @@ import {
   applySignConvention,
   refineBisection,
 } from "./airy-utilities.js";
+import { AnalyticalSolution } from "./AnalyticalSolution.js";
+
+/**
+ * Class-based implementation of triangular potential analytical solution.
+ * Extends the AnalyticalSolution abstract base class.
+ */
+export class TriangularPotentialSolution extends AnalyticalSolution {
+  constructor(
+    private height: number,
+    private width: number,
+    private offset: number,
+    private mass: number,
+  ) {
+    super();
+  }
+
+  solve(numStates: number, gridConfig: GridConfig): BoundStateResult {
+    return solveTriangularPotential(
+      this.height,
+      this.width,
+      this.offset,
+      this.mass,
+      numStates,
+      gridConfig,
+    );
+  }
+
+  createPotential(): PotentialFunction {
+    return createTriangularPotential(this.height, this.width, this.offset);
+  }
+
+  calculateClassicalProbability(
+    energy: number,
+    mass: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateTriangularPotentialClassicalProbability(
+      this.height,
+      this.width,
+      this.offset,
+      energy,
+      mass,
+      xGrid,
+    );
+  }
+
+  calculateWavefunctionZeros(
+    _stateIndex: number,
+    energy: number,
+  ): number[] {
+    return calculateTriangularPotentialWavefunctionZeros(
+      this.height,
+      this.width,
+      this.offset,
+      this.mass,
+      energy,
+    );
+  }
+
+  calculateTurningPoints(energy: number): { left: number; right: number } {
+    return calculateTriangularPotentialTurningPoints(
+      this.height,
+      this.width,
+      this.offset,
+      energy,
+    );
+  }
+
+  calculateWavefunctionSecondDerivative(
+    stateIndex: number,
+    xGrid: number[],
+  ): number[] {
+    // Need energy to calculate second derivative
+    // Solve if not already done
+    const result = this.solve(stateIndex + 1, {
+      xMin: xGrid[0],
+      xMax: xGrid[xGrid.length - 1],
+      numPoints: 100
+    });
+    const energy = result.energies[stateIndex];
+
+    return calculateTriangularPotentialWavefunctionSecondDerivative(
+      this.height,
+      this.width,
+      this.offset,
+      this.mass,
+      energy,
+      xGrid,
+    );
+  }
+}
 
 /**
  * Analytical solution for the finite triangular potential well.

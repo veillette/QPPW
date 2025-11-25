@@ -34,8 +34,84 @@
  */
 
 import QuantumConstants from "../QuantumConstants.js";
-import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
+import { BoundStateResult, GridConfig, PotentialFunction } from "../PotentialFunction.js";
 import { jacobiPolynomial, factorial } from "./math-utilities.js";
+import { AnalyticalSolution } from "./AnalyticalSolution.js";
+
+/**
+ * Class-based implementation of Pöschl-Teller potential analytical solution.
+ * Extends the AnalyticalSolution abstract base class.
+ */
+export class PoschlTellerPotentialSolution extends AnalyticalSolution {
+  constructor(
+    private potentialDepth: number,
+    private wellWidth: number,
+    private mass: number,
+  ) {
+    super();
+  }
+
+  solve(numStates: number, gridConfig: GridConfig): BoundStateResult {
+    return solvePoschlTellerPotential(
+      this.potentialDepth,
+      this.wellWidth,
+      this.mass,
+      numStates,
+      gridConfig,
+    );
+  }
+
+  createPotential(): PotentialFunction {
+    return createPoschlTellerPotential(this.potentialDepth, this.wellWidth);
+  }
+
+  calculateClassicalProbability(
+    energy: number,
+    mass: number,
+    xGrid: number[],
+  ): number[] {
+    return calculatePoschlTellerClassicalProbability(
+      this.potentialDepth,
+      this.wellWidth,
+      energy,
+      mass,
+      xGrid,
+    );
+  }
+
+  calculateWavefunctionZeros(
+    stateIndex: number,
+    _energy: number,
+  ): number[] {
+    return calculatePoschlTellerWavefunctionZeros(
+      this.potentialDepth,
+      this.wellWidth,
+      this.mass,
+      stateIndex,
+    );
+  }
+
+  calculateTurningPoints(energy: number): { left: number; right: number } {
+    return calculatePoschlTellerTurningPoints(
+      this.potentialDepth,
+      this.wellWidth,
+      energy,
+    );
+  }
+
+  calculateWavefunctionSecondDerivative(
+    stateIndex: number,
+    xGrid: number[],
+  ): number[] {
+    return calculatePoschlTellerWavefunctionSecondDerivative(
+      this.potentialDepth,
+      this.wellWidth,
+      this.mass,
+      stateIndex,
+      xGrid,
+    );
+  }
+}
 
 /**
  * Analytical solution for the Pöschl-Teller potential.

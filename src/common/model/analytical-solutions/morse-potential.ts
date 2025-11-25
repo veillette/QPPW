@@ -35,8 +35,94 @@
  */
 
 import QuantumConstants from "../QuantumConstants.js";
-import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
+import { BoundStateResult, GridConfig, PotentialFunction } from "../PotentialFunction.js";
 import { associatedLaguerre, factorial, gamma } from "./math-utilities.js";
+import { AnalyticalSolution } from "./AnalyticalSolution.js";
+
+/**
+ * Class-based implementation of Morse potential analytical solution.
+ * Extends the AnalyticalSolution abstract base class.
+ */
+export class MorsePotentialSolution extends AnalyticalSolution {
+  constructor(
+    private dissociationEnergy: number,
+    private wellWidth: number,
+    private equilibriumPosition: number,
+    private mass: number,
+  ) {
+    super();
+  }
+
+  solve(numStates: number, gridConfig: GridConfig): BoundStateResult {
+    return solveMorsePotential(
+      this.dissociationEnergy,
+      this.wellWidth,
+      this.equilibriumPosition,
+      this.mass,
+      numStates,
+      gridConfig,
+    );
+  }
+
+  createPotential(): PotentialFunction {
+    return createMorsePotential(
+      this.dissociationEnergy,
+      this.wellWidth,
+      this.equilibriumPosition,
+    );
+  }
+
+  calculateClassicalProbability(
+    energy: number,
+    mass: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateMorsePotentialClassicalProbability(
+      this.dissociationEnergy,
+      this.wellWidth,
+      this.equilibriumPosition,
+      energy,
+      mass,
+      xGrid,
+    );
+  }
+
+  calculateWavefunctionZeros(
+    stateIndex: number,
+    _energy: number,
+  ): number[] {
+    return calculateMorsePotentialWavefunctionZeros(
+      this.dissociationEnergy,
+      this.wellWidth,
+      this.equilibriumPosition,
+      this.mass,
+      stateIndex,
+    );
+  }
+
+  calculateTurningPoints(energy: number): { left: number; right: number } {
+    return calculateMorsePotentialTurningPoints(
+      this.dissociationEnergy,
+      this.wellWidth,
+      this.equilibriumPosition,
+      energy,
+    );
+  }
+
+  calculateWavefunctionSecondDerivative(
+    stateIndex: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateMorsePotentialWavefunctionSecondDerivative(
+      this.dissociationEnergy,
+      this.wellWidth,
+      this.equilibriumPosition,
+      this.mass,
+      stateIndex,
+      xGrid,
+    );
+  }
+}
 
 /**
  * Analytical solution for the Morse potential.

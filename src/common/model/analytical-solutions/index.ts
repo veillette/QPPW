@@ -2,12 +2,15 @@
  * Analytical solutions for well-known quantum potentials.
  * These provide exact solutions without numerical approximation.
  *
- * This module exports all analytical solution functions for various quantum potentials.
+ * This module exports all analytical solution functions and classes for various quantum potentials.
  */
 
 import qppw from "../../../QPPWNamespace.js";
 
-// Export all analytical solution functions
+// Export the abstract base class
+export { AnalyticalSolution } from "./AnalyticalSolution.js";
+
+// Export all analytical solution functions and classes
 export {
   solveInfiniteWell,
   createInfiniteWellPotential,
@@ -15,6 +18,7 @@ export {
   calculateInfiniteWellWavefunctionZeros,
   calculateInfiniteWellTurningPoints,
   calculateInfiniteWellWavefunctionSecondDerivative,
+  InfiniteSquareWellSolution,
 } from "./infinite-square-well.js";
 export {
   solveFiniteSquareWell,
@@ -23,6 +27,7 @@ export {
   calculateFiniteWellWavefunctionZeros,
   calculateFiniteWellTurningPoints,
   calculateFiniteWellWavefunctionSecondDerivative,
+  FiniteSquareWellSolution,
 } from "./finite-square-well.js";
 export {
   solveHarmonicOscillator,
@@ -31,6 +36,7 @@ export {
   calculateHarmonicOscillatorWavefunctionZeros,
   calculateHarmonicOscillatorTurningPoints,
   calculateHarmonicOscillatorWavefunctionSecondDerivative,
+  HarmonicOscillatorSolution,
 } from "./harmonic-oscillator.js";
 export {
   solveMorsePotential,
@@ -39,6 +45,7 @@ export {
   calculateMorsePotentialWavefunctionZeros,
   calculateMorsePotentialTurningPoints,
   calculateMorsePotentialWavefunctionSecondDerivative,
+  MorsePotentialSolution,
 } from "./morse-potential.js";
 export {
   solvePoschlTellerPotential,
@@ -47,6 +54,7 @@ export {
   calculatePoschlTellerWavefunctionZeros,
   calculatePoschlTellerTurningPoints,
   calculatePoschlTellerWavefunctionSecondDerivative,
+  PoschlTellerPotentialSolution,
 } from "./poschl-teller-potential.js";
 export {
   solveRosenMorsePotential,
@@ -55,6 +63,7 @@ export {
   calculateRosenMorsePotentialWavefunctionZeros,
   calculateRosenMorsePotentialTurningPoints,
   calculateRosenMorsePotentialWavefunctionSecondDerivative,
+  RosenMorsePotentialSolution,
 } from "./rosen-morse-potential.js";
 export {
   solveEckartPotential,
@@ -63,6 +72,7 @@ export {
   calculateEckartPotentialWavefunctionZeros,
   calculateEckartPotentialTurningPoints,
   calculateEckartPotentialWavefunctionSecondDerivative,
+  EckartPotentialSolution,
 } from "./eckart-potential.js";
 export {
   solveAsymmetricTrianglePotential,
@@ -71,6 +81,7 @@ export {
   calculateAsymmetricTriangleWavefunctionZeros,
   calculateAsymmetricTriangleTurningPoints,
   calculateAsymmetricTriangleWavefunctionSecondDerivative,
+  AsymmetricTrianglePotentialSolution,
 } from "./asymmetric-triangle-potential.js";
 export {
   solveCoulomb1DPotential,
@@ -79,6 +90,7 @@ export {
   calculateCoulomb1DWavefunctionZeros,
   calculateCoulomb1DTurningPoints,
   calculateCoulomb1DWavefunctionSecondDerivative,
+  Coulomb1DPotentialSolution,
 } from "./coulomb-1d-potential.js";
 export { solveCoulomb1DNumerical } from "./coulomb-1d-numerical-wrapper.js";
 export {
@@ -88,6 +100,7 @@ export {
   calculateCoulomb3DWavefunctionZeros,
   calculateCoulomb3DTurningPoints,
   calculateCoulomb3DWavefunctionSecondDerivative,
+  Coulomb3DPotentialSolution,
 } from "./coulomb-3d-potential.js";
 export {
   solveTriangularPotential,
@@ -96,6 +109,7 @@ export {
   calculateTriangularPotentialWavefunctionZeros,
   calculateTriangularPotentialTurningPoints,
   calculateTriangularPotentialWavefunctionSecondDerivative,
+  TriangularPotentialSolution,
 } from "./triangular-potential.js";
 export { solveDoubleSquareWellAnalytical } from "./double-square-well.js";
 export { solveMultiSquareWell } from "./multi-square-well.js";

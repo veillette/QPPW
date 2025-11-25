@@ -38,6 +38,7 @@ import {
   PotentialFunction,
 } from "../PotentialFunction.js";
 import { hermitePolynomial, factorial } from "./math-utilities.js";
+import { AnalyticalSolution } from "./AnalyticalSolution.js";
 
 /**
  * Create the potential function for a harmonic oscillator.
@@ -263,6 +264,75 @@ export function calculateHarmonicOscillatorWavefunctionSecondDerivative(
   }
 
   return secondDerivative;
+}
+
+/**
+ * Class-based implementation of harmonic oscillator analytical solution.
+ * Extends the AnalyticalSolution abstract base class.
+ */
+export class HarmonicOscillatorSolution extends AnalyticalSolution {
+  constructor(
+    private springConstant: number,
+    private mass: number,
+  ) {
+    super();
+  }
+
+  solve(numStates: number, gridConfig: GridConfig): BoundStateResult {
+    return solveHarmonicOscillator(
+      this.springConstant,
+      this.mass,
+      numStates,
+      gridConfig,
+    );
+  }
+
+  createPotential(): PotentialFunction {
+    return createHarmonicOscillatorPotential(this.springConstant);
+  }
+
+  calculateClassicalProbability(
+    energy: number,
+    mass: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateHarmonicOscillatorClassicalProbability(
+      this.springConstant,
+      energy,
+      mass,
+      xGrid,
+    );
+  }
+
+  calculateWavefunctionZeros(
+    stateIndex: number,
+    _energy: number,
+  ): number[] {
+    return calculateHarmonicOscillatorWavefunctionZeros(
+      this.springConstant,
+      this.mass,
+      stateIndex,
+    );
+  }
+
+  calculateTurningPoints(energy: number): { left: number; right: number } {
+    return calculateHarmonicOscillatorTurningPoints(
+      this.springConstant,
+      energy,
+    );
+  }
+
+  calculateWavefunctionSecondDerivative(
+    stateIndex: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateHarmonicOscillatorWavefunctionSecondDerivative(
+      this.springConstant,
+      this.mass,
+      stateIndex,
+      xGrid,
+    );
+  }
 }
 
 /**

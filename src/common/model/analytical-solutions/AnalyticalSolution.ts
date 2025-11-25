@@ -1,0 +1,108 @@
+/**
+ * Abstract base class for analytical solutions to quantum mechanical potentials.
+ *
+ * This class provides a common interface for all analytical solutions, ensuring consistency
+ * across different potential types. Each concrete implementation must provide methods for:
+ * - Solving the Schrödinger equation to get energies and wavefunctions
+ * - Creating the potential function
+ * - Calculating classical probability density
+ * - Finding wavefunction zeros (nodes)
+ * - Determining classical turning points
+ * - Computing wavefunction second derivatives
+ *
+ * @abstract
+ */
+
+import {
+  BoundStateResult,
+  GridConfig,
+  PotentialFunction,
+} from "../PotentialFunction.js";
+
+export abstract class AnalyticalSolution {
+  /**
+   * Solve the Schrödinger equation for this potential analytically.
+   * Returns bound state energies and wavefunctions.
+   *
+   * @param numStates - Number of energy levels to calculate
+   * @param gridConfig - Grid configuration for wavefunction evaluation
+   * @returns Bound state results with exact energies and wavefunctions
+   */
+  abstract solve(
+    numStates: number,
+    gridConfig: GridConfig,
+  ): BoundStateResult;
+
+  /**
+   * Create the potential function V(x).
+   *
+   * @returns Potential function V(x) in Joules
+   */
+  abstract createPotential(): PotentialFunction;
+
+  /**
+   * Calculate classical probability density for this potential.
+   *
+   * For a classical particle with total energy E moving in potential V(x),
+   * the probability density is proportional to 1/v(x), where v(x) is the velocity:
+   * P(x) ∝ 1/√(2m(E - V(x)))
+   *
+   * The result is normalized so that ∫P(x)dx = 1 over the classically allowed region.
+   *
+   * @param energy - Energy of the particle in Joules
+   * @param mass - Particle mass in kg
+   * @param xGrid - Array of x positions in meters
+   * @returns Array of normalized classical probability density values (in 1/meters)
+   */
+  abstract calculateClassicalProbability(
+    energy: number,
+    mass: number,
+    xGrid: number[],
+  ): number[];
+
+  /**
+   * Calculate the positions of wavefunction zeros (nodes).
+   *
+   * For the nth eigenstate, there are typically n-1 interior nodes (zeros).
+   * The exact positions depend on the specific potential.
+   *
+   * @param stateIndex - Index of the eigenstate (0 for ground state, 1 for first excited, etc.)
+   * @param energy - Energy of the eigenstate in Joules (may be needed for some potentials)
+   * @returns Array of x positions (in meters) where the wavefunction is zero
+   */
+  abstract calculateWavefunctionZeros(
+    stateIndex: number,
+    energy: number,
+  ): number[];
+
+  /**
+   * Calculate the classical turning points.
+   *
+   * Turning points occur where the particle's kinetic energy becomes zero,
+   * i.e., where E = V(x). These mark the boundaries of the classically allowed region.
+   *
+   * @param energy - Energy of the particle in Joules
+   * @returns Object with left and right turning point positions (in meters)
+   */
+  abstract calculateTurningPoints(
+    energy: number,
+  ): { left: number; right: number };
+
+  /**
+   * Calculate the second derivative of the wavefunction.
+   *
+   * The second derivative is related to the Schrödinger equation:
+   * ψ''(x) = (2m/ℏ²)[V(x) - E]ψ(x)
+   *
+   * This is useful for verifying that the wavefunction satisfies the Schrödinger equation
+   * and for numerical stability checks.
+   *
+   * @param stateIndex - Index of the eigenstate (0 for ground state, 1 for first excited, etc.)
+   * @param xGrid - Array of x positions in meters where derivatives should be evaluated
+   * @returns Array of second derivative values
+   */
+  abstract calculateWavefunctionSecondDerivative(
+    stateIndex: number,
+    xGrid: number[],
+  ): number[];
+}

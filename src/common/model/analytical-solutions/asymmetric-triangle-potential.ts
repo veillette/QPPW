@@ -40,7 +40,7 @@
  * Boundary condition: ψ(0) = 0 leads to Ai(-αx_n) = 0, giving αx_n = -z_n.
  */
 
-import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
+import { BoundStateResult, GridConfig, PotentialFunction } from "../PotentialFunction.js";
 import { airyAi } from "./math-utilities.js";
 import {
   calculateAiryAlpha,
@@ -49,6 +49,78 @@ import {
   generateGrid,
   normalizeWavefunction,
 } from "./airy-utilities.js";
+import { AnalyticalSolution } from "./AnalyticalSolution.js";
+
+/**
+ * Class-based implementation of asymmetric triangle potential analytical solution.
+ * Extends the AnalyticalSolution abstract base class.
+ */
+export class AsymmetricTrianglePotentialSolution extends AnalyticalSolution {
+  constructor(
+    private slope: number,
+    private wellWidth: number,
+    private mass: number,
+  ) {
+    super();
+  }
+
+  solve(numStates: number, gridConfig: GridConfig): BoundStateResult {
+    return solveAsymmetricTrianglePotential(
+      this.slope,
+      this.wellWidth,
+      this.mass,
+      numStates,
+      gridConfig,
+    );
+  }
+
+  createPotential(): PotentialFunction {
+    return createAsymmetricTrianglePotential(this.slope);
+  }
+
+  calculateClassicalProbability(
+    energy: number,
+    mass: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateAsymmetricTriangleClassicalProbability(
+      this.slope,
+      energy,
+      mass,
+      xGrid,
+    );
+  }
+
+  calculateWavefunctionZeros(
+    stateIndex: number,
+    _energy: number,
+  ): number[] {
+    return calculateAsymmetricTriangleWavefunctionZeros(
+      this.slope,
+      this.mass,
+      stateIndex,
+    );
+  }
+
+  calculateTurningPoints(energy: number): { left: number; right: number } {
+    return calculateAsymmetricTriangleTurningPoints(
+      this.slope,
+      energy,
+    );
+  }
+
+  calculateWavefunctionSecondDerivative(
+    stateIndex: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateAsymmetricTriangleWavefunctionSecondDerivative(
+      this.slope,
+      this.mass,
+      stateIndex,
+      xGrid,
+    );
+  }
+}
 
 /**
  * Analytical solution for the asymmetric triangle potential with infinite wall.

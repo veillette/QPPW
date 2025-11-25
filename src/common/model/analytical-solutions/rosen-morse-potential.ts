@@ -38,8 +38,94 @@
  */
 
 import QuantumConstants from "../QuantumConstants.js";
-import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
+import { BoundStateResult, GridConfig, PotentialFunction } from "../PotentialFunction.js";
 import { jacobiPolynomial, factorial, logGamma } from "./math-utilities.js";
+import { AnalyticalSolution } from "./AnalyticalSolution.js";
+
+/**
+ * Class-based implementation of Rosen-Morse potential analytical solution.
+ * Extends the AnalyticalSolution abstract base class.
+ */
+export class RosenMorsePotentialSolution extends AnalyticalSolution {
+  constructor(
+    private potentialDepth: number,
+    private barrierHeight: number,
+    private wellWidth: number,
+    private mass: number,
+  ) {
+    super();
+  }
+
+  solve(numStates: number, gridConfig: GridConfig): BoundStateResult {
+    return solveRosenMorsePotential(
+      this.potentialDepth,
+      this.barrierHeight,
+      this.wellWidth,
+      this.mass,
+      numStates,
+      gridConfig,
+    );
+  }
+
+  createPotential(): PotentialFunction {
+    return createRosenMorsePotential(
+      this.potentialDepth,
+      this.barrierHeight,
+      this.wellWidth,
+    );
+  }
+
+  calculateClassicalProbability(
+    energy: number,
+    mass: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateRosenMorsePotentialClassicalProbability(
+      this.potentialDepth,
+      this.barrierHeight,
+      this.wellWidth,
+      energy,
+      mass,
+      xGrid,
+    );
+  }
+
+  calculateWavefunctionZeros(
+    stateIndex: number,
+    _energy: number,
+  ): number[] {
+    return calculateRosenMorsePotentialWavefunctionZeros(
+      this.potentialDepth,
+      this.barrierHeight,
+      this.wellWidth,
+      this.mass,
+      stateIndex,
+    );
+  }
+
+  calculateTurningPoints(energy: number): { left: number; right: number } {
+    return calculateRosenMorsePotentialTurningPoints(
+      this.potentialDepth,
+      this.barrierHeight,
+      this.wellWidth,
+      energy,
+    );
+  }
+
+  calculateWavefunctionSecondDerivative(
+    stateIndex: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateRosenMorsePotentialWavefunctionSecondDerivative(
+      this.potentialDepth,
+      this.barrierHeight,
+      this.wellWidth,
+      this.mass,
+      stateIndex,
+      xGrid,
+    );
+  }
+}
 
 /**
  * Analytical solution for the Rosen-Morse potential.

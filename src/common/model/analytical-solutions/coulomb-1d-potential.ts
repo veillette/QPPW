@@ -43,8 +43,78 @@
  */
 
 import QuantumConstants from "../QuantumConstants.js";
-import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
+import { BoundStateResult, GridConfig, PotentialFunction } from "../PotentialFunction.js";
 import { associatedLaguerre } from "./math-utilities.js";
+import { AnalyticalSolution } from "./AnalyticalSolution.js";
+
+/**
+ * Class-based implementation of 1D Coulomb potential analytical solution.
+ * Extends the AnalyticalSolution abstract base class.
+ */
+export class Coulomb1DPotentialSolution extends AnalyticalSolution {
+  constructor(
+    private coulombStrength: number,
+    private mass: number,
+  ) {
+    super();
+  }
+
+  solve(numStates: number, gridConfig: GridConfig): BoundStateResult {
+    return solveCoulomb1DPotential(
+      this.coulombStrength,
+      this.mass,
+      numStates,
+      gridConfig,
+    );
+  }
+
+  createPotential(): PotentialFunction {
+    return createCoulomb1DPotential(this.coulombStrength);
+  }
+
+  calculateClassicalProbability(
+    energy: number,
+    mass: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateCoulomb1DClassicalProbability(
+      this.coulombStrength,
+      energy,
+      mass,
+      xGrid,
+    );
+  }
+
+  calculateWavefunctionZeros(
+    stateIndex: number,
+    _energy: number,
+  ): number[] {
+    return calculateCoulomb1DWavefunctionZeros(
+      this.coulombStrength,
+      this.mass,
+      stateIndex,
+    );
+  }
+
+  calculateTurningPoints(energy: number): { left: number; right: number } {
+    return calculateCoulomb1DTurningPoints(
+      this.coulombStrength,
+      energy,
+    );
+  }
+
+  calculateWavefunctionSecondDerivative(
+    stateIndex: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateCoulomb1DWavefunctionSecondDerivative(
+      this.coulombStrength,
+      this.mass,
+      stateIndex,
+      xGrid,
+    );
+  }
+}
 
 /**
  * Analytical solution for the 1D Coulomb potential.

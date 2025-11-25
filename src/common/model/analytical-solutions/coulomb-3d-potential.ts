@@ -31,8 +31,78 @@
  */
 
 import QuantumConstants from "../QuantumConstants.js";
-import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
+import { BoundStateResult, GridConfig, PotentialFunction } from "../PotentialFunction.js";
 import { associatedLaguerre, factorial } from "./math-utilities.js";
+import { AnalyticalSolution } from "./AnalyticalSolution.js";
+
+/**
+ * Class-based implementation of 3D Coulomb potential analytical solution.
+ * Extends the AnalyticalSolution abstract base class.
+ */
+export class Coulomb3DPotentialSolution extends AnalyticalSolution {
+  constructor(
+    private coulombStrength: number,
+    private mass: number,
+  ) {
+    super();
+  }
+
+  solve(numStates: number, gridConfig: GridConfig): BoundStateResult {
+    return solveCoulomb3DPotential(
+      this.coulombStrength,
+      this.mass,
+      numStates,
+      gridConfig,
+    );
+  }
+
+  createPotential(): PotentialFunction {
+    return createCoulomb3DPotential(this.coulombStrength);
+  }
+
+  calculateClassicalProbability(
+    energy: number,
+    mass: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateCoulomb3DClassicalProbability(
+      this.coulombStrength,
+      energy,
+      mass,
+      xGrid,
+    );
+  }
+
+  calculateWavefunctionZeros(
+    stateIndex: number,
+    _energy: number,
+  ): number[] {
+    return calculateCoulomb3DWavefunctionZeros(
+      this.coulombStrength,
+      this.mass,
+      stateIndex,
+    );
+  }
+
+  calculateTurningPoints(energy: number): { left: number; right: number } {
+    return calculateCoulomb3DTurningPoints(
+      this.coulombStrength,
+      energy,
+    );
+  }
+
+  calculateWavefunctionSecondDerivative(
+    stateIndex: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateCoulomb3DWavefunctionSecondDerivative(
+      this.coulombStrength,
+      this.mass,
+      stateIndex,
+      xGrid,
+    );
+  }
+}
 
 /**
  * Analytical solution for the 3D Coulomb potential (hydrogen atom, radial equation with L=0).
