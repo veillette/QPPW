@@ -460,7 +460,7 @@ export class OneWellModel extends BaseModel {
     if (
       this.potentialTypeProperty.value === PotentialType.HARMONIC_OSCILLATOR
     ) {
-      const springConstant = (4 * wellDepth) / (wellWidth * wellWidth);
+      const springConstant = (8 * wellDepth) / (wellWidth * wellWidth);
       const omega = Math.sqrt(springConstant / mass);
       const maxEnergy = 15 * QuantumConstants.EV_TO_JOULES; // 15 eV
       // E_n = ℏω(n + 1/2), solve for n: n = E/(ℏω) - 1/2
@@ -476,7 +476,7 @@ export class OneWellModel extends BaseModel {
       const maxN = Math.floor(
         Math.sqrt(
           (2 * mass * wellWidth * wellWidth * maxEnergy) /
-            (QuantumConstants.HBAR * QuantumConstants.HBAR * Math.PI * Math.PI),
+          (QuantumConstants.HBAR * QuantumConstants.HBAR * Math.PI * Math.PI),
         ),
       );
       numStates = Math.max(1, Math.min(maxN, 100)); // Cap at 100 for safety
@@ -487,10 +487,10 @@ export class OneWellModel extends BaseModel {
       // Use generous estimate to ensure we get all states
       const estimatedMax = Math.ceil(
         (1 / Math.PI) *
-          Math.sqrt(
-            (2 * mass * wellDepth * wellWidth * wellWidth) /
-              (QuantumConstants.HBAR * QuantumConstants.HBAR),
-          ),
+        Math.sqrt(
+          (2 * mass * wellDepth * wellWidth * wellWidth) /
+          (QuantumConstants.HBAR * QuantumConstants.HBAR),
+        ),
       );
       // Request more states than estimated to ensure we capture all bound states
       numStates = Math.max(10, Math.min(estimatedMax * 2, 100)); // At least 10, cap at 100
@@ -540,7 +540,7 @@ export class OneWellModel extends BaseModel {
         case PotentialType.HARMONIC_OSCILLATOR:
           // Convert well depth to spring constant: k = mω² = m(4V₀/mL²) = 4V₀/L²
           potentialParams.springConstant =
-            (4 * wellDepth) / (wellWidth * wellWidth);
+            (8 * wellDepth) / (wellWidth * wellWidth);
           break;
         case PotentialType.MORSE:
           // Morse potential: V(x) = D_e * (1 - exp(-(x - x_e)/a))^2
@@ -709,7 +709,10 @@ export class OneWellModel extends BaseModel {
         classicalProbability.push(0);
       } else {
         // P(x) ∝ 1/v(x) = 1/√[2(E - V(x))/m] = √[m/(2(E - V(x)))]
-        const probability = 1 / Math.sqrt(2 * kineticEnergy / mass);
+        // Add epsilon to avoid division by zero at turning points
+        const epsilon = 1e-10 * QuantumConstants.EV_TO_JOULES;
+        const probability =
+          1 / Math.sqrt((2 * Math.max(kineticEnergy, epsilon)) / mass);
         classicalProbability.push(probability);
 
         // For normalization (using trapezoidal rule)
@@ -759,7 +762,7 @@ export class OneWellModel extends BaseModel {
 
         case PotentialType.HARMONIC_OSCILLATOR: {
           // V = (1/2) * k * x^2
-          const springConstant = (4 * wellDepth) / (wellWidth * wellWidth);
+          const springConstant = (8 * wellDepth) / (wellWidth * wellWidth);
           V = 0.5 * springConstant * x * x;
           break;
         }
@@ -1015,7 +1018,7 @@ export class OneWellModel extends BaseModel {
           const displacementIndex = Math.round(
             ((displacement + 4 * QuantumConstants.NM_TO_M) /
               (8 * QuantumConstants.NM_TO_M)) *
-              (this.boundStateResult!.xGrid.length - 1),
+            (this.boundStateResult!.xGrid.length - 1),
           );
           const clampedIndex = Math.max(
             0,
