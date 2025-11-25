@@ -40,7 +40,14 @@ export {
   calculateMorsePotentialTurningPoints,
   calculateMorsePotentialWavefunctionSecondDerivative,
 } from "./morse-potential.js";
-export { solvePoschlTellerPotential } from "./poschl-teller-potential.js";
+export {
+  solvePoschlTellerPotential,
+  createPoschlTellerPotential,
+  calculatePoschlTellerClassicalProbability,
+  calculatePoschlTellerWavefunctionZeros,
+  calculatePoschlTellerTurningPoints,
+  calculatePoschlTellerWavefunctionSecondDerivative,
+} from "./poschl-teller-potential.js";
 export { solveRosenMorsePotential } from "./rosen-morse-potential.js";
 export { solveEckartPotential } from "./eckart-potential.js";
 export { solveAsymmetricTrianglePotential } from "./asymmetric-triangle-potential.js";
