@@ -1326,6 +1326,7 @@ export class EnergyChartNode extends Node {
     if (boundStates) {
       this.updateEnergyLevelStyling();
       this.updateTotalEnergyLine(boundStates);
+      this.updateClassicalTurningPoints(boundStates);
     }
   }
 
