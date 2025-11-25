@@ -262,7 +262,7 @@ export class IntroControlPanelNode extends Node {
         const classicalProbabilityCheckboxContent = new Checkbox(
             this.model.showClassicalProbabilityProperty,
             new Text(stringManager.classicalProbabilityDensityStringProperty, {
-                font: "12px sans-serif",
+                font: new PhetFont(12),
                 fill: QPPWColors.textFillProperty,
             }),
             { boxWidth: 16 },

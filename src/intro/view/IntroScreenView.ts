@@ -50,6 +50,7 @@ export class IntroScreenView extends ScreenView {
 
         // Position charts
         this.energyChart.left = margin;
+        //TODO why -200?    
         this.energyChart.top = 10 - 200;
 
         this.waveFunctionChart.left = margin;
