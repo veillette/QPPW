@@ -404,8 +404,8 @@ export class StringManager {
     return this.stringProperties.probabilityDensityStringProperty;
   }
 
-  get classicalProbabilityStringProperty(): ReadOnlyProperty<string> {
-    return this.stringProperties.classicalProbabilityStringProperty;
+  get classicalProbabilityDensityStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.classicalProbabilityDensityStringProperty;
   }
 
   get phaseColorStringProperty(): ReadOnlyProperty<string> {

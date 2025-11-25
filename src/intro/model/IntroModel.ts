@@ -297,18 +297,18 @@ export class IntroModel extends BaseModel {
         for (let i = 0; i < xGrid.length; i++) {
             const kineticEnergy = energy - potential[i];
 
-            if (kineticEnergy <= 0) {
-                classicalProbability.push(0);
-            } else {
-                const epsilon = 1e-10 * QuantumConstants.EV_TO_JOULES;
-                const probability =
+            let probability = 0;
+            if (kineticEnergy > 0) {
+                // Increase epsilon to avoid extreme spikes at turning points
+                const epsilon = 1e-6 * QuantumConstants.EV_TO_JOULES;
+                probability =
                     1 / Math.sqrt((2 * Math.max(kineticEnergy, epsilon)) / mass);
-                classicalProbability.push(probability);
+            }
+            classicalProbability.push(probability);
 
-                if (i > 0) {
-                    const dx = xGrid[i] - xGrid[i - 1];
-                    integralSum += (probability + classicalProbability[i - 1]) * dx / 2;
-                }
+            if (i > 0) {
+                const dx = xGrid[i] - xGrid[i - 1];
+                integralSum += (probability + classicalProbability[i - 1]) * dx / 2;
             }
         }
 
