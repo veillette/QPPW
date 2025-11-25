@@ -133,11 +133,7 @@ function trapezoidalIntegration(y: number[], dx: number): number {
 /**
  * Compute integral of wavefunction product: ∫ψ_m(x) * ψ_n(x) dx
  */
-function computeOverlap(
-  psi_m: number[],
-  psi_n: number[],
-  dx: number,
-): number {
+function computeOverlap(psi_m: number[], psi_n: number[], dx: number): number {
   const product = psi_m.map((val, i) => val * psi_n[i]);
   return trapezoidalIntegration(product, dx);
 }
@@ -280,9 +276,10 @@ function testOrthogonality(
 /**
  * Test node counting
  */
-function testNodeCounting(
-  wavefunctions: number[][],
-): { passed: boolean; details: string[] } {
+function testNodeCounting(wavefunctions: number[][]): {
+  passed: boolean;
+  details: string[];
+} {
   const details: string[] = [];
   let allPassed = true;
 
@@ -381,7 +378,10 @@ function testEigenvalues(
   let maxError = 0;
   let allPassed = true;
 
-  const numToTest = Math.min(numericalEnergies.length, analyticalEnergies.length);
+  const numToTest = Math.min(
+    numericalEnergies.length,
+    analyticalEnergies.length,
+  );
 
   for (let n = 0; n < numToTest; n++) {
     const error = percentageError(numericalEnergies[n], analyticalEnergies[n]);
@@ -454,12 +454,14 @@ function testMethodComprehensive(
 
     // Renormalize wavefunctions using the actual grid spacing
     // (solvers may upsample which affects normalization)
-    const renormalizedWavefunctions = numericalResult.wavefunctions.map((psi) => {
-      const normSquared = psi.map((val) => val * val);
-      const integral = trapezoidalIntegration(normSquared, dx);
-      const norm = Math.sqrt(integral);
-      return psi.map((val) => val / norm);
-    });
+    const renormalizedWavefunctions = numericalResult.wavefunctions.map(
+      (psi) => {
+        const normSquared = psi.map((val) => val * val);
+        const integral = trapezoidalIntegration(normSquared, dx);
+        const norm = Math.sqrt(integral);
+        return psi.map((val) => val / norm);
+      },
+    );
 
     // Test 1: Energy eigenvalues
     const energyTest = testEigenvalues(
@@ -1019,7 +1021,10 @@ function testWavefunctionNumerovMethod(): void {
     details.push(...nodeTest.details);
 
     // Test parity
-    const parityTest = testParityAlternation(result.wavefunctions, result.xGrid);
+    const parityTest = testParityAlternation(
+      result.wavefunctions,
+      result.xGrid,
+    );
     details.push(...parityTest.details);
 
     // Test edge decay
@@ -1104,7 +1109,9 @@ function runAllTests(): void {
   console.log(`Total tests: ${totalTests}`);
   console.log(`Passed: ${passedTests} ✅`);
   console.log(`Failed: ${failedTests} ❌`);
-  console.log(`Success rate: ${((passedTests / totalTests) * 100).toFixed(1)}%`);
+  console.log(
+    `Success rate: ${((passedTests / totalTests) * 100).toFixed(1)}%`,
+  );
   console.log(`Total execution time: ${totalTime} seconds`);
   console.log("═".repeat(80));
 

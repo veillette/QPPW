@@ -160,7 +160,7 @@ export abstract class BaseModel {
       // Trapezoidal integration for normalization
       if (i > 0) {
         const dx = xGrid[i] - xGrid[i - 1];
-        integralSum += (probability + classicalProbability[i - 1]) * dx / 2;
+        integralSum += ((probability + classicalProbability[i - 1]) * dx) / 2;
       }
     }
 

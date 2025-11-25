@@ -34,7 +34,11 @@
  */
 
 import QuantumConstants from "../QuantumConstants.js";
-import { BoundStateResult, GridConfig, PotentialFunction } from "../PotentialFunction.js";
+import {
+  BoundStateResult,
+  GridConfig,
+  PotentialFunction,
+} from "../PotentialFunction.js";
 import { jacobiPolynomial, factorial } from "./math-utilities.js";
 import { AnalyticalSolution } from "./AnalyticalSolution.js";
 
@@ -79,10 +83,7 @@ export class PoschlTellerPotentialSolution extends AnalyticalSolution {
     );
   }
 
-  calculateWavefunctionZeros(
-    stateIndex: number,
-    _energy: number,
-  ): number[] {
+  calculateWavefunctionZeros(stateIndex: number, _energy: number): number[] {
     return calculatePoschlTellerWavefunctionZeros(
       this.potentialDepth,
       this.wellWidth,
@@ -91,7 +92,9 @@ export class PoschlTellerPotentialSolution extends AnalyticalSolution {
     );
   }
 
-  calculateTurningPoints(energy: number): Array<{ left: number; right: number }> {
+  calculateTurningPoints(
+    energy: number,
+  ): Array<{ left: number; right: number }> {
     const points = calculatePoschlTellerTurningPoints(
       this.potentialDepth,
       this.wellWidth,
@@ -262,7 +265,7 @@ export function calculatePoschlTellerClassicalProbability(
 
       if (i > 0) {
         const dx = xGrid[i] - xGrid[i - 1];
-        integralSum += (probability + classicalProbability[i - 1]) * dx / 2;
+        integralSum += ((probability + classicalProbability[i - 1]) * dx) / 2;
       }
     }
   }

@@ -467,7 +467,12 @@ export class TwoWellsModel extends BaseModel {
     const potential = this.calculatePotentialEnergy(xGrid);
 
     // Use BaseModel's common method to calculate classical probability density
-    return this.calculateClassicalProbabilityDensity(potential, energy, mass, xGrid);
+    return this.calculateClassicalProbabilityDensity(
+      potential,
+      energy,
+      mass,
+      xGrid,
+    );
   }
 
   /**

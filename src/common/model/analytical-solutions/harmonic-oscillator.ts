@@ -304,10 +304,7 @@ export class HarmonicOscillatorSolution extends AnalyticalSolution {
     );
   }
 
-  calculateWavefunctionZeros(
-    stateIndex: number,
-    _energy: number,
-  ): number[] {
+  calculateWavefunctionZeros(stateIndex: number, _energy: number): number[] {
     return calculateHarmonicOscillatorWavefunctionZeros(
       this.springConstant,
       this.mass,
@@ -315,7 +312,9 @@ export class HarmonicOscillatorSolution extends AnalyticalSolution {
     );
   }
 
-  calculateTurningPoints(energy: number): Array<{ left: number; right: number }> {
+  calculateTurningPoints(
+    energy: number,
+  ): Array<{ left: number; right: number }> {
     const points = calculateHarmonicOscillatorTurningPoints(
       this.springConstant,
       energy,

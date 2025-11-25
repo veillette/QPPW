@@ -599,9 +599,9 @@ export class EnergyChartNode extends Node {
     }
 
     // Get turning points
-    const turningPoints = (this.model as OneWellModel).getClassicalTurningPoints(
-      selectedIndex,
-    );
+    const turningPoints = (
+      this.model as OneWellModel
+    ).getClassicalTurningPoints(selectedIndex);
 
     if (!turningPoints) {
       this.leftTurningPointLine.visible = false;

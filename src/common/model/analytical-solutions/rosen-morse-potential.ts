@@ -38,7 +38,11 @@
  */
 
 import QuantumConstants from "../QuantumConstants.js";
-import { BoundStateResult, GridConfig, PotentialFunction } from "../PotentialFunction.js";
+import {
+  BoundStateResult,
+  GridConfig,
+  PotentialFunction,
+} from "../PotentialFunction.js";
 import { jacobiPolynomial, factorial, logGamma } from "./math-utilities.js";
 import { AnalyticalSolution } from "./AnalyticalSolution.js";
 
@@ -90,10 +94,7 @@ export class RosenMorsePotentialSolution extends AnalyticalSolution {
     );
   }
 
-  calculateWavefunctionZeros(
-    stateIndex: number,
-    _energy: number,
-  ): number[] {
+  calculateWavefunctionZeros(stateIndex: number, _energy: number): number[] {
     return calculateRosenMorsePotentialWavefunctionZeros(
       this.potentialDepth,
       this.barrierHeight,
@@ -103,7 +104,9 @@ export class RosenMorsePotentialSolution extends AnalyticalSolution {
     );
   }
 
-  calculateTurningPoints(energy: number): Array<{ left: number; right: number }> {
+  calculateTurningPoints(
+    energy: number,
+  ): Array<{ left: number; right: number }> {
     const points = calculateRosenMorsePotentialTurningPoints(
       this.potentialDepth,
       this.barrierHeight,
@@ -332,7 +335,7 @@ export function calculateRosenMorsePotentialClassicalProbability(
 
       if (i > 0) {
         const dx = xGrid[i] - xGrid[i - 1];
-        integralSum += (probability + classicalProbability[i - 1]) * dx / 2;
+        integralSum += ((probability + classicalProbability[i - 1]) * dx) / 2;
       }
     }
   }

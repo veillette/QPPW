@@ -49,7 +49,11 @@
  */
 
 import QuantumConstants from "../QuantumConstants.js";
-import { BoundStateResult, GridConfig, PotentialFunction } from "../PotentialFunction.js";
+import {
+  BoundStateResult,
+  GridConfig,
+  PotentialFunction,
+} from "../PotentialFunction.js";
 import { airyAi, airyBi, airyAiPrime, airyBiPrime } from "./math-utilities.js";
 import {
   calculateAiryAlpha,
@@ -104,10 +108,7 @@ export class TriangularPotentialSolution extends AnalyticalSolution {
     );
   }
 
-  calculateWavefunctionZeros(
-    _stateIndex: number,
-    energy: number,
-  ): number[] {
+  calculateWavefunctionZeros(_stateIndex: number, energy: number): number[] {
     return calculateTriangularPotentialWavefunctionZeros(
       this.height,
       this.width,
@@ -117,7 +118,9 @@ export class TriangularPotentialSolution extends AnalyticalSolution {
     );
   }
 
-  calculateTurningPoints(energy: number): Array<{ left: number; right: number }> {
+  calculateTurningPoints(
+    energy: number,
+  ): Array<{ left: number; right: number }> {
     const points = calculateTriangularPotentialTurningPoints(
       this.height,
       this.width,
@@ -136,7 +139,7 @@ export class TriangularPotentialSolution extends AnalyticalSolution {
     const result = this.solve(stateIndex + 1, {
       xMin: xGrid[0],
       xMax: xGrid[xGrid.length - 1],
-      numPoints: 100
+      numPoints: 100,
     });
     const energy = result.energies[stateIndex];
 
@@ -519,7 +522,7 @@ export function calculateTriangularPotentialClassicalProbability(
 
       if (i > 0) {
         const dx = xGrid[i] - xGrid[i - 1];
-        integralSum += (probability + classicalProbability[i - 1]) * dx / 2;
+        integralSum += ((probability + classicalProbability[i - 1]) * dx) / 2;
       }
     }
   }

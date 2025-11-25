@@ -195,7 +195,9 @@ function testBasicProperties() {
       `State ${i}: Normalization error ${normError.toExponential(2)} exceeds tolerance`,
     );
   }
-  console.log(`  ✓ Normalization: All states within ${NORMALIZATION_TOLERANCE * 100}%`);
+  console.log(
+    `  ✓ Normalization: All states within ${NORMALIZATION_TOLERANCE * 100}%`,
+  );
 
   // Test orthogonality
   for (let i = 0; i < Math.min(5, wavefunctions.length - 1); i++) {
@@ -211,7 +213,9 @@ function testBasicProperties() {
       );
     }
   }
-  console.log(`  ✓ Orthogonality: All pairs within ${ORTHOGONALITY_TOLERANCE * 100}%`);
+  console.log(
+    `  ✓ Orthogonality: All pairs within ${ORTHOGONALITY_TOLERANCE * 100}%`,
+  );
 
   // Test energy ordering (strict monotonicity)
   for (let i = 0; i < energies.length - 1; i++) {
@@ -234,10 +238,7 @@ function testNodeCounts() {
 
   for (let i = 0; i < Math.min(10, wavefunctions.length); i++) {
     const nodes = countNodes(wavefunctions[i]);
-    assert(
-      nodes === i,
-      `State ${i}: Expected ${i} nodes, found ${nodes}`,
-    );
+    assert(nodes === i, `State ${i}: Expected ${i} nodes, found ${nodes}`);
   }
   console.log("  ✓ Node counts: All states have correct number of nodes");
 }
@@ -294,7 +295,9 @@ function testVaryingWellCount() {
       `${nWells} wells: Ground state normalization error ${normError.toExponential(2)}`,
     );
 
-    console.log(`  ✓ ${nWells} wells: ${energies.length} states found, ground state E₀ = ${energies[0].toFixed(4)} eV`);
+    console.log(
+      `  ✓ ${nWells} wells: ${energies.length} states found, ground state E₀ = ${energies[0].toFixed(4)} eV`,
+    );
   }
 }
 
@@ -361,7 +364,9 @@ function testVaryingWellDepth() {
       `Depth ${depth}eV: First excited state normalization error ${normError.toExponential(2)}`,
     );
 
-    console.log(`  ✓ Depth ${depth}eV: ${energies.length} bound states, E₀ = ${energies[0].toFixed(4)} eV`);
+    console.log(
+      `  ✓ Depth ${depth}eV: ${energies.length} bound states, E₀ = ${energies[0].toFixed(4)} eV`,
+    );
   }
 }
 
@@ -392,7 +397,9 @@ function testVaryingWellSeparation() {
       `Separation ${sep}nm: Normalization error ${normError.toExponential(2)}`,
     );
 
-    console.log(`  ✓ Separation ${sep}nm: E₀ = ${energies[0].toFixed(4)} eV, ${energies.length} states`);
+    console.log(
+      `  ✓ Separation ${sep}nm: E₀ = ${energies[0].toFixed(4)} eV, ${energies.length} states`,
+    );
   }
 }
 
@@ -413,7 +420,8 @@ function testSingleWellLimit() {
 
   for (let n = 1; n <= 5; n++) {
     const expectedEnergy =
-      ((n * n * Math.PI * Math.PI * HBAR * HBAR) / (2 * m * L * L)) /
+      (n * n * Math.PI * Math.PI * HBAR * HBAR) /
+      (2 * m * L * L) /
       EV_TO_JOULES;
     const actualEnergy = energies[n - 1];
     const relError = Math.abs((actualEnergy - expectedEnergy) / expectedEnergy);
@@ -428,13 +436,12 @@ function testSingleWellLimit() {
   // Check node counts
   for (let i = 0; i < 5; i++) {
     const nodes = countNodes(wavefunctions[i]);
-    assert(
-      nodes === i,
-      `State ${i}: Expected ${i} nodes, found ${nodes}`,
-    );
+    assert(nodes === i, `State ${i}: Expected ${i} nodes, found ${nodes}`);
   }
 
-  console.log("  ✓ Single well energies match infinite square well (within 10%)");
+  console.log(
+    "  ✓ Single well energies match infinite square well (within 10%)",
+  );
 }
 
 /**
@@ -457,10 +464,7 @@ function testManyWellsExtreme() {
     const nodes = countNodes(wavefunctions[i]);
     const normError = Math.abs(norm - 1.0);
 
-    assert(
-      nodes === i,
-      `State ${i}: Expected ${i} nodes, found ${nodes}`,
-    );
+    assert(nodes === i, `State ${i}: Expected ${i} nodes, found ${nodes}`);
 
     assert(
       normError < NORMALIZATION_TOLERANCE,
@@ -468,7 +472,9 @@ function testManyWellsExtreme() {
     );
   }
 
-  console.log(`  ✓ 10 wells: ${energies.length} states, all low-lying states well-behaved`);
+  console.log(
+    `  ✓ 10 wells: ${energies.length} states, all low-lying states well-behaved`,
+  );
 }
 
 /**
@@ -616,13 +622,21 @@ function runAllTests() {
     testPhysicalEnergyBounds();
     testSymmetryProperties();
 
-    console.log("\n╔═══════════════════════════════════════════════════════════╗");
-    console.log("║                      TEST SUMMARY                          ║");
-    console.log("╚═══════════════════════════════════════════════════════════╝");
+    console.log(
+      "\n╔═══════════════════════════════════════════════════════════╗",
+    );
+    console.log(
+      "║                      TEST SUMMARY                          ║",
+    );
+    console.log(
+      "╚═══════════════════════════════════════════════════════════╝",
+    );
     console.log(`  Total tests: ${totalTests}`);
     console.log(`  ✓ Passed: ${passedTests}`);
     console.log(`  ✗ Failed: ${failedTests}`);
-    console.log(`  Success rate: ${((passedTests / totalTests) * 100).toFixed(1)}%`);
+    console.log(
+      `  Success rate: ${((passedTests / totalTests) * 100).toFixed(1)}%`,
+    );
 
     if (failedTests === 0) {
       console.log("\n  🎉 All tests passed!");

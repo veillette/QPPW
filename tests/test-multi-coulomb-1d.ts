@@ -180,11 +180,11 @@ function checkAsymptoticDecay(
 
   // Check decay at 75% and 90% of grid extent
   const x75Index = Math.floor(x.length * 0.75);
-  const x90Index = Math.floor(x.length * 0.90);
+  const x90Index = Math.floor(x.length * 0.9);
 
   // For left side
   const left25Index = Math.floor(x.length * 0.25);
-  const left10Index = Math.floor(x.length * 0.10);
+  const left10Index = Math.floor(x.length * 0.1);
 
   // Calculate expected decay ratio
   const dx = x[x90Index] - x[x75Index];
@@ -218,10 +218,7 @@ function testBasicProperties() {
   const { xGrid, wavefunctions, energies } = result;
 
   // Test that we found bound states
-  assert(
-    energies.length > 0,
-    "No bound states found",
-  );
+  assert(energies.length > 0, "No bound states found");
 
   // Test normalization
   for (let i = 0; i < Math.min(10, wavefunctions.length); i++) {
@@ -232,7 +229,9 @@ function testBasicProperties() {
       `State ${i}: Normalization error ${normError.toExponential(2)} exceeds tolerance`,
     );
   }
-  console.log(`  ✓ Normalization: All states within ${NORMALIZATION_TOLERANCE * 100}%`);
+  console.log(
+    `  ✓ Normalization: All states within ${NORMALIZATION_TOLERANCE * 100}%`,
+  );
 
   // Test orthogonality
   for (let i = 0; i < Math.min(5, wavefunctions.length - 1); i++) {
@@ -248,7 +247,9 @@ function testBasicProperties() {
       );
     }
   }
-  console.log(`  ✓ Orthogonality: All pairs within ${ORTHOGONALITY_TOLERANCE * 100}%`);
+  console.log(
+    `  ✓ Orthogonality: All pairs within ${ORTHOGONALITY_TOLERANCE * 100}%`,
+  );
 
   // Test energy ordering (strict monotonicity)
   for (let i = 0; i < energies.length - 1; i++) {
@@ -291,10 +292,7 @@ function testNodeCounts() {
 
   for (let i = 0; i < Math.min(10, wavefunctions.length); i++) {
     const nodes = countNodes(wavefunctions[i]);
-    assert(
-      nodes === i,
-      `State ${i}: Expected ${i} nodes, found ${nodes}`,
-    );
+    assert(nodes === i, `State ${i}: Expected ${i} nodes, found ${nodes}`);
   }
   console.log("  ✓ Node counts: All states have correct number of nodes");
 }
@@ -362,7 +360,9 @@ function testVaryingCenterCount() {
       `${nCenters} centers: Ground state normalization error ${normError.toExponential(2)}`,
     );
 
-    console.log(`  ✓ ${nCenters} centers: ${energies.length} states, E₀ = ${energies[0].toFixed(4)} eV`);
+    console.log(
+      `  ✓ ${nCenters} centers: ${energies.length} states, E₀ = ${energies[0].toFixed(4)} eV`,
+    );
   }
 }
 
@@ -395,10 +395,14 @@ function testVaryingCenterSpacing() {
       `Spacing ${spacing}nm: Normalization error ${normError.toExponential(2)}`,
     );
 
-    console.log(`  ✓ Spacing ${spacing}nm: E₀ = ${energies[0].toFixed(4)} eV, ${energies.length} states`);
+    console.log(
+      `  ✓ Spacing ${spacing}nm: E₀ = ${energies[0].toFixed(4)} eV, ${energies.length} states`,
+    );
   }
 
-  console.log("  ✓ Ground state energy becomes less negative with increasing spacing");
+  console.log(
+    "  ✓ Ground state energy becomes less negative with increasing spacing",
+  );
 }
 
 /**
@@ -435,7 +439,9 @@ function testVaryingCoulombStrength() {
       `Depth ${depth}eV: First excited state normalization error ${normError.toExponential(2)}`,
     );
 
-    console.log(`  ✓ Depth ${depth}eV: ${energies.length} states, E₀ = ${energies[0].toFixed(4)} eV`);
+    console.log(
+      `  ✓ Depth ${depth}eV: ${energies.length} states, E₀ = ${energies[0].toFixed(4)} eV`,
+    );
   }
 }
 
@@ -469,7 +475,9 @@ function testSingleCenterLimit() {
     );
   }
 
-  console.log(`  ✓ Single center: ${energies.length} states, behaves like Coulomb 1D`);
+  console.log(
+    `  ✓ Single center: ${energies.length} states, behaves like Coulomb 1D`,
+  );
 }
 
 /**
@@ -492,8 +500,12 @@ function testWellSeparatedCenters() {
   const splitting12 = Math.abs((e2 - e1) / e1);
 
   console.log(`  E₀ = ${e0.toFixed(4)} eV`);
-  console.log(`  E₁ = ${e1.toFixed(4)} eV (splitting: ${(splitting01 * 100).toFixed(2)}%)`);
-  console.log(`  E₂ = ${e2.toFixed(4)} eV (splitting: ${(splitting12 * 100).toFixed(2)}%)`);
+  console.log(
+    `  E₁ = ${e1.toFixed(4)} eV (splitting: ${(splitting01 * 100).toFixed(2)}%)`,
+  );
+  console.log(
+    `  E₂ = ${e2.toFixed(4)} eV (splitting: ${(splitting12 * 100).toFixed(2)}%)`,
+  );
 
   // With well-separated centers, splittings should be small
   assert(
@@ -501,7 +513,9 @@ function testWellSeparatedCenters() {
     `Well-separated: E₀-E₁ splitting ${(splitting01 * 100).toFixed(1)}% too large`,
   );
 
-  console.log("  ✓ Well-separated centers: Low energy splitting consistent with weak coupling");
+  console.log(
+    "  ✓ Well-separated centers: Low energy splitting consistent with weak coupling",
+  );
 }
 
 /**
@@ -560,10 +574,7 @@ function testManyCentersExtreme() {
     const nodes = countNodes(wavefunctions[i]);
     const normError = Math.abs(norm - 1.0);
 
-    assert(
-      nodes === i,
-      `State ${i}: Expected ${i} nodes, found ${nodes}`,
-    );
+    assert(nodes === i, `State ${i}: Expected ${i} nodes, found ${nodes}`);
 
     assert(
       normError < NORMALIZATION_TOLERANCE,
@@ -576,7 +587,9 @@ function testManyCentersExtreme() {
     );
   }
 
-  console.log(`  ✓ 10 centers: ${energies.length} states, all low-lying states well-behaved`);
+  console.log(
+    `  ✓ 10 centers: ${energies.length} states, all low-lying states well-behaved`,
+  );
 }
 
 /**
@@ -600,10 +613,14 @@ function testParticleMassVariation() {
     );
     previousEnergy = energies[0];
 
-    console.log(`  ✓ Mass ${mass}mₑ: E₀ = ${energies[0].toFixed(4)} eV, ${energies.length} states`);
+    console.log(
+      `  ✓ Mass ${mass}mₑ: E₀ = ${energies[0].toFixed(4)} eV, ${energies.length} states`,
+    );
   }
 
-  console.log("  ✓ Ground state energy becomes more negative with particle mass");
+  console.log(
+    "  ✓ Ground state energy becomes more negative with particle mass",
+  );
 }
 
 /**
@@ -628,13 +645,21 @@ function runAllTests() {
     testManyCentersExtreme();
     testParticleMassVariation();
 
-    console.log("\n╔═══════════════════════════════════════════════════════════╗");
-    console.log("║                      TEST SUMMARY                          ║");
-    console.log("╚═══════════════════════════════════════════════════════════╝");
+    console.log(
+      "\n╔═══════════════════════════════════════════════════════════╗",
+    );
+    console.log(
+      "║                      TEST SUMMARY                          ║",
+    );
+    console.log(
+      "╚═══════════════════════════════════════════════════════════╝",
+    );
     console.log(`  Total tests: ${totalTests}`);
     console.log(`  ✓ Passed: ${passedTests}`);
     console.log(`  ✗ Failed: ${failedTests}`);
-    console.log(`  Success rate: ${((passedTests / totalTests) * 100).toFixed(1)}%`);
+    console.log(
+      `  Success rate: ${((passedTests / totalTests) * 100).toFixed(1)}%`,
+    );
 
     if (failedTests === 0) {
       console.log("\n  🎉 All tests passed!");

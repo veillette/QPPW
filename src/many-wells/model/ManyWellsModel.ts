@@ -380,7 +380,12 @@ export class ManyWellsModel extends BaseModel {
     const potential = this.calculatePotentialEnergy(xGrid);
 
     // Use BaseModel's common method to calculate classical probability density
-    return this.calculateClassicalProbabilityDensity(potential, energy, mass, xGrid);
+    return this.calculateClassicalProbabilityDensity(
+      potential,
+      energy,
+      mass,
+      xGrid,
+    );
   }
 
   /**
@@ -409,7 +414,8 @@ export class ManyWellsModel extends BaseModel {
           const period = wellWidth + wellSeparation;
 
           // Calculate total extent of the well array
-          const totalExtent = numberOfWells * wellWidth + (numberOfWells - 1) * wellSeparation;
+          const totalExtent =
+            numberOfWells * wellWidth + (numberOfWells - 1) * wellSeparation;
           const arrayStart = -totalExtent / 2;
 
           let inWell = false;

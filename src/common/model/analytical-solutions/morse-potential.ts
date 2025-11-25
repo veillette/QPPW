@@ -35,7 +35,11 @@
  */
 
 import QuantumConstants from "../QuantumConstants.js";
-import { BoundStateResult, GridConfig, PotentialFunction } from "../PotentialFunction.js";
+import {
+  BoundStateResult,
+  GridConfig,
+  PotentialFunction,
+} from "../PotentialFunction.js";
 import { associatedLaguerre, factorial, gamma } from "./math-utilities.js";
 import { AnalyticalSolution } from "./AnalyticalSolution.js";
 
@@ -87,10 +91,7 @@ export class MorsePotentialSolution extends AnalyticalSolution {
     );
   }
 
-  calculateWavefunctionZeros(
-    stateIndex: number,
-    _energy: number,
-  ): number[] {
+  calculateWavefunctionZeros(stateIndex: number, _energy: number): number[] {
     return calculateMorsePotentialWavefunctionZeros(
       this.dissociationEnergy,
       this.wellWidth,
@@ -100,7 +101,9 @@ export class MorsePotentialSolution extends AnalyticalSolution {
     );
   }
 
-  calculateTurningPoints(energy: number): Array<{ left: number; right: number }> {
+  calculateTurningPoints(
+    energy: number,
+  ): Array<{ left: number; right: number }> {
     const points = calculateMorsePotentialTurningPoints(
       this.dissociationEnergy,
       this.wellWidth,
@@ -282,12 +285,13 @@ export function calculateMorsePotentialClassicalProbability(
       classicalProbability.push(0);
     } else {
       const epsilon = 1e-10 * Math.abs(dissociationEnergy);
-      const probability = 1 / Math.sqrt((2 * Math.max(kineticEnergy, epsilon)) / mass);
+      const probability =
+        1 / Math.sqrt((2 * Math.max(kineticEnergy, epsilon)) / mass);
       classicalProbability.push(probability);
 
       if (i > 0) {
         const dx = xGrid[i] - xGrid[i - 1];
-        integralSum += (probability + classicalProbability[i - 1]) * dx / 2;
+        integralSum += ((probability + classicalProbability[i - 1]) * dx) / 2;
       }
     }
   }

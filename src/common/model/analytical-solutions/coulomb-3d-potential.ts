@@ -31,7 +31,11 @@
  */
 
 import QuantumConstants from "../QuantumConstants.js";
-import { BoundStateResult, GridConfig, PotentialFunction } from "../PotentialFunction.js";
+import {
+  BoundStateResult,
+  GridConfig,
+  PotentialFunction,
+} from "../PotentialFunction.js";
 import { associatedLaguerre, factorial } from "./math-utilities.js";
 import { AnalyticalSolution } from "./AnalyticalSolution.js";
 
@@ -73,10 +77,7 @@ export class Coulomb3DPotentialSolution extends AnalyticalSolution {
     );
   }
 
-  calculateWavefunctionZeros(
-    stateIndex: number,
-    _energy: number,
-  ): number[] {
+  calculateWavefunctionZeros(stateIndex: number, _energy: number): number[] {
     return calculateCoulomb3DWavefunctionZeros(
       this.coulombStrength,
       this.mass,
@@ -84,7 +85,9 @@ export class Coulomb3DPotentialSolution extends AnalyticalSolution {
     );
   }
 
-  calculateTurningPoints(energy: number): Array<{ left: number; right: number }> {
+  calculateTurningPoints(
+    energy: number,
+  ): Array<{ left: number; right: number }> {
     const points = calculateCoulomb3DTurningPoints(
       this.coulombStrength,
       energy,
@@ -255,7 +258,7 @@ export function calculateCoulomb3DClassicalProbability(
 
       if (i > 0) {
         const dx = xGrid[i] - xGrid[i - 1];
-        integralSum += (probability + classicalProbability[i - 1]) * dx / 2;
+        integralSum += ((probability + classicalProbability[i - 1]) * dx) / 2;
       }
     }
   }

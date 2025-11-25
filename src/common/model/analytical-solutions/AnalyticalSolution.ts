@@ -28,10 +28,7 @@ export abstract class AnalyticalSolution {
    * @param gridConfig - Grid configuration for wavefunction evaluation
    * @returns Bound state results with exact energies and wavefunctions
    */
-  abstract solve(
-    numStates: number,
-    gridConfig: GridConfig,
-  ): BoundStateResult;
+  abstract solve(numStates: number, gridConfig: GridConfig): BoundStateResult;
 
   /**
    * Create the potential function V(x).

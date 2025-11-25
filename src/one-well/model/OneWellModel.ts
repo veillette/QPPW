@@ -407,14 +407,11 @@ export class OneWellModel extends BaseModel {
       // Calculate dx for integration (using trapezoidal rule)
       let dx = 0;
       if (i === 0) {
-        dx =
-          ((xGrid[1] - xGrid[0]) / 2) * QuantumConstants.M_TO_NM;
+        dx = ((xGrid[1] - xGrid[0]) / 2) * QuantumConstants.M_TO_NM;
       } else if (i === xGrid.length - 1) {
-        dx =
-          ((xGrid[i] - xGrid[i - 1]) / 2) * QuantumConstants.M_TO_NM;
+        dx = ((xGrid[i] - xGrid[i - 1]) / 2) * QuantumConstants.M_TO_NM;
       } else {
-        dx =
-          ((xGrid[i + 1] - xGrid[i - 1]) / 2) * QuantumConstants.M_TO_NM;
+        dx = ((xGrid[i + 1] - xGrid[i - 1]) / 2) * QuantumConstants.M_TO_NM;
       }
 
       totalProbability += probabilityDensity * dx;
@@ -512,7 +509,7 @@ export class OneWellModel extends BaseModel {
       const maxN = Math.floor(
         Math.sqrt(
           (2 * mass * wellWidth * wellWidth * maxEnergy) /
-          (QuantumConstants.HBAR * QuantumConstants.HBAR * Math.PI * Math.PI),
+            (QuantumConstants.HBAR * QuantumConstants.HBAR * Math.PI * Math.PI),
         ),
       );
       numStates = Math.max(1, Math.min(maxN, 100)); // Cap at 100 for safety
@@ -523,10 +520,10 @@ export class OneWellModel extends BaseModel {
       // Use generous estimate to ensure we get all states
       const estimatedMax = Math.ceil(
         (1 / Math.PI) *
-        Math.sqrt(
-          (2 * mass * wellDepth * wellWidth * wellWidth) /
-          (QuantumConstants.HBAR * QuantumConstants.HBAR),
-        ),
+          Math.sqrt(
+            (2 * mass * wellDepth * wellWidth * wellWidth) /
+              (QuantumConstants.HBAR * QuantumConstants.HBAR),
+          ),
       );
       // Request more states than estimated to ensure we capture all bound states
       numStates = Math.max(10, Math.min(estimatedMax * 2, 100)); // At least 10, cap at 100
@@ -780,7 +777,12 @@ export class OneWellModel extends BaseModel {
     const potential = this.calculatePotentialEnergy(xGrid);
 
     // Use BaseModel's common method to calculate classical probability density
-    return this.calculateClassicalProbabilityDensity(potential, energy, mass, xGrid);
+    return this.calculateClassicalProbabilityDensity(
+      potential,
+      energy,
+      mass,
+      xGrid,
+    );
   }
 
   /**
@@ -1081,7 +1083,7 @@ export class OneWellModel extends BaseModel {
           const displacementIndex = Math.round(
             ((displacement + 4 * QuantumConstants.NM_TO_M) /
               (8 * QuantumConstants.NM_TO_M)) *
-            (this.boundStateResult!.xGrid.length - 1),
+              (this.boundStateResult!.xGrid.length - 1),
           );
           const clampedIndex = Math.max(
             0,

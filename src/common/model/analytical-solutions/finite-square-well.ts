@@ -334,11 +334,9 @@ export class FiniteSquareWellSolution extends AnalyticalSolution {
     );
   }
 
-  calculateWavefunctionZeros(
-    stateIndex: number,
-    energy: number,
-  ): number[] {
-    const parity = this.parities[stateIndex] || (stateIndex % 2 === 0 ? "even" : "odd");
+  calculateWavefunctionZeros(stateIndex: number, energy: number): number[] {
+    const parity =
+      this.parities[stateIndex] || (stateIndex % 2 === 0 ? "even" : "odd");
     return calculateFiniteWellWavefunctionZeros(
       this.wellWidth,
       this.wellDepth,
@@ -348,7 +346,9 @@ export class FiniteSquareWellSolution extends AnalyticalSolution {
     );
   }
 
-  calculateTurningPoints(energy: number): Array<{ left: number; right: number }> {
+  calculateTurningPoints(
+    energy: number,
+  ): Array<{ left: number; right: number }> {
     const points = calculateFiniteWellTurningPoints(
       this.wellWidth,
       this.wellDepth,
@@ -364,12 +364,14 @@ export class FiniteSquareWellSolution extends AnalyticalSolution {
     // We need energy to calculate the second derivative
     // For now, we'll need to solve to get energies or use a cached value
     // This is a limitation - we'll use the parity from the stored array
-    const parity = this.parities[stateIndex] || (stateIndex % 2 === 0 ? "even" : "odd");
+    const parity =
+      this.parities[stateIndex] || (stateIndex % 2 === 0 ? "even" : "odd");
 
     // We need the energy, so we'll need to solve if we haven't already
     // For simplicity, compute it on the fly
     const { HBAR } = QuantumConstants;
-    const xi0 = (this.wellWidth / 2 * Math.sqrt(2 * this.mass * this.wellDepth)) / HBAR;
+    const xi0 =
+      ((this.wellWidth / 2) * Math.sqrt(2 * this.mass * this.wellDepth)) / HBAR;
 
     let xi: number | null = null;
     if (parity === "even") {
@@ -383,7 +385,10 @@ export class FiniteSquareWellSolution extends AnalyticalSolution {
       return new Array(xGrid.length).fill(0);
     }
 
-    const energy = (HBAR * HBAR * xi * xi) / (2 * this.mass * (this.wellWidth / 2) * (this.wellWidth / 2)) - this.wellDepth;
+    const energy =
+      (HBAR * HBAR * xi * xi) /
+        (2 * this.mass * (this.wellWidth / 2) * (this.wellWidth / 2)) -
+      this.wellDepth;
 
     return calculateFiniteWellWavefunctionSecondDerivative(
       this.wellWidth,

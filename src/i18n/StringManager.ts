@@ -53,8 +53,10 @@ export class StringManager {
     return {
       introStringProperty: this.stringProperties.introScreenStringProperty,
       oneWellStringProperty: this.stringProperties.oneWellScreenStringProperty,
-      twoWellsStringProperty: this.stringProperties.twoWellsScreenStringProperty,
-      manyWellsStringProperty: this.stringProperties.manyWellsScreenStringProperty,
+      twoWellsStringProperty:
+        this.stringProperties.twoWellsScreenStringProperty,
+      manyWellsStringProperty:
+        this.stringProperties.manyWellsScreenStringProperty,
     };
   }
 
@@ -63,8 +65,10 @@ export class StringManager {
    */
   public getPreferencesLabels() {
     return {
-      preferencesStringProperty: this.stringProperties.preferencesStringProperty,
-      numericalMethodStringProperty: this.stringProperties.numericalMethodStringProperty,
+      preferencesStringProperty:
+        this.stringProperties.preferencesStringProperty,
+      numericalMethodStringProperty:
+        this.stringProperties.numericalMethodStringProperty,
       numericalMethodDescriptionStringProperty:
         this.stringProperties.numericalMethodDescriptionStringProperty,
       autoPauseWhenTabHiddenStringProperty:
@@ -83,11 +87,13 @@ export class StringManager {
   public getNumericalMethodNames() {
     return {
       numerovStringProperty: this.stringProperties.numerovStringProperty,
-      matrixNumerovStringProperty: this.stringProperties.matrixNumerovStringProperty,
+      matrixNumerovStringProperty:
+        this.stringProperties.matrixNumerovStringProperty,
       dvrStringProperty: this.stringProperties.dvrStringProperty,
       fghStringProperty: this.stringProperties.fghStringProperty,
       spectralStringProperty: this.stringProperties.spectralStringProperty,
-      quantumBoundStringProperty: this.stringProperties.quantumBoundStringProperty,
+      quantumBoundStringProperty:
+        this.stringProperties.quantumBoundStringProperty,
     };
   }
 
@@ -96,12 +102,16 @@ export class StringManager {
    */
   public getNumericalMethodDescriptions() {
     return {
-      numerovStringProperty: this.stringProperties.numerovDescriptionStringProperty,
-      matrixNumerovStringProperty: this.stringProperties.matrixNumerovDescriptionStringProperty,
+      numerovStringProperty:
+        this.stringProperties.numerovDescriptionStringProperty,
+      matrixNumerovStringProperty:
+        this.stringProperties.matrixNumerovDescriptionStringProperty,
       dvrStringProperty: this.stringProperties.dvrDescriptionStringProperty,
       fghStringProperty: this.stringProperties.fghDescriptionStringProperty,
-      spectralStringProperty: this.stringProperties.spectralDescriptionStringProperty,
-      quantumBoundStringProperty: this.stringProperties.quantumBoundDescriptionStringProperty,
+      spectralStringProperty:
+        this.stringProperties.spectralDescriptionStringProperty,
+      quantumBoundStringProperty:
+        this.stringProperties.quantumBoundDescriptionStringProperty,
     };
   }
 

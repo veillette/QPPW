@@ -40,7 +40,11 @@
  * Boundary condition: ψ(0) = 0 leads to Ai(-αx_n) = 0, giving αx_n = -z_n.
  */
 
-import { BoundStateResult, GridConfig, PotentialFunction } from "../PotentialFunction.js";
+import {
+  BoundStateResult,
+  GridConfig,
+  PotentialFunction,
+} from "../PotentialFunction.js";
 import { airyAi } from "./math-utilities.js";
 import {
   calculateAiryAlpha,
@@ -91,10 +95,7 @@ export class AsymmetricTrianglePotentialSolution extends AnalyticalSolution {
     );
   }
 
-  calculateWavefunctionZeros(
-    stateIndex: number,
-    _energy: number,
-  ): number[] {
+  calculateWavefunctionZeros(stateIndex: number, _energy: number): number[] {
     return calculateAsymmetricTriangleWavefunctionZeros(
       this.slope,
       this.mass,
@@ -102,11 +103,10 @@ export class AsymmetricTrianglePotentialSolution extends AnalyticalSolution {
     );
   }
 
-  calculateTurningPoints(energy: number): Array<{ left: number; right: number }> {
-    const points = calculateAsymmetricTriangleTurningPoints(
-      this.slope,
-      energy,
-    );
+  calculateTurningPoints(
+    energy: number,
+  ): Array<{ left: number; right: number }> {
+    const points = calculateAsymmetricTriangleTurningPoints(this.slope, energy);
     return [points]; // Return as array with single element for simple single-well potential
   }
 
@@ -252,7 +252,7 @@ export function calculateAsymmetricTriangleClassicalProbability(
 
       if (i > 0) {
         const dx = xGrid[i] - xGrid[i - 1];
-        integralSum += (probability + classicalProbability[i - 1]) * dx / 2;
+        integralSum += ((probability + classicalProbability[i - 1]) * dx) / 2;
       }
     }
   }

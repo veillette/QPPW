@@ -43,7 +43,11 @@
  */
 
 import QuantumConstants from "../QuantumConstants.js";
-import { BoundStateResult, GridConfig, PotentialFunction } from "../PotentialFunction.js";
+import {
+  BoundStateResult,
+  GridConfig,
+  PotentialFunction,
+} from "../PotentialFunction.js";
 import { associatedLaguerre } from "./math-utilities.js";
 import { AnalyticalSolution } from "./AnalyticalSolution.js";
 
@@ -85,10 +89,7 @@ export class Coulomb1DPotentialSolution extends AnalyticalSolution {
     );
   }
 
-  calculateWavefunctionZeros(
-    stateIndex: number,
-    _energy: number,
-  ): number[] {
+  calculateWavefunctionZeros(stateIndex: number, _energy: number): number[] {
     return calculateCoulomb1DWavefunctionZeros(
       this.coulombStrength,
       this.mass,
@@ -96,7 +97,9 @@ export class Coulomb1DPotentialSolution extends AnalyticalSolution {
     );
   }
 
-  calculateTurningPoints(energy: number): Array<{ left: number; right: number }> {
+  calculateTurningPoints(
+    energy: number,
+  ): Array<{ left: number; right: number }> {
     const points = calculateCoulomb1DTurningPoints(
       this.coulombStrength,
       energy,
@@ -273,7 +276,7 @@ export function calculateCoulomb1DClassicalProbability(
 
       if (i > 0) {
         const dx = xGrid[i] - xGrid[i - 1];
-        integralSum += (probability + classicalProbability[i - 1]) * dx / 2;
+        integralSum += ((probability + classicalProbability[i - 1]) * dx) / 2;
       }
     }
   }
@@ -345,7 +348,8 @@ export function calculateCoulomb1DWavefunctionZeros(
   // Search in positive x only (use symmetry for negative x)
   let prevX = 1e-15; // Start just above zero to avoid singularity
   const prevRho = (2 * prevX) / a_n;
-  let prevVal = prevRho * Math.exp(-prevRho / 2) * associatedLaguerre(n, 1, prevRho);
+  let prevVal =
+    prevRho * Math.exp(-prevRho / 2) * associatedLaguerre(n, 1, prevRho);
 
   for (let i = 1; i <= numSamples / 2; i++) {
     const x = prevX + i * dx;
@@ -367,7 +371,7 @@ export function calculateCoulomb1DWavefunctionZeros(
         if (Math.abs(valMid) < 1e-12) {
           // Found zero on positive side, add both ±x
           zeros.push(-mid); // Negative side
-          zeros.push(mid);  // Positive side
+          zeros.push(mid); // Positive side
           break;
         }
 

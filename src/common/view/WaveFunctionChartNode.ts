@@ -612,7 +612,10 @@ export class WaveFunctionChartNode extends Node {
           this.updateZeroLine();
           this.updateWaveFunction(boundStates, selectedIndex);
           this.updateStateLabel();
-          this.updateClassicalProbabilityVisualization(boundStates, selectedIndex);
+          this.updateClassicalProbabilityVisualization(
+            boundStates,
+            selectedIndex,
+          );
         }
       } while (this.updatePending);
     } finally {
@@ -653,9 +656,9 @@ export class WaveFunctionChartNode extends Node {
     }
 
     // Get turning points
-    const turningPoints = (this.model as OneWellModel).getClassicalTurningPoints(
-      selectedIndex,
-    );
+    const turningPoints = (
+      this.model as OneWellModel
+    ).getClassicalTurningPoints(selectedIndex);
 
     if (!turningPoints) {
       this.hideClassicalProbabilityVisualization();
@@ -678,13 +681,23 @@ export class WaveFunctionChartNode extends Node {
     // Left forbidden region (from left edge to left turning point)
     const leftRegionX = this.chartMargins.left;
     const leftRegionWidth = xLeft - leftRegionX;
-    this.leftForbiddenRegion.setRect(leftRegionX, yTop, leftRegionWidth, this.plotHeight);
+    this.leftForbiddenRegion.setRect(
+      leftRegionX,
+      yTop,
+      leftRegionWidth,
+      this.plotHeight,
+    );
     this.leftForbiddenRegion.visible = true;
 
     // Right forbidden region (from right turning point to right edge)
     const rightRegionX = xRight;
     const rightRegionWidth = this.chartMargins.left + this.plotWidth - xRight;
-    this.rightForbiddenRegion.setRect(rightRegionX, yTop, rightRegionWidth, this.plotHeight);
+    this.rightForbiddenRegion.setRect(
+      rightRegionX,
+      yTop,
+      rightRegionWidth,
+      this.plotHeight,
+    );
     this.rightForbiddenRegion.visible = true;
   }
 

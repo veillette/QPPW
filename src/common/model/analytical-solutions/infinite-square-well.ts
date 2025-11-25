@@ -171,7 +171,10 @@ export function calculateInfiniteWellWavefunctionSecondDerivative(
 
       // ψ''_n(x) = -normalization * waveFactor² * sin(waveFactor * xShifted)
       const secondDeriv =
-        -normalization * waveFactor * waveFactor * Math.sin(waveFactor * xShifted);
+        -normalization *
+        waveFactor *
+        waveFactor *
+        Math.sin(waveFactor * xShifted);
       secondDerivative.push(secondDeriv);
     } else {
       // Outside the well, wavefunction and derivatives are zero
@@ -215,14 +218,13 @@ export class InfiniteSquareWellSolution extends AnalyticalSolution {
     );
   }
 
-  calculateWavefunctionZeros(
-    stateIndex: number,
-    _energy: number,
-  ): number[] {
+  calculateWavefunctionZeros(stateIndex: number, _energy: number): number[] {
     return calculateInfiniteWellWavefunctionZeros(this.wellWidth, stateIndex);
   }
 
-  calculateTurningPoints(energy: number): Array<{ left: number; right: number }> {
+  calculateTurningPoints(
+    energy: number,
+  ): Array<{ left: number; right: number }> {
     const points = calculateInfiniteWellTurningPoints(this.wellWidth, energy);
     return [points]; // Return as array with single element for simple single-well potential
   }

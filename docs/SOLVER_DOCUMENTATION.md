@@ -338,6 +338,7 @@ The solver has recently been enhanced with several new features:
 ### Test Infrastructure
 
 New test suites added:
+
 - `npm run test:multi-square-well` - Multi-well square potential validation
 - `npm run test:multi-coulomb-1d` - Multi-Coulomb 1D validation
 - `npm run test:double-well` - Comprehensive 23-test suite for double wells

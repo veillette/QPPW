@@ -236,8 +236,8 @@ export class ControlPanelNode extends Node {
     // Filter potential types if specified in options
     const potentialItems = this.options.allowedPotentialTypes
       ? allPotentialItems.filter((item) =>
-        this.options.allowedPotentialTypes!.includes(item.value),
-      )
+          this.options.allowedPotentialTypes!.includes(item.value),
+        )
       : allPotentialItems;
 
     const potentialComboBox = new ComboBox(
@@ -501,20 +501,20 @@ export class ControlPanelNode extends Node {
     const classicalProbabilityCheckboxContent =
       "showClassicalProbabilityProperty" in this.model
         ? new Checkbox(
-          this.model.showClassicalProbabilityProperty,
-          new Text(stringManager.classicalProbabilityDensityStringProperty, {
-            font: new PhetFont(12),
-            fill: QPPWColors.textFillProperty,
-          }),
-          { boxWidth: 16 },
-        )
+            this.model.showClassicalProbabilityProperty,
+            new Text(stringManager.classicalProbabilityDensityStringProperty, {
+              font: new PhetFont(12),
+              fill: QPPWColors.textFillProperty,
+            }),
+            { boxWidth: 16 },
+          )
         : null;
 
     const classicalProbabilityCheckbox = classicalProbabilityCheckboxContent
       ? new Node({
-        children: [classicalProbabilityCheckboxContent],
-        x: 20,
-      })
+          children: [classicalProbabilityCheckboxContent],
+          x: 20,
+        })
       : null;
 
     // Wave function views checkboxes
@@ -584,15 +584,13 @@ export class ControlPanelNode extends Node {
 
       // Enable classical probability checkbox only in probability density mode
       if (classicalProbabilityCheckboxContent) {
-        classicalProbabilityCheckboxContent.enabled = mode === "probabilityDensity";
+        classicalProbabilityCheckboxContent.enabled =
+          mode === "probabilityDensity";
       }
     });
 
     // Build children array conditionally
-    const children: Node[] = [
-      displayLabel,
-      displayModeRadioButtonGroup,
-    ];
+    const children: Node[] = [displayLabel, displayModeRadioButtonGroup];
 
     // Add classical probability checkbox if it exists
     if (classicalProbabilityCheckbox) {
