@@ -564,26 +564,29 @@ export class OneWellModel extends BaseModel {
           V = Math.abs(x) <= wellWidth / 2 ? 0 : wellDepth;
           break;
 
-        case PotentialType.HARMONIC_OSCILLATOR:
+        case PotentialType.HARMONIC_OSCILLATOR: {
           // V = (1/2) * k * x^2
           const springConstant = (4 * wellDepth) / (wellWidth * wellWidth);
           V = 0.5 * springConstant * x * x;
           break;
+        }
 
-        case PotentialType.MORSE:
+        case PotentialType.MORSE: {
           // V(x) = D_e * (1 - exp(-a(x - x_e)))^2
           const a = 1 / wellWidth;
           const exponential = Math.exp(-a * x);
           V = wellDepth * Math.pow(1 - exponential, 2);
           break;
+        }
 
-        case PotentialType.POSCHL_TELLER:
+        case PotentialType.POSCHL_TELLER: {
           // V(x) = -V_0 / cosh^2(x/a)
           const coshPT = Math.cosh(x / wellWidth);
           V = -wellDepth / (coshPT * coshPT);
           break;
+        }
 
-        case PotentialType.ROSEN_MORSE:
+        case PotentialType.ROSEN_MORSE: {
           // V(x) = -V_0 / cosh^2(x/a) + V_1 * tanh(x/a)
           const barrierHeight =
             this.barrierHeightProperty.value * QuantumConstants.EV_TO_JOULES;
@@ -591,8 +594,9 @@ export class OneWellModel extends BaseModel {
           const tanhRM = Math.tanh(x / wellWidth);
           V = -wellDepth / (coshRM * coshRM) + barrierHeight * tanhRM;
           break;
+        }
 
-        case PotentialType.ECKART:
+        case PotentialType.ECKART: {
           // V(x) = V_0 / (1 + exp(x/a))^2 - V_1 / (1 + exp(x/a))
           const barrierHeightE =
             this.barrierHeightProperty.value * QuantumConstants.EV_TO_JOULES;
@@ -600,14 +604,16 @@ export class OneWellModel extends BaseModel {
           const denomE = 1 + expE;
           V = wellDepth / (denomE * denomE) - barrierHeightE / denomE;
           break;
+        }
 
-        case PotentialType.ASYMMETRIC_TRIANGLE:
+        case PotentialType.ASYMMETRIC_TRIANGLE: {
           // V(x) = F * x (linear potential with electric field)
           const slope = wellDepth / wellWidth;
           V = slope * x;
           break;
+        }
 
-        case PotentialType.TRIANGULAR:
+        case PotentialType.TRIANGULAR: {
           // Triangular potential
           const energyOffset =
             this.potentialOffsetProperty.value * QuantumConstants.EV_TO_JOULES;
@@ -619,6 +625,7 @@ export class OneWellModel extends BaseModel {
             V = wellDepth + energyOffset;
           }
           break;
+        }
 
         case PotentialType.COULOMB_1D:
         case PotentialType.COULOMB_3D: {
