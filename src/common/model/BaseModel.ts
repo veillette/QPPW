@@ -21,6 +21,9 @@ export abstract class BaseModel {
   public readonly timeProperty: NumberProperty; // In femtoseconds
   public readonly timeSpeedProperty: EnumerationProperty<TimeSpeed>;
 
+  // Display options
+  public readonly showClassicalProbabilityProperty: Property<boolean>;
+
   // Solver for quantum calculations
   protected readonly solver: Schrodinger1DSolver;
 
@@ -32,6 +35,9 @@ export abstract class BaseModel {
     this.isPlayingProperty = new Property<boolean>(false);
     this.timeProperty = new NumberProperty(0); // in femtoseconds
     this.timeSpeedProperty = new EnumerationProperty(TimeSpeed.NORMAL);
+
+    // Initialize display options
+    this.showClassicalProbabilityProperty = new Property<boolean>(false);
 
     // Initialize solver with user's preferred method
     this.solver = new Schrodinger1DSolver();
@@ -64,6 +70,7 @@ export abstract class BaseModel {
     this.isPlayingProperty.reset();
     this.timeProperty.reset();
     this.timeSpeedProperty.reset();
+    this.showClassicalProbabilityProperty.reset();
   }
 
   /**

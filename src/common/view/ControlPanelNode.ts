@@ -563,6 +563,16 @@ export class ControlPanelNode extends Node {
       phaseCheckbox.enabled = enabled;
     });
 
+    // Classical probability checkbox
+    const classicalProbabilityCheckbox = new Checkbox(
+      this.model.showClassicalProbabilityProperty,
+      new Text(stringManager.classicalProbabilityStringProperty, {
+        font: new PhetFont(14),
+        fill: QPPWColors.textFillProperty,
+      }),
+      { boxWidth: 16 },
+    );
+
     return new VBox({
       spacing: 8,
       align: "left",
@@ -571,6 +581,7 @@ export class ControlPanelNode extends Node {
         displayModeRadioButtonGroup,
         waveFunctionViewsLabel,
         waveFunctionCheckboxes,
+        classicalProbabilityCheckbox,
       ],
     });
   }

@@ -200,6 +200,199 @@ export class OneWellModel extends BaseModel {
   }
 
   /**
+   * Calculates the classical turning points for a given energy level.
+   * Returns the x positions (in nm) where the potential energy equals the eigenstate energy.
+   * Returns null if turning points cannot be calculated.
+   */
+  public getClassicalTurningPoints(energyLevel: number): {
+    left: number;
+    right: number;
+  } | null {
+    if (!this.boundStateResult) {
+      this.calculateBoundStates();
+    }
+
+    if (
+      !this.boundStateResult ||
+      energyLevel < 0 ||
+      energyLevel >= this.boundStateResult.energies.length
+    ) {
+      return null;
+    }
+
+    const energy = this.boundStateResult.energies[energyLevel]; // in Joules
+    const energyEV = energy * QuantumConstants.JOULES_TO_EV; // in eV
+    const xGrid = this.boundStateResult.xGrid; // in meters
+
+    // Find the turning points by finding where V(x) ≈ E
+    let leftTurningPoint: number | null = null;
+    let rightTurningPoint: number | null = null;
+
+    for (let i = 0; i < xGrid.length - 1; i++) {
+      const x = xGrid[i] * QuantumConstants.M_TO_NM; // Convert to nm
+      const V = this.getPotentialAtPosition(x); // in eV
+
+      const xNext = xGrid[i + 1] * QuantumConstants.M_TO_NM;
+      const VNext = this.getPotentialAtPosition(xNext);
+
+      // Check if energy crosses potential between these two points
+      if (
+        (V <= energyEV && VNext >= energyEV) ||
+        (V >= energyEV && VNext <= energyEV)
+      ) {
+        // Linear interpolation to find crossing point
+        const t = (energyEV - V) / (VNext - V);
+        const turningPoint = x + t * (xNext - x);
+
+        if (leftTurningPoint === null) {
+          leftTurningPoint = turningPoint;
+        } else {
+          rightTurningPoint = turningPoint;
+        }
+      }
+    }
+
+    if (leftTurningPoint !== null && rightTurningPoint !== null) {
+      return { left: leftTurningPoint, right: rightTurningPoint };
+    }
+
+    return null;
+  }
+
+  /**
+   * Helper method to get potential energy at a given position (in nm).
+   * Returns potential in eV.
+   */
+  private getPotentialAtPosition(xNm: number): number {
+    const potentialType = this.potentialTypeProperty.value;
+    const wellWidth = this.wellWidthProperty.value;
+    const wellDepth = this.wellDepthProperty.value;
+
+    if (potentialType === PotentialType.INFINITE_WELL) {
+      if (Math.abs(xNm) < wellWidth / 2) {
+        return 0;
+      } else {
+        return 1000; // Very large value for infinity
+      }
+    } else if (potentialType === PotentialType.FINITE_WELL) {
+      if (Math.abs(xNm) < wellWidth / 2) {
+        return -wellDepth;
+      } else {
+        return 0;
+      }
+    } else if (potentialType === PotentialType.HARMONIC_OSCILLATOR) {
+      const k = (2 * wellDepth) / ((wellWidth * wellWidth) / 4);
+      return 0.5 * k * xNm * xNm;
+    } else if (potentialType === PotentialType.ASYMMETRIC_TRIANGLE) {
+      if (xNm < 0) {
+        return 1000; // Infinite wall
+      } else {
+        const F_eV_per_nm = wellDepth / wellWidth;
+        return F_eV_per_nm * xNm;
+      }
+    } else if (potentialType === PotentialType.TRIANGULAR) {
+      const offset =
+        "potentialOffsetProperty" in this
+          ? this.potentialOffsetProperty.value
+          : 0;
+      const height = wellDepth;
+      if (xNm < 0) {
+        return height + offset;
+      } else if (xNm < wellWidth) {
+        return offset + (height / wellWidth) * xNm;
+      } else {
+        return height + offset;
+      }
+    } else if (
+      potentialType === PotentialType.COULOMB_1D ||
+      potentialType === PotentialType.COULOMB_3D
+    ) {
+      const k = wellDepth * (wellWidth / 2);
+      const distance = Math.max(Math.abs(xNm), 0.01);
+      return -k / distance;
+    } else if (potentialType === PotentialType.MORSE) {
+      const exponent = Math.exp(-xNm / wellWidth);
+      return wellDepth * Math.pow(1 - exponent, 2) - wellDepth;
+    } else if (potentialType === PotentialType.POSCHL_TELLER) {
+      const coshVal = Math.cosh(xNm / wellWidth);
+      return -wellDepth / (coshVal * coshVal);
+    } else if (potentialType === PotentialType.ROSEN_MORSE) {
+      const barrierHeight = this.barrierHeightProperty.value;
+      const coshVal = Math.cosh(xNm / wellWidth);
+      const tanhVal = Math.tanh(xNm / wellWidth);
+      return -wellDepth / (coshVal * coshVal) + barrierHeight * tanhVal;
+    } else if (potentialType === PotentialType.ECKART) {
+      const barrierHeight = this.barrierHeightProperty.value;
+      const expVal = Math.exp(xNm / wellWidth);
+      const denom = 1 + expVal;
+      return wellDepth / (denom * denom) - barrierHeight / denom;
+    }
+
+    // Default case
+    return 0;
+  }
+
+  /**
+   * Calculates the probability of finding the particle in the classically forbidden region.
+   * Returns a percentage (0-100).
+   */
+  public getClassicallyForbiddenProbability(energyLevel: number): number {
+    if (!this.boundStateResult) {
+      this.calculateBoundStates();
+    }
+
+    if (
+      !this.boundStateResult ||
+      energyLevel < 0 ||
+      energyLevel >= this.boundStateResult.energies.length
+    ) {
+      return 0;
+    }
+
+    const turningPoints = this.getClassicalTurningPoints(energyLevel);
+    if (!turningPoints) {
+      return 0;
+    }
+
+    const wavefunction = this.boundStateResult.wavefunctions[energyLevel];
+    const xGrid = this.boundStateResult.xGrid;
+
+    let forbiddenProbability = 0;
+    let totalProbability = 0;
+
+    for (let i = 0; i < xGrid.length; i++) {
+      const x = xGrid[i] * QuantumConstants.M_TO_NM; // Convert to nm
+      const psi = wavefunction[i];
+      const probabilityDensity = psi * psi;
+
+      // Calculate dx for integration (using trapezoidal rule)
+      let dx = 0;
+      if (i === 0) {
+        dx =
+          ((xGrid[1] - xGrid[0]) / 2) * QuantumConstants.M_TO_NM;
+      } else if (i === xGrid.length - 1) {
+        dx =
+          ((xGrid[i] - xGrid[i - 1]) / 2) * QuantumConstants.M_TO_NM;
+      } else {
+        dx =
+          ((xGrid[i + 1] - xGrid[i - 1]) / 2) * QuantumConstants.M_TO_NM;
+      }
+
+      totalProbability += probabilityDensity * dx;
+
+      // Check if we're in the classically forbidden region
+      if (x < turningPoints.left || x > turningPoints.right) {
+        forbiddenProbability += probabilityDensity * dx;
+      }
+    }
+
+    // Return as percentage
+    return totalProbability > 0
+      ? (forbiddenProbability / totalProbability) * 100
+      : 0;
+  }
+
+  /**
    * Calculates the energy eigenvalues for the current well parameters.
    * Uses the Schrödinger solver with analytical solution for infinite well.
    * @param n - The quantum number (1, 2, 3, ...)

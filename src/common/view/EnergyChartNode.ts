@@ -109,6 +109,10 @@ export class EnergyChartNode extends Node {
   private axesNode: Node;
   private readonly legendNode: Node;
 
+  // Classical turning point lines
+  private readonly leftTurningPointLine: Line;
+  private readonly rightTurningPointLine: Line;
+
   // Hover state
   private hoveredEnergyLevelIndex: number | null = null;
 
@@ -198,6 +202,23 @@ export class EnergyChartNode extends Node {
       lineDash: [10, 5],
     });
     this.plotContentNode.addChild(this.totalEnergyLine);
+
+    // Create classical turning point lines
+    this.leftTurningPointLine = new Line(0, 0, 0, 0, {
+      stroke: QPPWColors.energyLevelSelectedProperty,
+      lineWidth: 2,
+      lineDash: [8, 4],
+      visible: false,
+    });
+    this.plotContentNode.addChild(this.leftTurningPointLine);
+
+    this.rightTurningPointLine = new Line(0, 0, 0, 0, {
+      stroke: QPPWColors.energyLevelSelectedProperty,
+      lineWidth: 2,
+      lineDash: [8, 4],
+      visible: false,
+    });
+    this.plotContentNode.addChild(this.rightTurningPointLine);
 
     // Create legend (outside clipped area)
     this.legendNode = this.createLegend();
@@ -509,6 +530,9 @@ export class EnergyChartNode extends Node {
         this.update(),
       );
     }
+
+    // Update classical probability visualization when property changes
+    this.model.showClassicalProbabilityProperty.link(() => this.update());
   }
 
   /**
@@ -550,6 +574,52 @@ export class EnergyChartNode extends Node {
     this.updateEnergyLevels(boundStates);
     this.updateZeroLine();
     this.updateTotalEnergyLine(boundStates);
+    this.updateClassicalTurningPoints(boundStates);
+  }
+
+  /**
+   * Updates the classical turning point lines.
+   */
+  private updateClassicalTurningPoints(boundStates: BoundStateResult): void {
+    // Only show if the checkbox is checked and we have a OneWellModel
+    const showClassical =
+      this.model.showClassicalProbabilityProperty.value &&
+      "getClassicalTurningPoints" in this.model;
+
+    const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
+
+    if (
+      !showClassical ||
+      selectedIndex < 0 ||
+      selectedIndex >= boundStates.energies.length
+    ) {
+      this.leftTurningPointLine.visible = false;
+      this.rightTurningPointLine.visible = false;
+      return;
+    }
+
+    // Get turning points
+    const turningPoints = (this.model as OneWellModel).getClassicalTurningPoints(
+      selectedIndex,
+    );
+
+    if (!turningPoints) {
+      this.leftTurningPointLine.visible = false;
+      this.rightTurningPointLine.visible = false;
+      return;
+    }
+
+    // Draw vertical lines at turning points
+    const xLeft = this.dataToViewX(turningPoints.left);
+    const xRight = this.dataToViewX(turningPoints.right);
+    const yTop = this.chartMargins.top;
+    const yBottom = this.chartMargins.top + this.plotHeight;
+
+    this.leftTurningPointLine.setLine(xLeft, yTop, xLeft, yBottom);
+    this.leftTurningPointLine.visible = true;
+
+    this.rightTurningPointLine.setLine(xRight, yTop, xRight, yBottom);
+    this.rightTurningPointLine.visible = true;
   }
 
   /**

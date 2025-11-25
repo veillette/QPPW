@@ -587,6 +587,10 @@ export class StringManager {
     return this.stringProperties.timeFormatStringProperty;
   }
 
+  get classicalProbabilityStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.classicalProbabilityStringProperty;
+  }
+
   /**
    * Get all raw string properties
    * This can be used if direct access is needed to a specific string property
