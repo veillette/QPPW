@@ -51,6 +51,7 @@ export class StringManager {
    */
   public getScreenNames() {
     return {
+      introStringProperty: this.stringProperties.introScreenStringProperty,
       oneWellStringProperty: this.stringProperties.oneWellScreenStringProperty,
       twoWellsStringProperty: this.stringProperties.twoWellsScreenStringProperty,
       manyWellsStringProperty: this.stringProperties.manyWellsScreenStringProperty,
@@ -121,6 +122,26 @@ export class StringManager {
 
   get manyWellsStringProperty(): ReadOnlyProperty<string> {
     return this.stringProperties.manyWellsScreenStringProperty;
+  }
+
+  get introStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.introScreenStringProperty;
+  }
+
+  get introDescriptionStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.introDescriptionStringProperty;
+  }
+
+  get introKeyConceptsStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.introKeyConceptsStringProperty;
+  }
+
+  get introInteractionsStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.introInteractionsStringProperty;
+  }
+
+  get introEducationalContentStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.introEducationalContentStringProperty;
   }
 
   get energyStringProperty(): ReadOnlyProperty<string> {

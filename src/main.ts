@@ -20,9 +20,11 @@ import { NumericalMethod } from "./common/model/Schrodinger1DSolver.js";
 import { OneWellScreen } from "./one-well/OneWellScreen.js";
 import { TwoWellsScreen } from "./two-wells/TwoWellsScreen.js";
 import { ManyWellsScreen } from "./many-wells/ManyWellsScreen.js";
+import { IntroScreen } from "./intro/IntroScreen.js";
 import { OneWellScreenIcon } from "./one-well/view/OneWellScreenIcon.js";
 import { TwoWellsScreenIcon } from "./two-wells/view/TwoWellsScreenIcon.js";
 import { ManyWellsScreenIcon } from "./many-wells/view/ManyWellsScreenIcon.js";
+import { IntroScreenIcon } from "./intro/view/IntroScreenIcon.js";
 
 onReadyToLaunch(() => {
   const screenNames = stringManager.getScreenNames();
@@ -380,6 +382,12 @@ onReadyToLaunch(() => {
   };
 
   const screens = [
+    new IntroScreen({
+      name: screenNames.introStringProperty,
+      tandem: Tandem.ROOT.createTandem("introScreen"),
+      backgroundColorProperty: QPPWColors.backgroundColorProperty,
+      homeScreenIcon: new IntroScreenIcon(),
+    }),
     new OneWellScreen({
       name: screenNames.oneWellStringProperty,
       tandem: Tandem.ROOT.createTandem("oneWellScreen"),
