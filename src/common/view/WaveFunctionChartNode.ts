@@ -1024,19 +1024,12 @@ export class WaveFunctionChartNode extends Node {
       points.push({ x, y });
     }
 
-    // Draw smooth curve using quadratic bezier curves
+    // Draw  curve
     if (points.length > 0) {
       shape.moveTo(points[0].x, points[0].y);
 
       for (let i = 0; i < points.length - 1; i++) {
-        const p0 = points[i];
-        const p1 = points[i + 1];
-
-        // Control point is midpoint for simple smoothing
-        const cpX = (p0.x + p1.x) / 2;
-        const cpY = (p0.y + p1.y) / 2;
-
-        shape.quadraticCurveTo(cpX, cpY, p1.x, p1.y);
+        shape.lineTo(points[i].x, points[i].y);
       }
     }
 

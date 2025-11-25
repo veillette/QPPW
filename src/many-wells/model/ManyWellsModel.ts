@@ -379,39 +379,8 @@ export class ManyWellsModel extends BaseModel {
     // Calculate potential at each grid point
     const potential = this.calculatePotentialEnergy(xGrid);
 
-    // Calculate classical probability density
-    const classicalProbability: number[] = [];
-    let integralSum = 0;
-
-    // First pass: calculate unnormalized probability and find turning points
-    for (let i = 0; i < xGrid.length; i++) {
-      const kineticEnergy = energy - potential[i];
-
-      // Classical turning points: where E = V(x)
-      // In classical mechanics, the particle cannot exist beyond turning points
-      if (kineticEnergy <= 0) {
-        classicalProbability.push(0);
-      } else {
-        // P(x) ∝ 1/v(x) = 1/√[2(E - V(x))/m] = √[m/(2(E - V(x)))]
-        const probability = 1 / Math.sqrt(2 * kineticEnergy / mass);
-        classicalProbability.push(probability);
-
-        // For normalization (using trapezoidal rule)
-        if (i > 0) {
-          const dx = xGrid[i] - xGrid[i - 1];
-          integralSum += (probability + classicalProbability[i - 1]) * dx / 2;
-        }
-      }
-    }
-
-    // Normalize so that ∫P(x)dx = 1
-    if (integralSum > 0) {
-      for (let i = 0; i < classicalProbability.length; i++) {
-        classicalProbability[i] /= integralSum;
-      }
-    }
-
-    return classicalProbability;
+    // Use BaseModel's common method to calculate classical probability density
+    return this.calculateClassicalProbabilityDensity(potential, energy, mass, xGrid);
   }
 
   /**

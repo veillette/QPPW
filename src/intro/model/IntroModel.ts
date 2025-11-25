@@ -289,37 +289,8 @@ export class IntroModel extends BaseModel {
         // Fallback: numerical calculation using potential function
         const potential = this.calculatePotentialEnergy(xGrid);
 
-        // Calculate classical probability density
-        const classicalProbability: number[] = [];
-        let integralSum = 0;
-
-        // First pass: calculate unnormalized probability
-        for (let i = 0; i < xGrid.length; i++) {
-            const kineticEnergy = energy - potential[i];
-
-            let probability = 0;
-            if (kineticEnergy > 0) {
-                // Increase epsilon to avoid extreme spikes at turning points
-                const epsilon = 1e-6 * QuantumConstants.EV_TO_JOULES;
-                probability =
-                    1 / Math.sqrt((2 * Math.max(kineticEnergy, epsilon)) / mass);
-            }
-            classicalProbability.push(probability);
-
-            if (i > 0) {
-                const dx = xGrid[i] - xGrid[i - 1];
-                integralSum += (probability + classicalProbability[i - 1]) * dx / 2;
-            }
-        }
-
-        // Normalize
-        if (integralSum > 0) {
-            for (let i = 0; i < classicalProbability.length; i++) {
-                classicalProbability[i] /= integralSum;
-            }
-        }
-
-        return classicalProbability;
+        // Use BaseModel's common method to calculate classical probability density
+        return this.calculateClassicalProbabilityDensity(potential, energy, mass, xGrid);
     }
 
     /**

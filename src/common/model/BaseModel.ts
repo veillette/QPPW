@@ -101,4 +101,76 @@ export abstract class BaseModel {
       this.isStepping = false;
     }
   }
+
+  /**
+   * Calculate classical probability density from potential energy and energy level.
+   * This is a common calculation used by all model classes to compute the classical
+   * probability density for display alongside quantum probability.
+   *
+   * The classical probability density is P(x) ∝ 1/v(x) where v(x) is the classical velocity.
+   * For a particle with total energy E in potential V(x):
+   *   v(x) = √[2(E - V(x))/m]
+   *   P(x) = 1/v(x) = √[m/(2(E - V(x)))] = 1/√[2(E - V(x))/m]
+   *
+   * To prevent singularities at turning points (where E ≈ V(x) and v → 0), we use a
+   * minimum kinetic energy threshold (5% of total energy). This prevents display issues
+   * when classical probability is plotted with quantum probability on the same scale.
+   *
+   * @param potential - Array of potential energy values at each grid point (in Joules)
+   * @param energy - Total energy of the particle (in Joules)
+   * @param mass - Particle mass (in kg)
+   * @param xGrid - Array of x positions (in meters)
+   * @returns Normalized classical probability density array (in 1/meters)
+   */
+  protected calculateClassicalProbabilityDensity(
+    potential: number[],
+    energy: number,
+    mass: number,
+    xGrid: number[],
+  ): number[] {
+    const classicalProbability: number[] = [];
+    let integralSum = 0;
+
+    // First pass: find maximum kinetic energy to set appropriate threshold
+    let maxKE = 0;
+    for (let i = 0; i < xGrid.length; i++) {
+      const ke = energy - potential[i];
+      if (ke > maxKE) {
+        maxKE = ke;
+      }
+    }
+
+    // Use 1% of maximum kinetic energy as threshold to prevent singularities
+    // This preserves the shape while avoiding infinities at turning points
+    const minKE = 0.01 * maxKE;
+
+    // Second pass: calculate probability with threshold
+    for (let i = 0; i < xGrid.length; i++) {
+      const kineticEnergy = energy - potential[i];
+
+      let probability = 0;
+      if (kineticEnergy > 0) {
+        // Use minimum kinetic energy to prevent singularities at turning points
+        // This prevents display issues when classical probability is plotted with quantum probability
+        const safeKE = Math.max(kineticEnergy, minKE);
+        probability = 1 / Math.sqrt((2 * safeKE) / mass);
+      }
+      classicalProbability.push(probability);
+
+      // Trapezoidal integration for normalization
+      if (i > 0) {
+        const dx = xGrid[i] - xGrid[i - 1];
+        integralSum += (probability + classicalProbability[i - 1]) * dx / 2;
+      }
+    }
+
+    // Normalize so that ∫P(x)dx = 1
+    if (integralSum > 0) {
+      for (let i = 0; i < classicalProbability.length; i++) {
+        classicalProbability[i] /= integralSum;
+      }
+    }
+
+    return classicalProbability;
+  }
 }
