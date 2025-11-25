@@ -91,12 +91,13 @@ export class PoschlTellerPotentialSolution extends AnalyticalSolution {
     );
   }
 
-  calculateTurningPoints(energy: number): { left: number; right: number } {
-    return calculatePoschlTellerTurningPoints(
+  calculateTurningPoints(energy: number): Array<{ left: number; right: number }> {
+    const points = calculatePoschlTellerTurningPoints(
       this.potentialDepth,
       this.wellWidth,
       energy,
     );
+    return [points]; // Return as array with single element for simple single-well potential
   }
 
   calculateWavefunctionSecondDerivative(

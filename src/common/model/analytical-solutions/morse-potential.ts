@@ -100,13 +100,14 @@ export class MorsePotentialSolution extends AnalyticalSolution {
     );
   }
 
-  calculateTurningPoints(energy: number): { left: number; right: number } {
-    return calculateMorsePotentialTurningPoints(
+  calculateTurningPoints(energy: number): Array<{ left: number; right: number }> {
+    const points = calculateMorsePotentialTurningPoints(
       this.dissociationEnergy,
       this.wellWidth,
       this.equilibriumPosition,
       energy,
     );
+    return [points]; // Return as array with single element for simple single-well potential
   }
 
   calculateWavefunctionSecondDerivative(

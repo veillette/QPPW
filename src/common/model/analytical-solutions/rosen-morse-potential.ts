@@ -103,13 +103,14 @@ export class RosenMorsePotentialSolution extends AnalyticalSolution {
     );
   }
 
-  calculateTurningPoints(energy: number): { left: number; right: number } {
-    return calculateRosenMorsePotentialTurningPoints(
+  calculateTurningPoints(energy: number): Array<{ left: number; right: number }> {
+    const points = calculateRosenMorsePotentialTurningPoints(
       this.potentialDepth,
       this.barrierHeight,
       this.wellWidth,
       energy,
     );
+    return [points]; // Return as array with single element for simple single-well potential
   }
 
   calculateWavefunctionSecondDerivative(

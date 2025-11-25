@@ -102,11 +102,12 @@ export class AsymmetricTrianglePotentialSolution extends AnalyticalSolution {
     );
   }
 
-  calculateTurningPoints(energy: number): { left: number; right: number } {
-    return calculateAsymmetricTriangleTurningPoints(
+  calculateTurningPoints(energy: number): Array<{ left: number; right: number }> {
+    const points = calculateAsymmetricTriangleTurningPoints(
       this.slope,
       energy,
     );
+    return [points]; // Return as array with single element for simple single-well potential
   }
 
   calculateWavefunctionSecondDerivative(

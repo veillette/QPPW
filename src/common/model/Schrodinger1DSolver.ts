@@ -14,17 +14,18 @@ import {
   PotentialType,
 } from "./PotentialFunction.js";
 import {
-  solveFiniteSquareWell,
-  solveInfiniteWell,
-  solveHarmonicOscillator,
-  solveMorsePotential,
-  solvePoschlTellerPotential,
-  solveRosenMorsePotential,
-  solveEckartPotential,
-  solveAsymmetricTrianglePotential,
-  solveCoulomb1DPotential,
-  solveCoulomb3DPotential,
-  solveTriangularPotential,
+  AnalyticalSolution,
+  InfiniteSquareWellSolution,
+  FiniteSquareWellSolution,
+  HarmonicOscillatorSolution,
+  MorsePotentialSolution,
+  PoschlTellerPotentialSolution,
+  RosenMorsePotentialSolution,
+  EckartPotentialSolution,
+  AsymmetricTrianglePotentialSolution,
+  Coulomb1DPotentialSolution,
+  Coulomb3DPotentialSolution,
+  TriangularPotentialSolution,
   solveDoubleSquareWellAnalytical,
 } from "./analytical-solutions";
 import { solveMultiSquareWell } from "./analytical-solutions/multi-square-well.js";
@@ -81,6 +82,7 @@ export interface WellParameters {
  */
 export class Schrodinger1DSolver {
   private numericalMethod: NumericalMethod;
+  private analyticalSolution: AnalyticalSolution | null = null;
 
   /**
    * Create a new solver instance.
@@ -106,6 +108,15 @@ export class Schrodinger1DSolver {
   }
 
   /**
+   * Get the current analytical solution instance (if one has been created).
+   * This provides access to additional methods like calculateTurningPoints,
+   * calculateWavefunctionZeros, etc.
+   */
+  public getAnalyticalSolution(): AnalyticalSolution | null {
+    return this.analyticalSolution;
+  }
+
+  /**
    * Solve the Schrödinger equation using analytical solution if available,
    * otherwise use numerical method.
    *
@@ -121,16 +132,47 @@ export class Schrodinger1DSolver {
     numStates: number,
     gridConfig: GridConfig,
   ): BoundStateResult {
-    // Try analytical solution first
+    // Try to create analytical solution instance and solve
+    this.analyticalSolution = this.createAnalyticalSolution(wellParams, mass);
+
+    if (this.analyticalSolution) {
+      return this.analyticalSolution.solve(numStates, gridConfig);
+    }
+
+    // Handle special cases that don't have classes yet (multi-well potentials)
+    const specialCaseResult = this.handleSpecialCases(
+      wellParams,
+      mass,
+      numStates,
+      gridConfig,
+    );
+    if (specialCaseResult) {
+      return specialCaseResult;
+    }
+
+    // If no analytical solution available, throw error
+    throw new Error(
+      `No analytical solution available for potential type: ${wellParams.type}. Use solve() method with a custom potential function instead.`,
+    );
+  }
+
+  /**
+   * Create an analytical solution instance based on well parameters.
+   * Returns null if the potential type doesn't have an analytical solution
+   * or if required parameters are missing.
+   *
+   * @param wellParams - Parameters defining the potential well
+   * @param mass - Particle mass in kg
+   * @returns AnalyticalSolution instance or null
+   */
+  private createAnalyticalSolution(
+    wellParams: WellParameters,
+    mass: number,
+  ): AnalyticalSolution | null {
     switch (wellParams.type) {
       case PotentialType.INFINITE_WELL:
         if (wellParams.wellWidth !== undefined) {
-          return solveInfiniteWell(
-            wellParams.wellWidth,
-            mass,
-            numStates,
-            gridConfig,
-          );
+          return new InfiniteSquareWellSolution(wellParams.wellWidth, mass);
         }
         break;
 
@@ -139,23 +181,19 @@ export class Schrodinger1DSolver {
           wellParams.wellWidth !== undefined &&
           wellParams.wellDepth !== undefined
         ) {
-          return solveFiniteSquareWell(
+          return new FiniteSquareWellSolution(
             wellParams.wellWidth,
             wellParams.wellDepth,
             mass,
-            numStates,
-            gridConfig,
           );
         }
         break;
 
       case PotentialType.HARMONIC_OSCILLATOR:
         if (wellParams.springConstant !== undefined) {
-          return solveHarmonicOscillator(
+          return new HarmonicOscillatorSolution(
             wellParams.springConstant,
             mass,
-            numStates,
-            gridConfig,
           );
         }
         break;
@@ -166,13 +204,11 @@ export class Schrodinger1DSolver {
           wellParams.wellWidth !== undefined &&
           wellParams.equilibriumPosition !== undefined
         ) {
-          return solveMorsePotential(
+          return new MorsePotentialSolution(
             wellParams.dissociationEnergy,
             wellParams.wellWidth,
             wellParams.equilibriumPosition,
             mass,
-            numStates,
-            gridConfig,
           );
         }
         break;
@@ -182,12 +218,10 @@ export class Schrodinger1DSolver {
           wellParams.potentialDepth !== undefined &&
           wellParams.wellWidth !== undefined
         ) {
-          return solvePoschlTellerPotential(
+          return new PoschlTellerPotentialSolution(
             wellParams.potentialDepth,
             wellParams.wellWidth,
             mass,
-            numStates,
-            gridConfig,
           );
         }
         break;
@@ -198,13 +232,11 @@ export class Schrodinger1DSolver {
           wellParams.barrierHeight !== undefined &&
           wellParams.wellWidth !== undefined
         ) {
-          return solveRosenMorsePotential(
+          return new RosenMorsePotentialSolution(
             wellParams.potentialDepth,
             wellParams.barrierHeight,
             wellParams.wellWidth,
             mass,
-            numStates,
-            gridConfig,
           );
         }
         break;
@@ -215,13 +247,11 @@ export class Schrodinger1DSolver {
           wellParams.barrierHeight !== undefined &&
           wellParams.wellWidth !== undefined
         ) {
-          return solveEckartPotential(
+          return new EckartPotentialSolution(
             wellParams.potentialDepth,
             wellParams.barrierHeight,
             wellParams.wellWidth,
             mass,
-            numStates,
-            gridConfig,
           );
         }
         break;
@@ -231,55 +261,88 @@ export class Schrodinger1DSolver {
           wellParams.slope !== undefined &&
           wellParams.wellWidth !== undefined
         ) {
-          return solveAsymmetricTrianglePotential(
+          return new AsymmetricTrianglePotentialSolution(
             wellParams.slope,
             wellParams.wellWidth,
             mass,
-            numStates,
-            gridConfig,
           );
         }
         break;
 
       case PotentialType.COULOMB_1D:
         if (wellParams.coulombStrength !== undefined) {
-          return solveCoulomb1DPotential(
+          return new Coulomb1DPotentialSolution(
             wellParams.coulombStrength,
             mass,
-            numStates,
-            gridConfig,
           );
         }
         break;
 
       case PotentialType.COULOMB_3D:
         if (wellParams.coulombStrength !== undefined) {
-          return solveCoulomb3DPotential(
+          return new Coulomb3DPotentialSolution(
             wellParams.coulombStrength,
             mass,
-            numStates,
-            gridConfig,
           );
         }
         break;
 
       case PotentialType.TRIANGULAR:
         if (
-          wellParams.potentialDepth !== undefined &&
           wellParams.wellWidth !== undefined &&
+          wellParams.wellDepth !== undefined &&
           wellParams.energyOffset !== undefined
         ) {
-          return solveTriangularPotential(
-            wellParams.potentialDepth,
+          return new TriangularPotentialSolution(
+            wellParams.wellDepth,
             wellParams.wellWidth,
             wellParams.energyOffset,
             mass,
-            numStates,
-            gridConfig,
           );
         }
         break;
 
+      case PotentialType.DOUBLE_SQUARE_WELL:
+        // Double well doesn't have a class yet - still uses function
+        // Keep existing behavior for backward compatibility
+        if (
+          wellParams.wellWidth !== undefined &&
+          wellParams.wellDepth !== undefined &&
+          wellParams.wellSeparation !== undefined
+        ) {
+          // We'll handle this in the calling method
+          return null;
+        }
+        break;
+
+      case PotentialType.MULTI_SQUARE_WELL:
+        // Multi-square well doesn't have a class yet - still uses function
+        return null;
+
+      case PotentialType.MULTI_COULOMB_1D:
+        // Multi-Coulomb 1D doesn't have a class yet - still uses function
+        return null;
+
+      default:
+        return null;
+    }
+
+    return null;
+  }
+
+  /**
+   * Handle special cases that don't have analytical solution classes yet.
+   * These are typically multi-well potentials that still use standalone functions.
+   *
+   * @returns BoundStateResult if handled, null otherwise
+   */
+  private handleSpecialCases(
+    wellParams: WellParameters,
+    mass: number,
+    numStates: number,
+    gridConfig: GridConfig,
+  ): BoundStateResult | null {
+    switch (wellParams.type) {
       case PotentialType.DOUBLE_SQUARE_WELL:
         if (
           wellParams.wellWidth !== undefined &&
@@ -336,17 +399,9 @@ export class Schrodinger1DSolver {
           );
         }
         break;
-
-      case PotentialType.CUSTOM:
-        // No analytical solution, fall through to numerical
-        break;
     }
 
-    // If we reach here, we need to use numerical method
-    // But we need a potential function, which should be provided separately
-    throw new Error(
-      "Analytical solution not available. Use solveNumerical() with a custom potential function.",
-    );
+    return null;
   }
 
   /**

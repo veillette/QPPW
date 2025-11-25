@@ -105,13 +105,14 @@ export class EckartPotentialSolution extends AnalyticalSolution {
     );
   }
 
-  calculateTurningPoints(energy: number): { left: number; right: number } {
-    return calculateEckartPotentialTurningPoints(
+  calculateTurningPoints(energy: number): Array<{ left: number; right: number }> {
+    const points = calculateEckartPotentialTurningPoints(
       this.potentialDepth,
       this.barrierHeight,
       this.wellWidth,
       energy,
     );
+    return [points]; // Return as array with single element for simple single-well potential
   }
 
   calculateWavefunctionSecondDerivative(

@@ -79,14 +79,23 @@ export abstract class AnalyticalSolution {
    * Calculate the classical turning points.
    *
    * Turning points occur where the particle's kinetic energy becomes zero,
-   * i.e., where E = V(x). These mark the boundaries of the classically allowed region.
+   * i.e., where E = V(x). These mark the boundaries of the classically allowed regions.
+   *
+   * For simple potentials with a single well, there are two turning points (left and right).
+   * For more complex potentials (e.g., double wells, periodic potentials), there can be
+   * multiple pairs of turning points, creating multiple classically allowed regions.
+   *
+   * Some turning points may be infinite (±∞) for potentials that extend infinitely
+   * in one or both directions.
    *
    * @param energy - Energy of the particle in Joules
-   * @returns Object with left and right turning point positions (in meters)
+   * @returns Array of turning point pairs, where each pair represents a classically
+   *          allowed region: [{left: x1, right: x2}, {left: x3, right: x4}, ...]
+   *          For simple single-well potentials, this will be a single-element array.
    */
   abstract calculateTurningPoints(
     energy: number,
-  ): { left: number; right: number };
+  ): Array<{ left: number; right: number }>;
 
   /**
    * Calculate the second derivative of the wavefunction.

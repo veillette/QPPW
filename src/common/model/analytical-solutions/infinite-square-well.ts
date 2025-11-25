@@ -222,8 +222,9 @@ export class InfiniteSquareWellSolution extends AnalyticalSolution {
     return calculateInfiniteWellWavefunctionZeros(this.wellWidth, stateIndex);
   }
 
-  calculateTurningPoints(energy: number): { left: number; right: number } {
-    return calculateInfiniteWellTurningPoints(this.wellWidth, energy);
+  calculateTurningPoints(energy: number): Array<{ left: number; right: number }> {
+    const points = calculateInfiniteWellTurningPoints(this.wellWidth, energy);
+    return [points]; // Return as array with single element for simple single-well potential
   }
 
   calculateWavefunctionSecondDerivative(
