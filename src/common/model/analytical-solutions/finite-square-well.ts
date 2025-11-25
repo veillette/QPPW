@@ -192,10 +192,15 @@ export function calculateFiniteWellTurningPoints(
 }
 
 /**
- * Calculate the first and second derivatives of the wavefunction for a finite square well.
+ * Calculate the second derivative of the wavefunction for a finite square well.
  *
  * Inside the well: ψ(x) = A cos(kx) or A sin(kx)
- * Outside the well: ψ(x) = B exp(-κ|x|)
+ * - Even parity: ψ''(x) = -Ak² cos(kx) = -k² ψ(x)
+ * - Odd parity: ψ''(x) = -Ak² sin(kx) = -k² ψ(x)
+ *
+ * Outside the well: ψ(x) = B exp(-κ|x|) or B sign(x) exp(-κ|x|)
+ * - Even parity: ψ''(x) = B κ² exp(-κ|x|) = κ² ψ(x)
+ * - Odd parity: ψ''(x) = B κ² sign(x) exp(-κ|x|) = κ² ψ(x)
  *
  * @param wellWidth - Width of the well (L) in meters
  * @param wellDepth - Depth of the well (V₀) in Joules (positive value)
@@ -203,16 +208,16 @@ export function calculateFiniteWellTurningPoints(
  * @param energy - Energy of the eigenstate in Joules
  * @param parity - Parity of the state ("even" or "odd")
  * @param xGrid - Array of x positions in meters where derivatives should be evaluated
- * @returns Object with first and second derivative arrays
+ * @returns Array of second derivative values
  */
-export function calculateFiniteWellWavefunctionDerivatives(
+export function calculateFiniteWellWavefunctionSecondDerivative(
   wellWidth: number,
   wellDepth: number,
   mass: number,
   energy: number,
   parity: "even" | "odd",
   xGrid: number[],
-): { firstDerivative: number[]; secondDerivative: number[] } {
+): number[] {
   const { HBAR } = QuantumConstants;
   const halfWidth = wellWidth / 2;
   const k = Math.sqrt(2 * mass * (energy + wellDepth)) / HBAR; // Inside well
@@ -236,23 +241,18 @@ export function calculateFiniteWellWavefunctionDerivatives(
     normalization = 1 / Math.sqrt(integral);
   }
 
-  const firstDerivative: number[] = [];
   const secondDerivative: number[] = [];
 
   for (const x of xGrid) {
     if (Math.abs(x) <= halfWidth) {
       // Inside the well
       if (parity === "even") {
-        // ψ = A cos(kx), ψ' = -Ak sin(kx), ψ'' = -Ak² cos(kx)
-        const firstDeriv = -normalization * k * Math.sin(k * x);
+        // ψ = A cos(kx), ψ'' = -Ak² cos(kx)
         const secondDeriv = -normalization * k * k * Math.cos(k * x);
-        firstDerivative.push(firstDeriv);
         secondDerivative.push(secondDeriv);
       } else {
-        // ψ = A sin(kx), ψ' = Ak cos(kx), ψ'' = -Ak² sin(kx)
-        const firstDeriv = normalization * k * Math.cos(k * x);
+        // ψ = A sin(kx), ψ'' = -Ak² sin(kx)
         const secondDeriv = -normalization * k * k * Math.sin(k * x);
-        firstDerivative.push(firstDeriv);
         secondDerivative.push(secondDeriv);
       }
     } else {
@@ -261,32 +261,26 @@ export function calculateFiniteWellWavefunctionDerivatives(
       const signX = x >= 0 ? 1 : -1;
 
       if (parity === "even") {
-        // ψ = B exp(-κ|x|), ψ' = -B κ sign(x) exp(-κ|x|), ψ'' = B κ² exp(-κ|x|)
+        // ψ = B exp(-κ|x|), ψ'' = B κ² exp(-κ|x|)
         const cosVal = Math.cos(k * halfWidth);
         const B = normalization * cosVal * Math.exp(kappa * halfWidth);
         const expFactor = Math.exp(-kappa * absX);
 
-        const firstDeriv = -B * kappa * signX * expFactor;
         const secondDeriv = B * kappa * kappa * expFactor;
-        firstDerivative.push(firstDeriv);
         secondDerivative.push(secondDeriv);
       } else {
-        // ψ = B sign(x) exp(-κ|x|), ψ' = B exp(-κ|x|) [δ(x) - κ sign²(x) exp(-κ|x|)]
-        // For practical purposes: ψ' ≈ -B κ exp(-κ|x|)
-        // ψ'' = B κ² sign(x) exp(-κ|x|)
+        // ψ = B sign(x) exp(-κ|x|), ψ'' = B κ² sign(x) exp(-κ|x|)
         const sinVal = Math.sin(k * halfWidth);
         const B = normalization * sinVal * Math.exp(kappa * halfWidth);
         const expFactor = Math.exp(-kappa * absX);
 
-        const firstDeriv = -B * kappa * expFactor;
         const secondDeriv = B * kappa * kappa * signX * expFactor;
-        firstDerivative.push(firstDeriv);
         secondDerivative.push(secondDeriv);
       }
     }
   }
 
-  return { firstDerivative, secondDerivative };
+  return secondDerivative;
 }
 
 /**

@@ -139,29 +139,27 @@ export function calculateInfiniteWellTurningPoints(
 }
 
 /**
- * Calculate the first and second derivatives of the wavefunction for an infinite square well.
+ * Calculate the second derivative of the wavefunction for an infinite square well.
  *
  * For ψ_n(x) = √(2/L) sin(nπ(x + L/2)/L):
- * - ψ'_n(x) = √(2/L) * (nπ/L) * cos(nπ(x + L/2)/L)
- * - ψ''_n(x) = -√(2/L) * (nπ/L)² * sin(nπ(x + L/2)/L)
+ * - ψ''_n(x) = -√(2/L) * (nπ/L)² * sin(nπ(x + L/2)/L) = -(nπ/L)² * ψ_n(x)
  *
  * @param wellWidth - Width of the well (L) in meters
  * @param stateIndex - Index of the eigenstate (0 for ground state, 1 for first excited, etc.)
  * @param xGrid - Array of x positions in meters where derivatives should be evaluated
- * @returns Object with first and second derivative arrays
+ * @returns Array of second derivative values
  */
-export function calculateInfiniteWellWavefunctionDerivatives(
+export function calculateInfiniteWellWavefunctionSecondDerivative(
   wellWidth: number,
   stateIndex: number,
   xGrid: number[],
-): { firstDerivative: number[]; secondDerivative: number[] } {
+): number[] {
   const n = stateIndex + 1; // Quantum number (1, 2, 3, ...)
   const L = wellWidth;
   const halfWidth = L / 2;
   const normalization = Math.sqrt(2 / L);
   const waveFactor = (n * Math.PI) / L;
 
-  const firstDerivative: number[] = [];
   const secondDerivative: number[] = [];
 
   for (const x of xGrid) {
@@ -170,23 +168,17 @@ export function calculateInfiniteWellWavefunctionDerivatives(
       // Shift coordinate to [0, L] range for standard formula
       const xShifted = x + halfWidth;
 
-      // ψ'_n(x) = normalization * waveFactor * cos(waveFactor * xShifted)
-      const firstDeriv =
-        normalization * waveFactor * Math.cos(waveFactor * xShifted);
-      firstDerivative.push(firstDeriv);
-
       // ψ''_n(x) = -normalization * waveFactor² * sin(waveFactor * xShifted)
       const secondDeriv =
         -normalization * waveFactor * waveFactor * Math.sin(waveFactor * xShifted);
       secondDerivative.push(secondDeriv);
     } else {
       // Outside the well, wavefunction and derivatives are zero
-      firstDerivative.push(0);
       secondDerivative.push(0);
     }
   }
 
-  return { firstDerivative, secondDerivative };
+  return secondDerivative;
 }
 
 /**

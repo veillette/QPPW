@@ -202,24 +202,25 @@ export function calculateHarmonicOscillatorTurningPoints(
 }
 
 /**
- * Calculate the first and second derivatives of the wavefunction for a harmonic oscillator.
+ * Calculate the second derivative of the wavefunction for a harmonic oscillator.
  *
  * For ψ_n(x) = N_n * exp(-αx²/2) * H_n(√α x) where α = mω/ℏ and N_n is normalization:
- * - ψ'_n uses the chain rule and Hermite polynomial recursion: H'_n(ξ) = 2n H_{n-1}(ξ)
- * - ψ''_n uses further differentiation
+ * ψ''_n uses the chain rule and Hermite polynomial recursion relations:
+ * - H'_n(ξ) = 2n H_{n-1}(ξ)
+ * - H''_n(ξ) = 4n(n-1) H_{n-2}(ξ)
  *
  * @param springConstant - Spring constant k in N/m
  * @param mass - Particle mass in kg
  * @param stateIndex - Index of the eigenstate (0 for ground state, 1 for first excited, etc.)
  * @param xGrid - Array of x positions in meters where derivatives should be evaluated
- * @returns Object with first and second derivative arrays
+ * @returns Array of second derivative values
  */
-export function calculateHarmonicOscillatorWavefunctionDerivatives(
+export function calculateHarmonicOscillatorWavefunctionSecondDerivative(
   springConstant: number,
   mass: number,
   stateIndex: number,
   xGrid: number[],
-): { firstDerivative: number[]; secondDerivative: number[] } {
+): number[] {
   const { HBAR } = QuantumConstants;
   const n = stateIndex; // Quantum number (0, 1, 2, ...)
   const omega = Math.sqrt(springConstant / mass);
@@ -228,7 +229,6 @@ export function calculateHarmonicOscillatorWavefunctionDerivatives(
     (1 / Math.sqrt(Math.pow(2, n) * factorial(n))) *
     Math.pow(alpha / Math.PI, 0.25);
 
-  const firstDerivative: number[] = [];
   const secondDerivative: number[] = [];
 
   for (const x of xGrid) {
@@ -236,31 +236,22 @@ export function calculateHarmonicOscillatorWavefunctionDerivatives(
     const gaussianFactor = Math.exp((-xi * xi) / 2);
     const hermite_n = hermitePolynomial(n, xi);
 
-    // For first derivative, use: ψ' = N * [-α*x*exp(-αx²/2)*H_n + exp(-αx²/2)*H'_n * α]
-    // where H'_n(ξ) = 2n*H_{n-1}(ξ)
+    // Calculate H'_n(ξ) = 2n H_{n-1}(ξ)
     let hermite_derivative = 0;
     if (n > 0) {
       const hermite_n_minus_1 = hermitePolynomial(n - 1, xi);
       hermite_derivative = 2 * n * hermite_n_minus_1;
     }
 
-    const firstDeriv =
-      normalization *
-      gaussianFactor *
-      (-xi * hermite_n + hermite_derivative);
-    firstDerivative.push(firstDeriv);
-
-    // For second derivative, differentiate again
-    // ψ'' = N * [α²*x²*exp(-αx²/2)*H_n - α*exp(-αx²/2)*H_n
-    //            - 2α*x*exp(-αx²/2)*H'_n + α²*exp(-αx²/2)*H''_n]
-    // where H''_n(ξ) = 2n*H'_{n-1}(ξ) = 4n(n-1)*H_{n-2}(ξ)
-
+    // Calculate H''_n(ξ) = 4n(n-1) H_{n-2}(ξ)
     let hermite_second_derivative = 0;
     if (n > 1) {
       const hermite_n_minus_2 = hermitePolynomial(n - 2, xi);
       hermite_second_derivative = 4 * n * (n - 1) * hermite_n_minus_2;
     }
 
+    // ψ'' = N * [α²x²*exp(-αx²/2)*H_n - α*exp(-αx²/2)*H_n
+    //            - 2αx*exp(-αx²/2)*H'_n + α²*exp(-αx²/2)*H''_n]
     const secondDeriv =
       normalization *
       gaussianFactor *
@@ -271,7 +262,7 @@ export function calculateHarmonicOscillatorWavefunctionDerivatives(
     secondDerivative.push(secondDeriv);
   }
 
-  return { firstDerivative, secondDerivative };
+  return secondDerivative;
 }
 
 /**
