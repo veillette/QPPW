@@ -3,12 +3,13 @@
  * It displays a single quantum potential well and its wave functions.
  */
 
-import { BaseScreenView } from "../../common/view/BaseScreenView.js";
+import {
+  BaseScreenView,
+  ScreenStringProperties,
+} from "../../common/view/BaseScreenView.js";
 import { OneWellModel } from "../model/OneWellModel.js";
 import { ScreenViewOptions } from "scenerystack/sim";
-import { Node, Text, VBox, RichText } from "scenerystack/scenery";
-import { PhetFont } from "scenerystack/scenery-phet";
-import QPPWColors from "../../QPPWColors.js";
+import { TReadOnlyProperty } from "scenerystack/axon";
 import stringManager from "../../i18n/StringManager.js";
 import { PotentialType } from "../../common/model/PotentialFunction.js";
 
@@ -38,89 +39,32 @@ export class OneWellScreenView extends BaseScreenView {
   }
 
   /**
-   * Creates the content for the info dialog.
+   * Get screen-specific string properties for creating dialog content.
    */
-  public createInfoDialogContent(): Node {
-    const titleText = new Text(stringManager.oneWellStringProperty, {
-      font: new PhetFont({ size: 18, weight: "bold" }),
-      fill: QPPWColors.textFillProperty,
-    });
-
-    const descriptionText = new RichText(
-      stringManager.oneWellDescriptionStringProperty,
-      {
-        font: new PhetFont(14),
-        fill: QPPWColors.textFillProperty,
-        maxWidth: 500,
-      },
-    );
-
-    const keyConceptsTitle = new Text(
-      stringManager.keyConceptsTitleStringProperty,
-      {
-        font: new PhetFont({ size: 14, weight: "bold" }),
-        fill: QPPWColors.textFillProperty,
-      },
-    );
-
-    const keyConceptsList = new RichText(
-      stringManager.oneWellKeyConceptsStringProperty,
-      {
-        font: new PhetFont(13),
-        fill: QPPWColors.textFillProperty,
-        maxWidth: 500,
-      },
-    );
-
-    const interactionTitle = new Text(
-      stringManager.interactionsTitleStringProperty,
-      {
-        font: new PhetFont({ size: 14, weight: "bold" }),
-        fill: QPPWColors.textFillProperty,
-      },
-    );
-
-    const interactionsList = new RichText(
-      stringManager.oneWellInteractionsStringProperty,
-      {
-        font: new PhetFont(13),
-        fill: QPPWColors.textFillProperty,
-        maxWidth: 500,
-      },
-    );
-
-    return new VBox({
-      spacing: 12,
-      align: "left",
-      children: [
-        titleText,
-        descriptionText,
-        keyConceptsTitle,
-        keyConceptsList,
-        interactionTitle,
-        interactionsList,
-      ],
-    });
+  protected getScreenStringProperties(): ScreenStringProperties {
+    return {
+      titleStringProperty: stringManager.oneWellStringProperty,
+      descriptionStringProperty: stringManager.oneWellDescriptionStringProperty,
+      keyConceptsStringProperty: stringManager.oneWellKeyConceptsStringProperty,
+      interactionsStringProperty:
+        stringManager.oneWellInteractionsStringProperty,
+      educationalContentStringProperty:
+        stringManager.oneWellEducationalContentStringProperty,
+    };
   }
 
   /**
-   * Creates the screen summary content for accessibility.
+   * Get the common "Key Concepts" title string property.
    */
-  public createScreenSummaryContent(): Node {
-    const summaryText = new RichText(
-      stringManager.oneWellEducationalContentStringProperty,
-      {
-        font: new PhetFont(13),
-        fill: QPPWColors.textFillProperty,
-        maxWidth: 600,
-      },
-    );
+  protected getKeyConceptsTitleStringProperty(): TReadOnlyProperty<string> {
+    return stringManager.keyConceptsTitleStringProperty;
+  }
 
-    return new VBox({
-      spacing: 10,
-      align: "left",
-      children: [summaryText],
-    });
+  /**
+   * Get the common "Interactions" title string property.
+   */
+  protected getInteractionsTitleStringProperty(): TReadOnlyProperty<string> {
+    return stringManager.interactionsTitleStringProperty;
   }
 
   /**
