@@ -176,3 +176,357 @@ export function solveRosenMorsePotential(
     method: "analytical",
   };
 }
+
+/**
+ * Create the potential function for a Rosen-Morse potential.
+ * V(x) = -V_0 / cosh²(x/a) + V_1 * tanh(x/a)
+ *
+ * @param potentialDepth - Potential depth V_0 in Joules (positive value)
+ * @param barrierHeight - Barrier height V_1 in Joules
+ * @param wellWidth - Width parameter a in meters
+ * @returns Potential function V(x) in Joules
+ */
+export function createRosenMorsePotential(
+  potentialDepth: number,
+  barrierHeight: number,
+  wellWidth: number,
+): (x: number) => number {
+  const V0 = potentialDepth;
+  const V1 = barrierHeight;
+  const a = wellWidth;
+
+  return (x: number) => {
+    const coshVal = Math.cosh(x / a);
+    const tanhVal = Math.tanh(x / a);
+    return -V0 / (coshVal * coshVal) + V1 * tanhVal;
+  };
+}
+
+/**
+ * Calculate classical probability density for a Rosen-Morse potential.
+ * P(x) ∝ 1/v(x) = 1/√[2(E - V(x))/m]
+ *
+ * @param potentialDepth - Potential depth V_0 in Joules (positive value)
+ * @param barrierHeight - Barrier height V_1 in Joules
+ * @param wellWidth - Width parameter a in meters
+ * @param energy - Energy of the particle in Joules
+ * @param mass - Particle mass in kg
+ * @param xGrid - Array of x positions in meters
+ * @returns Array of normalized classical probability density values (in 1/meters)
+ */
+export function calculateRosenMorsePotentialClassicalProbability(
+  potentialDepth: number,
+  barrierHeight: number,
+  wellWidth: number,
+  energy: number,
+  mass: number,
+  xGrid: number[],
+): number[] {
+  const potentialFn = createRosenMorsePotential(
+    potentialDepth,
+    barrierHeight,
+    wellWidth,
+  );
+
+  const classicalProbability: number[] = [];
+  let integralSum = 0;
+
+  // Calculate unnormalized probability
+  for (let i = 0; i < xGrid.length; i++) {
+    const kineticEnergy = energy - potentialFn(xGrid[i]);
+
+    if (kineticEnergy <= 0) {
+      classicalProbability.push(0);
+    } else {
+      const epsilon = 1e-10 * Math.abs(potentialDepth);
+      const probability =
+        1 / Math.sqrt((2 * Math.max(kineticEnergy, epsilon)) / mass);
+      classicalProbability.push(probability);
+
+      if (i > 0) {
+        const dx = xGrid[i] - xGrid[i - 1];
+        integralSum += (probability + classicalProbability[i - 1]) * dx / 2;
+      }
+    }
+  }
+
+  // Normalize
+  if (integralSum > 0) {
+    for (let i = 0; i < classicalProbability.length; i++) {
+      classicalProbability[i] /= integralSum;
+    }
+  }
+
+  return classicalProbability;
+}
+
+/**
+ * Calculate the classical turning points for a Rosen-Morse potential.
+ * Solve E = -V_0 / cosh²(x/a) + V_1 * tanh(x/a) for x numerically
+ *
+ * @param potentialDepth - Potential depth V_0 in Joules (positive value)
+ * @param barrierHeight - Barrier height V_1 in Joules
+ * @param wellWidth - Width parameter a in meters
+ * @param energy - Energy of the particle in Joules
+ * @returns Object with left and right turning point positions (in meters)
+ */
+export function calculateRosenMorsePotentialTurningPoints(
+  potentialDepth: number,
+  barrierHeight: number,
+  wellWidth: number,
+  energy: number,
+): { left: number; right: number } {
+  const potentialFn = createRosenMorsePotential(
+    potentialDepth,
+    barrierHeight,
+    wellWidth,
+  );
+  const a = wellWidth;
+
+  // Search for turning points using bisection
+  // Start from a wide range and narrow down
+  const searchRange = 20 * a;
+
+  // Find left turning point (negative x)
+  let leftLow = -searchRange;
+  let leftHigh = 0;
+
+  for (let iter = 0; iter < 50; iter++) {
+    const mid = (leftLow + leftHigh) / 2;
+    const diff = potentialFn(mid) - energy;
+
+    if (Math.abs(diff) < 1e-14 * Math.abs(energy)) {
+      leftLow = mid;
+      break;
+    }
+
+    if (diff > 0) {
+      leftLow = mid;
+    } else {
+      leftHigh = mid;
+    }
+  }
+
+  // Find right turning point (positive x)
+  let rightLow = 0;
+  let rightHigh = searchRange;
+
+  for (let iter = 0; iter < 50; iter++) {
+    const mid = (rightLow + rightHigh) / 2;
+    const diff = potentialFn(mid) - energy;
+
+    if (Math.abs(diff) < 1e-14 * Math.abs(energy)) {
+      rightHigh = mid;
+      break;
+    }
+
+    if (diff > 0) {
+      rightHigh = mid;
+    } else {
+      rightLow = mid;
+    }
+  }
+
+  return {
+    left: (leftLow + leftHigh) / 2,
+    right: (rightLow + rightHigh) / 2,
+  };
+}
+
+/**
+ * Calculate wavefunction zeros for Rosen-Morse potential (numerical approach).
+ * Finds zeros by detecting sign changes in the wavefunction.
+ *
+ * @param potentialDepth - Potential depth V_0 in Joules (positive value)
+ * @param barrierHeight - Barrier height V_1 in Joules
+ * @param wellWidth - Width parameter a in meters
+ * @param mass - Particle mass in kg
+ * @param stateIndex - Index of the eigenstate (0 for ground state, etc.)
+ * @param searchRange - Range to search for zeros (in meters)
+ * @returns Array of x positions (in meters) where wavefunction is zero
+ */
+export function calculateRosenMorsePotentialWavefunctionZeros(
+  potentialDepth: number,
+  barrierHeight: number,
+  wellWidth: number,
+  mass: number,
+  stateIndex: number,
+  searchRange: number = 20e-9,
+): number[] {
+  const { HBAR } = QuantumConstants;
+  const V0 = potentialDepth;
+  const V1 = barrierHeight;
+  const a = wellWidth;
+  const n = stateIndex;
+
+  const lambda = (a * Math.sqrt(2 * mass * V0)) / HBAR;
+  const mu = (a * Math.sqrt(2 * mass) * V1) / (2 * HBAR * Math.sqrt(V0));
+  const lambdaEff = Math.sqrt(lambda * lambda - mu * mu);
+
+  const s = lambdaEff - n - 0.5;
+  const alpha_jac = s - mu;
+  const beta_jac = s + mu;
+
+  const normalization = Math.sqrt(
+    ((1 / a) * (2 * s)) /
+      (factorial(n) *
+        Math.exp(
+          logGamma(n + alpha_jac + 1) +
+            logGamma(n + beta_jac + 1) -
+            logGamma(n + alpha_jac + beta_jac + 1),
+        )),
+  );
+
+  // Ground state has no zeros
+  if (n === 0) {
+    return [];
+  }
+
+  const zeros: number[] = [];
+  const numSamples = 1000;
+  const dx = (2 * searchRange) / numSamples;
+
+  let prevX = -searchRange;
+  let prevTanh = Math.tanh(prevX / a);
+  let prevSech = 1.0 / Math.cosh(prevX / a);
+  let prevJacobi = jacobiPolynomial(n, alpha_jac, beta_jac, prevTanh);
+  let prevVal =
+    normalization *
+    Math.pow(prevSech, s) *
+    Math.exp(mu * prevTanh) *
+    prevJacobi;
+
+  for (let i = 1; i <= numSamples; i++) {
+    const x = -searchRange + i * dx;
+    const tanhVal = Math.tanh(x / a);
+    const sechVal = 1.0 / Math.cosh(x / a);
+    const jacobiPoly = jacobiPolynomial(n, alpha_jac, beta_jac, tanhVal);
+    const val =
+      normalization *
+      Math.pow(sechVal, s) *
+      Math.exp(mu * tanhVal) *
+      jacobiPoly;
+
+    // Sign change detected
+    if (prevVal * val < 0) {
+      // Use bisection to refine
+      let left = prevX;
+      let right = x;
+      for (let iter = 0; iter < 20; iter++) {
+        const mid = (left + right) / 2;
+        const midTanh = Math.tanh(mid / a);
+        const midSech = 1.0 / Math.cosh(mid / a);
+        const midJacobi = jacobiPolynomial(n, alpha_jac, beta_jac, midTanh);
+        const valMid =
+          normalization *
+          Math.pow(midSech, s) *
+          Math.exp(mu * midTanh) *
+          midJacobi;
+
+        if (Math.abs(valMid) < 1e-12) {
+          zeros.push(mid);
+          break;
+        }
+
+        if (valMid * prevVal < 0) {
+          right = mid;
+        } else {
+          left = mid;
+        }
+
+        if (iter === 19) {
+          zeros.push((left + right) / 2);
+        }
+      }
+    }
+
+    prevX = x;
+    prevVal = val;
+  }
+
+  return zeros;
+}
+
+/**
+ * Calculate the second derivative of the wavefunction for a Rosen-Morse potential.
+ * Uses numerical differentiation on the analytical wavefunction.
+ *
+ * @param potentialDepth - Potential depth V_0 in Joules (positive value)
+ * @param barrierHeight - Barrier height V_1 in Joules
+ * @param wellWidth - Width parameter a in meters
+ * @param mass - Particle mass in kg
+ * @param stateIndex - Index of the eigenstate (0 for ground state, etc.)
+ * @param xGrid - Array of x positions in meters where derivatives should be evaluated
+ * @returns Array of second derivative values
+ */
+export function calculateRosenMorsePotentialWavefunctionSecondDerivative(
+  potentialDepth: number,
+  barrierHeight: number,
+  wellWidth: number,
+  mass: number,
+  stateIndex: number,
+  xGrid: number[],
+): number[] {
+  const { HBAR } = QuantumConstants;
+  const V0 = potentialDepth;
+  const V1 = barrierHeight;
+  const a = wellWidth;
+  const n = stateIndex;
+
+  const lambda = (a * Math.sqrt(2 * mass * V0)) / HBAR;
+  const mu = (a * Math.sqrt(2 * mass) * V1) / (2 * HBAR * Math.sqrt(V0));
+  const lambdaEff = Math.sqrt(lambda * lambda - mu * mu);
+
+  const s = lambdaEff - n - 0.5;
+  const alpha_jac = s - mu;
+  const beta_jac = s + mu;
+
+  const normalization = Math.sqrt(
+    ((1 / a) * (2 * s)) /
+      (factorial(n) *
+        Math.exp(
+          logGamma(n + alpha_jac + 1) +
+            logGamma(n + beta_jac + 1) -
+            logGamma(n + alpha_jac + beta_jac + 1),
+        )),
+  );
+
+  const secondDerivative: number[] = [];
+  const h = 1e-12; // Small step for numerical differentiation
+
+  for (const x of xGrid) {
+    // Evaluate at x-h, x, x+h
+    const xMinus = x - h;
+    const xPlus = x + h;
+
+    const tanhMinus = Math.tanh(xMinus / a);
+    const sechMinus = 1.0 / Math.cosh(xMinus / a);
+    const jacobiMinus = jacobiPolynomial(n, alpha_jac, beta_jac, tanhMinus);
+    const psiMinus =
+      normalization *
+      Math.pow(sechMinus, s) *
+      Math.exp(mu * tanhMinus) *
+      jacobiMinus;
+
+    const tanh = Math.tanh(x / a);
+    const sech = 1.0 / Math.cosh(x / a);
+    const jacobi = jacobiPolynomial(n, alpha_jac, beta_jac, tanh);
+    const psi =
+      normalization * Math.pow(sech, s) * Math.exp(mu * tanh) * jacobi;
+
+    const tanhPlus = Math.tanh(xPlus / a);
+    const sechPlus = 1.0 / Math.cosh(xPlus / a);
+    const jacobiPlus = jacobiPolynomial(n, alpha_jac, beta_jac, tanhPlus);
+    const psiPlus =
+      normalization *
+      Math.pow(sechPlus, s) *
+      Math.exp(mu * tanhPlus) *
+      jacobiPlus;
+
+    // Second derivative using central difference
+    const secondDeriv = (psiPlus - 2 * psi + psiMinus) / (h * h);
+    secondDerivative.push(secondDeriv);
+  }
+
+  return secondDerivative;
+}

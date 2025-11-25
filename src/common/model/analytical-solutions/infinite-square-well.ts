@@ -24,7 +24,162 @@
  */
 
 import QuantumConstants from "../QuantumConstants.js";
-import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
+import {
+  BoundStateResult,
+  GridConfig,
+  PotentialFunction,
+} from "../PotentialFunction.js";
+
+/**
+ * Create the potential function for an infinite square well.
+ * V(x) = 0 for -L/2 < x < L/2, V(x) = ∞ otherwise
+ *
+ * @param wellWidth - Width of the well (L) in meters
+ * @returns Potential function V(x) in Joules
+ */
+export function createInfiniteWellPotential(
+  wellWidth: number,
+): PotentialFunction {
+  const halfWidth = wellWidth / 2;
+  return (x: number) => {
+    if (x >= -halfWidth && x <= halfWidth) {
+      return 0;
+    } else {
+      return 1e100; // Very large value to approximate infinity
+    }
+  };
+}
+
+/**
+ * Calculate classical probability density for an infinite square well.
+ * For a particle in a box with constant potential inside, the classical velocity
+ * is constant, so the probability density is uniform: P(x) = 1/L for |x| < L/2
+ *
+ * This is one of the cases where the renormalization can be computed analytically.
+ *
+ * @param wellWidth - Width of the well (L) in meters
+ * @param energy - Energy of the particle in Joules (unused for infinite well)
+ * @param mass - Particle mass in kg (unused for infinite well)
+ * @param xGrid - Array of x positions in meters
+ * @returns Array of normalized classical probability density values (in 1/meters)
+ */
+export function calculateInfiniteWellClassicalProbability(
+  wellWidth: number,
+  _energy: number,
+  _mass: number,
+  xGrid: number[],
+): number[] {
+  const halfWidth = wellWidth / 2;
+  const probability: number[] = [];
+
+  // Classical probability is uniform inside the well: P(x) = 1/L
+  // This is already normalized: ∫P(x)dx = 1
+  const uniformProbability = 1 / wellWidth;
+
+  for (const x of xGrid) {
+    if (x >= -halfWidth && x <= halfWidth) {
+      probability.push(uniformProbability);
+    } else {
+      probability.push(0);
+    }
+  }
+
+  return probability;
+}
+
+/**
+ * Calculate the positions of wavefunction zeros (nodes) for an infinite square well.
+ * For the nth eigenstate, there are n-1 nodes evenly spaced inside the well.
+ *
+ * The zeros occur at x = -L/2 + (k*L)/n for k = 1, 2, ..., n-1
+ *
+ * @param wellWidth - Width of the well (L) in meters
+ * @param stateIndex - Index of the eigenstate (0 for ground state, 1 for first excited, etc.)
+ * @returns Array of x positions (in meters) where the wavefunction is zero
+ */
+export function calculateInfiniteWellWavefunctionZeros(
+  wellWidth: number,
+  stateIndex: number,
+): number[] {
+  const n = stateIndex + 1; // Quantum number (1, 2, 3, ...)
+  const zeros: number[] = [];
+
+  // Ground state (n=1) has no interior nodes
+  if (n === 1) {
+    return zeros;
+  }
+
+  // For nth state, there are n-1 interior nodes
+  // They occur at x = -L/2 + (k*L)/n for k = 1, 2, ..., n-1
+  for (let k = 1; k < n; k++) {
+    const x = -wellWidth / 2 + (k * wellWidth) / n;
+    zeros.push(x);
+  }
+
+  return zeros;
+}
+
+/**
+ * Calculate the classical turning points for an infinite square well.
+ * For an infinite well, the turning points are always at the walls: x = ±L/2
+ *
+ * @param wellWidth - Width of the well (L) in meters
+ * @param _energy - Energy of the particle in Joules (unused for infinite well)
+ * @returns Object with left and right turning point positions (in meters)
+ */
+export function calculateInfiniteWellTurningPoints(
+  wellWidth: number,
+  _energy: number,
+): { left: number; right: number } {
+  const halfWidth = wellWidth / 2;
+  return {
+    left: -halfWidth,
+    right: halfWidth,
+  };
+}
+
+/**
+ * Calculate the second derivative of the wavefunction for an infinite square well.
+ *
+ * For ψ_n(x) = √(2/L) sin(nπ(x + L/2)/L):
+ * - ψ''_n(x) = -√(2/L) * (nπ/L)² * sin(nπ(x + L/2)/L) = -(nπ/L)² * ψ_n(x)
+ *
+ * @param wellWidth - Width of the well (L) in meters
+ * @param stateIndex - Index of the eigenstate (0 for ground state, 1 for first excited, etc.)
+ * @param xGrid - Array of x positions in meters where derivatives should be evaluated
+ * @returns Array of second derivative values
+ */
+export function calculateInfiniteWellWavefunctionSecondDerivative(
+  wellWidth: number,
+  stateIndex: number,
+  xGrid: number[],
+): number[] {
+  const n = stateIndex + 1; // Quantum number (1, 2, 3, ...)
+  const L = wellWidth;
+  const halfWidth = L / 2;
+  const normalization = Math.sqrt(2 / L);
+  const waveFactor = (n * Math.PI) / L;
+
+  const secondDerivative: number[] = [];
+
+  for (const x of xGrid) {
+    // Check if x is inside the well [-L/2, L/2]
+    if (x >= -halfWidth && x <= halfWidth) {
+      // Shift coordinate to [0, L] range for standard formula
+      const xShifted = x + halfWidth;
+
+      // ψ''_n(x) = -normalization * waveFactor² * sin(waveFactor * xShifted)
+      const secondDeriv =
+        -normalization * waveFactor * waveFactor * Math.sin(waveFactor * xShifted);
+      secondDerivative.push(secondDeriv);
+    } else {
+      // Outside the well, wavefunction and derivatives are zero
+      secondDerivative.push(0);
+    }
+  }
+
+  return secondDerivative;
+}
 
 /**
  * Analytical solution for an infinite square well (particle in a box).

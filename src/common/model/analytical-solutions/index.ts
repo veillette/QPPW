@@ -8,18 +8,95 @@
 import qppw from "../../../QPPWNamespace.js";
 
 // Export all analytical solution functions
-export { solveInfiniteWell } from "./infinite-square-well.js";
-export { solveFiniteSquareWell } from "./finite-square-well.js";
-export { solveHarmonicOscillator } from "./harmonic-oscillator.js";
-export { solveMorsePotential } from "./morse-potential.js";
-export { solvePoschlTellerPotential } from "./poschl-teller-potential.js";
-export { solveRosenMorsePotential } from "./rosen-morse-potential.js";
-export { solveEckartPotential } from "./eckart-potential.js";
-export { solveAsymmetricTrianglePotential } from "./asymmetric-triangle-potential.js";
-export { solveCoulomb1DPotential } from "./coulomb-1d-potential.js";
+export {
+  solveInfiniteWell,
+  createInfiniteWellPotential,
+  calculateInfiniteWellClassicalProbability,
+  calculateInfiniteWellWavefunctionZeros,
+  calculateInfiniteWellTurningPoints,
+  calculateInfiniteWellWavefunctionSecondDerivative,
+} from "./infinite-square-well.js";
+export {
+  solveFiniteSquareWell,
+  createFiniteWellPotential,
+  calculateFiniteWellClassicalProbability,
+  calculateFiniteWellWavefunctionZeros,
+  calculateFiniteWellTurningPoints,
+  calculateFiniteWellWavefunctionSecondDerivative,
+} from "./finite-square-well.js";
+export {
+  solveHarmonicOscillator,
+  createHarmonicOscillatorPotential,
+  calculateHarmonicOscillatorClassicalProbability,
+  calculateHarmonicOscillatorWavefunctionZeros,
+  calculateHarmonicOscillatorTurningPoints,
+  calculateHarmonicOscillatorWavefunctionSecondDerivative,
+} from "./harmonic-oscillator.js";
+export {
+  solveMorsePotential,
+  createMorsePotential,
+  calculateMorsePotentialClassicalProbability,
+  calculateMorsePotentialWavefunctionZeros,
+  calculateMorsePotentialTurningPoints,
+  calculateMorsePotentialWavefunctionSecondDerivative,
+} from "./morse-potential.js";
+export {
+  solvePoschlTellerPotential,
+  createPoschlTellerPotential,
+  calculatePoschlTellerClassicalProbability,
+  calculatePoschlTellerWavefunctionZeros,
+  calculatePoschlTellerTurningPoints,
+  calculatePoschlTellerWavefunctionSecondDerivative,
+} from "./poschl-teller-potential.js";
+export {
+  solveRosenMorsePotential,
+  createRosenMorsePotential,
+  calculateRosenMorsePotentialClassicalProbability,
+  calculateRosenMorsePotentialWavefunctionZeros,
+  calculateRosenMorsePotentialTurningPoints,
+  calculateRosenMorsePotentialWavefunctionSecondDerivative,
+} from "./rosen-morse-potential.js";
+export {
+  solveEckartPotential,
+  createEckartPotential,
+  calculateEckartPotentialClassicalProbability,
+  calculateEckartPotentialWavefunctionZeros,
+  calculateEckartPotentialTurningPoints,
+  calculateEckartPotentialWavefunctionSecondDerivative,
+} from "./eckart-potential.js";
+export {
+  solveAsymmetricTrianglePotential,
+  createAsymmetricTrianglePotential,
+  calculateAsymmetricTriangleClassicalProbability,
+  calculateAsymmetricTriangleWavefunctionZeros,
+  calculateAsymmetricTriangleTurningPoints,
+  calculateAsymmetricTriangleWavefunctionSecondDerivative,
+} from "./asymmetric-triangle-potential.js";
+export {
+  solveCoulomb1DPotential,
+  createCoulomb1DPotential,
+  calculateCoulomb1DClassicalProbability,
+  calculateCoulomb1DWavefunctionZeros,
+  calculateCoulomb1DTurningPoints,
+  calculateCoulomb1DWavefunctionSecondDerivative,
+} from "./coulomb-1d-potential.js";
 export { solveCoulomb1DNumerical } from "./coulomb-1d-numerical-wrapper.js";
-export { solveCoulomb3DPotential } from "./coulomb-3d-potential.js";
-export { solveTriangularPotential } from "./triangular-potential.js";
+export {
+  solveCoulomb3DPotential,
+  createCoulomb3DPotential,
+  calculateCoulomb3DClassicalProbability,
+  calculateCoulomb3DWavefunctionZeros,
+  calculateCoulomb3DTurningPoints,
+  calculateCoulomb3DWavefunctionSecondDerivative,
+} from "./coulomb-3d-potential.js";
+export {
+  solveTriangularPotential,
+  createTriangularPotential,
+  calculateTriangularPotentialClassicalProbability,
+  calculateTriangularPotentialWavefunctionZeros,
+  calculateTriangularPotentialTurningPoints,
+  calculateTriangularPotentialWavefunctionSecondDerivative,
+} from "./triangular-potential.js";
 export { solveDoubleSquareWellAnalytical } from "./double-square-well.js";
 export { solveMultiSquareWell } from "./multi-square-well.js";
 export { solveMultiCoulomb1D } from "./multi-coulomb-1d.js";

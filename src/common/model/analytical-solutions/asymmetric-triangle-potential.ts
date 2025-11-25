@@ -118,3 +118,228 @@ export function solveAsymmetricTrianglePotential(
     method: "analytical",
   };
 }
+
+/**
+ * Create the potential function for an asymmetric triangle potential.
+ * V(x) = ∞ for x < 0 (infinite wall), V(x) = F·x for x ≥ 0
+ *
+ * @param slope - Slope parameter F in Joules/meter (field strength)
+ * @returns Potential function V(x) in Joules
+ */
+export function createAsymmetricTrianglePotential(
+  slope: number,
+): (x: number) => number {
+  const F = slope;
+
+  return (x: number) => {
+    if (x < 0) {
+      return 1e100; // Very large value to approximate infinity
+    } else {
+      return F * x;
+    }
+  };
+}
+
+/**
+ * Calculate classical probability density for an asymmetric triangle potential.
+ * P(x) ∝ 1/v(x) = 1/√[2(E - V(x))/m] = 1/√[2(E - Fx)/m]
+ *
+ * @param slope - Slope parameter F in Joules/meter (field strength)
+ * @param energy - Energy of the particle in Joules
+ * @param mass - Particle mass in kg
+ * @param xGrid - Array of x positions in meters
+ * @returns Array of normalized classical probability density values (in 1/meters)
+ */
+export function calculateAsymmetricTriangleClassicalProbability(
+  slope: number,
+  energy: number,
+  mass: number,
+  xGrid: number[],
+): number[] {
+  const F = slope;
+  const classicalProbability: number[] = [];
+  let integralSum = 0;
+
+  // Classical turning point: x_0 = E/F
+  const x0 = energy / F;
+
+  // Calculate unnormalized probability
+  for (let i = 0; i < xGrid.length; i++) {
+    const x = xGrid[i];
+
+    // Only classically allowed in region 0 ≤ x ≤ x_0
+    if (x < 0 || x > x0) {
+      classicalProbability.push(0);
+    } else {
+      const kineticEnergy = energy - F * x;
+      const epsilon = 1e-10 * Math.abs(energy);
+      const probability =
+        1 / Math.sqrt((2 * Math.max(kineticEnergy, epsilon)) / mass);
+      classicalProbability.push(probability);
+
+      if (i > 0) {
+        const dx = xGrid[i] - xGrid[i - 1];
+        integralSum += (probability + classicalProbability[i - 1]) * dx / 2;
+      }
+    }
+  }
+
+  // Normalize
+  if (integralSum > 0) {
+    for (let i = 0; i < classicalProbability.length; i++) {
+      classicalProbability[i] /= integralSum;
+    }
+  }
+
+  return classicalProbability;
+}
+
+/**
+ * Calculate the classical turning points for an asymmetric triangle potential.
+ * For this potential, there is one turning point at x = E/F (right side).
+ * The left boundary is the infinite wall at x = 0.
+ *
+ * @param slope - Slope parameter F in Joules/meter (field strength)
+ * @param energy - Energy of the particle in Joules
+ * @returns Object with left and right turning point positions (in meters)
+ */
+export function calculateAsymmetricTriangleTurningPoints(
+  slope: number,
+  energy: number,
+): { left: number; right: number } {
+  const F = slope;
+
+  // Classical turning point where E = F·x => x = E/F
+  const turningPoint = energy / F;
+
+  return {
+    left: 0, // Infinite wall at x = 0
+    right: turningPoint,
+  };
+}
+
+/**
+ * Calculate wavefunction zeros for asymmetric triangle potential.
+ * The wavefunction is ψ(x) = N · Ai(α(x - x_0)), where x_0 = E/F.
+ * Zeros occur where Ai(α(x - x_0)) = 0.
+ *
+ * @param slope - Slope parameter F in Joules/meter (field strength)
+ * @param mass - Particle mass in kg
+ * @param energy - Energy of the eigenstate in Joules
+ * @param searchRange - Range to search for zeros (in meters)
+ * @returns Array of x positions (in meters) where wavefunction is zero
+ */
+export function calculateAsymmetricTriangleWavefunctionZeros(
+  slope: number,
+  mass: number,
+  energy: number,
+  searchRange: number = 20e-9,
+): number[] {
+  const F = slope;
+  const alpha = calculateAiryAlpha(mass, F);
+  const x0 = energy / F;
+
+  const zeros: number[] = [];
+  const numSamples = 1000;
+  const dx = (2 * searchRange) / numSamples;
+
+  let prevX = -searchRange;
+  let prevZ = alpha * (prevX - x0);
+  let prevVal = prevX < 0 ? 0 : airyAi(prevZ);
+
+  for (let i = 1; i <= numSamples; i++) {
+    const x = -searchRange + i * dx;
+
+    if (x < 0) {
+      prevX = x;
+      prevVal = 0;
+      continue;
+    }
+
+    const z = alpha * (x - x0);
+    const val = airyAi(z);
+
+    // Sign change detected
+    if (prevVal * val < 0 && prevX >= 0) {
+      // Use bisection to refine
+      let left = prevX;
+      let right = x;
+      for (let iter = 0; iter < 20; iter++) {
+        const mid = (left + right) / 2;
+        const midZ = alpha * (mid - x0);
+        const valMid = airyAi(midZ);
+
+        if (Math.abs(valMid) < 1e-12) {
+          zeros.push(mid);
+          break;
+        }
+
+        if (valMid * prevVal < 0) {
+          right = mid;
+        } else {
+          left = mid;
+        }
+
+        if (iter === 19) {
+          zeros.push((left + right) / 2);
+        }
+      }
+    }
+
+    prevX = x;
+    prevVal = val;
+  }
+
+  return zeros;
+}
+
+/**
+ * Calculate the second derivative of the wavefunction for an asymmetric triangle potential.
+ * Uses numerical differentiation on the analytical wavefunction.
+ *
+ * @param slope - Slope parameter F in Joules/meter (field strength)
+ * @param mass - Particle mass in kg
+ * @param energy - Energy of the eigenstate in Joules
+ * @param xGrid - Array of x positions in meters where derivatives should be evaluated
+ * @returns Array of second derivative values
+ */
+export function calculateAsymmetricTriangleWavefunctionSecondDerivative(
+  slope: number,
+  mass: number,
+  energy: number,
+  xGrid: number[],
+): number[] {
+  const F = slope;
+  const alpha = calculateAiryAlpha(mass, F);
+  const x0 = energy / F;
+
+  const secondDerivative: number[] = [];
+  const h = 1e-12; // Small step for numerical differentiation
+
+  for (const x of xGrid) {
+    if (x < 0) {
+      // In the infinite wall region, wavefunction is zero
+      secondDerivative.push(0);
+      continue;
+    }
+
+    // Evaluate at x-h, x, x+h
+    const xMinus = x - h;
+    const xPlus = x + h;
+
+    const zMinus = alpha * (xMinus - x0);
+    const psiMinus = xMinus < 0 ? 0 : airyAi(zMinus);
+
+    const z = alpha * (x - x0);
+    const psi = airyAi(z);
+
+    const zPlus = alpha * (xPlus - x0);
+    const psiPlus = airyAi(zPlus);
+
+    // Second derivative using central difference
+    const secondDeriv = (psiPlus - 2 * psi + psiMinus) / (h * h);
+    secondDerivative.push(secondDeriv);
+  }
+
+  return secondDerivative;
+}

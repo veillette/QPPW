@@ -36,7 +36,252 @@
  */
 
 import QuantumConstants from "../QuantumConstants.js";
-import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
+import {
+  BoundStateResult,
+  GridConfig,
+  PotentialFunction,
+} from "../PotentialFunction.js";
+
+/**
+ * Create the potential function for a finite square well.
+ * V(x) = -V₀ for |x| < L/2, V(x) = 0 for |x| > L/2
+ *
+ * @param wellWidth - Width of the well (L) in meters
+ * @param wellDepth - Depth of the well (V₀) in Joules (positive value)
+ * @returns Potential function V(x) in Joules
+ */
+export function createFiniteWellPotential(
+  wellWidth: number,
+  wellDepth: number,
+): PotentialFunction {
+  const halfWidth = wellWidth / 2;
+  return (x: number) => {
+    if (Math.abs(x) <= halfWidth) {
+      return -wellDepth;
+    } else {
+      return 0;
+    }
+  };
+}
+
+/**
+ * Calculate classical probability density for a finite square well.
+ * Inside the well, the kinetic energy is constant (E + V₀), so the velocity is constant.
+ * Therefore, the classical probability density is uniform: P(x) = 1/L for |x| < L/2
+ *
+ * This is one of the cases where the renormalization can be computed analytically.
+ *
+ * @param wellWidth - Width of the well (L) in meters
+ * @param wellDepth - Depth of the well (V₀) in Joules (positive value)
+ * @param energy - Energy of the particle in Joules (must be > -V₀)
+ * @param mass - Particle mass in kg (unused for finite well)
+ * @param xGrid - Array of x positions in meters
+ * @returns Array of normalized classical probability density values (in 1/meters)
+ */
+export function calculateFiniteWellClassicalProbability(
+  wellWidth: number,
+  wellDepth: number,
+  energy: number,
+  _mass: number,
+  xGrid: number[],
+): number[] {
+  const halfWidth = wellWidth / 2;
+  const probability: number[] = [];
+
+  // Classical probability is uniform inside the well: P(x) = 1/L
+  // This is already normalized: ∫P(x)dx = 1
+  const uniformProbability = 1 / wellWidth;
+
+  for (const x of xGrid) {
+    if (Math.abs(x) <= halfWidth && energy > -wellDepth) {
+      probability.push(uniformProbability);
+    } else {
+      probability.push(0);
+    }
+  }
+
+  return probability;
+}
+
+/**
+ * Calculate the positions of wavefunction zeros (nodes) for a finite square well.
+ * The zeros depend on the parity and quantum numbers of the state.
+ *
+ * For even parity states: ψ(x) = A cos(kx) inside, zeros at x = ±(2m+1)π/(2k) for m = 0,1,2,...
+ * For odd parity states: ψ(x) = A sin(kx) inside, zeros at x = ±mπ/k for m = 1,2,3,...
+ * Plus x = 0 for odd parity states.
+ *
+ * @param wellWidth - Width of the well (L) in meters
+ * @param wellDepth - Depth of the well (V₀) in Joules (positive value)
+ * @param mass - Particle mass in kg
+ * @param energy - Energy of the eigenstate in Joules
+ * @param parity - Parity of the state ("even" or "odd")
+ * @returns Array of x positions (in meters) where the wavefunction is zero inside the well
+ */
+export function calculateFiniteWellWavefunctionZeros(
+  wellWidth: number,
+  wellDepth: number,
+  mass: number,
+  energy: number,
+  parity: "even" | "odd",
+): number[] {
+  const { HBAR } = QuantumConstants;
+  const halfWidth = wellWidth / 2;
+  const k = Math.sqrt(2 * mass * (energy + wellDepth)) / HBAR; // Wave number inside well
+
+  const zeros: number[] = [];
+
+  if (parity === "even") {
+    // Even parity: cos(kx), zeros at x where kx = (2m+1)π/2
+    let m = 0;
+    while (true) {
+      const x = ((2 * m + 1) * Math.PI) / (2 * k);
+      if (x >= halfWidth) break; // Outside well
+      if (x > 0) {
+        zeros.push(-x); // Symmetric about origin
+        zeros.push(x);
+      }
+      m++;
+    }
+  } else {
+    // Odd parity: sin(kx), has zero at origin and at x where kx = mπ
+    zeros.push(0); // Always a zero at origin for odd parity
+
+    let m = 1;
+    while (true) {
+      const x = (m * Math.PI) / k;
+      if (x >= halfWidth) break; // Outside well
+      zeros.push(-x); // Symmetric about origin
+      zeros.push(x);
+      m++;
+    }
+  }
+
+  // Sort zeros in ascending order
+  zeros.sort((a, b) => a - b);
+
+  return zeros;
+}
+
+/**
+ * Calculate the classical turning points for a finite square well.
+ * For bound states with E < 0, the turning points are at the well boundaries x = ±L/2
+ *
+ * @param wellWidth - Width of the well (L) in meters
+ * @param wellDepth - Depth of the well (V₀) in Joules (positive value)
+ * @param energy - Energy of the particle in Joules (should be -V₀ < E < 0 for bound states)
+ * @returns Object with left and right turning point positions (in meters)
+ */
+export function calculateFiniteWellTurningPoints(
+  wellWidth: number,
+  wellDepth: number,
+  energy: number,
+): { left: number; right: number } {
+  const halfWidth = wellWidth / 2;
+
+  // For bound states (E < 0), the turning points are at the well edges
+  // since V = -V₀ inside and V = 0 outside
+  // The particle can classically exist where E > V(x)
+  // Inside: E > -V₀ (always true for bound states)
+  // Outside: E > 0 (never true for bound states E < 0)
+
+  return {
+    left: -halfWidth,
+    right: halfWidth,
+  };
+}
+
+/**
+ * Calculate the second derivative of the wavefunction for a finite square well.
+ *
+ * Inside the well: ψ(x) = A cos(kx) or A sin(kx)
+ * - Even parity: ψ''(x) = -Ak² cos(kx) = -k² ψ(x)
+ * - Odd parity: ψ''(x) = -Ak² sin(kx) = -k² ψ(x)
+ *
+ * Outside the well: ψ(x) = B exp(-κ|x|) or B sign(x) exp(-κ|x|)
+ * - Even parity: ψ''(x) = B κ² exp(-κ|x|) = κ² ψ(x)
+ * - Odd parity: ψ''(x) = B κ² sign(x) exp(-κ|x|) = κ² ψ(x)
+ *
+ * @param wellWidth - Width of the well (L) in meters
+ * @param wellDepth - Depth of the well (V₀) in Joules (positive value)
+ * @param mass - Particle mass in kg
+ * @param energy - Energy of the eigenstate in Joules
+ * @param parity - Parity of the state ("even" or "odd")
+ * @param xGrid - Array of x positions in meters where derivatives should be evaluated
+ * @returns Array of second derivative values
+ */
+export function calculateFiniteWellWavefunctionSecondDerivative(
+  wellWidth: number,
+  wellDepth: number,
+  mass: number,
+  energy: number,
+  parity: "even" | "odd",
+  xGrid: number[],
+): number[] {
+  const { HBAR } = QuantumConstants;
+  const halfWidth = wellWidth / 2;
+  const k = Math.sqrt(2 * mass * (energy + wellDepth)) / HBAR; // Inside well
+  const kappa = Math.sqrt(-2 * mass * energy) / HBAR; // Outside well (decay constant)
+
+  // Determine normalization constant (simplified version)
+  let normalization: number;
+  if (parity === "even") {
+    const cosVal = Math.cos(k * halfWidth);
+    const B = cosVal * Math.exp(kappa * halfWidth);
+    const integral =
+      2 * (halfWidth + Math.sin(2 * k * halfWidth) / (4 * k)) +
+      (2 * B * B) / (2 * kappa);
+    normalization = 1 / Math.sqrt(integral);
+  } else {
+    const sinVal = Math.sin(k * halfWidth);
+    const B = sinVal * Math.exp(kappa * halfWidth);
+    const integral =
+      2 * (halfWidth - Math.sin(2 * k * halfWidth) / (4 * k)) +
+      (2 * B * B) / (2 * kappa);
+    normalization = 1 / Math.sqrt(integral);
+  }
+
+  const secondDerivative: number[] = [];
+
+  for (const x of xGrid) {
+    if (Math.abs(x) <= halfWidth) {
+      // Inside the well
+      if (parity === "even") {
+        // ψ = A cos(kx), ψ'' = -Ak² cos(kx)
+        const secondDeriv = -normalization * k * k * Math.cos(k * x);
+        secondDerivative.push(secondDeriv);
+      } else {
+        // ψ = A sin(kx), ψ'' = -Ak² sin(kx)
+        const secondDeriv = -normalization * k * k * Math.sin(k * x);
+        secondDerivative.push(secondDeriv);
+      }
+    } else {
+      // Outside the well (exponentially decaying)
+      const absX = Math.abs(x);
+      const signX = x >= 0 ? 1 : -1;
+
+      if (parity === "even") {
+        // ψ = B exp(-κ|x|), ψ'' = B κ² exp(-κ|x|)
+        const cosVal = Math.cos(k * halfWidth);
+        const B = normalization * cosVal * Math.exp(kappa * halfWidth);
+        const expFactor = Math.exp(-kappa * absX);
+
+        const secondDeriv = B * kappa * kappa * expFactor;
+        secondDerivative.push(secondDeriv);
+      } else {
+        // ψ = B sign(x) exp(-κ|x|), ψ'' = B κ² sign(x) exp(-κ|x|)
+        const sinVal = Math.sin(k * halfWidth);
+        const B = normalization * sinVal * Math.exp(kappa * halfWidth);
+        const expFactor = Math.exp(-kappa * absX);
+
+        const secondDeriv = B * kappa * kappa * signX * expFactor;
+        secondDerivative.push(secondDeriv);
+      }
+    }
+  }
+
+  return secondDerivative;
+}
 
 /**
  * Analytical solution for a finite square well.
