@@ -172,7 +172,9 @@ export class IntroModel extends BaseModel {
    * Calculate the classical probability density for a given energy level.
    * Override from BaseModel to provide potential-specific implementations.
    */
-  public override getClassicalProbabilityDensity(energyIndex: number): number[] | null {
+  public override getClassicalProbabilityDensity(
+    energyIndex: number,
+  ): number[] | null {
     if (!this.boundStateResult) {
       this.calculateBoundStates();
     }

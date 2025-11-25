@@ -10,19 +10,11 @@ import {
 } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { TimeSpeed } from "scenerystack";
-import Schrodinger1DSolver, {
-  NumericalMethod,
-} from "./Schrodinger1DSolver.js";
+import Schrodinger1DSolver, { NumericalMethod } from "./Schrodinger1DSolver.js";
 import QPPWPreferences from "../../QPPWPreferences.js";
-import {
-  PotentialType,
-  BoundStateResult,
-} from "./PotentialFunction.js";
+import { PotentialType, BoundStateResult } from "./PotentialFunction.js";
 import QuantumConstants from "./QuantumConstants.js";
-import {
-  SuperpositionType,
-  SuperpositionConfig,
-} from "./SuperpositionType.js";
+import { SuperpositionType, SuperpositionConfig } from "./SuperpositionType.js";
 
 export abstract class BaseModel {
   // Default time step for manual stepping (in seconds, ~1 frame at 60 FPS)

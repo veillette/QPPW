@@ -207,7 +207,9 @@ export class ManyWellsModel extends BaseModel {
    * @param energyIndex - Index of the energy level (0-indexed)
    * @returns Array of classical probability density values, or null if unavailable
    */
-  public override getClassicalProbabilityDensity(energyIndex: number): number[] | null {
+  public override getClassicalProbabilityDensity(
+    energyIndex: number,
+  ): number[] | null {
     if (!this.boundStateResult) {
       this.calculateBoundStates();
     }

@@ -6,7 +6,7 @@
 import { NumberProperty, Property } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { BaseModel } from "../../common/model/BaseModel.js";
-import Schrodinger1DSolver, {
+import {
   WellParameters,
   NumericalMethod,
 } from "../../common/model/Schrodinger1DSolver.js";
@@ -525,7 +525,9 @@ export class OneWellModel extends BaseModel {
    * @param energyIndex - Index of the energy level (0-indexed)
    * @returns Array of classical probability density values, or null if unavailable
    */
-  public override getClassicalProbabilityDensity(energyIndex: number): number[] | null {
+  public override getClassicalProbabilityDensity(
+    energyIndex: number,
+  ): number[] | null {
     if (!this.boundStateResult) {
       this.calculateBoundStates();
     }
