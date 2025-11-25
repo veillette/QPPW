@@ -8,9 +8,21 @@ import {
   NumberProperty,
   Property,
 } from "scenerystack/axon";
+import { Range } from "scenerystack/dot";
 import { TimeSpeed } from "scenerystack";
-import Schrodinger1DSolver, { NumericalMethod } from "./Schrodinger1DSolver.js";
+import Schrodinger1DSolver, {
+  NumericalMethod,
+} from "./Schrodinger1DSolver.js";
 import QPPWPreferences from "../../QPPWPreferences.js";
+import {
+  PotentialType,
+  BoundStateResult,
+} from "./PotentialFunction.js";
+import QuantumConstants from "./QuantumConstants.js";
+import {
+  SuperpositionType,
+  SuperpositionConfig,
+} from "./SuperpositionType.js";
 
 export abstract class BaseModel {
   // Default time step for manual stepping (in seconds, ~1 frame at 60 FPS)
@@ -21,8 +33,37 @@ export abstract class BaseModel {
   public readonly timeProperty: NumberProperty; // In femtoseconds
   public readonly timeSpeedProperty: EnumerationProperty<TimeSpeed>;
 
-  // Display options
+  // Potential type selection
+  public readonly potentialTypeProperty: Property<PotentialType>;
+
+  // Well parameters (used for different potential types)
+  public readonly wellWidthProperty: NumberProperty;
+  public readonly wellDepthProperty: NumberProperty;
+  public readonly wellOffsetProperty: NumberProperty; // For asymmetric wells
+
+  // Particle properties
+  public readonly particleMassProperty: NumberProperty; // In units of electron mass
+
+  // Energy level selection
+  public readonly selectedEnergyLevelIndexProperty: NumberProperty; // 0-indexed
+
+  // Display settings
+  public readonly showRealPartProperty: Property<boolean>;
+  public readonly showImaginaryPartProperty: Property<boolean>;
+  public readonly showMagnitudeProperty: Property<boolean>;
+  public readonly showPhaseProperty: Property<boolean>;
   public readonly showClassicalProbabilityProperty: Property<boolean>;
+
+  // Chart visibility
+  public readonly showTotalEnergyProperty: Property<boolean>;
+  public readonly showPotentialEnergyProperty: Property<boolean>;
+
+  // Superposition state
+  public readonly superpositionTypeProperty: Property<SuperpositionType>;
+  public readonly superpositionConfigProperty: Property<SuperpositionConfig>;
+
+  // Cached bound state results
+  protected boundStateResult: BoundStateResult | null = null;
 
   // Solver for quantum calculations
   protected readonly solver: Schrodinger1DSolver;
@@ -36,8 +77,52 @@ export abstract class BaseModel {
     this.timeProperty = new NumberProperty(0); // in femtoseconds
     this.timeSpeedProperty = new EnumerationProperty(TimeSpeed.NORMAL);
 
-    // Initialize display options
+    // Initialize potential type
+    this.potentialTypeProperty = new Property<PotentialType>(
+      PotentialType.INFINITE_WELL,
+    );
+
+    // Initialize well parameters with default values
+    this.wellWidthProperty = new NumberProperty(1.0, {
+      range: new Range(0.1, 6.0),
+    }); // in nanometers
+    this.wellDepthProperty = new NumberProperty(5.0, {
+      range: new Range(0.1, 15.0),
+    }); // in eV
+    this.wellOffsetProperty = new NumberProperty(0.5, {
+      range: new Range(0.0, 1.0),
+    }); // normalized position
+
+    // Initialize particle mass (1.0 = electron mass)
+    this.particleMassProperty = new NumberProperty(1.0, {
+      range: new Range(0.5, 1.1),
+    }); // 0.5 to 1.1 times electron mass
+
+    // Initialize energy level selection (ground state by default)
+    this.selectedEnergyLevelIndexProperty = new NumberProperty(0, {
+      range: new Range(0, 99),
+    });
+
+    // Initialize display settings
+    this.showRealPartProperty = new Property<boolean>(true);
+    this.showImaginaryPartProperty = new Property<boolean>(false);
+    this.showMagnitudeProperty = new Property<boolean>(false);
+    this.showPhaseProperty = new Property<boolean>(false);
     this.showClassicalProbabilityProperty = new Property<boolean>(false);
+
+    // Initialize chart visibility
+    this.showTotalEnergyProperty = new Property<boolean>(true);
+    this.showPotentialEnergyProperty = new Property<boolean>(true);
+
+    // Initialize superposition state
+    this.superpositionTypeProperty = new Property<SuperpositionType>(
+      SuperpositionType.SINGLE,
+    );
+    this.superpositionConfigProperty = new Property<SuperpositionConfig>({
+      type: SuperpositionType.SINGLE,
+      amplitudes: [1.0],
+      phases: [0],
+    });
 
     // Initialize solver with user's preferred method
     this.solver = new Schrodinger1DSolver();
@@ -53,6 +138,25 @@ export abstract class BaseModel {
     QPPWPreferences.gridPointsProperty.lazyLink(() => {
       this.onSolverMethodChanged(this.solver.getNumericalMethod());
     });
+
+    // Setup cache invalidation for common properties
+    this.setupCacheInvalidation();
+  }
+
+  /**
+   * Setup cache invalidation listeners for common properties.
+   * Subclasses can override this to add additional invalidation listeners.
+   */
+  protected setupCacheInvalidation(): void {
+    const invalidateCache = () => {
+      this.boundStateResult = null;
+    };
+
+    this.potentialTypeProperty.link(invalidateCache);
+    this.wellWidthProperty.link(invalidateCache);
+    this.wellDepthProperty.link(invalidateCache);
+    this.wellOffsetProperty.link(invalidateCache);
+    this.particleMassProperty.link(invalidateCache);
   }
 
   /**
@@ -64,13 +168,35 @@ export abstract class BaseModel {
 
   /**
    * Resets the model to its initial state.
+   * This is the public API method that delegates to resetAll().
+   */
+  public reset(): void {
+    this.resetAll();
+  }
+
+  /**
+   * Resets all properties to their initial state.
    * Subclasses should override this method and call super.resetAll().
    */
   public resetAll(): void {
     this.isPlayingProperty.reset();
     this.timeProperty.reset();
     this.timeSpeedProperty.reset();
+    this.potentialTypeProperty.reset();
+    this.wellWidthProperty.reset();
+    this.wellDepthProperty.reset();
+    this.wellOffsetProperty.reset();
+    this.particleMassProperty.reset();
+    this.selectedEnergyLevelIndexProperty.reset();
+    this.showRealPartProperty.reset();
+    this.showImaginaryPartProperty.reset();
+    this.showMagnitudeProperty.reset();
+    this.showPhaseProperty.reset();
     this.showClassicalProbabilityProperty.reset();
+    this.showTotalEnergyProperty.reset();
+    this.showPotentialEnergyProperty.reset();
+    this.superpositionTypeProperty.reset();
+    this.superpositionConfigProperty.reset();
   }
 
   /**
@@ -172,5 +298,107 @@ export abstract class BaseModel {
     }
 
     return classicalProbability;
+  }
+
+  /**
+   * Abstract method for calculating bound states.
+   * Subclasses must implement this method to perform the actual bound state calculations.
+   */
+  protected abstract calculateBoundStates(): void;
+
+  /**
+   * Get all bound state energies and wavefunctions for the current well.
+   * @returns BoundStateResult with energies (in eV) and wavefunctions
+   */
+  public getBoundStates(): BoundStateResult | null {
+    if (!this.boundStateResult) {
+      this.calculateBoundStates();
+    }
+    return this.boundStateResult;
+  }
+
+  /**
+   * Calculates the energy eigenvalues for the current well parameters.
+   * @param n - The quantum number (1, 2, 3, ...)
+   * @returns The energy in eV
+   */
+  public getEnergyLevel(n: number): number {
+    // Ensure bound states are calculated
+    if (!this.boundStateResult) {
+      this.calculateBoundStates();
+    }
+
+    // Return energy for quantum number n (1-indexed)
+    if (
+      this.boundStateResult &&
+      n > 0 &&
+      n <= this.boundStateResult.energies.length
+    ) {
+      const energyJoules = this.boundStateResult.energies[n - 1];
+      return Schrodinger1DSolver.joulesToEV(energyJoules);
+    }
+
+    // Fallback to analytical formula if solver fails
+    const L = this.wellWidthProperty.value * QuantumConstants.NM_TO_M;
+    const energy =
+      (n *
+        n *
+        Math.PI *
+        Math.PI *
+        QuantumConstants.HBAR *
+        QuantumConstants.HBAR) /
+      (2 * QuantumConstants.ELECTRON_MASS * L * L);
+    return Schrodinger1DSolver.joulesToEV(energy);
+  }
+
+  /**
+   * Get the wavefunction for a specific quantum number.
+   * @param n - The quantum number (1, 2, 3, ...)
+   * @returns Array of wavefunction values at grid points, or null if unavailable
+   */
+  public getWavefunction(n: number): number[] | null {
+    if (!this.boundStateResult) {
+      this.calculateBoundStates();
+    }
+
+    if (
+      this.boundStateResult &&
+      n > 0 &&
+      n <= this.boundStateResult.wavefunctions.length
+    ) {
+      return this.boundStateResult.wavefunctions[n - 1];
+    }
+
+    return null;
+  }
+
+  /**
+   * Get the spatial grid points for wavefunctions.
+   * @returns Array of x positions in nanometers
+   */
+  public getXGrid(): number[] | null {
+    if (!this.boundStateResult) {
+      this.calculateBoundStates();
+    }
+
+    if (this.boundStateResult) {
+      // Convert from meters to nanometers
+      return this.boundStateResult.xGrid.map(
+        (x) => x * QuantumConstants.M_TO_NM,
+      );
+    }
+
+    return null;
+  }
+
+  /**
+   * Calculate the classical probability density for a given energy level.
+   * This method provides a default implementation that can be overridden by subclasses.
+   * @param energyIndex - Index of the energy level (0-indexed)
+   * @returns Array of classical probability density values, or null if unavailable
+   */
+  public getClassicalProbabilityDensity(_energyIndex: number): number[] | null {
+    // Subclasses must override this method to provide potential-specific implementations
+    return null;
   }
 }

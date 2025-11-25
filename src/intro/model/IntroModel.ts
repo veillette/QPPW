@@ -10,71 +10,23 @@ import {
   WellParameters,
   NumericalMethod,
 } from "../../common/model/Schrodinger1DSolver.js";
-import {
-  PotentialType,
-  BoundStateResult,
-} from "../../common/model/PotentialFunction.js";
+import { PotentialType } from "../../common/model/PotentialFunction.js";
 import QuantumConstants from "../../common/model/QuantumConstants.js";
-import {
-  SuperpositionType,
-  SuperpositionConfig,
-} from "../../common/model/SuperpositionType.js";
 
 export type DisplayMode = "probabilityDensity" | "waveFunction";
 
 export class IntroModel extends BaseModel {
-  // Potential type selection
-  public readonly potentialTypeProperty: Property<PotentialType>;
-
-  // Well parameters
-  public readonly wellWidthProperty: NumberProperty;
-  public readonly wellDepthProperty: NumberProperty;
-  public readonly wellOffsetProperty: NumberProperty;
+  // Model-specific well parameters
   public readonly barrierHeightProperty: NumberProperty;
   public readonly potentialOffsetProperty: NumberProperty;
 
-  // Particle properties
-  public readonly particleMassProperty: NumberProperty;
-
-  // Energy level selection
-  public readonly selectedEnergyLevelIndexProperty: NumberProperty;
-
-  // Display settings
+  // Model-specific display settings (simplified, no "phaseColor" mode)
   public readonly displayModeProperty: Property<DisplayMode>;
-  public readonly showRealPartProperty: Property<boolean>;
-  public readonly showImaginaryPartProperty: Property<boolean>;
-  public readonly showMagnitudeProperty: Property<boolean>;
-  public readonly showPhaseProperty: Property<boolean>;
-
-  // Superposition properties (required by WaveFunctionChartNode, but not used in intro screen)
-  public readonly superpositionTypeProperty: Property<SuperpositionType>;
-  public readonly superpositionConfigProperty: Property<SuperpositionConfig>;
-
-  // Chart visibility
-  public readonly showTotalEnergyProperty: Property<boolean>;
-  public readonly showPotentialEnergyProperty: Property<boolean>;
-
-  // Cached bound state results
-  protected boundStateResult: BoundStateResult | null = null;
 
   public constructor() {
     super();
 
-    // Initialize potential type
-    this.potentialTypeProperty = new Property<PotentialType>(
-      PotentialType.INFINITE_WELL,
-    );
-
-    // Initialize well parameters
-    this.wellWidthProperty = new NumberProperty(1.0, {
-      range: new Range(0.1, 6.0),
-    });
-    this.wellDepthProperty = new NumberProperty(5.0, {
-      range: new Range(0.1, 15.0),
-    });
-    this.wellOffsetProperty = new NumberProperty(0.5, {
-      range: new Range(0.0, 1.0),
-    });
+    // Initialize model-specific well parameters
     this.barrierHeightProperty = new NumberProperty(0.5, {
       range: new Range(0.0, 10.0),
     });
@@ -82,103 +34,48 @@ export class IntroModel extends BaseModel {
       range: new Range(-5.0, 15.0),
     });
 
-    // Initialize particle mass
-    this.particleMassProperty = new NumberProperty(1.0, {
-      range: new Range(0.5, 1.1),
-    });
-
-    // Initialize energy level selection
-    this.selectedEnergyLevelIndexProperty = new NumberProperty(0, {
-      range: new Range(0, 99),
-    });
-
-    // Initialize display settings
+    // Initialize model-specific display settings (simplified)
     this.displayModeProperty = new Property<DisplayMode>("probabilityDensity");
-    this.showRealPartProperty = new Property<boolean>(true);
-    this.showImaginaryPartProperty = new Property<boolean>(false);
-    this.showMagnitudeProperty = new Property<boolean>(false);
-    this.showPhaseProperty = new Property<boolean>(false);
+  }
 
-    // Initialize superposition properties (not used in intro screen, but required by chart nodes)
-    this.superpositionTypeProperty = new Property<SuperpositionType>(
-      SuperpositionType.SINGLE,
-    );
-    this.superpositionConfigProperty = new Property<SuperpositionConfig>({
-      type: SuperpositionType.SINGLE,
-      amplitudes: [],
-      phases: [],
-    });
+  /**
+   * Setup cache invalidation listeners, including model-specific properties.
+   * Extends the base implementation to add IntroModel-specific invalidation.
+   */
+  protected override setupCacheInvalidation(): void {
+    super.setupCacheInvalidation();
 
-    // Initialize chart visibility
-    this.showTotalEnergyProperty = new Property<boolean>(true);
-    this.showPotentialEnergyProperty = new Property<boolean>(true);
-
-    // Recalculate bound states when parameters change
     const invalidateCache = () => {
       this.boundStateResult = null;
     };
 
-    this.potentialTypeProperty.link(invalidateCache);
-    this.wellWidthProperty.link(invalidateCache);
-    this.wellDepthProperty.link(invalidateCache);
-    this.wellOffsetProperty.link(invalidateCache);
     this.barrierHeightProperty.link(invalidateCache);
     this.potentialOffsetProperty.link(invalidateCache);
-    this.particleMassProperty.link(invalidateCache);
   }
 
   /**
    * Called when the solver method or grid points changes.
    */
-  protected onSolverMethodChanged(_method: NumericalMethod): void {
+  protected override onSolverMethodChanged(_method: NumericalMethod): void {
     this.boundStateResult = null;
   }
 
   /**
-   * Resets the model to its initial state.
-   */
-  public reset(): void {
-    this.resetAll();
-  }
-
-  /**
    * Resets all properties to their initial state.
+   * Override from BaseModel to reset model-specific properties.
    */
   public override resetAll(): void {
     super.resetAll();
-    this.potentialTypeProperty.reset();
-    this.wellWidthProperty.reset();
-    this.wellDepthProperty.reset();
-    this.wellOffsetProperty.reset();
     this.barrierHeightProperty.reset();
     this.potentialOffsetProperty.reset();
-    this.particleMassProperty.reset();
-    this.selectedEnergyLevelIndexProperty.reset();
     this.displayModeProperty.reset();
-    this.showRealPartProperty.reset();
-    this.showImaginaryPartProperty.reset();
-    this.showMagnitudeProperty.reset();
-    this.showPhaseProperty.reset();
-    this.superpositionTypeProperty.reset();
-    this.superpositionConfigProperty.reset();
-    this.showTotalEnergyProperty.reset();
-    this.showPotentialEnergyProperty.reset();
-  }
-
-  /**
-   * Get all bound state energies and wavefunctions for the current well.
-   */
-  public getBoundStates(): BoundStateResult | null {
-    if (!this.boundStateResult) {
-      this.calculateBoundStates();
-    }
-    return this.boundStateResult;
   }
 
   /**
    * Calculate bound states using the Schrödinger solver.
+   * Override from BaseModel.
    */
-  private calculateBoundStates(): void {
+  protected override calculateBoundStates(): void {
     const wellWidth = this.wellWidthProperty.value * QuantumConstants.NM_TO_M;
     const wellDepth =
       this.wellDepthProperty.value * QuantumConstants.EV_TO_JOULES;
@@ -273,8 +170,9 @@ export class IntroModel extends BaseModel {
 
   /**
    * Calculate the classical probability density for a given energy level.
+   * Override from BaseModel to provide potential-specific implementations.
    */
-  public getClassicalProbabilityDensity(energyIndex: number): number[] | null {
+  public override getClassicalProbabilityDensity(energyIndex: number): number[] | null {
     if (!this.boundStateResult) {
       this.calculateBoundStates();
     }
