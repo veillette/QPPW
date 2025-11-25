@@ -294,7 +294,7 @@ export function calculateMorsePotentialWavefunctionZeros(
   const dx = (xMax - xMin) / numSamples;
 
   let prevX = xMin;
-  let prevZ = 2 * lambda * Math.exp(-(prevX - xe) / a);
+  const prevZ = 2 * lambda * Math.exp(-(prevX - xe) / a);
   let prevVal =
     normalization *
     Math.pow(prevZ, lambda - n - 0.5) *

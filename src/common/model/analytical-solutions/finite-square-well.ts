@@ -174,8 +174,8 @@ export function calculateFiniteWellWavefunctionZeros(
  */
 export function calculateFiniteWellTurningPoints(
   wellWidth: number,
-  wellDepth: number,
-  energy: number,
+  _wellDepth: number,
+  _energy: number,
 ): { left: number; right: number } {
   const halfWidth = wellWidth / 2;
 

@@ -273,7 +273,7 @@ export function calculateCoulomb1DWavefunctionZeros(
 
   // Search in positive x only (use symmetry for negative x)
   let prevX = 1e-15; // Start just above zero to avoid singularity
-  let prevRho = (2 * prevX) / a_n;
+  const prevRho = (2 * prevX) / a_n;
   let prevVal = prevRho * Math.exp(-prevRho / 2) * associatedLaguerre(n, 1, prevRho);
 
   for (let i = 1; i <= numSamples / 2; i++) {

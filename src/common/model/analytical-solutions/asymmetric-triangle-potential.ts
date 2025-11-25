@@ -244,7 +244,7 @@ export function calculateAsymmetricTriangleWavefunctionZeros(
   const dx = (2 * searchRange) / numSamples;
 
   let prevX = -searchRange;
-  let prevZ = alpha * (prevX - x0);
+  const prevZ = alpha * (prevX - x0);
   let prevVal = prevX < 0 ? 0 : airyAi(prevZ);
 
   for (let i = 1; i <= numSamples; i++) {

@@ -374,10 +374,10 @@ export function calculateEckartPotentialWavefunctionZeros(
   const dx = (2 * searchRange) / numSamples;
 
   let prevX = -searchRange;
-  let prevXi = Math.exp(prevX / a);
-  let prevXiPlus1 = 1 + prevXi;
-  let prevJacobiArg = 1 - (2 * prevXi) / prevXiPlus1;
-  let prevJacobi = jacobiPolynomial(n, alpha_jac, beta_jac, prevJacobiArg);
+  const prevXi = Math.exp(prevX / a);
+  const prevXiPlus1 = 1 + prevXi;
+  const prevJacobiArg = 1 - (2 * prevXi) / prevXiPlus1;
+  const prevJacobi = jacobiPolynomial(n, alpha_jac, beta_jac, prevJacobiArg);
   let prevVal =
     normalization *
     Math.pow(prevXi, s2 - n) *

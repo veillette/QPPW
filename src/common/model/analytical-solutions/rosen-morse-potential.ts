@@ -387,9 +387,9 @@ export function calculateRosenMorsePotentialWavefunctionZeros(
   const dx = (2 * searchRange) / numSamples;
 
   let prevX = -searchRange;
-  let prevTanh = Math.tanh(prevX / a);
-  let prevSech = 1.0 / Math.cosh(prevX / a);
-  let prevJacobi = jacobiPolynomial(n, alpha_jac, beta_jac, prevTanh);
+  const prevTanh = Math.tanh(prevX / a);
+  const prevSech = 1.0 / Math.cosh(prevX / a);
+  const prevJacobi = jacobiPolynomial(n, alpha_jac, beta_jac, prevTanh);
   let prevVal =
     normalization *
     Math.pow(prevSech, s) *

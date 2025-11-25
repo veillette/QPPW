@@ -244,9 +244,6 @@ export function calculateCoulomb3DWavefunctionZeros(
   const n = stateIndex + 1; // Convert index to principal quantum number (1, 2, 3, ...)
   const a0 = (HBAR * HBAR) / (mass * alpha);
   const a_n = n * a0;
-  const normalization =
-    (2.0 / (a_n * Math.sqrt(a_n))) *
-    Math.sqrt(factorial(n - 1) / (n * factorial(n)));
 
   // Ground state (n=1) has no zeros (L^1_0(ρ) = 1, constant)
   if (n === 1) {
@@ -259,7 +256,7 @@ export function calculateCoulomb3DWavefunctionZeros(
 
   // Search in positive r only (use symmetry for negative x)
   let prevR = 1e-15; // Start just above zero
-  let prevRho = (2 * prevR) / a_n;
+  const prevRho = (2 * prevR) / a_n;
   let prevVal = Math.exp(-prevRho / 2) * associatedLaguerre(n - 1, 1, prevRho);
 
   for (let i = 1; i <= numSamples / 2; i++) {
