@@ -36,7 +36,72 @@
  */
 
 import QuantumConstants from "../QuantumConstants.js";
-import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
+import {
+  BoundStateResult,
+  GridConfig,
+  PotentialFunction,
+} from "../PotentialFunction.js";
+
+/**
+ * Create the potential function for a finite square well.
+ * V(x) = -V₀ for |x| < L/2, V(x) = 0 for |x| > L/2
+ *
+ * @param wellWidth - Width of the well (L) in meters
+ * @param wellDepth - Depth of the well (V₀) in Joules (positive value)
+ * @returns Potential function V(x) in Joules
+ */
+export function createFiniteWellPotential(
+  wellWidth: number,
+  wellDepth: number,
+): PotentialFunction {
+  const halfWidth = wellWidth / 2;
+  return (x: number) => {
+    if (Math.abs(x) <= halfWidth) {
+      return -wellDepth;
+    } else {
+      return 0;
+    }
+  };
+}
+
+/**
+ * Calculate classical probability density for a finite square well.
+ * Inside the well, the kinetic energy is constant (E + V₀), so the velocity is constant.
+ * Therefore, the classical probability density is uniform: P(x) = 1/L for |x| < L/2
+ *
+ * This is one of the cases where the renormalization can be computed analytically.
+ *
+ * @param wellWidth - Width of the well (L) in meters
+ * @param wellDepth - Depth of the well (V₀) in Joules (positive value)
+ * @param energy - Energy of the particle in Joules (must be > -V₀)
+ * @param mass - Particle mass in kg (unused for finite well)
+ * @param xGrid - Array of x positions in meters
+ * @returns Array of normalized classical probability density values (in 1/meters)
+ */
+export function calculateFiniteWellClassicalProbability(
+  wellWidth: number,
+  wellDepth: number,
+  energy: number,
+  _mass: number,
+  xGrid: number[],
+): number[] {
+  const halfWidth = wellWidth / 2;
+  const probability: number[] = [];
+
+  // Classical probability is uniform inside the well: P(x) = 1/L
+  // This is already normalized: ∫P(x)dx = 1
+  const uniformProbability = 1 / wellWidth;
+
+  for (const x of xGrid) {
+    if (Math.abs(x) <= halfWidth && energy > -wellDepth) {
+      probability.push(uniformProbability);
+    } else {
+      probability.push(0);
+    }
+  }
+
+  return probability;
+}
 
 /**
  * Analytical solution for a finite square well.

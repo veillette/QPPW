@@ -8,9 +8,21 @@
 import qppw from "../../../QPPWNamespace.js";
 
 // Export all analytical solution functions
-export { solveInfiniteWell } from "./infinite-square-well.js";
-export { solveFiniteSquareWell } from "./finite-square-well.js";
-export { solveHarmonicOscillator } from "./harmonic-oscillator.js";
+export {
+  solveInfiniteWell,
+  createInfiniteWellPotential,
+  calculateInfiniteWellClassicalProbability,
+} from "./infinite-square-well.js";
+export {
+  solveFiniteSquareWell,
+  createFiniteWellPotential,
+  calculateFiniteWellClassicalProbability,
+} from "./finite-square-well.js";
+export {
+  solveHarmonicOscillator,
+  createHarmonicOscillatorPotential,
+  calculateHarmonicOscillatorClassicalProbability,
+} from "./harmonic-oscillator.js";
 export { solveMorsePotential } from "./morse-potential.js";
 export { solvePoschlTellerPotential } from "./poschl-teller-potential.js";
 export { solveRosenMorsePotential } from "./rosen-morse-potential.js";

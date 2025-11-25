@@ -32,8 +32,72 @@
  */
 
 import QuantumConstants from "../QuantumConstants.js";
-import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
+import {
+  BoundStateResult,
+  GridConfig,
+  PotentialFunction,
+} from "../PotentialFunction.js";
 import { hermitePolynomial, factorial } from "./math-utilities.js";
+
+/**
+ * Create the potential function for a harmonic oscillator.
+ * V(x) = (1/2) * k * x^2
+ *
+ * @param springConstant - Spring constant k in N/m
+ * @returns Potential function V(x) in Joules
+ */
+export function createHarmonicOscillatorPotential(
+  springConstant: number,
+): PotentialFunction {
+  return (x: number) => {
+    return 0.5 * springConstant * x * x;
+  };
+}
+
+/**
+ * Calculate classical probability density for a harmonic oscillator.
+ * For a classical harmonic oscillator, the probability density is:
+ * P(x) = 1 / (π * √(A² - x²))  for |x| < A, where A = √(2E/k) is the amplitude
+ *
+ * This is one of the cases where the renormalization can be computed analytically.
+ * The integral ∫_{-A}^{A} 1/√(A² - x²) dx = π, so the normalization is 1/π.
+ *
+ * @param springConstant - Spring constant k in N/m
+ * @param energy - Energy of the particle in Joules
+ * @param mass - Particle mass in kg (unused for harmonic oscillator)
+ * @param xGrid - Array of x positions in meters
+ * @returns Array of normalized classical probability density values (in 1/meters)
+ */
+export function calculateHarmonicOscillatorClassicalProbability(
+  springConstant: number,
+  energy: number,
+  _mass: number,
+  xGrid: number[],
+): number[] {
+  const probability: number[] = [];
+
+  // Classical amplitude: A = √(2E/k)
+  const amplitude = Math.sqrt((2 * energy) / springConstant);
+
+  // Classical probability density: P(x) = 1 / (π * √(A² - x²))
+  // This is already analytically normalized
+
+  for (const x of xGrid) {
+    if (Math.abs(x) < amplitude) {
+      const arg = amplitude * amplitude - x * x;
+      if (arg > 0) {
+        const prob = 1 / (Math.PI * Math.sqrt(arg));
+        probability.push(prob);
+      } else {
+        probability.push(0);
+      }
+    } else {
+      probability.push(0);
+    }
+  }
+
+  return probability;
+}
 
 /**
  * Analytical solution for a quantum harmonic oscillator.

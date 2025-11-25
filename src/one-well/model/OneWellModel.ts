@@ -19,7 +19,19 @@ import {
   SuperpositionType,
   SuperpositionConfig,
 } from "../../common/model/SuperpositionType.js";
-import { calculateCoherentStateCoefficients } from "../../common/model/analytical-solutions/harmonic-oscillator.js";
+import {
+  calculateCoherentStateCoefficients,
+  createHarmonicOscillatorPotential,
+  calculateHarmonicOscillatorClassicalProbability,
+} from "../../common/model/analytical-solutions/harmonic-oscillator.js";
+import {
+  createInfiniteWellPotential,
+  calculateInfiniteWellClassicalProbability,
+} from "../../common/model/analytical-solutions/infinite-square-well.js";
+import {
+  createFiniteWellPotential,
+  calculateFiniteWellClassicalProbability,
+} from "../../common/model/analytical-solutions/finite-square-well.js";
 
 export type DisplayMode = "probabilityDensity" | "waveFunction" | "phaseColor";
 
@@ -265,44 +277,63 @@ export class OneWellModel extends BaseModel {
   /**
    * Helper method to get potential energy at a given position (in nm).
    * Returns potential in eV.
+   * Uses the analytical solver's potential function when available.
    */
   private getPotentialAtPosition(xNm: number): number {
     const potentialType = this.potentialTypeProperty.value;
-    const wellWidth = this.wellWidthProperty.value;
+    const wellWidth = this.wellWidthProperty.value * QuantumConstants.NM_TO_M;
     const wellDepth = this.wellDepthProperty.value;
+    const xMeters = xNm * QuantumConstants.NM_TO_M;
 
-    if (potentialType === PotentialType.INFINITE_WELL) {
-      if (Math.abs(xNm) < wellWidth / 2) {
-        return 0;
-      } else {
-        return 1000; // Very large value for infinity
+    // Try to use analytical solver potential functions
+    let potentialFunction: ((x: number) => number) | null = null;
+
+    switch (potentialType) {
+      case PotentialType.INFINITE_WELL:
+        potentialFunction = createInfiniteWellPotential(wellWidth);
+        break;
+
+      case PotentialType.FINITE_WELL:
+        potentialFunction = createFiniteWellPotential(
+          wellWidth,
+          wellDepth * QuantumConstants.EV_TO_JOULES,
+        );
+        break;
+
+      case PotentialType.HARMONIC_OSCILLATOR: {
+        const wellDepthJoules = wellDepth * QuantumConstants.EV_TO_JOULES;
+        const springConstant = (8 * wellDepthJoules) / (wellWidth * wellWidth);
+        potentialFunction = createHarmonicOscillatorPotential(springConstant);
+        break;
       }
-    } else if (potentialType === PotentialType.FINITE_WELL) {
-      if (Math.abs(xNm) < wellWidth / 2) {
-        return -wellDepth;
-      } else {
-        return 0;
-      }
-    } else if (potentialType === PotentialType.HARMONIC_OSCILLATOR) {
-      const k = (2 * wellDepth) / ((wellWidth * wellWidth) / 4);
-      return 0.5 * k * xNm * xNm;
-    } else if (potentialType === PotentialType.ASYMMETRIC_TRIANGLE) {
+
+      default:
+        // Fall through to legacy implementation for other potentials
+        break;
+    }
+
+    // If we have an analytical potential function, use it
+    if (potentialFunction) {
+      const VJoules = potentialFunction(xMeters);
+      return VJoules * QuantumConstants.JOULES_TO_EV;
+    }
+
+    // Legacy implementation for potentials without analytical solver support
+    if (potentialType === PotentialType.ASYMMETRIC_TRIANGLE) {
       if (xNm < 0) {
         return 1000; // Infinite wall
       } else {
-        const F_eV_per_nm = wellDepth / wellWidth;
+        const F_eV_per_nm = wellDepth / (wellWidth * QuantumConstants.M_TO_NM);
         return F_eV_per_nm * xNm;
       }
     } else if (potentialType === PotentialType.TRIANGULAR) {
-      const offset =
-        "potentialOffsetProperty" in this
-          ? this.potentialOffsetProperty.value
-          : 0;
+      const offset = this.potentialOffsetProperty.value;
       const height = wellDepth;
+      const widthNm = wellWidth * QuantumConstants.M_TO_NM;
       if (xNm < 0) {
         return height + offset;
-      } else if (xNm < wellWidth) {
-        return offset + (height / wellWidth) * xNm;
+      } else if (xNm < widthNm) {
+        return offset + (height / widthNm) * xNm;
       } else {
         return height + offset;
       }
@@ -310,23 +341,28 @@ export class OneWellModel extends BaseModel {
       potentialType === PotentialType.COULOMB_1D ||
       potentialType === PotentialType.COULOMB_3D
     ) {
-      const k = wellDepth * (wellWidth / 2);
+      const widthNm = wellWidth * QuantumConstants.M_TO_NM;
+      const k = wellDepth * (widthNm / 2);
       const distance = Math.max(Math.abs(xNm), 0.01);
       return -k / distance;
     } else if (potentialType === PotentialType.MORSE) {
-      const exponent = Math.exp(-xNm / wellWidth);
+      const widthNm = wellWidth * QuantumConstants.M_TO_NM;
+      const exponent = Math.exp(-xNm / widthNm);
       return wellDepth * Math.pow(1 - exponent, 2) - wellDepth;
     } else if (potentialType === PotentialType.POSCHL_TELLER) {
-      const coshVal = Math.cosh(xNm / wellWidth);
+      const widthNm = wellWidth * QuantumConstants.M_TO_NM;
+      const coshVal = Math.cosh(xNm / widthNm);
       return -wellDepth / (coshVal * coshVal);
     } else if (potentialType === PotentialType.ROSEN_MORSE) {
+      const widthNm = wellWidth * QuantumConstants.M_TO_NM;
       const barrierHeight = this.barrierHeightProperty.value;
-      const coshVal = Math.cosh(xNm / wellWidth);
-      const tanhVal = Math.tanh(xNm / wellWidth);
+      const coshVal = Math.cosh(xNm / widthNm);
+      const tanhVal = Math.tanh(xNm / widthNm);
       return -wellDepth / (coshVal * coshVal) + barrierHeight * tanhVal;
     } else if (potentialType === PotentialType.ECKART) {
+      const widthNm = wellWidth * QuantumConstants.M_TO_NM;
       const barrierHeight = this.barrierHeightProperty.value;
-      const expVal = Math.exp(xNm / wellWidth);
+      const expVal = Math.exp(xNm / widthNm);
       const denom = 1 + expVal;
       return wellDepth / (denom * denom) - barrierHeight / denom;
     }
@@ -671,6 +707,8 @@ export class OneWellModel extends BaseModel {
    * The classical probability density is inversely proportional to the velocity:
    * P(x) ∝ 1/v(x) = 1/√[2(E - V(x))/m]
    *
+   * For many potentials, the analytical solver provides an exact normalized solution.
+   *
    * @param energyIndex - Index of the energy level (0-indexed)
    * @returns Array of classical probability density values, or null if unavailable
    */
@@ -691,8 +729,54 @@ export class OneWellModel extends BaseModel {
     const xGrid = this.boundStateResult.xGrid;
     const mass =
       this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
+    const wellWidth = this.wellWidthProperty.value * QuantumConstants.NM_TO_M;
+    const wellDepth =
+      this.wellDepthProperty.value * QuantumConstants.EV_TO_JOULES;
 
-    // Calculate potential at each grid point
+    // Use analytical solver methods when available
+    const potentialType = this.potentialTypeProperty.value;
+
+    try {
+      switch (potentialType) {
+        case PotentialType.INFINITE_WELL:
+          return calculateInfiniteWellClassicalProbability(
+            wellWidth,
+            energy,
+            mass,
+            xGrid,
+          );
+
+        case PotentialType.FINITE_WELL:
+          return calculateFiniteWellClassicalProbability(
+            wellWidth,
+            wellDepth,
+            energy,
+            mass,
+            xGrid,
+          );
+
+        case PotentialType.HARMONIC_OSCILLATOR: {
+          const springConstant = (8 * wellDepth) / (wellWidth * wellWidth);
+          return calculateHarmonicOscillatorClassicalProbability(
+            springConstant,
+            energy,
+            mass,
+            xGrid,
+          );
+        }
+
+        default:
+          // Fall back to numerical calculation for other potentials
+          break;
+      }
+    } catch (error) {
+      console.warn(
+        `Failed to use analytical classical probability for ${potentialType}, falling back to numerical:`,
+        error,
+      );
+    }
+
+    // Fallback: numerical calculation using potential function
     const potential = this.calculatePotentialEnergy(xGrid);
 
     // Calculate classical probability density
@@ -735,6 +819,7 @@ export class OneWellModel extends BaseModel {
 
   /**
    * Calculate the potential energy at given positions.
+   * Uses the analytical solver's potential function when available.
    * @param xGrid - Array of x positions in meters
    * @returns Array of potential energy values in Joules
    */
@@ -743,6 +828,35 @@ export class OneWellModel extends BaseModel {
     const wellDepth =
       this.wellDepthProperty.value * QuantumConstants.EV_TO_JOULES;
 
+    // Try to use analytical solver potential functions
+    let potentialFunction: ((x: number) => number) | null = null;
+
+    switch (this.potentialTypeProperty.value) {
+      case PotentialType.INFINITE_WELL:
+        potentialFunction = createInfiniteWellPotential(wellWidth);
+        break;
+
+      case PotentialType.FINITE_WELL:
+        potentialFunction = createFiniteWellPotential(wellWidth, wellDepth);
+        break;
+
+      case PotentialType.HARMONIC_OSCILLATOR: {
+        const springConstant = (8 * wellDepth) / (wellWidth * wellWidth);
+        potentialFunction = createHarmonicOscillatorPotential(springConstant);
+        break;
+      }
+
+      default:
+        // Fall through to legacy implementation for other potentials
+        break;
+    }
+
+    // If we have an analytical potential function, use it
+    if (potentialFunction) {
+      return xGrid.map((x) => potentialFunction!(x));
+    }
+
+    // Legacy implementation for potentials without analytical solver support
     const potential: number[] = [];
 
     for (let i = 0; i < xGrid.length; i++) {
@@ -750,23 +864,6 @@ export class OneWellModel extends BaseModel {
       let V = 0;
 
       switch (this.potentialTypeProperty.value) {
-        case PotentialType.INFINITE_WELL:
-          // V = 0 inside [-L/2, L/2], infinity outside
-          V = Math.abs(x) <= wellWidth / 2 ? 0 : Infinity;
-          break;
-
-        case PotentialType.FINITE_WELL:
-          // V = 0 inside [-L/2, L/2], V0 outside
-          V = Math.abs(x) <= wellWidth / 2 ? 0 : wellDepth;
-          break;
-
-        case PotentialType.HARMONIC_OSCILLATOR: {
-          // V = (1/2) * k * x^2
-          const springConstant = (8 * wellDepth) / (wellWidth * wellWidth);
-          V = 0.5 * springConstant * x * x;
-          break;
-        }
-
         case PotentialType.MORSE: {
           // V(x) = D_e * (1 - exp(-a(x - x_e)))^2
           const a = 1 / wellWidth;

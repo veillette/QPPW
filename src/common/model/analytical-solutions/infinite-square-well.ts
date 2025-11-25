@@ -24,7 +24,68 @@
  */
 
 import QuantumConstants from "../QuantumConstants.js";
-import { BoundStateResult, GridConfig } from "../PotentialFunction.js";
+import {
+  BoundStateResult,
+  GridConfig,
+  PotentialFunction,
+} from "../PotentialFunction.js";
+
+/**
+ * Create the potential function for an infinite square well.
+ * V(x) = 0 for -L/2 < x < L/2, V(x) = ∞ otherwise
+ *
+ * @param wellWidth - Width of the well (L) in meters
+ * @returns Potential function V(x) in Joules
+ */
+export function createInfiniteWellPotential(
+  wellWidth: number,
+): PotentialFunction {
+  const halfWidth = wellWidth / 2;
+  return (x: number) => {
+    if (x >= -halfWidth && x <= halfWidth) {
+      return 0;
+    } else {
+      return 1e100; // Very large value to approximate infinity
+    }
+  };
+}
+
+/**
+ * Calculate classical probability density for an infinite square well.
+ * For a particle in a box with constant potential inside, the classical velocity
+ * is constant, so the probability density is uniform: P(x) = 1/L for |x| < L/2
+ *
+ * This is one of the cases where the renormalization can be computed analytically.
+ *
+ * @param wellWidth - Width of the well (L) in meters
+ * @param energy - Energy of the particle in Joules (unused for infinite well)
+ * @param mass - Particle mass in kg (unused for infinite well)
+ * @param xGrid - Array of x positions in meters
+ * @returns Array of normalized classical probability density values (in 1/meters)
+ */
+export function calculateInfiniteWellClassicalProbability(
+  wellWidth: number,
+  _energy: number,
+  _mass: number,
+  xGrid: number[],
+): number[] {
+  const halfWidth = wellWidth / 2;
+  const probability: number[] = [];
+
+  // Classical probability is uniform inside the well: P(x) = 1/L
+  // This is already normalized: ∫P(x)dx = 1
+  const uniformProbability = 1 / wellWidth;
+
+  for (const x of xGrid) {
+    if (x >= -halfWidth && x <= halfWidth) {
+      probability.push(uniformProbability);
+    } else {
+      probability.push(0);
+    }
+  }
+
+  return probability;
+}
 
 /**
  * Analytical solution for an infinite square well (particle in a box).
