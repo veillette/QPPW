@@ -358,3 +358,330 @@ export function solveTriangularPotential(
     method: "analytical",
   };
 }
+
+/**
+ * Create the potential function for a finite triangular potential well.
+ * V(x) = height + offset for x < 0
+ * V(x) = offset + (height/width) * x for 0 ≤ x ≤ width
+ * V(x) = height + offset for x > width
+ *
+ * @param height - Height of the potential barrier (Joules)
+ * @param width - Width of the triangular region (meters)
+ * @param offset - Energy offset/minimum of the well (Joules)
+ * @returns Potential function V(x) in Joules
+ */
+export function createTriangularPotential(
+  height: number,
+  width: number,
+  offset: number,
+): (x: number) => number {
+  const F = height / width;
+  const V0 = height + offset;
+
+  return (x: number) => {
+    if (x < 0) {
+      return V0;
+    } else if (x <= width) {
+      return offset + F * x;
+    } else {
+      return V0;
+    }
+  };
+}
+
+/**
+ * Calculate classical probability density for a finite triangular potential well.
+ * P(x) ∝ 1/v(x) = 1/√[2(E - V(x))/m]
+ *
+ * @param height - Height of the potential barrier (Joules)
+ * @param width - Width of the triangular region (meters)
+ * @param offset - Energy offset/minimum of the well (Joules)
+ * @param energy - Energy of the particle in Joules
+ * @param mass - Particle mass in kg
+ * @param xGrid - Array of x positions in meters
+ * @returns Array of normalized classical probability density values (in 1/meters)
+ */
+export function calculateTriangularPotentialClassicalProbability(
+  height: number,
+  width: number,
+  offset: number,
+  energy: number,
+  mass: number,
+  xGrid: number[],
+): number[] {
+  const potentialFn = createTriangularPotential(height, width, offset);
+  const classicalProbability: number[] = [];
+  let integralSum = 0;
+
+  // Calculate unnormalized probability
+  for (let i = 0; i < xGrid.length; i++) {
+    const kineticEnergy = energy - potentialFn(xGrid[i]);
+
+    if (kineticEnergy <= 0) {
+      classicalProbability.push(0);
+    } else {
+      const epsilon = 1e-10 * Math.abs(height);
+      const probability =
+        1 / Math.sqrt((2 * Math.max(kineticEnergy, epsilon)) / mass);
+      classicalProbability.push(probability);
+
+      if (i > 0) {
+        const dx = xGrid[i] - xGrid[i - 1];
+        integralSum += (probability + classicalProbability[i - 1]) * dx / 2;
+      }
+    }
+  }
+
+  // Normalize
+  if (integralSum > 0) {
+    for (let i = 0; i < classicalProbability.length; i++) {
+      classicalProbability[i] /= integralSum;
+    }
+  }
+
+  return classicalProbability;
+}
+
+/**
+ * Calculate the classical turning points for a finite triangular potential well.
+ * Left turning point is at x = 0, right turning point is where E = offset + F*x
+ *
+ * @param height - Height of the potential barrier (Joules)
+ * @param width - Width of the triangular region (meters)
+ * @param offset - Energy offset/minimum of the well (Joules)
+ * @param energy - Energy of the particle in Joules
+ * @returns Object with left and right turning point positions (in meters)
+ */
+export function calculateTriangularPotentialTurningPoints(
+  height: number,
+  width: number,
+  offset: number,
+  energy: number,
+): { left: number; right: number } {
+  const F = height / width;
+
+  // Left turning point is at x = 0 (start of linear region)
+  const left = 0;
+
+  // Right turning point where E = offset + F*x => x = (E - offset)/F
+  const right = Math.min((energy - offset) / F, width);
+
+  return { left, right };
+}
+
+/**
+ * Calculate wavefunction zeros for finite triangular potential (numerical approach).
+ * Since the wavefunction involves Airy functions, zeros must be found numerically.
+ *
+ * @param height - Height of the potential barrier (Joules)
+ * @param width - Width of the triangular region (meters)
+ * @param offset - Energy offset/minimum of the well (Joules)
+ * @param mass - Particle mass in kg
+ * @param energy - Energy of the eigenstate in Joules
+ * @param searchRange - Range to search for zeros (in meters)
+ * @returns Array of x positions (in meters) where wavefunction is zero
+ */
+export function calculateTriangularPotentialWavefunctionZeros(
+  height: number,
+  width: number,
+  offset: number,
+  mass: number,
+  energy: number,
+  searchRange: number = 20e-9,
+): number[] {
+  const F = height / width;
+  const V0 = height + offset;
+  const alpha = calculateAiryAlpha(mass, F);
+  const x0 = (energy - offset) / F;
+
+  // Get coefficients A and B from boundary conditions (similar to solver)
+  const { HBAR } = QuantumConstants;
+  const kappa = Math.sqrt(2 * mass * (V0 - energy)) / HBAR;
+
+  const z0 = alpha * (0 - x0);
+  const Ai0 = airyAi(z0);
+  const Bi0 = airyBi(z0);
+  const AiPrime0 = airyAiPrime(z0);
+  const BiPrime0 = airyBiPrime(z0);
+
+  const leftAi = kappa * Ai0 - alpha * AiPrime0;
+  const leftBi = kappa * Bi0 - alpha * BiPrime0;
+
+  let A: number, B: number;
+  if (Math.abs(leftAi) > 1e-12) {
+    const ratio = -leftBi / leftAi;
+    const normFactor = 1.0 / Math.sqrt(1.0 + ratio * ratio);
+    A = ratio * normFactor;
+    B = normFactor;
+  } else {
+    A = 1;
+    B = 0;
+  }
+
+  const zeros: number[] = [];
+  const numSamples = 1000;
+  const dx = (2 * searchRange) / numSamples;
+
+  // Evaluate wavefunction at first point
+  let prevX = -searchRange;
+  let prevVal: number;
+  if (prevX < 0) {
+    const psiAt0 = A * Ai0 + B * Bi0;
+    prevVal = psiAt0 * Math.exp(kappa * prevX);
+  } else if (prevX <= x0) {
+    const z = alpha * (prevX - x0);
+    prevVal = A * airyAi(z) + B * airyBi(z);
+  } else {
+    const z = alpha * (prevX - x0);
+    prevVal = airyAi(z);
+  }
+
+  for (let i = 1; i <= numSamples; i++) {
+    const x = -searchRange + i * dx;
+    let val: number;
+
+    if (x < 0) {
+      const psiAt0 = A * Ai0 + B * Bi0;
+      val = psiAt0 * Math.exp(kappa * x);
+    } else if (x <= x0) {
+      const z = alpha * (x - x0);
+      val = A * airyAi(z) + B * airyBi(z);
+    } else if (x < width) {
+      const z = alpha * (x - x0);
+      val = airyAi(z);
+    } else {
+      // Beyond width, exponential decay
+      const zAtWidth = alpha * (width - x0);
+      const psiAtWidth = airyAi(zAtWidth);
+      val = psiAtWidth * Math.exp(-kappa * (x - width));
+    }
+
+    // Sign change detected
+    if (prevVal * val < 0) {
+      // Use bisection to refine
+      let left = prevX;
+      let right = x;
+      for (let iter = 0; iter < 20; iter++) {
+        const mid = (left + right) / 2;
+        let valMid: number;
+
+        if (mid < 0) {
+          const psiAt0 = A * Ai0 + B * Bi0;
+          valMid = psiAt0 * Math.exp(kappa * mid);
+        } else if (mid <= x0) {
+          const z = alpha * (mid - x0);
+          valMid = A * airyAi(z) + B * airyBi(z);
+        } else if (mid < width) {
+          const z = alpha * (mid - x0);
+          valMid = airyAi(z);
+        } else {
+          const zAtWidth = alpha * (width - x0);
+          const psiAtWidth = airyAi(zAtWidth);
+          valMid = psiAtWidth * Math.exp(-kappa * (mid - width));
+        }
+
+        if (Math.abs(valMid) < 1e-12) {
+          zeros.push(mid);
+          break;
+        }
+
+        if (valMid * prevVal < 0) {
+          right = mid;
+        } else {
+          left = mid;
+        }
+
+        if (iter === 19) {
+          zeros.push((left + right) / 2);
+        }
+      }
+    }
+
+    prevX = x;
+    prevVal = val;
+  }
+
+  return zeros;
+}
+
+/**
+ * Calculate the second derivative of the wavefunction for a finite triangular potential.
+ * Uses numerical differentiation.
+ *
+ * @param height - Height of the potential barrier (Joules)
+ * @param width - Width of the triangular region (meters)
+ * @param offset - Energy offset/minimum of the well (Joules)
+ * @param mass - Particle mass in kg
+ * @param energy - Energy of the eigenstate in Joules
+ * @param xGrid - Array of x positions in meters where derivatives should be evaluated
+ * @returns Array of second derivative values
+ */
+export function calculateTriangularPotentialWavefunctionSecondDerivative(
+  height: number,
+  width: number,
+  offset: number,
+  mass: number,
+  energy: number,
+  xGrid: number[],
+): number[] {
+  const { HBAR } = QuantumConstants;
+  const F = height / width;
+  const V0 = height + offset;
+  const alpha = calculateAiryAlpha(mass, F);
+  const kappa = Math.sqrt(2 * mass * (V0 - energy)) / HBAR;
+  const x0 = (energy - offset) / F;
+
+  // Get coefficients A and B from boundary conditions
+  const z0 = alpha * (0 - x0);
+  const Ai0 = airyAi(z0);
+  const Bi0 = airyBi(z0);
+  const AiPrime0 = airyAiPrime(z0);
+  const BiPrime0 = airyBiPrime(z0);
+
+  const leftAi = kappa * Ai0 - alpha * AiPrime0;
+  const leftBi = kappa * Bi0 - alpha * BiPrime0;
+
+  let A: number, B: number;
+  if (Math.abs(leftAi) > 1e-12) {
+    const ratio = -leftBi / leftAi;
+    const normFactor = 1.0 / Math.sqrt(1.0 + ratio * ratio);
+    A = ratio * normFactor;
+    B = normFactor;
+  } else {
+    A = 1;
+    B = 0;
+  }
+
+  const secondDerivative: number[] = [];
+  const h = 1e-12;
+
+  // Helper function to evaluate wavefunction
+  const evaluatePsi = (x: number): number => {
+    if (x < 0) {
+      const psiAt0 = A * Ai0 + B * Bi0;
+      return psiAt0 * Math.exp(kappa * x);
+    } else if (x <= x0) {
+      const z = alpha * (x - x0);
+      return A * airyAi(z) + B * airyBi(z);
+    } else if (x < width) {
+      const z = alpha * (x - x0);
+      return airyAi(z);
+    } else {
+      const zAtWidth = alpha * (width - x0);
+      const psiAtWidth = airyAi(zAtWidth);
+      return psiAtWidth * Math.exp(-kappa * (x - width));
+    }
+  };
+
+  for (const x of xGrid) {
+    const psiMinus = evaluatePsi(x - h);
+    const psi = evaluatePsi(x);
+    const psiPlus = evaluatePsi(x + h);
+
+    // Second derivative using central difference
+    const secondDeriv = (psiPlus - 2 * psi + psiMinus) / (h * h);
+    secondDerivative.push(secondDeriv);
+  }
+
+  return secondDerivative;
+}
