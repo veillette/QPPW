@@ -348,6 +348,13 @@ export class IntroModel extends BaseModel {
         let leftTurningPoint: number | null = null;
         let rightTurningPoint: number | null = null;
 
+        // Handle infinite well directly (classical turning points at well edges)
+        if (this.potentialTypeProperty.value === PotentialType.INFINITE_WELL) {
+            const halfWidth = this.wellWidthProperty.value / 2;
+            return { left: -halfWidth, right: halfWidth };
+        }
+
+        // Existing loop to find turning points for other potentials
         for (let i = 0; i < xGrid.length - 1; i++) {
             const x = xGrid[i] * QuantumConstants.M_TO_NM;
             const V = this.getPotentialAtPosition(x);
@@ -375,11 +382,12 @@ export class IntroModel extends BaseModel {
         }
 
         if (leftTurningPoint !== null && rightTurningPoint !== null) {
-            // Clamp turning points to chart's X-axis range (-4 to 4 nm)
-            const X_AXIS_RANGE_NM = 4;
-            leftTurningPoint = Math.max(-X_AXIS_RANGE_NM, Math.min(X_AXIS_RANGE_NM, leftTurningPoint));
-            rightTurningPoint = Math.max(-X_AXIS_RANGE_NM, Math.min(X_AXIS_RANGE_NM, rightTurningPoint));
-
+            // Clamp turning points to chart's X-axis range (-X_AXIS_RANGE_NM to X_AXIS_RANGE_NM)
+            const X_AXIS_RANGE_NM = 4; // Define X_AXIS_RANGE_NM here
+            const minX = -X_AXIS_RANGE_NM;
+            const maxX = X_AXIS_RANGE_NM;
+            leftTurningPoint = Math.max(minX, Math.min(maxX, leftTurningPoint));
+            rightTurningPoint = Math.max(minX, Math.min(maxX, rightTurningPoint));
             return { left: leftTurningPoint, right: rightTurningPoint };
         }
 
