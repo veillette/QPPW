@@ -65,6 +65,13 @@ export class WaveFunctionChartNode extends Node {
   private yAxisLabel!: Text;
   private readonly stateLabelNode: Text; // Label showing which wavefunction is displayed
 
+  // Classical probability visualization
+  private readonly leftTurningPointLine: Line;
+  private readonly rightTurningPointLine: Line;
+  private readonly leftForbiddenRegion: Rectangle;
+  private readonly rightForbiddenRegion: Rectangle;
+  private readonly forbiddenProbabilityLabel: Text; // Label showing the forbidden probability percentage
+
   // Guard flag to prevent reentry during updates
   private isUpdating: boolean = false;
   // Flag to indicate if an update was requested while another update was in progress
@@ -134,6 +141,77 @@ export class WaveFunctionChartNode extends Node {
       lineDash: [5, 5],
     });
     this.plotContentNode.addChild(this.zeroLine);
+
+    // Create classical turning point lines
+    this.leftTurningPointLine = new Line(0, 0, 0, 0, {
+      stroke: QPPWColors.energyLevelSelectedProperty,
+      lineWidth: 2,
+      lineDash: [8, 4],
+      visible: false,
+    });
+    this.plotContentNode.addChild(this.leftTurningPointLine);
+
+    this.rightTurningPointLine = new Line(0, 0, 0, 0, {
+      stroke: QPPWColors.energyLevelSelectedProperty,
+      lineWidth: 2,
+      lineDash: [8, 4],
+      visible: false,
+    });
+    this.plotContentNode.addChild(this.rightTurningPointLine);
+
+    // Create classically forbidden regions (shaded areas)
+    this.leftForbiddenRegion = new Rectangle(0, 0, 1, 1, {
+      fill: "rgba(255, 200, 200, 0.3)",
+      stroke: null,
+      visible: false,
+    });
+    this.plotContentNode.addChild(this.leftForbiddenRegion);
+
+    this.rightForbiddenRegion = new Rectangle(0, 0, 1, 1, {
+      fill: "rgba(255, 200, 200, 0.3)",
+      stroke: null,
+      visible: false,
+    });
+    this.plotContentNode.addChild(this.rightForbiddenRegion);
+
+    // Create forbidden probability label (appears on hover)
+    this.forbiddenProbabilityLabel = new Text("", {
+      font: new PhetFont(14),
+      fill: QPPWColors.labelFillProperty,
+      visible: false,
+      centerX: this.chartWidth / 2,
+      top: this.chartMargins.top + 30,
+    });
+    this.addChild(this.forbiddenProbabilityLabel);
+
+    // Add hover listeners to forbidden regions to show probability percentage
+    const showForbiddenProbability = () => {
+      const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
+      if (
+        "getClassicallyForbiddenProbability" in this.model &&
+        selectedIndex >= 0
+      ) {
+        const percentage = (
+          this.model as OneWellModel
+        ).getClassicallyForbiddenProbability(selectedIndex);
+        this.forbiddenProbabilityLabel.string = `Classically Forbidden: ${percentage.toFixed(1)}%`;
+        this.forbiddenProbabilityLabel.visible = true;
+      }
+    };
+
+    const hideForbiddenProbability = () => {
+      this.forbiddenProbabilityLabel.visible = false;
+    };
+
+    this.leftForbiddenRegion.addInputListener({
+      enter: showForbiddenProbability,
+      exit: hideForbiddenProbability,
+    });
+
+    this.rightForbiddenRegion.addInputListener({
+      enter: showForbiddenProbability,
+      exit: hideForbiddenProbability,
+    });
 
     // Create wave function paths
     this.realPartPath = new Path(null, {
@@ -517,6 +595,8 @@ export class WaveFunctionChartNode extends Node {
           this.updateZeroLine();
           this.updateSuperpositionWavefunction();
           this.updateStateLabel();
+          // Hide classical probability visualization for superpositions
+          this.hideClassicalProbabilityVisualization();
         } else {
           // Display single eigenstate
           const selectedIndex =
@@ -532,12 +612,80 @@ export class WaveFunctionChartNode extends Node {
           this.updateZeroLine();
           this.updateWaveFunction(boundStates, selectedIndex);
           this.updateStateLabel();
+          this.updateClassicalProbabilityVisualization(boundStates, selectedIndex);
         }
       } while (this.updatePending);
     } finally {
       this.isUpdating = false;
       this.updatePending = false;
     }
+  }
+
+  /**
+   * Hides the classical probability visualization.
+   */
+  private hideClassicalProbabilityVisualization(): void {
+    this.leftTurningPointLine.visible = false;
+    this.rightTurningPointLine.visible = false;
+    this.leftForbiddenRegion.visible = false;
+    this.rightForbiddenRegion.visible = false;
+  }
+
+  /**
+   * Updates the classical probability visualization (turning points and forbidden regions).
+   */
+  private updateClassicalProbabilityVisualization(
+    boundStates: BoundStateResult,
+    selectedIndex: number,
+  ): void {
+    // Only show if the checkbox is checked and we have a OneWellModel
+    const showClassical =
+      this.model.showClassicalProbabilityProperty.value &&
+      "getClassicalTurningPoints" in this.model;
+
+    if (
+      !showClassical ||
+      selectedIndex < 0 ||
+      selectedIndex >= boundStates.energies.length
+    ) {
+      this.hideClassicalProbabilityVisualization();
+      return;
+    }
+
+    // Get turning points
+    const turningPoints = (this.model as OneWellModel).getClassicalTurningPoints(
+      selectedIndex,
+    );
+
+    if (!turningPoints) {
+      this.hideClassicalProbabilityVisualization();
+      return;
+    }
+
+    // Draw vertical lines at turning points
+    const xLeft = this.dataToViewX(turningPoints.left);
+    const xRight = this.dataToViewX(turningPoints.right);
+    const yTop = this.chartMargins.top;
+    const yBottom = this.chartMargins.top + this.plotHeight;
+
+    this.leftTurningPointLine.setLine(xLeft, yTop, xLeft, yBottom);
+    this.leftTurningPointLine.visible = true;
+
+    this.rightTurningPointLine.setLine(xRight, yTop, xRight, yBottom);
+    this.rightTurningPointLine.visible = true;
+
+    // Draw shaded forbidden regions
+    // Left forbidden region (from left edge to left turning point)
+    const leftRegionX = this.chartMargins.left;
+    const leftRegionWidth = xLeft - leftRegionX;
+    this.leftForbiddenRegion.setRect(leftRegionX, yTop, leftRegionWidth, this.plotHeight);
+    this.leftForbiddenRegion.visible = true;
+
+    // Right forbidden region (from right turning point to right edge)
+    const rightRegionX = xRight;
+    const rightRegionWidth = this.chartMargins.left + this.plotWidth - xRight;
+    this.rightForbiddenRegion.setRect(rightRegionX, yTop, rightRegionWidth, this.plotHeight);
+    this.rightForbiddenRegion.visible = true;
   }
 
   /**

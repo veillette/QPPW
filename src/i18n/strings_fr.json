@@ -148,5 +148,6 @@
   "manyWellsEducationalContent": "Aperçu de l'Écran:\nCet écran démontre la formation de bandes d'énergie dans des potentiels périodiques, le fondement de la physique des solides. En ajoutant plus de puits, les niveaux d'énergie discrets s'élargissent en bandes continues séparées par des lacunes.\n\nCommandes Disponibles:\n• Nombre de Puits: Ajoutez ou retirez des puits pour voir la structure de bande émerger\n• Constante de Réseau: Ajustez l'espacement périodique du potentiel\n• Sélection de Bande: Sélectionnez différentes bandes d'énergie pour visualiser les états de Bloch\n\nObjectifs d'Apprentissage:\n• Comprendre comment les potentiels périodiques créent une structure de bande d'énergie\n• Explorer la relation entre le nombre de puits et la formation de bandes\n• Relier la mécanique quantique aux propriétés des solides (métaux, semi-conducteurs, isolants)",
   "probabilityDensityAxis": "Densité de Probabilité",
   "positionNmAxis": "Position (nm)",
-  "timeFormat": "{{time}} fs"
+  "timeFormat": "{{time}} fs",
+  "classicalProbability": "Probabilité Classique"
 }
