@@ -12,16 +12,25 @@ export {
   solveInfiniteWell,
   createInfiniteWellPotential,
   calculateInfiniteWellClassicalProbability,
+  calculateInfiniteWellWavefunctionZeros,
+  calculateInfiniteWellTurningPoints,
+  calculateInfiniteWellWavefunctionDerivatives,
 } from "./infinite-square-well.js";
 export {
   solveFiniteSquareWell,
   createFiniteWellPotential,
   calculateFiniteWellClassicalProbability,
+  calculateFiniteWellWavefunctionZeros,
+  calculateFiniteWellTurningPoints,
+  calculateFiniteWellWavefunctionDerivatives,
 } from "./finite-square-well.js";
 export {
   solveHarmonicOscillator,
   createHarmonicOscillatorPotential,
   calculateHarmonicOscillatorClassicalProbability,
+  calculateHarmonicOscillatorWavefunctionZeros,
+  calculateHarmonicOscillatorTurningPoints,
+  calculateHarmonicOscillatorWavefunctionDerivatives,
 } from "./harmonic-oscillator.js";
 export { solveMorsePotential } from "./morse-potential.js";
 export { solvePoschlTellerPotential } from "./poschl-teller-potential.js";
