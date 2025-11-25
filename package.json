@@ -27,6 +27,7 @@
     "build": "npx tsc --noEmit && npx vite build",
     "preview": "npx vite preview",
     "test": "tsx --tsconfig tsconfig.test.json --import ./tests/browser-globals.js tests/run-terminal-tests.js",
+    "test:wavefunction": "tsx --tsconfig tsconfig.test.json --import ./tests/browser-globals.js tests/test-wavefunction-comprehensive.ts",
     "test:double-well": "tsx --tsconfig tsconfig.test.json --import ./tests/browser-globals.js tests/test-double-well.ts",
     "test:coulomb": "tsx --tsconfig tsconfig.test.json --import ./tests/browser-globals.js tests/verify-coulomb.ts",
     "test:multi-square-well": "tsx --tsconfig tsconfig.test.json --import ./tests/browser-globals.js tests/test-multi-square-well.ts",

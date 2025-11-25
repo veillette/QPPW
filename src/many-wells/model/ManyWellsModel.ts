@@ -52,6 +52,7 @@ export class ManyWellsModel extends BaseModel {
   public readonly showImaginaryPartProperty: Property<boolean>;
   public readonly showMagnitudeProperty: Property<boolean>;
   public readonly showPhaseProperty: Property<boolean>;
+  public readonly showClassicalProbabilityProperty: Property<boolean>;
 
   // Chart visibility
   public readonly showTotalEnergyProperty: Property<boolean>;
@@ -110,6 +111,7 @@ export class ManyWellsModel extends BaseModel {
     this.showImaginaryPartProperty = new Property<boolean>(false);
     this.showMagnitudeProperty = new Property<boolean>(false);
     this.showPhaseProperty = new Property<boolean>(false);
+    this.showClassicalProbabilityProperty = new Property<boolean>(false);
 
     // Initialize chart visibility
     this.showTotalEnergyProperty = new Property<boolean>(true);
@@ -175,6 +177,7 @@ export class ManyWellsModel extends BaseModel {
     this.showImaginaryPartProperty.reset();
     this.showMagnitudeProperty.reset();
     this.showPhaseProperty.reset();
+    this.showClassicalProbabilityProperty.reset();
     this.showTotalEnergyProperty.reset();
     this.showPotentialEnergyProperty.reset();
     this.superpositionTypeProperty.reset();
@@ -345,5 +348,155 @@ export class ManyWellsModel extends BaseModel {
     }
 
     return null;
+  }
+
+  /**
+   * Calculate the classical probability density for a given energy level.
+   * The classical probability density is inversely proportional to the velocity:
+   * P(x) ∝ 1/v(x) = 1/√[2(E - V(x))/m]
+   *
+   * @param energyIndex - Index of the energy level (0-indexed)
+   * @returns Array of classical probability density values, or null if unavailable
+   */
+  public getClassicalProbabilityDensity(energyIndex: number): number[] | null {
+    if (!this.boundStateResult) {
+      this.calculateBoundStates();
+    }
+
+    if (
+      !this.boundStateResult ||
+      energyIndex < 0 ||
+      energyIndex >= this.boundStateResult.energies.length
+    ) {
+      return null;
+    }
+
+    const energy = this.boundStateResult.energies[energyIndex];
+    const xGrid = this.boundStateResult.xGrid;
+    const mass =
+      this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
+
+    // Calculate potential at each grid point
+    const potential = this.calculatePotentialEnergy(xGrid);
+
+    // Calculate classical probability density
+    const classicalProbability: number[] = [];
+    let integralSum = 0;
+
+    // First pass: calculate unnormalized probability and find turning points
+    for (let i = 0; i < xGrid.length; i++) {
+      const kineticEnergy = energy - potential[i];
+
+      // Classical turning points: where E = V(x)
+      // In classical mechanics, the particle cannot exist beyond turning points
+      if (kineticEnergy <= 0) {
+        classicalProbability.push(0);
+      } else {
+        // P(x) ∝ 1/v(x) = 1/√[2(E - V(x))/m] = √[m/(2(E - V(x)))]
+        const probability = 1 / Math.sqrt(2 * kineticEnergy / mass);
+        classicalProbability.push(probability);
+
+        // For normalization (using trapezoidal rule)
+        if (i > 0) {
+          const dx = xGrid[i] - xGrid[i - 1];
+          integralSum += (probability + classicalProbability[i - 1]) * dx / 2;
+        }
+      }
+    }
+
+    // Normalize so that ∫P(x)dx = 1
+    if (integralSum > 0) {
+      for (let i = 0; i < classicalProbability.length; i++) {
+        classicalProbability[i] /= integralSum;
+      }
+    }
+
+    return classicalProbability;
+  }
+
+  /**
+   * Calculate the potential energy at given positions.
+   * @param xGrid - Array of x positions in meters
+   * @returns Array of potential energy values in Joules
+   */
+  private calculatePotentialEnergy(xGrid: number[]): number[] {
+    const numberOfWells = this.numberOfWellsProperty.value;
+    const wellWidth = this.wellWidthProperty.value * QuantumConstants.NM_TO_M;
+    const wellDepth =
+      this.wellDepthProperty.value * QuantumConstants.EV_TO_JOULES;
+    const wellSeparation =
+      this.wellSeparationProperty.value * QuantumConstants.NM_TO_M;
+
+    const potential: number[] = [];
+
+    for (let i = 0; i < xGrid.length; i++) {
+      const x = xGrid[i];
+      let V = 0;
+
+      switch (this.potentialTypeProperty.value) {
+        case PotentialType.MULTI_SQUARE_WELL: {
+          // Multiple square wells arranged periodically
+          const halfWellWidth = wellWidth / 2;
+          const period = wellWidth + wellSeparation;
+
+          // Calculate total extent of the well array
+          const totalExtent = numberOfWells * wellWidth + (numberOfWells - 1) * wellSeparation;
+          const arrayStart = -totalExtent / 2;
+
+          let inWell = false;
+
+          // Check if x is inside any of the wells
+          for (let wellIndex = 0; wellIndex < numberOfWells; wellIndex++) {
+            const wellCenter = arrayStart + wellIndex * period + wellWidth / 2;
+            const wellStart = wellCenter - halfWellWidth;
+            const wellEnd = wellCenter + halfWellWidth;
+
+            if (x >= wellStart && x <= wellEnd) {
+              inWell = true;
+              break;
+            }
+          }
+
+          V = inWell ? 0 : wellDepth;
+          break;
+        }
+
+        case PotentialType.MULTI_COULOMB_1D: {
+          // Multiple Coulomb centers arranged periodically
+          const coulombConstant = 8.9875517923e9;
+          const coulombStrength =
+            coulombConstant *
+            QuantumConstants.ELEMENTARY_CHARGE *
+            QuantumConstants.ELEMENTARY_CHARGE;
+
+          // Calculate total extent of the Coulomb centers
+          const totalExtent = (numberOfWells - 1) * wellSeparation;
+          const arrayStart = -totalExtent / 2;
+
+          // Sum contributions from all Coulomb centers
+          V = 0;
+          for (let wellIndex = 0; wellIndex < numberOfWells; wellIndex++) {
+            const centerPosition = arrayStart + wellIndex * wellSeparation;
+            const r = Math.abs(x - centerPosition);
+
+            if (r > 1e-12) {
+              // Avoid singularity at center
+              V += -coulombStrength / r;
+            } else {
+              V += -coulombStrength / 1e-12;
+            }
+          }
+          break;
+        }
+
+        default:
+          V = 0;
+          break;
+      }
+
+      potential.push(V);
+    }
+
+    return potential;
   }
 }
