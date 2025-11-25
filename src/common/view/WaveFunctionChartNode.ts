@@ -57,6 +57,7 @@ export class WaveFunctionChartNode extends Node {
   private readonly imaginaryPartPath: Path;
   private readonly magnitudePath: Path;
   private readonly probabilityDensityPath: Path;
+  private readonly classicalProbabilityPath: Path;
   private readonly phaseColorNode: Node; // Container for phase-colored visualization
   private phaseColorStrips: Rectangle[]; // Pool of rectangles for phase visualization
   private readonly zeroLine: Line;
@@ -162,6 +163,14 @@ export class WaveFunctionChartNode extends Node {
       fill: QPPWColors.wavefunctionProbabilityFillProperty, // Semi-transparent fill
     });
     this.plotContentNode.addChild(this.probabilityDensityPath);
+
+    this.classicalProbabilityPath = new Path(null, {
+      stroke: QPPWColors.classicalProbabilityProperty,
+      lineWidth: 2,
+      lineDash: [5, 3],
+      visible: false,
+    });
+    this.plotContentNode.addChild(this.classicalProbabilityPath);
 
     // Create phase color visualization node
     this.phaseColorNode = new Node({
@@ -375,6 +384,13 @@ export class WaveFunctionChartNode extends Node {
       this.magnitudePath.visible =
         show && this.model.displayModeProperty.value === "waveFunction";
     });
+
+    // Update visibility of classical probability (only for OneWellModel)
+    if ("showClassicalProbabilityProperty" in this.model) {
+      this.model.showClassicalProbabilityProperty.link(() => {
+        this.update();
+      });
+    }
   }
 
   /**
@@ -681,6 +697,7 @@ export class WaveFunctionChartNode extends Node {
         probabilityDensity,
       );
       this.probabilityDensityPath.visible = true;
+      this.classicalProbabilityPath.visible = false; // Hide classical for superposition
       this.realPartPath.visible = false;
       this.imaginaryPartPath.visible = false;
       this.magnitudePath.visible = false;
@@ -689,6 +706,7 @@ export class WaveFunctionChartNode extends Node {
       // Magnitude and phase for coloring
       this.plotPhaseColoredSuperposition(boundStates.xGrid, realPart, imagPart);
       this.probabilityDensityPath.visible = false;
+      this.classicalProbabilityPath.visible = false;
       this.realPartPath.visible = false;
       this.imaginaryPartPath.visible = false;
       this.magnitudePath.visible = false;
@@ -708,6 +726,7 @@ export class WaveFunctionChartNode extends Node {
         magnitude,
       );
       this.probabilityDensityPath.visible = false;
+      this.classicalProbabilityPath.visible = false;
       this.realPartPath.visible = this.model.showRealPartProperty.value;
       this.imaginaryPartPath.visible =
         this.model.showImaginaryPartProperty.value;
@@ -751,10 +770,29 @@ export class WaveFunctionChartNode extends Node {
       this.imaginaryPartPath.visible = false;
       this.magnitudePath.visible = false;
       this.phaseColorNode.visible = false;
+
+      // Plot classical probability if enabled (only for OneWellModel)
+      if (
+        "showClassicalProbabilityProperty" in this.model &&
+        this.model.showClassicalProbabilityProperty.value
+      ) {
+        const classicalProbability = (
+          this.model as OneWellModel
+        ).getClassicalProbabilityDensity(selectedIndex);
+        if (classicalProbability) {
+          this.plotClassicalProbabilityDensity(xGrid, classicalProbability);
+          this.classicalProbabilityPath.visible = true;
+        } else {
+          this.classicalProbabilityPath.visible = false;
+        }
+      } else {
+        this.classicalProbabilityPath.visible = false;
+      }
     } else if (displayMode === "phaseColor") {
       // Plot magnitude with phase-colored fill
       this.plotPhaseColoredWavefunction(xGrid, wavefunction, phase);
       this.probabilityDensityPath.visible = false;
+      this.classicalProbabilityPath.visible = false;
       this.realPartPath.visible = false;
       this.imaginaryPartPath.visible = false;
       this.magnitudePath.visible = false;
@@ -763,6 +801,7 @@ export class WaveFunctionChartNode extends Node {
       // Plot wave function components
       this.plotWaveFunctionComponents(xGrid, wavefunction, phase);
       this.probabilityDensityPath.visible = false;
+      this.classicalProbabilityPath.visible = false;
       this.realPartPath.visible = this.model.showRealPartProperty.value;
       this.imaginaryPartPath.visible =
         this.model.showImaginaryPartProperty.value;
@@ -818,6 +857,42 @@ export class WaveFunctionChartNode extends Node {
     shape.close();
 
     this.probabilityDensityPath.shape = shape;
+  }
+
+  /**
+   * Plots the classical probability density with smooth curves.
+   */
+  private plotClassicalProbabilityDensity(
+    xGrid: number[],
+    classicalProbability: number[],
+  ): void {
+    const shape = new Shape();
+
+    // Build points array
+    const points: { x: number; y: number }[] = [];
+    for (let i = 0; i < xGrid.length; i++) {
+      const x = this.dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
+      const y = this.dataToViewY(classicalProbability[i]);
+      points.push({ x, y });
+    }
+
+    // Draw smooth curve using quadratic bezier curves
+    if (points.length > 0) {
+      shape.moveTo(points[0].x, points[0].y);
+
+      for (let i = 0; i < points.length - 1; i++) {
+        const p0 = points[i];
+        const p1 = points[i + 1];
+
+        // Control point is midpoint for simple smoothing
+        const cpX = (p0.x + p1.x) / 2;
+        const cpY = (p0.y + p1.y) / 2;
+
+        shape.quadraticCurveTo(cpX, cpY, p1.x, p1.y);
+      }
+    }
+
+    this.classicalProbabilityPath.shape = shape;
   }
 
   /**

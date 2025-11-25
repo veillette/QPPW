@@ -383,6 +383,10 @@ export class StringManager {
     return this.stringProperties.probabilityDensityStringProperty;
   }
 
+  get classicalProbabilityStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.classicalProbabilityStringProperty;
+  }
+
   get phaseColorStringProperty(): ReadOnlyProperty<string> {
     return this.stringProperties.phaseColorStringProperty;
   }

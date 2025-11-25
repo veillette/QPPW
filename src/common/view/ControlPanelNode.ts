@@ -497,6 +497,26 @@ export class ControlPanelNode extends Node {
       fill: QPPWColors.textFillProperty,
     });
 
+    // Classical probability checkbox (only for OneWellModel and only in probability density mode)
+    const classicalProbabilityCheckboxContent =
+      "showClassicalProbabilityProperty" in this.model
+        ? new Checkbox(
+            this.model.showClassicalProbabilityProperty,
+            new Text(stringManager.classicalProbabilityStringProperty, {
+              font: new PhetFont(12),
+              fill: QPPWColors.textFillProperty,
+            }),
+            { boxWidth: 16 },
+          )
+        : null;
+
+    const classicalProbabilityCheckbox = classicalProbabilityCheckboxContent
+      ? new Node({
+          children: [classicalProbabilityCheckboxContent],
+          x: 20,
+        })
+      : null;
+
     // Wave function views checkboxes
     const waveFunctionViewsLabel = new Text(
       stringManager.waveFunctionViewsStringProperty,
@@ -561,17 +581,31 @@ export class ControlPanelNode extends Node {
       imaginaryPartCheckbox.enabled = enabled;
       magnitudeCheckbox.enabled = enabled;
       phaseCheckbox.enabled = enabled;
+
+      // Enable classical probability checkbox only in probability density mode
+      if (classicalProbabilityCheckboxContent) {
+        classicalProbabilityCheckboxContent.enabled = mode === "probabilityDensity";
+      }
     });
+
+    // Build children array conditionally
+    const children: Node[] = [
+      displayLabel,
+      displayModeRadioButtonGroup,
+    ];
+
+    // Add classical probability checkbox if it exists
+    if (classicalProbabilityCheckbox) {
+      children.push(classicalProbabilityCheckbox);
+    }
+
+    // Add wave function views
+    children.push(waveFunctionViewsLabel, waveFunctionCheckboxes);
 
     return new VBox({
       spacing: 8,
       align: "left",
-      children: [
-        displayLabel,
-        displayModeRadioButtonGroup,
-        waveFunctionViewsLabel,
-        waveFunctionCheckboxes,
-      ],
+      children,
     });
   }
 

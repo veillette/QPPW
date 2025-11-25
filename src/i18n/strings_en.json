@@ -21,6 +21,7 @@
   "position": "Position",
   "waveFunction": "Wave Function",
   "probabilityDensity": "Probability Density",
+  "classicalProbability": "Classical Probability",
   "phaseColor": "Phase (Color)",
   "realPart": "Real Part",
   "imaginaryPart": "Imaginary Part",
