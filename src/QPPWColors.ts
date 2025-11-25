@@ -67,6 +67,15 @@ const QPPWColors = {
     },
   ),
 
+  classicalProbabilityProperty: new ProfileColorProperty(
+    qppw,
+    "classicalProbability",
+    {
+      default: new Color(0, 255, 200), // Cyan/turquoise
+      projector: new Color(0, 180, 140), // Darker cyan for projector
+    },
+  ),
+
   // Potential well colors
   potentialWellProperty: new ProfileColorProperty(qppw, "potentialWell", {
     default: new Color(150, 150, 200), // Light purple
