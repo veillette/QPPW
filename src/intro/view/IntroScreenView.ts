@@ -20,7 +20,6 @@ export class IntroScreenView extends ScreenView {
     private energyChart: EnergyChartNode;
     private waveFunctionChart: WaveFunctionChartNode;
     private controlPanel: IntroControlPanelNode;
-    private chartsContainer: Node;
     private listBoxParent: Node;
 
     public constructor(model: IntroModel, options?: ScreenViewOptions) {
@@ -51,15 +50,11 @@ export class IntroScreenView extends ScreenView {
 
         // Position charts
         this.energyChart.left = margin;
-        this.energyChart.top = 10;
+        this.energyChart.top = 10 - 200;
 
         this.waveFunctionChart.left = margin;
         this.waveFunctionChart.top = margin + energyChartHeight + 30;
 
-        // Create container for charts
-        this.chartsContainer = new Node({
-            children: [this.energyChart, this.waveFunctionChart],
-        });
 
         // Create listbox parent node for ComboBox popups
         this.listBoxParent = new Node();
@@ -83,7 +78,8 @@ export class IntroScreenView extends ScreenView {
         });
 
         // Add all components to the view
-        this.addChild(this.chartsContainer);
+        this.addChild(this.energyChart);
+        this.addChild(this.waveFunctionChart);
         this.addChild(this.controlPanel);
         this.addChild(this.resetAllButton);
         this.addChild(this.listBoxParent); // ListBox parent must be added last for proper z-ordering
