@@ -5,7 +5,10 @@
 
 import { ScreenView, ScreenViewOptions } from "scenerystack/sim";
 import { ResetAllButton } from "scenerystack/scenery-phet";
-import { Node } from "scenerystack/scenery";
+import { Node, Text, VBox, RichText } from "scenerystack/scenery";
+import { PhetFont } from "scenerystack/scenery-phet";
+import { TReadOnlyProperty } from "scenerystack/axon";
+import QPPWColors from "../../QPPWColors.js";
 import { OneWellModel } from "../../one-well/model/OneWellModel.js";
 import { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
 import { ManyWellsModel } from "../../many-wells/model/ManyWellsModel.js";
@@ -17,6 +20,17 @@ import {
 } from "./ControlPanelNode.js";
 import { SimulationControlBar } from "./SimulationControlBar.js";
 import { BaseModel } from "../model/BaseModel.js";
+
+/**
+ * Screen-specific string properties for info dialog and screen summary.
+ */
+export interface ScreenStringProperties {
+  titleStringProperty: TReadOnlyProperty<string>;
+  descriptionStringProperty: TReadOnlyProperty<string>;
+  keyConceptsStringProperty: TReadOnlyProperty<string>;
+  interactionsStringProperty: TReadOnlyProperty<string>;
+  educationalContentStringProperty: TReadOnlyProperty<string>;
+}
 
 export abstract class BaseScreenView extends ScreenView {
   protected readonly resetAllButton: ResetAllButton;
@@ -127,16 +141,98 @@ export abstract class BaseScreenView extends ScreenView {
   }
 
   /**
-   * Creates the content for the info dialog.
-   * Subclasses must implement this method to provide screen-specific information.
+   * Get screen-specific string properties for creating dialog content.
+   * Subclasses must implement this method to provide their specific strings.
    */
-  public abstract createInfoDialogContent(): Node;
+  protected abstract getScreenStringProperties(): ScreenStringProperties;
+
+  /**
+   * Get the common "Key Concepts" title string property.
+   * This is shared across all screens.
+   */
+  protected abstract getKeyConceptsTitleStringProperty(): TReadOnlyProperty<string>;
+
+  /**
+   * Get the common "Interactions" title string property.
+   * This is shared across all screens.
+   */
+  protected abstract getInteractionsTitleStringProperty(): TReadOnlyProperty<string>;
+
+  /**
+   * Creates the content for the info dialog.
+   * This is a concrete implementation that uses screen-specific string properties.
+   */
+  public createInfoDialogContent(): Node {
+    const strings = this.getScreenStringProperties();
+    const keyConceptsTitle = this.getKeyConceptsTitleStringProperty();
+    const interactionsTitle = this.getInteractionsTitleStringProperty();
+
+    const titleText = new Text(strings.titleStringProperty, {
+      font: new PhetFont({ size: 18, weight: "bold" }),
+      fill: QPPWColors.textFillProperty,
+    });
+
+    const descriptionText = new RichText(strings.descriptionStringProperty, {
+      font: new PhetFont(14),
+      fill: QPPWColors.textFillProperty,
+      maxWidth: 500,
+    });
+
+    const keyConceptsTitleText = new Text(keyConceptsTitle, {
+      font: new PhetFont({ size: 14, weight: "bold" }),
+      fill: QPPWColors.textFillProperty,
+    });
+
+    const keyConceptsList = new RichText(strings.keyConceptsStringProperty, {
+      font: new PhetFont(13),
+      fill: QPPWColors.textFillProperty,
+      maxWidth: 500,
+    });
+
+    const interactionTitleText = new Text(interactionsTitle, {
+      font: new PhetFont({ size: 14, weight: "bold" }),
+      fill: QPPWColors.textFillProperty,
+    });
+
+    const interactionsList = new RichText(strings.interactionsStringProperty, {
+      font: new PhetFont(13),
+      fill: QPPWColors.textFillProperty,
+      maxWidth: 500,
+    });
+
+    return new VBox({
+      spacing: 12,
+      align: "left",
+      children: [
+        titleText,
+        descriptionText,
+        keyConceptsTitleText,
+        keyConceptsList,
+        interactionTitleText,
+        interactionsList,
+      ],
+    });
+  }
 
   /**
    * Creates the screen summary content for accessibility.
-   * Subclasses must implement this method to provide screen-specific summary.
+   * This is a concrete implementation that uses screen-specific string properties.
    */
-  public abstract createScreenSummaryContent(): Node;
+  public createScreenSummaryContent(): Node {
+    const strings = this.getScreenStringProperties();
+
+    const summaryText = new RichText(strings.educationalContentStringProperty, {
+      font: new PhetFont(13),
+      fill: QPPWColors.textFillProperty,
+      maxWidth: 600,
+    });
+
+    return new VBox({
+      spacing: 10,
+      align: "left",
+      children: [summaryText],
+    });
+  }
 
   /**
    * Resets the screen view to its initial state.
