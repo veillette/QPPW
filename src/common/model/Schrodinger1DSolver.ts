@@ -41,6 +41,28 @@ import QuantumConstants from "./QuantumConstants.js";
 import QPPWPreferences from "../../QPPWPreferences.js";
 import qppw from "../../QPPWNamespace.js";
 import { NumericalMethod } from "./NumericalMethod.js";
+import {
+  BasePotential,
+  AnalyticalPotential,
+  InfiniteSquareWellPotential,
+  FiniteSquareWellPotential,
+  HarmonicOscillatorPotential,
+  MorsePotential,
+  PoschlTellerPotential,
+  RosenMorsePotential,
+  EckartPotential,
+  AsymmetricTrianglePotential,
+  Coulomb1DPotential,
+  Coulomb3DPotential,
+  TriangularPotential,
+} from "./potentials/index.js";
+
+// Re-export potential classes for external use
+export {
+  BasePotential,
+  AnalyticalPotential,
+  NumericalPotential,
+} from "./potentials/index.js";
 
 // Re-export NumericalMethod for backward compatibility
 export { NumericalMethod };
@@ -537,6 +559,184 @@ export class Schrodinger1DSolver {
     } else {
       // Use wavefunctions directly from the solver
       return result;
+    }
+  }
+
+  /**
+   * Create a potential class instance from well parameters.
+   * This is the new class-based approach that separates analytical and numerical potentials.
+   *
+   * @param wellParams - Parameters defining the potential well
+   * @param mass - Particle mass in kg
+   * @returns BasePotential instance (AnalyticalPotential or NumericalPotential)
+   */
+  public createPotential(
+    wellParams: WellParameters,
+    mass: number,
+  ): BasePotential | null {
+    switch (wellParams.type) {
+      case PotentialType.INFINITE_WELL:
+        if (wellParams.wellWidth !== undefined) {
+          return new InfiniteSquareWellPotential(wellParams.wellWidth, mass);
+        }
+        break;
+
+      case PotentialType.FINITE_WELL:
+        if (
+          wellParams.wellWidth !== undefined &&
+          wellParams.wellDepth !== undefined
+        ) {
+          return new FiniteSquareWellPotential(
+            wellParams.wellWidth,
+            wellParams.wellDepth,
+            mass,
+          );
+        }
+        break;
+
+      case PotentialType.HARMONIC_OSCILLATOR:
+        if (wellParams.springConstant !== undefined) {
+          return new HarmonicOscillatorPotential(
+            wellParams.springConstant,
+            mass,
+          );
+        }
+        break;
+
+      case PotentialType.MORSE:
+        if (
+          wellParams.dissociationEnergy !== undefined &&
+          wellParams.wellWidth !== undefined &&
+          wellParams.equilibriumPosition !== undefined
+        ) {
+          return new MorsePotential(
+            wellParams.dissociationEnergy,
+            wellParams.wellWidth,
+            wellParams.equilibriumPosition,
+            mass,
+          );
+        }
+        break;
+
+      case PotentialType.POSCHL_TELLER:
+        if (
+          wellParams.potentialDepth !== undefined &&
+          wellParams.wellWidth !== undefined
+        ) {
+          return new PoschlTellerPotential(
+            wellParams.potentialDepth,
+            wellParams.wellWidth,
+            mass,
+          );
+        }
+        break;
+
+      case PotentialType.ROSEN_MORSE:
+        if (
+          wellParams.potentialDepth !== undefined &&
+          wellParams.barrierHeight !== undefined &&
+          wellParams.wellWidth !== undefined
+        ) {
+          return new RosenMorsePotential(
+            wellParams.potentialDepth,
+            wellParams.barrierHeight,
+            wellParams.wellWidth,
+            mass,
+          );
+        }
+        break;
+
+      case PotentialType.ECKART:
+        if (
+          wellParams.potentialDepth !== undefined &&
+          wellParams.barrierHeight !== undefined &&
+          wellParams.wellWidth !== undefined
+        ) {
+          return new EckartPotential(
+            wellParams.potentialDepth,
+            wellParams.barrierHeight,
+            wellParams.wellWidth,
+            mass,
+          );
+        }
+        break;
+
+      case PotentialType.ASYMMETRIC_TRIANGLE:
+        if (
+          wellParams.slope !== undefined &&
+          wellParams.wellWidth !== undefined
+        ) {
+          return new AsymmetricTrianglePotential(
+            wellParams.slope,
+            wellParams.wellWidth,
+            mass,
+          );
+        }
+        break;
+
+      case PotentialType.COULOMB_1D:
+        if (wellParams.coulombStrength !== undefined) {
+          return new Coulomb1DPotential(wellParams.coulombStrength, mass);
+        }
+        break;
+
+      case PotentialType.COULOMB_3D:
+        if (wellParams.coulombStrength !== undefined) {
+          return new Coulomb3DPotential(wellParams.coulombStrength, mass);
+        }
+        break;
+
+      case PotentialType.TRIANGULAR:
+        if (
+          wellParams.wellWidth !== undefined &&
+          wellParams.wellDepth !== undefined &&
+          wellParams.energyOffset !== undefined
+        ) {
+          return new TriangularPotential(
+            wellParams.wellDepth,
+            wellParams.wellWidth,
+            wellParams.energyOffset,
+            mass,
+          );
+        }
+        break;
+
+      default:
+        // For types not yet converted to classes (multi-well types, custom)
+        return null;
+    }
+
+    return null;
+  }
+
+  /**
+   * Solve the Schrödinger equation using a potential class instance.
+   * This method automatically uses analytical or numerical methods based on
+   * the potential type.
+   *
+   * @param potential - Potential class instance (AnalyticalPotential or NumericalPotential)
+   * @param numStates - Number of bound states to calculate
+   * @param gridConfig - Grid configuration for spatial discretization
+   * @returns Bound state results with energies and wavefunctions
+   */
+  public solvePotential(
+    potential: BasePotential,
+    numStates: number,
+    gridConfig: GridConfig,
+  ): BoundStateResult {
+    if (potential.hasAnalyticalSolution()) {
+      // Use analytical solution
+      const analyticalPotential = potential as AnalyticalPotential;
+      return analyticalPotential.solve(numStates, gridConfig);
+    } else {
+      // Use numerical solution
+      const potentialFunction = potential.createPotential();
+      return this.solveNumerical(
+        potentialFunction,
+        potential.getMass(),
+        numStates,
+        gridConfig,
+      );
     }
   }
 
