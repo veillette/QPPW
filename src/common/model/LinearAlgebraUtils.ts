@@ -1,21 +1,73 @@
 /**
- * Linear algebra utilities compatible with scenerystack/dot API.
+ * Linear algebra utilities for quantum mechanics solvers.
  *
- * This module provides shared matrix operations and eigenvalue decomposition
- * for the quantum mechanics solvers. The Matrix class API mirrors scenerystack/dot's
- * Matrix class for compatibility.
+ * This module provides matrix operations and eigenvalue decomposition optimized
+ * for quantum mechanical calculations. The Matrix class API is designed to be
+ * compatible with scenerystack/dot's Matrix class, ensuring seamless integration
+ * with the broader SceneryStack ecosystem.
  *
- * In browser: Uses scenerystack/dot Matrix class directly
- * In Node: Uses compatible implementation for testing
+ * ## Matrix Implementation
+ *
+ * The DotMatrix class exported from this module provides a lightweight, efficient
+ * implementation of core matrix operations needed for quantum mechanics:
+ * - Matrix construction, indexing (get/set)
+ * - Arithmetic operations (addition, multiplication, scalar multiplication)
+ * - Matrix algebra (transpose, inverse, submatrix extraction)
+ * - Utility methods (identity, diagonal matrices)
+ *
+ * This implementation uses Float64Array for efficient numerical computations and
+ * maintains full compatibility across browser and Node.js test environments.
+ *
+ * ## Design Philosophy
+ *
+ * Rather than attempting dynamic imports of scenerystack/dot's Matrix class
+ * (which can cause ESM module resolution issues in test environments), we provide
+ * a carefully crafted implementation that:
+ * 1. Implements the exact API subset needed by quantum mechanics solvers
+ * 2. Uses efficient Float64Array storage for numerical stability
+ * 3. Works reliably in both browser and Node.js test environments
+ * 4. Maintains API compatibility with scenerystack/dot for future upgrades
+ *
+ * @module LinearAlgebraUtils
  */
 
 import qppw from "../../QPPWNamespace.js";
 
 /**
- * Matrix class compatible with scenerystack/dot Matrix API.
- * Provides the same methods used by the quantum mechanics solvers.
+ * Matrix class providing core linear algebra operations for quantum mechanics.
+ *
+ * This class implements a compatible subset of the scenerystack/dot Matrix API,
+ * optimized for the specific needs of quantum mechanical calculations. The
+ * implementation uses Float64Array for efficient numerical computations and
+ * provides all essential matrix operations needed by the solver algorithms.
+ *
+ * ## Key Features
+ * - Efficient Float64Array-based storage
+ * - Row-major indexing for memory locality
+ * - Full support for matrix arithmetic (add, multiply, transpose, inverse)
+ * - Gaussian elimination with partial pivoting for matrix inversion
+ * - Static factory methods for identity and diagonal matrices
+ *
+ * ## API Compatibility
+ * The API is designed to match scenerystack/dot's Matrix class for methods
+ * used by quantum mechanics solvers, enabling potential future migration to
+ * the official implementation when environment constraints allow.
+ *
+ * @example
+ * ```typescript
+ * // Create a 3x3 identity matrix
+ * const I = DotMatrix.identity(3, 3);
+ *
+ * // Create a matrix from values
+ * const A = new DotMatrix(2, 2, [1, 2, 3, 4]);
+ *
+ * // Matrix operations
+ * const B = A.transpose();
+ * const C = A.times(B);
+ * const D = A.inverse();
+ * ```
  */
-export class DotMatrix {
+class CustomDotMatrix {
   private m: number; // rows
   private n: number; // columns
   private entries: Float64Array;
@@ -68,10 +120,10 @@ export class DotMatrix {
    * @param j1 - Final column index
    * @returns Submatrix
    */
-  getMatrix(i0: number, i1: number, j0: number, j1: number): DotMatrix {
+  getMatrix(i0: number, i1: number, j0: number, j1: number): CustomDotMatrix {
     const rows = i1 - i0 + 1;
     const cols = j1 - j0 + 1;
-    const result = new DotMatrix(rows, cols);
+    const result = new CustomDotMatrix(rows, cols);
     for (let i = 0; i < rows; i++) {
       for (let j = 0; j < cols; j++) {
         result.set(i, j, this.get(i0 + i, j0 + j));
@@ -83,15 +135,15 @@ export class DotMatrix {
   /**
    * Create a copy of this matrix.
    */
-  copy(): DotMatrix {
-    return new DotMatrix(this.m, this.n, this.entries);
+  copy(): CustomDotMatrix {
+    return new CustomDotMatrix(this.m, this.n, this.entries);
   }
 
   /**
    * Matrix transpose.
    */
-  transpose(): DotMatrix {
-    const result = new DotMatrix(this.n, this.m);
+  transpose(): CustomDotMatrix {
+    const result = new CustomDotMatrix(this.n, this.m);
     for (let i = 0; i < this.m; i++) {
       for (let j = 0; j < this.n; j++) {
         result.set(j, i, this.get(i, j));
@@ -103,8 +155,8 @@ export class DotMatrix {
   /**
    * Matrix addition.
    */
-  plus(B: DotMatrix): DotMatrix {
-    const result = new DotMatrix(this.m, this.n);
+  plus(B: CustomDotMatrix): CustomDotMatrix {
+    const result = new CustomDotMatrix(this.m, this.n);
     for (let i = 0; i < this.m; i++) {
       for (let j = 0; j < this.n; j++) {
         result.set(i, j, this.get(i, j) + B.get(i, j));
@@ -116,7 +168,7 @@ export class DotMatrix {
   /**
    * Multiply matrix by scalar in place.
    */
-  timesEquals(scalar: number): DotMatrix {
+  timesEquals(scalar: number): CustomDotMatrix {
     for (let i = 0; i < this.entries.length; i++) {
       this.entries[i] *= scalar;
     }
@@ -126,8 +178,8 @@ export class DotMatrix {
   /**
    * Matrix multiplication.
    */
-  times(B: DotMatrix): DotMatrix {
-    const result = new DotMatrix(this.m, B.n);
+  times(B: CustomDotMatrix): CustomDotMatrix {
+    const result = new CustomDotMatrix(this.m, B.n);
     for (let i = 0; i < this.m; i++) {
       for (let j = 0; j < B.n; j++) {
         let sum = 0;
@@ -143,14 +195,14 @@ export class DotMatrix {
   /**
    * Matrix inverse using Gaussian elimination with partial pivoting.
    */
-  inverse(): DotMatrix {
+  inverse(): CustomDotMatrix {
     if (this.m !== this.n) {
       throw new Error("Matrix must be square for inverse");
     }
     const N = this.m;
 
     // Create augmented matrix [A | I]
-    const aug = new DotMatrix(N, 2 * N);
+    const aug = new CustomDotMatrix(N, 2 * N);
     for (let i = 0; i < N; i++) {
       for (let j = 0; j < N; j++) {
         aug.set(i, j, this.get(i, j));
@@ -201,7 +253,7 @@ export class DotMatrix {
     }
 
     // Extract inverse from augmented matrix
-    const inv = new DotMatrix(N, N);
+    const inv = new CustomDotMatrix(N, N);
     for (let i = 0; i < N; i++) {
       for (let j = 0; j < N; j++) {
         inv.set(i, j, aug.get(i, j + N));
@@ -213,8 +265,8 @@ export class DotMatrix {
   /**
    * Create identity matrix.
    */
-  static identity(m: number, n: number): DotMatrix {
-    const result = new DotMatrix(m, n);
+  static identity(m: number, n: number): CustomDotMatrix {
+    const result = new CustomDotMatrix(m, n);
     const min = Math.min(m, n);
     for (let i = 0; i < min; i++) {
       result.set(i, i, 1);
@@ -225,9 +277,9 @@ export class DotMatrix {
   /**
    * Create diagonal matrix from array.
    */
-  static diagonalMatrix(values: number[]): DotMatrix {
+  static diagonalMatrix(values: number[]): CustomDotMatrix {
     const N = values.length;
-    const result = new DotMatrix(N, N);
+    const result = new CustomDotMatrix(N, N);
     for (let i = 0; i < N; i++) {
       result.set(i, i, values[i]);
     }
@@ -236,9 +288,17 @@ export class DotMatrix {
 }
 
 /**
- * Complex number interface for FFT operations
+ * Export the matrix class as DotMatrix for backward compatibility.
+ * This provides a consistent API that works across browser and test environments.
  */
-export interface ComplexNumber {
+export { CustomDotMatrix as DotMatrix };
+
+/**
+ * Simple complex number interface for FFT operations.
+ * We use a lightweight interface rather than the full dot Complex class
+ * for better test environment compatibility and reduced overhead for FFT operations.
+ */
+export interface Complex {
   real: number;
   imaginary: number;
 }
@@ -257,7 +317,7 @@ export interface EigenDecompositionResult {
  * @param matrix - Matrix object
  * @returns 2D array in row-major order
  */
-export function matrixToArray(matrix: DotMatrix): number[][] {
+export function matrixToArray(matrix: CustomDotMatrix): number[][] {
   const m = matrix.getRowDimension();
   const n = matrix.getColumnDimension();
   const array: number[][] = [];
@@ -280,7 +340,7 @@ export function matrixToArray(matrix: DotMatrix): number[][] {
  * @param M - Matrix to symmetrize
  * @returns Symmetric matrix
  */
-export function symmetrizeMatrix(M: DotMatrix): DotMatrix {
+export function symmetrizeMatrix(M: CustomDotMatrix): CustomDotMatrix {
   const transposed = M.transpose();
   const sum = M.plus(transposed);
   return sum.timesEquals(0.5);
@@ -293,7 +353,7 @@ export function symmetrizeMatrix(M: DotMatrix): DotMatrix {
  * @param H - Full matrix
  * @returns Interior matrix with boundary rows/columns removed
  */
-export function extractInteriorMatrix(H: DotMatrix): DotMatrix {
+export function extractInteriorMatrix(H: CustomDotMatrix): CustomDotMatrix {
   const N = H.getRowDimension();
   return H.getMatrix(1, N - 2, 1, N - 2);
 }
@@ -309,7 +369,7 @@ export function extractInteriorMatrix(H: DotMatrix): DotMatrix {
  * @returns Object with eigenvalues array and eigenvectors (array of column vectors)
  */
 export function diagonalize(
-  matrix: DotMatrix | number[][],
+  matrix: CustomDotMatrix | number[][],
 ): EigenDecompositionResult {
   // Convert to 2D array for Jacobi algorithm
   const A = Array.isArray(matrix)
@@ -510,7 +570,7 @@ export function normalizeWavefunctionChebyshev(
  * @param b - Second complex number
  * @returns Sum a + b
  */
-function complexAdd(a: ComplexNumber, b: ComplexNumber): ComplexNumber {
+function complexAdd(a: Complex, b: Complex): Complex {
   return {
     real: a.real + b.real,
     imaginary: a.imaginary + b.imaginary,
@@ -524,7 +584,7 @@ function complexAdd(a: ComplexNumber, b: ComplexNumber): ComplexNumber {
  * @param b - Second complex number
  * @returns Difference a - b
  */
-function complexSubtract(a: ComplexNumber, b: ComplexNumber): ComplexNumber {
+function complexSubtract(a: Complex, b: Complex): Complex {
   return {
     real: a.real - b.real,
     imaginary: a.imaginary - b.imaginary,
@@ -538,7 +598,7 @@ function complexSubtract(a: ComplexNumber, b: ComplexNumber): ComplexNumber {
  * @param b - Second complex number
  * @returns Product a × b
  */
-function complexMultiply(a: ComplexNumber, b: ComplexNumber): ComplexNumber {
+function complexMultiply(a: Complex, b: Complex): Complex {
   return {
     real: a.real * b.real - a.imaginary * b.imaginary,
     imaginary: a.real * b.imaginary + a.imaginary * b.real,
@@ -552,7 +612,7 @@ function complexMultiply(a: ComplexNumber, b: ComplexNumber): ComplexNumber {
  * @param x - Input array of complex numbers
  * @returns FFT of input
  */
-export function fft(x: ComplexNumber[]): ComplexNumber[] {
+export function fft(x: Complex[]): Complex[] {
   const N = x.length;
 
   // Base case
@@ -561,8 +621,8 @@ export function fft(x: ComplexNumber[]): ComplexNumber[] {
   }
 
   // Divide
-  const even: ComplexNumber[] = [];
-  const odd: ComplexNumber[] = [];
+  const even: Complex[] = [];
+  const odd: Complex[] = [];
   for (let i = 0; i < N; i++) {
     if (i % 2 === 0) {
       even.push(x[i]);
@@ -576,10 +636,10 @@ export function fft(x: ComplexNumber[]): ComplexNumber[] {
   const fftOdd = fft(odd);
 
   // Combine
-  const result: ComplexNumber[] = new Array(N);
+  const result: Complex[] = new Array(N);
   for (let frequencyIndex = 0; frequencyIndex < N / 2; frequencyIndex++) {
     const angle = (-2 * Math.PI * frequencyIndex) / N;
-    const twiddle: ComplexNumber = {
+    const twiddle: Complex = {
       real: Math.cos(angle),
       imaginary: Math.sin(angle),
     };
@@ -601,7 +661,7 @@ export function fft(x: ComplexNumber[]): ComplexNumber[] {
  * @param X - Input array of complex numbers
  * @returns IFFT of input
  */
-export function ifft(X: ComplexNumber[]): ComplexNumber[] {
+export function ifft(X: Complex[]): Complex[] {
   const N = X.length;
 
   // Conjugate input
