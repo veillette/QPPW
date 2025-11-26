@@ -3,7 +3,7 @@
  * for the selected energy state. This is the bottom chart in the One Well screen.
  */
 
-import { Node, Line, Path, Text, Rectangle } from "scenerystack/scenery";
+import { Node, Line, Path, Text, Rectangle, Circle } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
 import { NumberProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
@@ -71,6 +71,9 @@ export class WaveFunctionChartNode extends Node {
   private readonly leftForbiddenRegion: Rectangle;
   private readonly rightForbiddenRegion: Rectangle;
   private readonly forbiddenProbabilityLabel: Text; // Label showing the forbidden probability percentage
+
+  // Zeros visualization
+  private readonly zerosNode: Node; // Container for zero markers
 
   // Guard flag to prevent reentry during updates
   private isUpdating: boolean = false;
@@ -258,6 +261,12 @@ export class WaveFunctionChartNode extends Node {
 
     // Initialize rectangle pool for phase color visualization (will be populated on first use)
     this.phaseColorStrips = [];
+
+    // Create zeros visualization node
+    this.zerosNode = new Node({
+      visible: false,
+    });
+    this.plotContentNode.addChild(this.zerosNode);
 
     // Create state label in upper right corner (outside clipped area)
     this.stateLabelNode = new Text("", {
@@ -469,6 +478,11 @@ export class WaveFunctionChartNode extends Node {
         this.update();
       });
     }
+
+    // Update visibility of zeros
+    this.model.showZerosProperty.link(() => {
+      this.update();
+    });
   }
 
   /**
@@ -894,6 +908,9 @@ export class WaveFunctionChartNode extends Node {
       this.magnitudePath.visible = this.model.showMagnitudeProperty.value;
       this.phaseColorNode.visible = false;
     }
+
+    // Update zeros visualization using the real part of the superposition
+    this.updateZerosVisualization(boundStates.xGrid, realPart);
   }
 
   /**
@@ -969,6 +986,9 @@ export class WaveFunctionChartNode extends Node {
       this.magnitudePath.visible = this.model.showMagnitudeProperty.value;
       this.phaseColorNode.visible = false;
     }
+
+    // Update zeros visualization (works for all display modes)
+    this.updateZerosVisualization(xGrid, wavefunction);
   }
 
   /**
@@ -1394,6 +1414,70 @@ export class WaveFunctionChartNode extends Node {
     } finally {
       this.isUpdating = false;
     }
+  }
+
+  /**
+   * Finds zeros (nodes) in the wavefunction data.
+   * Zeros occur where the wavefunction changes sign.
+   * @param xGrid - Array of x positions in meters
+   * @param wavefunction - Array of wavefunction values
+   * @returns Array of x positions (in nm) where zeros occur
+   */
+  private findZeros(xGrid: number[], wavefunction: number[]): number[] {
+    const zeros: number[] = [];
+
+    for (let i = 0; i < wavefunction.length - 1; i++) {
+      const y1 = wavefunction[i];
+      const y2 = wavefunction[i + 1];
+
+      // Check for sign change (zero crossing)
+      if (y1 * y2 < 0) {
+        // Linear interpolation to find more accurate zero position
+        const x1 = xGrid[i];
+        const x2 = xGrid[i + 1];
+        const zeroX = x1 - y1 * (x2 - x1) / (y2 - y1);
+        zeros.push(zeroX * QuantumConstants.M_TO_NM); // Convert to nm
+      }
+    }
+
+    return zeros;
+  }
+
+  /**
+   * Updates the visualization of wavefunction zeros (nodes).
+   * @param xGrid - Array of x positions in meters
+   * @param wavefunction - Array of wavefunction values (real part for complex wavefunctions)
+   */
+  private updateZerosVisualization(xGrid: number[], wavefunction: number[]): void {
+    // Clear existing zeros
+    this.zerosNode.removeAllChildren();
+
+    // Only show if enabled
+    if (!this.model.showZerosProperty.value) {
+      this.zerosNode.visible = false;
+      return;
+    }
+
+    // Find zeros
+    const zeros = this.findZeros(xGrid, wavefunction);
+
+    // Create circles at each zero position
+    zeros.forEach(zeroX => {
+      const x = this.dataToViewX(zeroX);
+      const y = this.dataToViewY(0); // Zeros are at y=0
+
+      const circle = new Circle(4, {
+        fill: QPPWColors.energyLevelSelectedProperty,
+        stroke: QPPWColors.backgroundColorProperty,
+        lineWidth: 1.5,
+        centerX: x,
+        centerY: y,
+      });
+
+      this.zerosNode.addChild(circle);
+    });
+
+    this.zerosNode.visible = zeros.length > 0;
   }
 
   /**

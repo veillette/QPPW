@@ -131,6 +131,7 @@ export abstract class BaseModel {
   public readonly showMagnitudeProperty: Property<boolean>;
   public readonly showPhaseProperty: Property<boolean>;
   public readonly showClassicalProbabilityProperty: Property<boolean>;
+  public readonly showZerosProperty: Property<boolean>;
 
   // Chart visibility
   public readonly showTotalEnergyProperty: Property<boolean>;
@@ -193,6 +194,7 @@ export abstract class BaseModel {
     this.showMagnitudeProperty = new Property<boolean>(false);
     this.showPhaseProperty = new Property<boolean>(false);
     this.showClassicalProbabilityProperty = new Property<boolean>(false);
+    this.showZerosProperty = new Property<boolean>(false);
 
     // Initialize chart visibility
     this.showTotalEnergyProperty = new Property<boolean>(true);
@@ -277,6 +279,7 @@ export abstract class BaseModel {
     this.showMagnitudeProperty.reset();
     this.showPhaseProperty.reset();
     this.showClassicalProbabilityProperty.reset();
+    this.showZerosProperty.reset();
     this.showTotalEnergyProperty.reset();
     this.showPotentialEnergyProperty.reset();
     this.superpositionTypeProperty.reset();
