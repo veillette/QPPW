@@ -198,10 +198,14 @@ This provides O(h⁶) local accuracy, much better than standard finite differenc
 
 ## References
 
-1. **Numerov Method**: B. Numerov (1924), "A method of extrapolation of perturbations"
-2. **Finite Square Well**: Griffiths, "Introduction to Quantum Mechanics" (3rd ed.), Section 2.6
-3. **WKB Approximation**: Landau & Lifshitz, "Quantum Mechanics" (3rd ed.), Chapter VII
-4. **Double Well Physics**: Merzbacher, "Quantum Mechanics" (3rd ed.), Chapter 6
+The solver implementation is based on well-established numerical and analytical techniques:
+
+1. **Numerov Method**: Higher-order finite-difference method for solving differential equations (B. Numerov, 1924)
+2. **Finite Square Well**: Transcendental equations for bound states in finite potential wells
+3. **WKB Approximation**: Semiclassical method for estimating quantum tunneling and energy splitting
+4. **Double Well Physics**: Quantum mechanical treatment of symmetric double-well potentials with tunneling effects
+
+These techniques are documented in standard quantum mechanics textbooks and computational physics literature.
 
 ## See Also
 

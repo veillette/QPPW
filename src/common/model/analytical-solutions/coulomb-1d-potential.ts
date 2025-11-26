@@ -15,21 +15,19 @@
  * should be used. The analytical solution is STRONGLY PREFERRED as it's exact and
  * much more efficient.
  *
- * REFERENCES:
- * - Loudon, R. (2016). "The one-dimensional Coulomb problem"
- *   Proc. R. Soc. A 472: 20150534. https://doi.org/10.1098/rspa.2015.0534
- *   Complete derivation of the 1D Coulomb problem, including proof that only odd-parity
- *   states are normalizable. Pages 3-8 contain the wavefunction solutions.
+ * The 1D Coulomb problem has been studied in the physics literature, with particular
+ * attention to the requirement that only odd-parity states are normalizable due to the
+ * boundary conditions at the singular point x=0. The energy eigenvalues and wavefunctions
+ * are derived from the Schrödinger equation with appropriate boundary conditions.
  *
- * - Gomes, J. F., & Zimerman, A. H. (2004). "The Coulomb problem in one dimension"
- *   American Journal of Physics, 48(7), 579-580.
- *   https://doi.org/10.1119/1.12067
- *   Early treatment of the 1D Coulomb problem.
+ * FREELY AVAILABLE REFERENCES:
+ * - Cheng, K.-M., & Lam, C. S. (2009). "The one-dimensional Coulomb Problem."
+ *   arXiv:0905.3978. https://arxiv.org/abs/0905.3978
+ *   Studies scattering and bound states for the 1D Coulomb potential V(x) = λ/|x|.
  *
- * - Andrews, M. (1976). "Singular potentials in one dimension"
- *   American Journal of Physics, 44(12), 1064-1066.
- *   https://doi.org/10.1119/1.10585
- *   Discussion of boundary conditions at singular points.
+ * - Campiglia, M., et al. (2019). "A Distributional Approach for the One-Dimensional Hydrogen Atom."
+ *   Frontiers in Physics, 7, 101. https://www.frontiersin.org/articles/10.3389/fphy.2019.00101/full
+ *   Addresses the non-integrable singularity at the origin using distribution theory.
  *
  * ENERGY EIGENVALUES:
  *   E_n = -mα²/(2ℏ²(n+1/2)²),  n = 0, 1, 2, ...

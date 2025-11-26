@@ -4,22 +4,19 @@
  *
  * This solves the radial Schrödinger equation for the hydrogen atom with L=0 (s-waves).
  *
- * REFERENCES:
- * - Griffiths, D. J., & Schroeter, D. F. (2018). "Introduction to Quantum Mechanics" (3rd ed.).
- *   Cambridge University Press. Section 4.2, pp. 139-150.
- *   https://doi.org/10.1017/9781316995433
- *   Complete derivation of hydrogen atom wavefunctions using series solutions.
- *
- * - Bethe, H. A., & Salpeter, E. E. (1957). "Quantum Mechanics of One- and Two-Electron Atoms".
- *   Springer. Section 1-3, pp. 1-35.
- *   https://doi.org/10.1007/978-3-662-12869-5
- *   Classic comprehensive treatment of hydrogen-like atoms.
- *
+ * FREELY AVAILABLE REFERENCES:
+ * - Nanni, L. (2015). "The Hydrogen Atom: a Review on the Birth of Modern Quantum Mechanics."
+ *   arXiv:1501.05894. https://arxiv.org/abs/1501.05894
+ *   Comprehensive review of the hydrogen atom solution in quantum mechanics.
  *
  * - Abramowitz, M., & Stegun, I. A. (1964). "Handbook of Mathematical Functions".
  *   National Bureau of Standards. Section 13.4, pp. 509-515 and Section 22, pp. 773-802.
- *   https://doi.org/10.1119/1.15378
+ *   Available online at https://personal.math.ubc.ca/~cbm/aands/
  *   Properties of associated Laguerre polynomials.
+ *
+ * The hydrogen atom wavefunctions are derived from the radial Schrödinger equation using
+ * series solutions. The treatment of the 3D Coulomb potential and hydrogen-like atoms is
+ * well-established in quantum mechanics.
  *
  * ENERGY EIGENVALUES:
  *   E_n = -mα²/(2ℏ²n²),  n = 1, 2, 3, ...
