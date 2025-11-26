@@ -15,21 +15,10 @@
  * should be used. The analytical solution is STRONGLY PREFERRED as it's exact and
  * much more efficient.
  *
- * REFERENCES:
- * - Loudon, R. (2016). "The one-dimensional Coulomb problem"
- *   Proc. R. Soc. A 472: 20150534. https://doi.org/10.1098/rspa.2015.0534
- *   Complete derivation of the 1D Coulomb problem, including proof that only odd-parity
- *   states are normalizable. Pages 3-8 contain the wavefunction solutions.
- *
- * - Gomes, J. F., & Zimerman, A. H. (2004). "The Coulomb problem in one dimension"
- *   American Journal of Physics, 48(7), 579-580.
- *   https://doi.org/10.1119/1.12067
- *   Early treatment of the 1D Coulomb problem.
- *
- * - Andrews, M. (1976). "Singular potentials in one dimension"
- *   American Journal of Physics, 44(12), 1064-1066.
- *   https://doi.org/10.1119/1.10585
- *   Discussion of boundary conditions at singular points.
+ * The 1D Coulomb problem has been studied in the physics literature, with particular
+ * attention to the requirement that only odd-parity states are normalizable due to the
+ * boundary conditions at the singular point x=0. The energy eigenvalues and wavefunctions
+ * are derived from the Schrödinger equation with appropriate boundary conditions.
  *
  * ENERGY EIGENVALUES:
  *   E_n = -mα²/(2ℏ²(n+1/2)²),  n = 0, 1, 2, ...

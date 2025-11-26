@@ -263,14 +263,7 @@ The DVR method uses a basis of delta functions on grid points, making the potent
 
 ## References
 
-1. **Numerov Method**:
-   - Numerov, B. (1924). "Note on the numerical integration of d²x/dt² = f(x,t)"
-
-2. **DVR Method**:
-   - Colbert, D. T., & Miller, W. H. (1992). "A novel discrete variable representation for quantum mechanical reactive scattering via the S-matrix Kohn method." _Journal of Chemical Physics_, 96(3), 1982-1991.
-
-3. **Quantum Mechanics**:
-   - Griffiths, D. J., & Schroeter, D. F. (2018). _Introduction to Quantum Mechanics_ (3rd ed.). Cambridge University Press.
+The solver implementations are based on well-established numerical methods for solving the time-independent Schrödinger equation, including the Numerov method (1924), Discrete Variable Representation (DVR), and various spectral methods. These techniques are documented in standard quantum mechanics and computational physics literature.
 
 ## Visualization Features
 

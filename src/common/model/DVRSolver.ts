@@ -4,9 +4,10 @@
  *
  * This method constructs the Hamiltonian matrix H = T + V and diagonalizes it:
  * - Potential energy V is diagonal: V_ii = V(x_i)
- * - Kinetic energy T uses Colbert-Miller formula for uniform grids
+ * - Kinetic energy T uses the Colbert-Miller formula for uniform grids
  *
- * Reference: Colbert & Miller, J. Chem. Phys. 96, 1982 (1992)
+ * DVR is a well-established numerical method for quantum mechanical calculations,
+ * particularly efficient for bound state problems.
  */
 
 import QuantumConstants from "./QuantumConstants.js";
