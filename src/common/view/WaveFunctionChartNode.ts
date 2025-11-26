@@ -3,9 +3,9 @@
  * for the selected energy state. This is the bottom chart in the One Well screen.
  */
 
-import { Node, Line, Path, Text, Rectangle, Circle } from "scenerystack/scenery";
+import { Node, Line, Path, Text, Rectangle, Circle, DragListener } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
-import { NumberProperty } from "scenerystack/axon";
+import { NumberProperty, BooleanProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
 import {
@@ -74,6 +74,18 @@ export class WaveFunctionChartNode extends Node {
 
   // Zeros visualization
   private readonly zerosNode: Node; // Container for zero markers
+
+  // Area measurement tool
+  public readonly showAreaToolProperty: BooleanProperty;
+  private readonly areaToolContainer: Node; // Container for all area tool elements
+  private readonly leftMarker: Line;
+  private readonly rightMarker: Line;
+  private readonly leftMarkerHandle: Circle;
+  private readonly rightMarkerHandle: Circle;
+  private readonly areaRegion: Rectangle;
+  private readonly areaLabel: Text;
+  private leftMarkerXProperty: NumberProperty; // X position in nm
+  private rightMarkerXProperty: NumberProperty; // X position in nm
 
   // Guard flag to prevent reentry during updates
   private isUpdating: boolean = false;
@@ -267,6 +279,93 @@ export class WaveFunctionChartNode extends Node {
       visible: false,
     });
     this.plotContentNode.addChild(this.zerosNode);
+
+    // Initialize area measurement tool
+    this.showAreaToolProperty = new BooleanProperty(false);
+
+    // Initialize marker positions (default to -1nm and +1nm)
+    this.leftMarkerXProperty = new NumberProperty(-1);
+    this.rightMarkerXProperty = new NumberProperty(1);
+
+    // Create area tool container
+    this.areaToolContainer = new Node({
+      visible: false,
+    });
+    this.plotContentNode.addChild(this.areaToolContainer);
+
+    // Create shaded region between markers
+    this.areaRegion = new Rectangle(0, 0, 1, 1, {
+      fill: "rgba(100, 150, 255, 0.2)", // Semi-transparent blue
+      stroke: null,
+    });
+    this.areaToolContainer.addChild(this.areaRegion);
+
+    // Create left marker line
+    this.leftMarker = new Line(0, 0, 0, 0, {
+      stroke: QPPWColors.energyLevelSelectedProperty,
+      lineWidth: 2,
+      lineDash: [6, 4],
+    });
+    this.areaToolContainer.addChild(this.leftMarker);
+
+    // Create right marker line
+    this.rightMarker = new Line(0, 0, 0, 0, {
+      stroke: QPPWColors.energyLevelSelectedProperty,
+      lineWidth: 2,
+      lineDash: [6, 4],
+    });
+    this.areaToolContainer.addChild(this.rightMarker);
+
+    // Create left marker handle (draggable circle at top)
+    this.leftMarkerHandle = new Circle(8, {
+      fill: QPPWColors.energyLevelSelectedProperty,
+      stroke: QPPWColors.backgroundColorProperty,
+      lineWidth: 2,
+      cursor: "ew-resize",
+    });
+    this.areaToolContainer.addChild(this.leftMarkerHandle);
+
+    // Create right marker handle (draggable circle at top)
+    this.rightMarkerHandle = new Circle(8, {
+      fill: QPPWColors.energyLevelSelectedProperty,
+      stroke: QPPWColors.backgroundColorProperty,
+      lineWidth: 2,
+      cursor: "ew-resize",
+    });
+    this.areaToolContainer.addChild(this.rightMarkerHandle);
+
+    // Create area percentage label
+    this.areaLabel = new Text("", {
+      font: new PhetFont({ size: 16, weight: "bold" }),
+      fill: QPPWColors.labelFillProperty,
+      visible: false,
+    });
+    this.addChild(this.areaLabel);
+
+    // Setup drag listeners for markers
+    this.setupAreaToolDragListeners();
+
+    // Link area tool visibility to property
+    this.showAreaToolProperty.link((show: boolean) => {
+      this.areaToolContainer.visible = show;
+      this.areaLabel.visible = show;
+      if (show) {
+        this.updateAreaTool();
+      }
+    });
+
+    // Update area tool when marker positions change
+    this.leftMarkerXProperty.link(() => {
+      if (this.showAreaToolProperty.value) {
+        this.updateAreaTool();
+      }
+    });
+
+    this.rightMarkerXProperty.link(() => {
+      if (this.showAreaToolProperty.value) {
+        this.updateAreaTool();
+      }
+    });
 
     // Create state label in upper right corner (outside clipped area)
     this.stateLabelNode = new Text("", {
@@ -482,6 +581,20 @@ export class WaveFunctionChartNode extends Node {
     // Update visibility of zeros
     this.model.showZerosProperty.link(() => {
       this.update();
+    });
+
+    // Update area tool when display mode changes or when data updates
+    this.model.displayModeProperty.link(() => {
+      if (this.showAreaToolProperty.value) {
+        this.updateAreaTool();
+      }
+    });
+
+    // Update area tool when time changes (for superposition states)
+    this.model.timeProperty.link(() => {
+      if (this.showAreaToolProperty.value && this.model.isPlayingProperty.value) {
+        this.updateAreaTool();
+      }
     });
   }
 
@@ -1493,5 +1606,223 @@ export class WaveFunctionChartNode extends Node {
    */
   private dataToViewY(y: number): number {
     return this.chartMargins.top + this.chartTransform.modelToViewY(y);
+  }
+
+  /**
+   * Converts view X coordinate to data X coordinate using ChartTransform.
+   */
+  private viewToDataX(x: number): number {
+    return this.chartTransform.viewToModelX(x - this.chartMargins.left);
+  }
+
+  /**
+   * Sets up drag listeners for the area measurement tool markers.
+   */
+  private setupAreaToolDragListeners(): void {
+    // Left marker drag listener
+    this.leftMarkerHandle.addInputListener(
+      new DragListener({
+        drag: (event: any) => {
+          const parentPoint = this.globalToLocalPoint(event.pointer.point);
+          let newX = this.viewToDataX(parentPoint.x);
+
+          // Constrain to chart bounds and ensure left marker stays left of right marker
+          newX = Math.max(this.xMinProperty.value, newX);
+          newX = Math.min(this.rightMarkerXProperty.value - 0.1, newX);
+
+          this.leftMarkerXProperty.value = newX;
+        },
+      }),
+    );
+
+    // Right marker drag listener
+    this.rightMarkerHandle.addInputListener(
+      new DragListener({
+        drag: (event: any) => {
+          const parentPoint = this.globalToLocalPoint(event.pointer.point);
+          let newX = this.viewToDataX(parentPoint.x);
+
+          // Constrain to chart bounds and ensure right marker stays right of left marker
+          newX = Math.min(this.xMaxProperty.value, newX);
+          newX = Math.max(this.leftMarkerXProperty.value + 0.1, newX);
+
+          this.rightMarkerXProperty.value = newX;
+        },
+      }),
+    );
+  }
+
+  /**
+   * Updates the area measurement tool visualization and calculates the probability.
+   */
+  private updateAreaTool(): void {
+    if (!this.showAreaToolProperty.value) {
+      return;
+    }
+
+    const leftX = this.leftMarkerXProperty.value;
+    const rightX = this.rightMarkerXProperty.value;
+
+    // Convert to view coordinates
+    const leftViewX = this.dataToViewX(leftX);
+    const rightViewX = this.dataToViewX(rightX);
+    const yTop = this.chartMargins.top;
+    const yBottom = this.chartMargins.top + this.plotHeight;
+
+    // Update marker lines
+    this.leftMarker.setLine(leftViewX, yTop, leftViewX, yBottom);
+    this.rightMarker.setLine(rightViewX, yTop, rightViewX, yBottom);
+
+    // Update marker handles (circles at top)
+    this.leftMarkerHandle.centerX = leftViewX;
+    this.leftMarkerHandle.centerY = yTop + 15;
+
+    this.rightMarkerHandle.centerX = rightViewX;
+    this.rightMarkerHandle.centerY = yTop + 15;
+
+    // Update shaded region
+    this.areaRegion.setRect(
+      leftViewX,
+      yTop,
+      rightViewX - leftViewX,
+      this.plotHeight,
+    );
+
+    // Calculate probability in the selected region
+    const probability = this.calculateProbabilityInRegion(leftX, rightX);
+
+    // Update label
+    if (probability !== null) {
+      this.areaLabel.string = `${probability.toFixed(1)}%`;
+      // Position label at the center between markers, near the top
+      this.areaLabel.centerX = (leftViewX + rightViewX) / 2;
+      this.areaLabel.top = this.chartMargins.top + 35;
+    } else {
+      this.areaLabel.string = "N/A";
+    }
+  }
+
+  /**
+   * Calculates the probability (area under the curve) in the specified region.
+   * Uses trapezoidal integration of the probability density.
+   * @param xStart - Start x position in nm
+   * @param xEnd - End x position in nm
+   * @returns Probability as a percentage (0-100), or null if not available
+   */
+  private calculateProbabilityInRegion(
+    xStart: number,
+    xEnd: number,
+  ): number | null {
+    const boundStates = this.model.getBoundStates();
+    if (!boundStates) {
+      return null;
+    }
+
+    // Only calculate for probability density mode
+    const displayMode = this.model.displayModeProperty.value;
+    if (displayMode !== "probabilityDensity") {
+      return null;
+    }
+
+    // Check if we're displaying a superposition or a single eigenstate
+    const superpositionType = this.model.superpositionTypeProperty.value;
+    const isSuperposition = superpositionType !== SuperpositionType.SINGLE;
+
+    let probabilityDensity: number[];
+
+    if (isSuperposition && "superpositionConfigProperty" in this.model) {
+      // Calculate superposition probability density
+      const config = (this.model as OneWellModel).superpositionConfigProperty
+        .value;
+      const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
+      const numPoints = boundStates.xGrid.length;
+
+      // Compute time-evolved superposition
+      const realPart = new Array(numPoints).fill(0);
+      const imagPart = new Array(numPoints).fill(0);
+
+      for (let n = 0; n < config.amplitudes.length; n++) {
+        const amplitude = config.amplitudes[n];
+        const initialPhase = config.phases[n];
+
+        if (amplitude === 0 || n >= boundStates.wavefunctions.length) {
+          continue;
+        }
+
+        const eigenfunction = boundStates.wavefunctions[n];
+        const energy = boundStates.energies[n];
+
+        // Time evolution phase for this eigenstate: -E_n*t/ℏ
+        const timePhase = -(energy * time) / QuantumConstants.HBAR;
+
+        // Total phase: initial phase + time evolution phase
+        const totalPhase = initialPhase + timePhase;
+
+        // Complex coefficient
+        const realCoeff = amplitude * Math.cos(totalPhase);
+        const imagCoeff = amplitude * Math.sin(totalPhase);
+
+        // Add contribution to superposition
+        for (let i = 0; i < numPoints; i++) {
+          realPart[i] += realCoeff * eigenfunction[i];
+          imagPart[i] += imagCoeff * eigenfunction[i];
+        }
+      }
+
+      // Calculate |ψ|²
+      probabilityDensity = new Array(numPoints);
+      for (let i = 0; i < numPoints; i++) {
+        probabilityDensity[i] =
+          realPart[i] * realPart[i] + imagPart[i] * imagPart[i];
+      }
+    } else {
+      // Single eigenstate
+      const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
+      if (
+        selectedIndex < 0 ||
+        selectedIndex >= boundStates.wavefunctions.length
+      ) {
+        return null;
+      }
+
+      const wavefunction = boundStates.wavefunctions[selectedIndex];
+      probabilityDensity = wavefunction.map((psi) => psi * psi);
+    }
+
+    // Integrate probability density in the region using trapezoidal rule
+    const xGrid = boundStates.xGrid;
+    let probability = 0;
+
+    for (let i = 0; i < xGrid.length - 1; i++) {
+      const x1 = xGrid[i] * QuantumConstants.M_TO_NM; // Convert to nm
+      const x2 = xGrid[i + 1] * QuantumConstants.M_TO_NM;
+
+      // Check if this segment overlaps with our region
+      if (x2 >= xStart && x1 <= xEnd) {
+        // Calculate overlap
+        const segmentStart = Math.max(x1, xStart);
+        const segmentEnd = Math.min(x2, xEnd);
+
+        if (segmentEnd > segmentStart) {
+          // Linearly interpolate probability density values at segment boundaries
+          const t1 = (segmentStart - x1) / (x2 - x1);
+          const t2 = (segmentEnd - x1) / (x2 - x1);
+
+          const p1 =
+            probabilityDensity[i] * (1 - t1) +
+            probabilityDensity[i + 1] * t1;
+          const p2 =
+            probabilityDensity[i] * (1 - t2) +
+            probabilityDensity[i + 1] * t2;
+
+          // Trapezoidal rule
+          const dx = segmentEnd - segmentStart;
+          probability += 0.5 * (p1 + p2) * dx * QuantumConstants.NM_TO_M;
+        }
+      }
+    }
+
+    // Convert to percentage
+    return probability * 100;
   }
 }

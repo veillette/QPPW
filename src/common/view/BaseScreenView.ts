@@ -122,6 +122,7 @@ export abstract class BaseScreenView extends ScreenView {
       model,
       this.listBoxParent,
       controlPanelOptions,
+      this.waveFunctionChart,
     );
     this.controlPanel.left = chartsWidth + margin * 2;
     this.controlPanel.top = margin;
