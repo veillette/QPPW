@@ -29,6 +29,7 @@ This simulation allows users to explore the properties of quantum "particles" bo
   - Wave functions (real and imaginary parts, magnitude)
   - Probability density with filled area visualization
   - Phase-colored visualization showing quantum phase evolution
+  - Wavefunction zeros (node positions) visualization
   - Interactive energy level selection with hover labels
   - High-resolution wavefunction display (1000 points for analytical solutions)
 - **Energy Level Display**: Observe discrete energy levels with color-coded selection
@@ -96,12 +97,12 @@ This simulation is designed to help students understand:
     - Multi-square well (1-10 wells)
     - Multi-Coulomb 1D (1-10 centers)
   - **Numerical Methods**: For validation and extension
-    - DVR (Discrete Variable Representation)
-    - Spectral method
+    - DVR (Discrete Variable Representation) - Default method
+    - Spectral (Chebyshev polynomial) method
     - Matrix Numerov
     - FGH (Fourier Grid Hamiltonian)
     - Shooting Numerov (classical shooting method)
-    - QuantumBound (experimental)
+    - QuantumBound (advanced inward-outward shooting with logarithmic derivative)
 - **Time Evolution**: Proper quantum dynamics with individual eigenstate phase evolution for superpositions
 
 ### Installation
@@ -169,7 +170,7 @@ npm test
 
 This command:
 
-- Runs comprehensive accuracy tests across 5 numerical methods (DVR, Spectral, Matrix Numerov, FGH, and QuantumBound)
+- Runs comprehensive accuracy tests across 6 numerical methods (DVR, Spectral, Matrix Numerov, FGH, Shooting Numerov, and QuantumBound)
 - Tests harmonic oscillator, finite square wells, 3D Coulomb potential, Morse potential, Pöschl-Teller potential, and double wells
 - Uses grid sizes of 32, 64, and 128 points
 - Displays detailed pass/fail results with error percentages
@@ -248,7 +249,7 @@ The project includes two comprehensive test suites:
 - **Morse Potential** - Vibrational levels, 1.0% tolerance
 - **Pöschl-Teller Potential** - Bound states, 1.0% tolerance
 - **Double Square Wells** (3 configurations) - 1.0% tolerance
-- Tests all 5 numerical methods (DVR, Spectral, Matrix Numerov, FGH, QuantumBound)
+- Tests all 6 numerical methods (DVR, Spectral, Matrix Numerov, FGH, Shooting Numerov, QuantumBound)
 - Multiple grid sizes (32, 64, 128 points)
 
 **2. Double Well Test Suite** (`npm run test:double-well`) - **23 stringent tests** for double quantum wells:

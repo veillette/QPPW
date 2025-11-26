@@ -1,6 +1,6 @@
 # Comprehensive Accuracy Tests for Numerical Quantum Solvers
 
-This document describes the comprehensive accuracy validation tests for all numerical methods used in the QPPW quantum physics simulation: **DVR**, **Spectral**, **Matrix Numerov**, **FGH**, and **QuantumBound** (experimental).
+This document describes the comprehensive accuracy validation tests for all numerical methods used in the QPPW quantum physics simulation: **DVR**, **Spectral**, **Matrix Numerov**, **FGH**, **Shooting Numerov**, and **QuantumBound**.
 
 ## Overview
 
@@ -38,7 +38,7 @@ where:
 - Grid sizes: **32, 64, 128 points** (powers of 2)
 - Grid range: -5 nm to +5 nm
 - States tested: 10 states (n = 0, 1, 2, ..., 9)
-- Methods tested: DVR, Spectral, Matrix Numerov, FGH, QuantumBound
+- Methods tested: DVR, Spectral, Matrix Numerov, FGH, Shooting Numerov, QuantumBound
 - Error tolerance: **0.1%** (extremely high accuracy for smooth potentials)
 
 ### 2. Finite Square Wells
@@ -58,7 +58,7 @@ Multiple configurations test various well depths and widths:
 - Grid sizes: **32, 64, 128 points** (powers of 2)
 - Grid range: -2L to +2L (where L = well width)
 - States tested: Bound states
-- Methods tested: DVR, Spectral, Matrix Numerov, FGH, QuantumBound
+- Methods tested: DVR, Spectral, Matrix Numerov, FGH, Shooting Numerov, QuantumBound
 - Error tolerance: **0.5%** (stringent despite discontinuous potential)
 
 ### 3. 3D Coulomb Potential (Hydrogen Atom, L=0)
@@ -78,7 +78,7 @@ where α = e²/(4πε₀) is the Coulomb strength.
 - Grid sizes: **32, 64, 128 points** (powers of 2)
 - Grid range: 1 pm to 10 nm (r > 0)
 - States tested: First few states
-- Methods tested: DVR, Spectral, Matrix Numerov, FGH, QuantumBound
+- Methods tested: DVR, Spectral, Matrix Numerov, FGH, Shooting Numerov, QuantumBound
 - Error tolerance: **1.0%** (stringent even for singular potential)
 
 ### 4. Morse Potential
@@ -92,7 +92,7 @@ Tests vibrational energy levels in anharmonic molecular potentials:
 - Well width: Typical molecular bond length scale (~10⁻¹⁰ m)
 - Grid sizes: **32, 64, 128 points** (powers of 2)
 - States tested: Vibrational states
-- Methods tested: DVR, Spectral, Matrix Numerov, FGH, QuantumBound
+- Methods tested: DVR, Spectral, Matrix Numerov, FGH, Shooting Numerov, QuantumBound
 - Error tolerance: **1.0%** (anharmonic potential with exact solution)
 
 ### 5. Pöschl-Teller Potential
@@ -106,7 +106,7 @@ Tests bound states in hyperbolic potential wells:
 - Well width: ~10⁻¹⁰ m
 - Grid sizes: **32, 64, 128 points** (powers of 2)
 - States tested: Bound states
-- Methods tested: DVR, Spectral, Matrix Numerov, FGH, QuantumBound
+- Methods tested: DVR, Spectral, Matrix Numerov, FGH, Shooting Numerov, QuantumBound
 - Error tolerance: **1.0%** (hyperbolic potential with exact solution)
 
 ### 6. Double Square Wells
@@ -124,7 +124,7 @@ Tests symmetric double wells with central barrier (has analytical solution):
 - Mass: Electron mass
 - Grid sizes: **32, 64, 128 points** (powers of 2)
 - States tested: Energy level pairs (even and odd parity states)
-- Methods tested: DVR, Spectral, Matrix Numerov, FGH, QuantumBound (compared to analytical solution or DVR reference)
+- Methods tested: DVR, Spectral, Matrix Numerov, FGH, Shooting Numerov, QuantumBound (compared to analytical solution or DVR reference)
 - Error tolerance: **1.0%** (stringent inter-method agreement required)
 
 ## Running the Tests

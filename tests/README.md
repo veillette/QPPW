@@ -16,12 +16,12 @@ The test directory contains only essential files:
 
 ## Test Coverage
 
-The comprehensive test suite (`AccuracyTests.ts`) validates all numerical methods (DVR, Spectral, Matrix Numerov, FGH, and QuantumBound) against analytical solutions across multiple potential types and grid sizes:
+The comprehensive test suite (`AccuracyTests.ts`) validates all numerical methods (DVR, Spectral, Matrix Numerov, FGH, Shooting Numerov, and QuantumBound) against analytical solutions across multiple potential types and grid sizes:
 
 ### 1. Harmonic Oscillator
 
 - Tests across grid sizes: 32, 64, 128 points
-- All 5 methods tested (DVR, Spectral, Matrix Numerov, FGH, QuantumBound)
+- All 6 methods tested (DVR, Spectral, Matrix Numerov, FGH, Shooting Numerov, QuantumBound)
 - Tests first 10 energy levels
 - **0.1% error tolerance**
 
@@ -33,28 +33,28 @@ The comprehensive test suite (`AccuracyTests.ts`) validates all numerical method
   - Wide shallow well: 2nm width, 10eV depth
   - Narrow medium well: 0.5nm width, 30eV depth
 - Grid sizes: 32, 64, 128 points (powers of 2)
-- All 5 methods tested (DVR, Spectral, Matrix Numerov, FGH, QuantumBound)
+- All 6 methods tested (DVR, Spectral, Matrix Numerov, FGH, Shooting Numerov, QuantumBound)
 - **0.5% error tolerance**
 
 ### 3. 3D Coulomb Potential (Hydrogen Atom)
 
 - Tests the radial Schrödinger equation for s-waves (L=0)
 - Grid sizes: 32, 64, 128 points (powers of 2)
-- All 5 methods tested (DVR, Spectral, Matrix Numerov, FGH, QuantumBound)
+- All 6 methods tested (DVR, Spectral, Matrix Numerov, FGH, Shooting Numerov, QuantumBound)
 - **1.0% error tolerance**
 
 ### 4. Morse Potential
 
 - Tests vibrational energy levels for realistic molecular parameters
 - Grid sizes: 32, 64, 128 points (powers of 2)
-- All 5 methods tested (DVR, Spectral, Matrix Numerov, FGH, QuantumBound)
+- All 6 methods tested (DVR, Spectral, Matrix Numerov, FGH, Shooting Numerov, QuantumBound)
 - **1.0% error tolerance**
 
 ### 5. Pöschl-Teller Potential
 
 - Tests bound states in hyperbolic wells
 - Grid sizes: 32, 64, 128 points (powers of 2)
-- All 5 methods tested (DVR, Spectral, Matrix Numerov, FGH, QuantumBound)
+- All 6 methods tested (DVR, Spectral, Matrix Numerov, FGH, Shooting Numerov, QuantumBound)
 - **1.0% error tolerance**
 
 ### 6. Double Square Wells (Accuracy Tests)
