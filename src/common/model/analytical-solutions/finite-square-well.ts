@@ -42,6 +42,7 @@ import {
   PotentialFunction,
 } from "../PotentialFunction.js";
 import { AnalyticalSolution } from "./AnalyticalSolution.js";
+import { findRootHybrid } from "./root-finding-utils.js";
 
 /**
  * Create the potential function for a finite square well.
@@ -603,29 +604,16 @@ function findEvenParityState(xi0: number, stateIndex: number): number | null {
     return sec2Xi + eta / (xi * xi) + xi / eta;
   };
 
-  // Method 1: Try bisection method (most robust)
-  const bisectionResult = solveBisection(f, xiMin, xiMax, 1e-10, 100);
-  if (bisectionResult !== null) {
-    return bisectionResult;
-  }
-
-  // Method 2: Try Newton-Raphson with Lima's initial guess
-  const limaGuess = getLimaApproximation(xi0, stateIndex, "even");
-  if (limaGuess !== null && limaGuess > xiMin && limaGuess < xiMax) {
-    const newtonResult = solveNewtonRaphson(
-      f,
-      fDerivative,
-      limaGuess,
-      1e-10,
-      50,
-    );
-    if (
-      newtonResult !== null &&
-      newtonResult >= xiMin &&
-      newtonResult <= xiMax
-    ) {
-      return newtonResult;
+  // Use dot library's hybrid Newton's/bisection root finder
+  // This automatically combines the robustness of bisection with the speed of Newton's method
+  try {
+    const root = findRootHybrid(xiMin, xiMax, 1e-10, f, fDerivative);
+    // Verify the root is valid
+    if (Math.abs(f(root)) < 1e-8) {
+      return root;
     }
+  } catch (e) {
+    // findRoot failed, continue to fallback methods
   }
 
   // Method 3: Try secant method with midpoint initial guess
@@ -677,29 +665,16 @@ function findOddParityState(xi0: number, stateIndex: number): number | null {
     return csc2Xi + eta / (xi * xi) + xi / eta;
   };
 
-  // Method 1: Try bisection method (most robust)
-  const bisectionResult = solveBisection(f, xiMin, xiMax, 1e-10, 100);
-  if (bisectionResult !== null) {
-    return bisectionResult;
-  }
-
-  // Method 2: Try Newton-Raphson with Lima's initial guess
-  const limaGuess = getLimaApproximation(xi0, stateIndex, "odd");
-  if (limaGuess !== null && limaGuess > xiMin && limaGuess < xiMax) {
-    const newtonResult = solveNewtonRaphson(
-      f,
-      fDerivative,
-      limaGuess,
-      1e-10,
-      50,
-    );
-    if (
-      newtonResult !== null &&
-      newtonResult >= xiMin &&
-      newtonResult <= xiMax
-    ) {
-      return newtonResult;
+  // Use dot library's hybrid Newton's/bisection root finder
+  // This automatically combines the robustness of bisection with the speed of Newton's method
+  try {
+    const root = findRootHybrid(xiMin, xiMax, 1e-10, f, fDerivative);
+    // Verify the root is valid
+    if (Math.abs(f(root)) < 1e-8) {
+      return root;
     }
+  } catch (e) {
+    // findRoot failed, continue to fallback methods
   }
 
   // Method 3: Try secant method with midpoint initial guess
