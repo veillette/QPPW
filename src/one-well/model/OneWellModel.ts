@@ -30,6 +30,172 @@ import {
 export type DisplayMode = "probabilityDensity" | "waveFunction" | "phaseColor";
 
 export class OneWellModel extends BaseModel {
+  // ==================== CONSTANTS ====================
+
+  /**
+   * Default barrier height in electron volts.
+   * Used for Rosen-Morse and Eckart potentials.
+   */
+  private static readonly DEFAULT_BARRIER_HEIGHT = 0.5;
+
+  /**
+   * Minimum barrier height in electron volts.
+   */
+  private static readonly BARRIER_HEIGHT_MIN = 0.0;
+
+  /**
+   * Maximum barrier height in electron volts.
+   */
+  private static readonly BARRIER_HEIGHT_MAX = 10.0;
+
+  /**
+   * Default potential offset in electron volts.
+   * Used for triangular potential configuration.
+   */
+  private static readonly DEFAULT_POTENTIAL_OFFSET = 0.0;
+
+  /**
+   * Minimum potential offset in electron volts.
+   */
+  private static readonly POTENTIAL_OFFSET_MIN = -5.0;
+
+  /**
+   * Maximum potential offset in electron volts.
+   */
+  private static readonly POTENTIAL_OFFSET_MAX = 15.0;
+
+  /**
+   * Default coherent state displacement in nanometers.
+   */
+  private static readonly DEFAULT_COHERENT_DISPLACEMENT = 0.5;
+
+  /**
+   * Minimum coherent state displacement in nanometers.
+   */
+  private static readonly COHERENT_DISPLACEMENT_MIN = 0.0;
+
+  /**
+   * Maximum coherent state displacement in nanometers.
+   */
+  private static readonly COHERENT_DISPLACEMENT_MAX = 2.0;
+
+  /**
+   * Default number of bound states to calculate.
+   */
+  private static readonly DEFAULT_NUM_STATES = 10;
+
+  /**
+   * Number of states for asymmetric triangle potential.
+   * Larger value needed due to dense energy spectrum.
+   */
+  private static readonly NUM_STATES_ASYMMETRIC_TRIANGLE = 80;
+
+  /**
+   * Number of states for triangular potential.
+   */
+  private static readonly NUM_STATES_TRIANGULAR = 50;
+
+  /**
+   * Number of states for other complex potentials.
+   */
+  private static readonly NUM_STATES_COMPLEX = 80;
+
+  /**
+   * Maximum energy in electron volts for state calculations.
+   * Limits the energy range for harmonic oscillator and infinite well.
+   */
+  private static readonly MAX_ENERGY_EV = 15;
+
+  /**
+   * Maximum number of states (safety cap).
+   * Prevents excessive computation time.
+   */
+  private static readonly MAX_NUM_STATES = 100;
+
+  /**
+   * Chart display range in nanometers (extends from -RANGE to +RANGE).
+   * Defines the spatial extent of the visualization.
+   */
+  private static readonly CHART_DISPLAY_RANGE_NM = 4;
+
+  /**
+   * Number of grid points for analytical solution evaluation.
+   * High resolution ensures smooth wavefunction plots.
+   */
+  private static readonly ANALYTICAL_GRID_POINTS = 1000;
+
+  /**
+   * Spring constant multiplier for harmonic oscillator.
+   * Factor used to convert well depth and width to spring constant: k = 8*V₀/L².
+   */
+  private static readonly SPRING_CONSTANT_MULTIPLIER = 8;
+
+  /**
+   * Alternative spring constant multiplier.
+   * Used in some calculations: k = 4*V₀/L².
+   */
+  private static readonly SPRING_CONSTANT_MULTIPLIER_ALT = 4;
+
+  /**
+   * Coulomb's constant in N·m²/C².
+   * Used for Coulomb potential calculations: k = 1/(4πε₀).
+   */
+  private static readonly COULOMB_CONSTANT = 8.9875517923e9;
+
+  /**
+   * Minimum distance for Coulomb potential calculations in nanometers.
+   * Prevents singularity at the origin (r = 0) in getPotentialAtPosition.
+   */
+  private static readonly COULOMB_MIN_DISTANCE_NM = 0.01;
+
+  /**
+   * Minimum distance for Coulomb potential calculations in meters.
+   * Prevents singularity at the origin (r = 0) in calculatePotentialEnergy.
+   */
+  private static readonly COULOMB_MIN_DISTANCE_M = 1e-12;
+
+  /**
+   * Infinite wall potential value in electron volts.
+   * Large value representing impenetrable barrier.
+   */
+  private static readonly INFINITE_WALL_VALUE = 1000;
+
+  /**
+   * Gaussian width parameter for coherent state construction.
+   * Controls localization in eigenstate space.
+   */
+  private static readonly COHERENT_GAUSSIAN_SIGMA = 3.0;
+
+  /**
+   * Center eigenstate index for coherent state construction.
+   * Default center for Gaussian envelope.
+   */
+  private static readonly COHERENT_CENTER_EIGENSTATE = 5;
+
+  /**
+   * Phase gradient for coherent state momentum.
+   * Small phase increment per eigenstate to create momentum.
+   */
+  private static readonly COHERENT_PHASE_GRADIENT = 0.1;
+
+  /**
+   * Number of states for narrow localized superposition.
+   */
+  private static readonly NUM_STATES_NARROW = 5;
+
+  /**
+   * Number of states for wide localized superposition.
+   */
+  private static readonly NUM_STATES_WIDE = 10;
+
+  /**
+   * Half divisor for trapezoidal integration.
+   * Used to calculate midpoint: (x[i+1] - x[i]) / 2.
+   */
+  private static readonly HALF_DIVISOR = 2;
+
+  // ==================== PROPERTIES ====================
+
   // Model-specific well parameters
   public readonly barrierHeightProperty: NumberProperty; // For Rosen-Morse and Eckart potentials
   public readonly potentialOffsetProperty: NumberProperty; // For triangular potential
@@ -45,21 +211,39 @@ export class OneWellModel extends BaseModel {
     super();
 
     // Initialize model-specific well parameters
-    this.barrierHeightProperty = new NumberProperty(0.5, {
-      range: new Range(0.0, 10.0),
-    }); // in eV (for Rosen-Morse and Eckart)
-    this.potentialOffsetProperty = new NumberProperty(0.0, {
-      range: new Range(-5.0, 15.0),
-    }); // in eV (for triangular potential)
+    this.barrierHeightProperty = new NumberProperty(
+      OneWellModel.DEFAULT_BARRIER_HEIGHT,
+      {
+        range: new Range(
+          OneWellModel.BARRIER_HEIGHT_MIN,
+          OneWellModel.BARRIER_HEIGHT_MAX,
+        ),
+      },
+    ); // in eV (for Rosen-Morse and Eckart)
+    this.potentialOffsetProperty = new NumberProperty(
+      OneWellModel.DEFAULT_POTENTIAL_OFFSET,
+      {
+        range: new Range(
+          OneWellModel.POTENTIAL_OFFSET_MIN,
+          OneWellModel.POTENTIAL_OFFSET_MAX,
+        ),
+      },
+    ); // in eV (for triangular potential)
 
     // Initialize model-specific display settings
     this.displayModeProperty = new Property<DisplayMode>("probabilityDensity");
     this.energyLevelProperty = new NumberProperty(0); // Deprecated
 
-    // Initialize coherent state displacement (0.5 nm default, range 0 to 2 nm)
-    this.coherentDisplacementProperty = new NumberProperty(0.5, {
-      range: new Range(0.0, 2.0),
-    });
+    // Initialize coherent state displacement
+    this.coherentDisplacementProperty = new NumberProperty(
+      OneWellModel.DEFAULT_COHERENT_DISPLACEMENT,
+      {
+        range: new Range(
+          OneWellModel.COHERENT_DISPLACEMENT_MIN,
+          OneWellModel.COHERENT_DISPLACEMENT_MAX,
+        ),
+      },
+    );
 
     // Update superposition coefficients when superposition type or coherent displacement changes
     this.superpositionTypeProperty.link(() =>
@@ -202,7 +386,9 @@ export class OneWellModel extends BaseModel {
 
       case PotentialType.HARMONIC_OSCILLATOR: {
         const wellDepthJoules = wellDepth * QuantumConstants.EV_TO_JOULES;
-        const springConstant = (8 * wellDepthJoules) / (wellWidth * wellWidth);
+        const springConstant =
+          (OneWellModel.SPRING_CONSTANT_MULTIPLIER * wellDepthJoules) /
+          (wellWidth * wellWidth);
         potentialFunction = createHarmonicOscillatorPotential(springConstant);
         break;
       }
@@ -221,7 +407,7 @@ export class OneWellModel extends BaseModel {
     // Legacy implementation for potentials without analytical solver support
     if (potentialType === PotentialType.ASYMMETRIC_TRIANGLE) {
       if (xNm < 0) {
-        return 1000; // Infinite wall
+        return OneWellModel.INFINITE_WALL_VALUE; // Infinite wall
       } else {
         const F_eV_per_nm = wellDepth / (wellWidth * QuantumConstants.M_TO_NM);
         return F_eV_per_nm * xNm;
@@ -242,8 +428,11 @@ export class OneWellModel extends BaseModel {
       potentialType === PotentialType.COULOMB_3D
     ) {
       const widthNm = wellWidth * QuantumConstants.M_TO_NM;
-      const k = wellDepth * (widthNm / 2);
-      const distance = Math.max(Math.abs(xNm), 0.01);
+      const k = wellDepth * (widthNm / OneWellModel.HALF_DIVISOR);
+      const distance = Math.max(
+        Math.abs(xNm),
+        OneWellModel.COULOMB_MIN_DISTANCE_NM,
+      );
       return -k / distance;
     } else if (potentialType === PotentialType.MORSE) {
       const widthNm = wellWidth * QuantumConstants.M_TO_NM;
@@ -307,11 +496,17 @@ export class OneWellModel extends BaseModel {
       // Calculate dx for integration (using trapezoidal rule)
       let dx = 0;
       if (i === 0) {
-        dx = ((xGrid[1] - xGrid[0]) / 2) * QuantumConstants.M_TO_NM;
+        dx =
+          ((xGrid[1] - xGrid[0]) / OneWellModel.HALF_DIVISOR) *
+          QuantumConstants.M_TO_NM;
       } else if (i === xGrid.length - 1) {
-        dx = ((xGrid[i] - xGrid[i - 1]) / 2) * QuantumConstants.M_TO_NM;
+        dx =
+          ((xGrid[i] - xGrid[i - 1]) / OneWellModel.HALF_DIVISOR) *
+          QuantumConstants.M_TO_NM;
       } else {
-        dx = ((xGrid[i + 1] - xGrid[i - 1]) / 2) * QuantumConstants.M_TO_NM;
+        dx =
+          ((xGrid[i + 1] - xGrid[i - 1]) / OneWellModel.HALF_DIVISOR) *
+          QuantumConstants.M_TO_NM;
       }
 
       totalProbability += probabilityDensity * dx;
@@ -342,24 +537,31 @@ export class OneWellModel extends BaseModel {
       this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
 
     // Calculate number of states based on potential type and energy range
-    let numStates = 10; // Default for most potentials
+    let numStates = OneWellModel.DEFAULT_NUM_STATES; // Default for most potentials
 
-    // For harmonic oscillator, calculate states up to 15 eV
+    // For harmonic oscillator, calculate states up to MAX_ENERGY_EV
     if (
       this.potentialTypeProperty.value === PotentialType.HARMONIC_OSCILLATOR
     ) {
-      const springConstant = (8 * wellDepth) / (wellWidth * wellWidth);
+      const springConstant =
+        (OneWellModel.SPRING_CONSTANT_MULTIPLIER * wellDepth) /
+        (wellWidth * wellWidth);
       const omega = Math.sqrt(springConstant / mass);
-      const maxEnergy = 15 * QuantumConstants.EV_TO_JOULES; // 15 eV
+      const maxEnergy =
+        OneWellModel.MAX_ENERGY_EV * QuantumConstants.EV_TO_JOULES;
       // E_n = ℏω(n + 1/2), solve for n: n = E/(ℏω) - 1/2
       const maxN = Math.floor(
         maxEnergy / (QuantumConstants.HBAR * omega) - 0.5,
       );
-      numStates = Math.max(1, Math.min(maxN + 1, 100)); // Cap at 100 for safety
+      numStates = Math.max(
+        1,
+        Math.min(maxN + 1, OneWellModel.MAX_NUM_STATES),
+      ); // Cap at MAX_NUM_STATES for safety
     }
-    // For infinite well, calculate states up to 15 eV
+    // For infinite well, calculate states up to MAX_ENERGY_EV
     else if (this.potentialTypeProperty.value === PotentialType.INFINITE_WELL) {
-      const maxEnergy = 15 * QuantumConstants.EV_TO_JOULES; // 15 eV
+      const maxEnergy =
+        OneWellModel.MAX_ENERGY_EV * QuantumConstants.EV_TO_JOULES;
       // E_n = (ℏ²π²n²)/(2mL²), solve for n
       const maxN = Math.floor(
         Math.sqrt(
@@ -367,7 +569,7 @@ export class OneWellModel extends BaseModel {
             (QuantumConstants.HBAR * QuantumConstants.HBAR * Math.PI * Math.PI),
         ),
       );
-      numStates = Math.max(1, Math.min(maxN, 100)); // Cap at 100 for safety
+      numStates = Math.max(1, Math.min(maxN, OneWellModel.MAX_NUM_STATES)); // Cap at MAX_NUM_STATES for safety
     }
     // For finite well, estimate maximum number of bound states
     else if (this.potentialTypeProperty.value === PotentialType.FINITE_WELL) {
@@ -381,33 +583,30 @@ export class OneWellModel extends BaseModel {
           ),
       );
       // Request more states than estimated to ensure we capture all bound states
-      numStates = Math.max(10, Math.min(estimatedMax * 2, 100)); // At least 10, cap at 100
+      numStates = Math.max(
+        OneWellModel.DEFAULT_NUM_STATES,
+        Math.min(estimatedMax * 2, OneWellModel.MAX_NUM_STATES),
+      ); // At least DEFAULT_NUM_STATES, cap at MAX_NUM_STATES
     }
     // For asymmetric triangle, calculate states that fit in the energy range
     else if (
       this.potentialTypeProperty.value === PotentialType.ASYMMETRIC_TRIANGLE
     ) {
-      numStates = 80; // Asymmetric triangle may have many states, use larger number
+      numStates = OneWellModel.NUM_STATES_ASYMMETRIC_TRIANGLE; // Asymmetric triangle may have many states
     }
     // For triangular potential, calculate states based on well depth
     else if (this.potentialTypeProperty.value === PotentialType.TRIANGULAR) {
-      numStates = 50; // Triangular well typically has fewer states than asymmetric
+      numStates = OneWellModel.NUM_STATES_TRIANGULAR; // Triangular well typically has fewer states than asymmetric
     } else {
-      numStates = 80; // Use more states for other potentials
+      numStates = OneWellModel.NUM_STATES_COMPLEX; // Use more states for other potentials
     }
 
-    // Grid configuration spans the full chart display range (-4 nm to +4 nm)
+    // Grid configuration spans the full chart display range
     // This ensures wavefunctions are calculated across the entire visible area
-    const CHART_DISPLAY_RANGE_NM = 4; // Match the chart x-axis range
-
-    // For analytical solutions, use a fixed high-resolution grid (1000 points)
-    // since we can evaluate them exactly at any point
-    const ANALYTICAL_GRID_POINTS = 1000;
-
     const gridConfig = {
-      xMin: -CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
-      xMax: CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
-      numPoints: ANALYTICAL_GRID_POINTS, // Use fixed high-resolution grid for analytical solutions
+      xMin: -OneWellModel.CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
+      xMax: OneWellModel.CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
+      numPoints: OneWellModel.ANALYTICAL_GRID_POINTS, // Use fixed high-resolution grid for analytical solutions
     };
 
     try {
@@ -428,7 +627,8 @@ export class OneWellModel extends BaseModel {
         case PotentialType.HARMONIC_OSCILLATOR:
           // Convert well depth to spring constant: k = mω² = m(4V₀/mL²) = 4V₀/L²
           potentialParams.springConstant =
-            (8 * wellDepth) / (wellWidth * wellWidth);
+            (OneWellModel.SPRING_CONSTANT_MULTIPLIER * wellDepth) /
+            (wellWidth * wellWidth);
           break;
         case PotentialType.MORSE:
           // Morse potential: V(x) = D_e * (1 - exp(-(x - x_e)/a))^2
@@ -481,9 +681,8 @@ export class OneWellModel extends BaseModel {
           // α ≈ 2.307e-28 J·m for electron charge
           // Energy then scales naturally with mass: E_n = -mα²/(2ℏ²n²)
           // With electron mass, this gives E_1 = -13.6 eV
-          const coulombConstant = 8.9875517923e9; // Coulomb's constant in N·m²/C²
           potentialParams.coulombStrength =
-            coulombConstant *
+            OneWellModel.COULOMB_CONSTANT *
             QuantumConstants.ELEMENTARY_CHARGE *
             QuantumConstants.ELEMENTARY_CHARGE;
           break;
@@ -571,7 +770,9 @@ export class OneWellModel extends BaseModel {
           );
 
         case PotentialType.HARMONIC_OSCILLATOR: {
-          const springConstant = (8 * wellDepth) / (wellWidth * wellWidth);
+          const springConstant =
+            (OneWellModel.SPRING_CONSTANT_MULTIPLIER * wellDepth) /
+            (wellWidth * wellWidth);
           return calculateHarmonicOscillatorClassicalProbability(
             springConstant,
             energy,
@@ -627,7 +828,9 @@ export class OneWellModel extends BaseModel {
         break;
 
       case PotentialType.HARMONIC_OSCILLATOR: {
-        const springConstant = (8 * wellDepth) / (wellWidth * wellWidth);
+        const springConstant =
+          (OneWellModel.SPRING_CONSTANT_MULTIPLIER * wellDepth) /
+          (wellWidth * wellWidth);
         potentialFunction = createHarmonicOscillatorPotential(springConstant);
         break;
       }
@@ -709,17 +912,16 @@ export class OneWellModel extends BaseModel {
         case PotentialType.COULOMB_1D:
         case PotentialType.COULOMB_3D: {
           // V(x) = -α/|x| where α = ke²
-          const coulombConstant = 8.9875517923e9;
           const coulombStrength =
-            coulombConstant *
+            OneWellModel.COULOMB_CONSTANT *
             QuantumConstants.ELEMENTARY_CHARGE *
             QuantumConstants.ELEMENTARY_CHARGE;
           const r = Math.abs(x);
-          if (r > 1e-12) {
+          if (r > OneWellModel.COULOMB_MIN_DISTANCE_M) {
             // Avoid singularity at origin
             V = -coulombStrength / r;
           } else {
-            V = -coulombStrength / 1e-12;
+            V = -coulombStrength / OneWellModel.COULOMB_MIN_DISTANCE_M;
           }
           break;
         }
@@ -837,7 +1039,10 @@ export class OneWellModel extends BaseModel {
         // Narrow localized state: superposition of first few states
         amplitudes = new Array(numStates).fill(0);
         phases = new Array(numStates).fill(0);
-        const numStatesNarrow = Math.min(5, numStates);
+        const numStatesNarrow = Math.min(
+          OneWellModel.NUM_STATES_NARROW,
+          numStates,
+        );
         for (let i = 0; i < numStatesNarrow; i++) {
           amplitudes[i] = 1;
         }
@@ -853,7 +1058,10 @@ export class OneWellModel extends BaseModel {
         // Wide localized state: superposition of more states
         amplitudes = new Array(numStates).fill(0);
         phases = new Array(numStates).fill(0);
-        const numStatesWide = Math.min(10, numStates);
+        const numStatesWide = Math.min(
+          OneWellModel.NUM_STATES_WIDE,
+          numStates,
+        );
         for (let i = 0; i < numStatesWide; i++) {
           amplitudes[i] = 1;
         }
@@ -879,7 +1087,9 @@ export class OneWellModel extends BaseModel {
             this.wellDepthProperty.value * QuantumConstants.EV_TO_JOULES;
           const mass =
             this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
-          const springConstant = (4 * wellDepth) / (wellWidth * wellWidth);
+          const springConstant =
+            (OneWellModel.SPRING_CONSTANT_MULTIPLIER_ALT * wellDepth) /
+            (wellWidth * wellWidth);
 
           const result = calculateCoherentStateCoefficients(
             displacement,
@@ -913,8 +1123,11 @@ export class OneWellModel extends BaseModel {
 
           // Weight each eigenstate by its wavefunction value at the displacement position
           // and apply a Gaussian envelope in eigenstate index to create localization
-          const sigma = 3.0; // Width of Gaussian in eigenstate space
-          const n0 = Math.min(5, Math.floor(numStates / 2)); // Center around a middle eigenstate
+          const sigma = OneWellModel.COHERENT_GAUSSIAN_SIGMA; // Width of Gaussian in eigenstate space
+          const n0 = Math.min(
+            OneWellModel.COHERENT_CENTER_EIGENSTATE,
+            Math.floor(numStates / OneWellModel.HALF_DIVISOR),
+          ); // Center around a middle eigenstate
 
           for (let n = 0; n < numStates; n++) {
             if (n < this.boundStateResult!.wavefunctions.length) {
@@ -923,7 +1136,8 @@ export class OneWellModel extends BaseModel {
 
               // Gaussian envelope in eigenstate space
               const gaussianWeight = Math.exp(
-                -Math.pow(n - n0, 2) / (2 * sigma * sigma),
+                -Math.pow(n - n0, 2) /
+                  (OneWellModel.HALF_DIVISOR * sigma * sigma),
               );
 
               // Combine position-based and Gaussian weights
@@ -944,7 +1158,8 @@ export class OneWellModel extends BaseModel {
           // Phase increases linearly with eigenstate index to create momentum
           const momentumDirection = displacement > 0 ? -1 : 1; // Move toward center
           for (let n = 0; n < numStates; n++) {
-            phases[n] = momentumDirection * n * 0.1; // Small phase gradient
+            phases[n] =
+              momentumDirection * n * OneWellModel.COHERENT_PHASE_GRADIENT; // Small phase gradient
           }
         }
         break;
