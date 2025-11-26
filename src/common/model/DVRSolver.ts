@@ -8,6 +8,13 @@
  *
  * DVR is a well-established numerical method for quantum mechanical calculations,
  * particularly efficient for bound state problems.
+ *
+ * FREELY AVAILABLE REFERENCES:
+ * - Pliś, S., & Zak, E. (2025). "Quantum Discrete Variable Representations."
+ *   arXiv:2504.15841. https://arxiv.org/abs/2504.15841
+ * - Kievsky, A., et al. (2020). "Discrete Variable Representation method in the
+ *   study of few-body quantum systems with non-zero angular momentum."
+ *   arXiv:2008.12936. https://arxiv.org/abs/2008.12936
  */
 
 import QuantumConstants from "./QuantumConstants.js";

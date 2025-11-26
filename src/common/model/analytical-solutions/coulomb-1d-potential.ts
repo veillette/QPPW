@@ -20,6 +20,15 @@
  * boundary conditions at the singular point x=0. The energy eigenvalues and wavefunctions
  * are derived from the Schrödinger equation with appropriate boundary conditions.
  *
+ * FREELY AVAILABLE REFERENCES:
+ * - Cheng, K.-M., & Lam, C. S. (2009). "The one-dimensional Coulomb Problem."
+ *   arXiv:0905.3978. https://arxiv.org/abs/0905.3978
+ *   Studies scattering and bound states for the 1D Coulomb potential V(x) = λ/|x|.
+ *
+ * - Campiglia, M., et al. (2019). "A Distributional Approach for the One-Dimensional Hydrogen Atom."
+ *   Frontiers in Physics, 7, 101. https://www.frontiersin.org/articles/10.3389/fphy.2019.00101/full
+ *   Addresses the non-integrable singularity at the origin using distribution theory.
+ *
  * ENERGY EIGENVALUES:
  *   E_n = -mα²/(2ℏ²(n+1/2)²),  n = 0, 1, 2, ...
  *   (Note the half-integer quantum numbers, different from 3D Hydrogen)

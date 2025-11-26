@@ -263,7 +263,20 @@ The DVR method uses a basis of delta functions on grid points, making the potent
 
 ## References
 
-The solver implementations are based on well-established numerical methods for solving the time-independent Schrödinger equation, including the Numerov method (1924), Discrete Variable Representation (DVR), and various spectral methods. These techniques are documented in standard quantum mechanics and computational physics literature.
+The solver implementations are based on well-established numerical methods for solving the time-independent Schrödinger equation, including the Numerov method (1924), Discrete Variable Representation (DVR), and various spectral methods.
+
+### Freely Available References
+
+1. **Numerov Method**:
+   - Pillai, M., et al. (2014). "Numerov numerical method applied to the Schrödinger equation." arXiv:1403.7092. https://arxiv.org/abs/1403.7092
+   - Santoso, A. B., & Zuhdi, M. (2015). "Numerical Solution of the 1D-Schrödinger Equation with Pseudo-Delta Barrier Using Numerov Method." arXiv:1507.03708. https://arxiv.org/abs/1507.03708
+
+2. **DVR Method**:
+   - Pliś, S., & Zak, E. (2025). "Quantum Discrete Variable Representations." arXiv:2504.15841. https://arxiv.org/abs/2504.15841
+   - Kievsky, A., et al. (2020). "Discrete Variable Representation method in the study of few-body quantum systems with non-zero angular momentum." arXiv:2008.12936. https://arxiv.org/abs/2008.12936
+
+3. **Additional Resources**:
+   - Abramowitz, M., & Stegun, I. A. (1964). "Handbook of Mathematical Functions." National Bureau of Standards. Available online at https://personal.math.ubc.ca/~cbm/aands/
 
 ## Visualization Features
 

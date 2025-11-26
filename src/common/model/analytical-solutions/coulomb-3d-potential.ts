@@ -4,7 +4,11 @@
  *
  * This solves the radial Schrödinger equation for the hydrogen atom with L=0 (s-waves).
  *
- * REFERENCES:
+ * FREELY AVAILABLE REFERENCES:
+ * - Nanni, L. (2015). "The Hydrogen Atom: a Review on the Birth of Modern Quantum Mechanics."
+ *   arXiv:1501.05894. https://arxiv.org/abs/1501.05894
+ *   Comprehensive review of the hydrogen atom solution in quantum mechanics.
+ *
  * - Abramowitz, M., & Stegun, I. A. (1964). "Handbook of Mathematical Functions".
  *   National Bureau of Standards. Section 13.4, pp. 509-515 and Section 22, pp. 773-802.
  *   Available online at https://personal.math.ubc.ca/~cbm/aands/
@@ -12,7 +16,7 @@
  *
  * The hydrogen atom wavefunctions are derived from the radial Schrödinger equation using
  * series solutions. The treatment of the 3D Coulomb potential and hydrogen-like atoms is
- * covered in standard quantum mechanics textbooks.
+ * well-established in quantum mechanics.
  *
  * ENERGY EIGENVALUES:
  *   E_n = -mα²/(2ℏ²n²),  n = 1, 2, 3, ...
