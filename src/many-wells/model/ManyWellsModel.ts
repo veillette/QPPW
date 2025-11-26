@@ -29,12 +29,12 @@ export class ManyWellsModel extends BaseModel {
   /**
    * Minimum well width in nanometers for multi-square well.
    */
-  private static readonly WELL_WIDTH_MIN = 0.1;
+  private static readonly MANY_WELL_WIDTH_MIN = 0.1;
 
   /**
    * Maximum well width in nanometers for multi-square well.
    */
-  private static readonly WELL_WIDTH_MAX = 3.0;
+  private static readonly MANY_WELL_WIDTH_MAX = 3.0;
 
   /**
    * Default number of wells in the potential.
@@ -144,7 +144,7 @@ export class ManyWellsModel extends BaseModel {
     // Override well width range for multi-square well
     this.wellWidthProperty.setValueAndRange(
       ManyWellsModel.DEFAULT_WELL_WIDTH,
-      new Range(ManyWellsModel.WELL_WIDTH_MIN, ManyWellsModel.WELL_WIDTH_MAX),
+      new Range(ManyWellsModel.MANY_WELL_WIDTH_MIN, ManyWellsModel.MANY_WELL_WIDTH_MAX),
     );
 
     // Initialize number of wells

@@ -623,14 +623,6 @@ function findEvenParityState(xi0: number, stateIndex: number): number | null {
     return secantResult;
   }
 
-  // Method 4: Try Lima's approximation directly (if available)
-  if (limaGuess !== null && limaGuess >= xiMin && limaGuess <= xiMax) {
-    // Verify it's a reasonable solution
-    if (Math.abs(f(limaGuess)) < 1e-6) {
-      return limaGuess;
-    }
-  }
-
   // All methods failed
   console.warn(`All methods failed to find even parity state ${stateIndex}`);
   return null;
@@ -684,115 +676,8 @@ function findOddParityState(xi0: number, stateIndex: number): number | null {
     return secantResult;
   }
 
-  // Method 4: Try Lima's approximation directly (if available)
-  if (limaGuess !== null && limaGuess >= xiMin && limaGuess <= xiMax) {
-    // Verify it's a reasonable solution
-    if (Math.abs(f(limaGuess)) < 1e-6) {
-      return limaGuess;
-    }
-  }
-
   // All methods failed
   console.warn(`All methods failed to find odd parity state ${stateIndex}`);
-  return null;
-}
-
-/**
- * Solve equation f(x) = 0 using bisection method.
- * Improved version with better convergence checking.
- *
- * @returns Root if found, null otherwise
- */
-function solveBisection(
-  f: (x: number) => number,
-  xMin: number,
-  xMax: number,
-  tolerance: number,
-  maxIterations: number,
-): number | null {
-  let a = xMin;
-  let b = xMax;
-
-  // Check if function values have opposite signs (necessary for bisection)
-  const fa = f(a);
-  const fb = f(b);
-
-  if (fa * fb > 0) {
-    // No sign change, bisection won't work
-    return null;
-  }
-
-  for (let iter = 0; iter < maxIterations; iter++) {
-    const c = (a + b) / 2;
-    const fc = f(c);
-
-    // Check convergence
-    if (Math.abs(fc) < tolerance || (b - a) / 2 < tolerance) {
-      return c;
-    }
-
-    // Update interval
-    if (fa * fc < 0) {
-      b = c;
-      // fb = fc; // Not needed since we recalculate
-    } else {
-      a = c;
-      // fa = fc; // Not needed since we recalculate
-    }
-  }
-
-  // Return best approximation even if not fully converged
-  const c = (a + b) / 2;
-  if (Math.abs(f(c)) < tolerance * 10) {
-    return c;
-  }
-
-  return null;
-}
-
-/**
- * Solve equation f(x) = 0 using Newton-Raphson method.
- * Fast convergence but requires good initial guess and derivative.
- *
- * @returns Root if found, null otherwise
- */
-function solveNewtonRaphson(
-  f: (x: number) => number,
-  fPrime: (x: number) => number,
-  x0: number,
-  tolerance: number,
-  maxIterations: number,
-): number | null {
-  let x = x0;
-
-  for (let iter = 0; iter < maxIterations; iter++) {
-    const fx = f(x);
-    const fpx = fPrime(x);
-
-    // Check for zero derivative
-    if (Math.abs(fpx) < 1e-15) {
-      return null;
-    }
-
-    const dx = fx / fpx;
-    x = x - dx;
-
-    // Check convergence
-    if (Math.abs(dx) < tolerance || Math.abs(fx) < tolerance) {
-      return x;
-    }
-
-    // Check for divergence
-    if (!isFinite(x) || Math.abs(x) > 1e10) {
-      return null;
-    }
-  }
-
-  // Check if we're close enough even without full convergence
-  if (Math.abs(f(x)) < tolerance * 10) {
-    return x;
-  }
-
   return null;
 }
 
@@ -845,65 +730,3 @@ function solveSecant(
   return null;
 }
 
-/**
- * Lima's approximation formula for finite square well eigenvalues.
- * Reference: Lima, F. M. S. (2020). "A simpler graphical solution and an
- * approximate formula for energy eigenvalues in finite square quantum wells."
- * American Journal of Physics, 88(11), 1019.
- *
- * Provides excellent initial guesses for the numerical solvers.
- *
- * @param xi0 - Dimensionless well parameter
- * @param stateIndex - Index of the state (0, 1, 2, ...)
- * @param parity - "even" or "odd"
- * @returns Approximate ξ value, or null if not applicable
- */
-function getLimaApproximation(
-  xi0: number,
-  stateIndex: number,
-  parity: "even" | "odd",
-): number | null {
-  // Determine which interval to search based on parity
-  const n = parity === "even" ? stateIndex * 2 : stateIndex * 2 + 1;
-
-  // Check if this state can exist
-  if ((n * Math.PI) / 2 >= xi0) {
-    return null;
-  }
-
-  // Lima's approximation uses an improved formula
-  // v_n ≈ (n+1/2)π - arcsin((n+1/2)π/(2*xi0)) when (n+1/2)π < xi0
-
-  const nEffective = n / 2 + 0.5; // Effective quantum number
-  const vApprox = nEffective * Math.PI;
-
-  if (vApprox >= xi0) {
-    return null;
-  }
-
-  // Refined approximation based on Lima (2020)
-  // This is a simplified version - the full formula is more complex
-  const ratio = vApprox / xi0;
-
-  if (ratio >= 1) {
-    return null;
-  }
-
-  // Correction term
-  const correction = Math.asin(ratio);
-  const vRefined = vApprox - correction * 0.5; // Simplified correction
-
-  // Ensure result is in valid range
-  const xiMin = (n * Math.PI) / 2;
-  const xiMax = ((n + 1) * Math.PI) / 2;
-
-  if (vRefined >= xiMin && vRefined <= Math.min(xiMax, xi0)) {
-    return vRefined;
-  }
-
-  // Fallback to simple linear interpolation
-  const alpha = Math.min(0.5 + 0.3 * (1 - ratio), 0.95);
-  const vSimple = xiMin + alpha * (Math.min(xiMax, xi0) - xiMin);
-
-  return vSimple;
-}

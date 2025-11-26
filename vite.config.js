@@ -1,12 +1,48 @@
 import { defineConfig } from "vite";
+import { visualizer } from "rollup-plugin-visualizer";
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  plugins: [
+    // Bundle analysis - generates stats.html in the project root
+    // Set to false in normal builds, enable with ANALYZE=true npm run build
+    process.env.ANALYZE === "true" &&
+      visualizer({
+        filename: "./dist/stats.html",
+        open: false,
+        gzipSize: true,
+        brotliSize: true,
+        template: "treemap", // treemap, sunburst, network
+      }),
+  ].filter(Boolean),
   // So the build can be served from an arbitrary path
   base: "./",
   build: {
     chunkSizeWarningLimit: 2000,
+    // Enable terser for better minification and tree shaking
+    minify: "terser",
+    terserOptions: {
+      compress: {
+        // Remove unused code
+        dead_code: true,
+        drop_console: false, // Keep console for debugging
+        drop_debugger: true,
+        passes: 2, // Multiple passes for better optimization
+        unused: true, // Remove unused variables and functions
+      },
+      mangle: {
+        safari10: true,
+      },
+      format: {
+        comments: false, // Remove comments
+      },
+    },
     rollupOptions: {
+      // Enable tree shaking - Vite will respect the sideEffects field in package.json
+      treeshake: {
+        preset: "recommended",
+        // Vite will automatically handle side effects based on package.json
+      },
       output: {
         manualChunks: (id) => {
           // Vendor libraries - split large dependencies
@@ -16,9 +52,6 @@ export default defineConfig({
             }
             if (id.includes("katex")) {
               return "vendor-katex";
-            }
-            if (id.includes("three")) {
-              return "vendor-three";
             }
             // Other vendor dependencies
             return "vendor-other";
