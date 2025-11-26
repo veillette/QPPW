@@ -193,6 +193,9 @@ export class ManyWellsModel extends BaseModel {
       ], // Default to equal superposition
       phases: [0, 0],
     };
+
+    // Setup cache invalidation after all properties are initialized
+    this.setupCacheInvalidation();
   }
 
   /**

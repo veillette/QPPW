@@ -126,6 +126,9 @@ export class IntroModel extends BaseModel {
 
     // Initialize model-specific display settings (simplified)
     this.displayModeProperty = new Property<DisplayMode>("probabilityDensity");
+
+    // Setup cache invalidation after all properties are initialized
+    this.setupCacheInvalidation();
   }
 
   /**

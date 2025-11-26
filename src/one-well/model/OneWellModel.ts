@@ -254,6 +254,9 @@ export class OneWellModel extends BaseModel {
         this.updateSuperpositionCoefficients();
       }
     });
+
+    // Setup cache invalidation after all properties are initialized
+    this.setupCacheInvalidation();
   }
 
   /**

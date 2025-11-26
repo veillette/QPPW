@@ -217,6 +217,9 @@ export class TwoWellsModel extends BaseModel {
       ], // Default to equal superposition of first two states (normalized)
       phases: [0, 0],
     };
+
+    // Setup cache invalidation after all properties are initialized
+    this.setupCacheInvalidation();
   }
 
   /**

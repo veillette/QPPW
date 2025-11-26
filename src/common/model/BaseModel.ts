@@ -225,8 +225,8 @@ export abstract class BaseModel {
       this.onSolverMethodChanged(this.solver.getNumericalMethod());
     });
 
-    // Setup cache invalidation for common properties
-    this.setupCacheInvalidation();
+    // Note: setupCacheInvalidation() must be called by subclasses
+    // after all their properties are initialized
   }
 
   /**
