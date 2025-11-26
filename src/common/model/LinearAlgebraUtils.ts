@@ -236,9 +236,11 @@ export class DotMatrix {
 }
 
 /**
- * Complex number interface for FFT operations
+ * Simple complex number interface for FFT operations.
+ * We use a lightweight interface rather than the full dot Complex class
+ * for better test environment compatibility and reduced overhead for FFT operations.
  */
-export interface ComplexNumber {
+export interface Complex {
   real: number;
   imaginary: number;
 }
@@ -510,7 +512,7 @@ export function normalizeWavefunctionChebyshev(
  * @param b - Second complex number
  * @returns Sum a + b
  */
-function complexAdd(a: ComplexNumber, b: ComplexNumber): ComplexNumber {
+function complexAdd(a: Complex, b: Complex): Complex {
   return {
     real: a.real + b.real,
     imaginary: a.imaginary + b.imaginary,
@@ -524,7 +526,7 @@ function complexAdd(a: ComplexNumber, b: ComplexNumber): ComplexNumber {
  * @param b - Second complex number
  * @returns Difference a - b
  */
-function complexSubtract(a: ComplexNumber, b: ComplexNumber): ComplexNumber {
+function complexSubtract(a: Complex, b: Complex): Complex {
   return {
     real: a.real - b.real,
     imaginary: a.imaginary - b.imaginary,
@@ -538,7 +540,7 @@ function complexSubtract(a: ComplexNumber, b: ComplexNumber): ComplexNumber {
  * @param b - Second complex number
  * @returns Product a × b
  */
-function complexMultiply(a: ComplexNumber, b: ComplexNumber): ComplexNumber {
+function complexMultiply(a: Complex, b: Complex): Complex {
   return {
     real: a.real * b.real - a.imaginary * b.imaginary,
     imaginary: a.real * b.imaginary + a.imaginary * b.real,
@@ -552,7 +554,7 @@ function complexMultiply(a: ComplexNumber, b: ComplexNumber): ComplexNumber {
  * @param x - Input array of complex numbers
  * @returns FFT of input
  */
-export function fft(x: ComplexNumber[]): ComplexNumber[] {
+export function fft(x: Complex[]): Complex[] {
   const N = x.length;
 
   // Base case
@@ -561,8 +563,8 @@ export function fft(x: ComplexNumber[]): ComplexNumber[] {
   }
 
   // Divide
-  const even: ComplexNumber[] = [];
-  const odd: ComplexNumber[] = [];
+  const even: Complex[] = [];
+  const odd: Complex[] = [];
   for (let i = 0; i < N; i++) {
     if (i % 2 === 0) {
       even.push(x[i]);
@@ -576,10 +578,10 @@ export function fft(x: ComplexNumber[]): ComplexNumber[] {
   const fftOdd = fft(odd);
 
   // Combine
-  const result: ComplexNumber[] = new Array(N);
+  const result: Complex[] = new Array(N);
   for (let frequencyIndex = 0; frequencyIndex < N / 2; frequencyIndex++) {
     const angle = (-2 * Math.PI * frequencyIndex) / N;
-    const twiddle: ComplexNumber = {
+    const twiddle: Complex = {
       real: Math.cos(angle),
       imaginary: Math.sin(angle),
     };
@@ -601,7 +603,7 @@ export function fft(x: ComplexNumber[]): ComplexNumber[] {
  * @param X - Input array of complex numbers
  * @returns IFFT of input
  */
-export function ifft(X: ComplexNumber[]): ComplexNumber[] {
+export function ifft(X: Complex[]): Complex[] {
   const N = X.length;
 
   // Conjugate input

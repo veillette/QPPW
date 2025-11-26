@@ -27,7 +27,7 @@ import {
   fft,
   ifft,
   fftFreq,
-  ComplexNumber,
+  Complex,
   cubicSplineInterpolation,
 } from "./LinearAlgebraUtils.js";
 import { standardizeWavefunction } from "./WavefunctionStandardization.js";
@@ -201,7 +201,7 @@ function buildFGHHamiltonian(
   // For each basis function (column j), apply kinetic energy operator
   for (let j = 0; j < N; j++) {
     // Create basis vector in position space (delta function at grid point j)
-    const psi_x: ComplexNumber[] = [];
+    const psi_x: Complex[] = [];
     for (let i = 0; i < N; i++) {
       psi_x.push({ real: i === j ? 1.0 : 0.0, imaginary: 0.0 });
     }

@@ -4,7 +4,7 @@
  */
 
 import { NumberProperty, Property } from "scenerystack/axon";
-import { Range } from "scenerystack/dot";
+import { Range, clamp } from "scenerystack/dot";
 import { BaseModel } from "../../common/model/BaseModel.js";
 import {
   WellParameters,
@@ -553,10 +553,7 @@ export class OneWellModel extends BaseModel {
       const maxN = Math.floor(
         maxEnergy / (QuantumConstants.HBAR * omega) - 0.5,
       );
-      numStates = Math.max(
-        1,
-        Math.min(maxN + 1, OneWellModel.MAX_NUM_STATES),
-      ); // Cap at MAX_NUM_STATES for safety
+      numStates = clamp(maxN + 1, 1, OneWellModel.MAX_NUM_STATES); // Cap at MAX_NUM_STATES for safety
     }
     // For infinite well, calculate states up to MAX_ENERGY_EV
     else if (this.potentialTypeProperty.value === PotentialType.INFINITE_WELL) {
@@ -569,7 +566,7 @@ export class OneWellModel extends BaseModel {
             (QuantumConstants.HBAR * QuantumConstants.HBAR * Math.PI * Math.PI),
         ),
       );
-      numStates = Math.max(1, Math.min(maxN, OneWellModel.MAX_NUM_STATES)); // Cap at MAX_NUM_STATES for safety
+      numStates = clamp(maxN, 1, OneWellModel.MAX_NUM_STATES); // Cap at MAX_NUM_STATES for safety
     }
     // For finite well, estimate maximum number of bound states
     else if (this.potentialTypeProperty.value === PotentialType.FINITE_WELL) {
@@ -583,9 +580,10 @@ export class OneWellModel extends BaseModel {
           ),
       );
       // Request more states than estimated to ensure we capture all bound states
-      numStates = Math.max(
+      numStates = clamp(
+        estimatedMax * 2,
         OneWellModel.DEFAULT_NUM_STATES,
-        Math.min(estimatedMax * 2, OneWellModel.MAX_NUM_STATES),
+        OneWellModel.MAX_NUM_STATES,
       ); // At least DEFAULT_NUM_STATES, cap at MAX_NUM_STATES
     }
     // For asymmetric triangle, calculate states that fit in the energy range
@@ -1113,12 +1111,10 @@ export class OneWellModel extends BaseModel {
               (8 * QuantumConstants.NM_TO_M)) *
               (this.boundStateResult!.xGrid.length - 1),
           );
-          const clampedIndex = Math.max(
+          const clampedIndex = clamp(
+            displacementIndex,
             0,
-            Math.min(
-              displacementIndex,
-              this.boundStateResult!.xGrid.length - 1,
-            ),
+            this.boundStateResult!.xGrid.length - 1,
           );
 
           // Weight each eigenstate by its wavefunction value at the displacement position
