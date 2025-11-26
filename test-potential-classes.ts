@@ -5,7 +5,7 @@
 
 import { Schrodinger1DSolver, WellParameters } from "./src/common/model/Schrodinger1DSolver.js";
 import { PotentialType } from "./src/common/model/PotentialFunction.js";
-import { BasePotential, NumericalPotential } from "./src/common/model/potentials/index.js";
+import { NumericalPotential } from "./src/common/model/potentials/index.js";
 import QuantumConstants from "./src/common/model/QuantumConstants.js";
 
 // Test configuration
