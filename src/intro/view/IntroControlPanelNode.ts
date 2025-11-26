@@ -268,11 +268,27 @@ export class IntroControlPanelNode extends Node {
         mode === "probabilityDensity";
     });
 
+    // Show Zeros checkbox
+    const showZerosCheckboxContent = new Checkbox(
+      this.model.showZerosProperty,
+      new Text(stringManager.showZerosStringProperty, {
+        font: new PhetFont(12),
+        fill: QPPWColors.textFillProperty,
+      }),
+      { boxWidth: 16 },
+    );
+
+    const showZerosCheckbox = new Node({
+      children: [showZerosCheckboxContent],
+      x: 20,
+    });
+
     // Build children array (no wavefunction view checkboxes in intro screen)
     const children: Node[] = [
       displayLabel,
       displayModeRadioButtonGroup,
       classicalProbabilityCheckbox,
+      showZerosCheckbox,
     ];
 
     return new VBox({

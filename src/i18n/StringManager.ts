@@ -438,6 +438,10 @@ export class StringManager {
     return this.stringProperties.phaseStringProperty;
   }
 
+  get showZerosStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.showZerosStringProperty;
+  }
+
   get energyEvStringProperty(): ReadOnlyProperty<string> {
     return this.stringProperties.energyEvStringProperty;
   }
