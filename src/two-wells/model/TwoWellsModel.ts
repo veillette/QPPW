@@ -18,6 +18,132 @@ import QPPWPreferences from "../../QPPWPreferences.js";
 export type DisplayMode = "probabilityDensity" | "waveFunction" | "phaseColor";
 
 export class TwoWellsModel extends BaseModel {
+  // ==================== CONSTANTS ====================
+
+  /**
+   * Default well width in nanometers for double square well.
+   */
+  private static readonly DEFAULT_WELL_WIDTH = 1.0;
+
+  /**
+   * Minimum well width in nanometers for double square well.
+   */
+  private static readonly WELL_WIDTH_MIN = 0.1;
+
+  /**
+   * Maximum well width in nanometers for double square well.
+   */
+  private static readonly WELL_WIDTH_MAX = 3.0;
+
+  /**
+   * Default well separation in nanometers.
+   * Distance between the centers of the two wells.
+   */
+  private static readonly DEFAULT_WELL_SEPARATION = 0.2;
+
+  /**
+   * Minimum well separation in nanometers.
+   */
+  private static readonly WELL_SEPARATION_MIN = 0.05;
+
+  /**
+   * Maximum well separation in nanometers.
+   */
+  private static readonly WELL_SEPARATION_MAX = 0.7;
+
+  /**
+   * Default barrier height in electron volts.
+   */
+  private static readonly DEFAULT_BARRIER_HEIGHT = 3;
+
+  /**
+   * Minimum barrier height in electron volts.
+   */
+  private static readonly BARRIER_HEIGHT_MIN = 0.1;
+
+  /**
+   * Maximum barrier height in electron volts.
+   */
+  private static readonly BARRIER_HEIGHT_MAX = 15.0;
+
+  /**
+   * Default barrier width in nanometers.
+   */
+  private static readonly DEFAULT_BARRIER_WIDTH = 2;
+
+  /**
+   * Minimum barrier width in nanometers.
+   */
+  private static readonly BARRIER_WIDTH_MIN = 0.1;
+
+  /**
+   * Maximum barrier width in nanometers.
+   */
+  private static readonly BARRIER_WIDTH_MAX = 5.0;
+
+  /**
+   * Default amplitude for superposition states.
+   * Normalized value for equal superposition (1/√2).
+   */
+  private static readonly DEFAULT_SUPERPOSITION_AMPLITUDE = 0.7;
+
+  /**
+   * Default number of states for most potentials.
+   */
+  private static readonly DEFAULT_NUM_STATES = 10;
+
+  /**
+   * Number of states for Coulomb 1D potential.
+   */
+  private static readonly NUM_STATES_COULOMB = 80;
+
+  /**
+   * Number of states for double square well.
+   * Higher value needed to capture energy level splitting.
+   */
+  private static readonly NUM_STATES_DOUBLE_WELL = 80;
+
+  /**
+   * Maximum energy in electron volts for state calculations.
+   */
+  private static readonly MAX_ENERGY_EV = 15;
+
+  /**
+   * Maximum number of states (safety cap).
+   */
+  private static readonly MAX_NUM_STATES = 100;
+
+  /**
+   * Chart display range in nanometers (extends from -RANGE to +RANGE).
+   */
+  private static readonly CHART_DISPLAY_RANGE_NM = 4;
+
+  /**
+   * Number of grid points for double square well analytical solution.
+   * High resolution needed for accurate wavefunction representation.
+   */
+  private static readonly DOUBLE_WELL_GRID_POINTS = 2000;
+
+  /**
+   * Coulomb's constant in N·m²/C².
+   * Used for Coulomb potential calculations: k = 1/(4πε₀).
+   */
+  private static readonly COULOMB_CONSTANT = 8.9875517923e9;
+
+  /**
+   * Minimum distance for Coulomb potential calculations in meters.
+   * Prevents singularity at the origin (r = 0).
+   */
+  private static readonly COULOMB_MIN_DISTANCE = 1e-12;
+
+  /**
+   * Half divisor for position calculations.
+   * Used to calculate midpoints and half-widths.
+   */
+  private static readonly HALF_DIVISOR = 2;
+
+  // ==================== PROPERTIES ====================
+
   // Model-specific well parameters
   public readonly wellSeparationProperty: NumberProperty;
 
@@ -39,20 +165,41 @@ export class TwoWellsModel extends BaseModel {
     this.potentialTypeProperty.value = PotentialType.DOUBLE_SQUARE_WELL;
 
     // Override well width range for double square well
-    this.wellWidthProperty.setValueAndRange(1.0, new Range(0.1, 3.0));
+    this.wellWidthProperty.setValueAndRange(
+      TwoWellsModel.DEFAULT_WELL_WIDTH,
+      new Range(TwoWellsModel.WELL_WIDTH_MIN, TwoWellsModel.WELL_WIDTH_MAX),
+    );
 
     // Initialize model-specific well parameters
-    this.wellSeparationProperty = new NumberProperty(0.2, {
-      range: new Range(0.05, 0.7),
-    }); // in nanometers (0.05-0.7 nm for double square well)
+    this.wellSeparationProperty = new NumberProperty(
+      TwoWellsModel.DEFAULT_WELL_SEPARATION,
+      {
+        range: new Range(
+          TwoWellsModel.WELL_SEPARATION_MIN,
+          TwoWellsModel.WELL_SEPARATION_MAX,
+        ),
+      },
+    ); // in nanometers
 
     // Initialize barrier parameters
-    this.barrierHeightProperty = new NumberProperty(3, {
-      range: new Range(0.1, 15.0),
-    }); // in eV
-    this.barrierWidthProperty = new NumberProperty(2, {
-      range: new Range(0.1, 5.0),
-    }); // in nanometers
+    this.barrierHeightProperty = new NumberProperty(
+      TwoWellsModel.DEFAULT_BARRIER_HEIGHT,
+      {
+        range: new Range(
+          TwoWellsModel.BARRIER_HEIGHT_MIN,
+          TwoWellsModel.BARRIER_HEIGHT_MAX,
+        ),
+      },
+    ); // in eV
+    this.barrierWidthProperty = new NumberProperty(
+      TwoWellsModel.DEFAULT_BARRIER_WIDTH,
+      {
+        range: new Range(
+          TwoWellsModel.BARRIER_WIDTH_MIN,
+          TwoWellsModel.BARRIER_WIDTH_MAX,
+        ),
+      },
+    ); // in nanometers
 
     // Initialize tunneling probability
     this.tunnelingProbabilityProperty = new NumberProperty(0);
@@ -64,7 +211,10 @@ export class TwoWellsModel extends BaseModel {
     // Override superposition config default
     this.superpositionConfigProperty.value = {
       type: SuperpositionType.PSI_I_PSI_J,
-      amplitudes: [0.7, 0.7], // Default to equal superposition of first two states (normalized)
+      amplitudes: [
+        TwoWellsModel.DEFAULT_SUPERPOSITION_AMPLITUDE,
+        TwoWellsModel.DEFAULT_SUPERPOSITION_AMPLITUDE,
+      ], // Default to equal superposition of first two states (normalized)
       phases: [0, 0],
     };
   }
@@ -158,11 +308,12 @@ export class TwoWellsModel extends BaseModel {
       this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
 
     // Calculate number of states based on potential type and energy range
-    let numStates = 10; // Default for most potentials
+    let numStates = TwoWellsModel.DEFAULT_NUM_STATES; // Default for most potentials
 
-    // For infinite well, calculate states up to 15 eV
+    // For infinite well, calculate states up to MAX_ENERGY_EV
     if (this.potentialTypeProperty.value === PotentialType.INFINITE_WELL) {
-      const maxEnergy = 15 * QuantumConstants.EV_TO_JOULES; // 15 eV
+      const maxEnergy =
+        TwoWellsModel.MAX_ENERGY_EV * QuantumConstants.EV_TO_JOULES;
       // E_n = (ℏ²π²n²)/(2mL²), solve for n
       const maxN = Math.floor(
         Math.sqrt(
@@ -170,28 +321,25 @@ export class TwoWellsModel extends BaseModel {
             (QuantumConstants.HBAR * QuantumConstants.HBAR * Math.PI * Math.PI),
         ),
       );
-      numStates = Math.max(1, Math.min(maxN, 100)); // Cap at 100 for safety
+      numStates = Math.max(1, Math.min(maxN, TwoWellsModel.MAX_NUM_STATES)); // Cap at MAX_NUM_STATES for safety
     } else if (this.potentialTypeProperty.value === PotentialType.COULOMB_1D) {
-      numStates = 80; // Use more states for Coulomb potential
+      numStates = TwoWellsModel.NUM_STATES_COULOMB; // Use more states for Coulomb potential
     } else if (
       this.potentialTypeProperty.value === PotentialType.DOUBLE_SQUARE_WELL
     ) {
-      numStates = 80; // Use more states for double well to capture splitting
+      numStates = TwoWellsModel.NUM_STATES_DOUBLE_WELL; // Use more states for double well to capture splitting
     }
 
     // Grid configuration
     let gridConfig;
 
-    // For all potentials, span the full chart display range (-4 nm to +4 nm)
-    const CHART_DISPLAY_RANGE_NM = 4;
-
     if (this.potentialTypeProperty.value === PotentialType.DOUBLE_SQUARE_WELL) {
-      // For double square well, use analytical solution with fixed 2000 grid points
-      // spanning the full chart range (-4 nm to +4 nm)
+      // For double square well, use analytical solution with fixed high-resolution grid
+      // spanning the full chart range
       gridConfig = {
-        xMin: -CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
-        xMax: CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
-        numPoints: 2000,
+        xMin: -TwoWellsModel.CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
+        xMax: TwoWellsModel.CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
+        numPoints: TwoWellsModel.DOUBLE_WELL_GRID_POINTS,
       };
     } else {
       const method = this.solver.getNumericalMethod();
@@ -199,12 +347,15 @@ export class TwoWellsModel extends BaseModel {
 
       if (method === "fgh") {
         // FGH: round to nearest power of 2 for FFT efficiency
-        numGridPoints = Math.pow(2, Math.round(Math.log2(numGridPoints)));
+        numGridPoints = Math.pow(
+          TwoWellsModel.HALF_DIVISOR,
+          Math.round(Math.log2(numGridPoints)),
+        );
       }
 
       gridConfig = {
-        xMin: -CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
-        xMax: CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
+        xMin: -TwoWellsModel.CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
+        xMax: TwoWellsModel.CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
         numPoints: numGridPoints,
       };
     }
@@ -225,9 +376,8 @@ export class TwoWellsModel extends BaseModel {
           // For Coulomb potentials, use coulombStrength parameter α = k*e²
           // where k = 1/(4πε₀) ≈ 8.9875517923e9 N·m²/C²
           // α ≈ 2.307e-28 J·m for electron charge
-          const coulombConstant = 8.9875517923e9; // Coulomb's constant in N·m²/C²
           potentialParams.coulombStrength =
-            coulombConstant *
+            TwoWellsModel.COULOMB_CONSTANT *
             QuantumConstants.ELEMENTARY_CHARGE *
             QuantumConstants.ELEMENTARY_CHARGE;
           break;
@@ -328,13 +478,16 @@ export class TwoWellsModel extends BaseModel {
       switch (this.potentialTypeProperty.value) {
         case PotentialType.INFINITE_WELL:
           // V = 0 inside [-L/2, L/2], infinity outside
-          V = Math.abs(x) <= wellWidth / 2 ? 0 : Infinity;
+          V =
+            Math.abs(x) <= wellWidth / TwoWellsModel.HALF_DIVISOR
+              ? 0
+              : Infinity;
           break;
 
         case PotentialType.DOUBLE_SQUARE_WELL: {
           // Double square well: two wells separated by a barrier
-          const halfWellWidth = wellWidth / 2;
-          const halfSeparation = wellSeparation / 2;
+          const halfWellWidth = wellWidth / TwoWellsModel.HALF_DIVISOR;
+          const halfSeparation = wellSeparation / TwoWellsModel.HALF_DIVISOR;
 
           // Left well: centered at -halfSeparation
           const leftWellStart = -halfSeparation - halfWellWidth;
@@ -357,17 +510,16 @@ export class TwoWellsModel extends BaseModel {
 
         case PotentialType.COULOMB_1D: {
           // V(x) = -α/|x| where α = ke²
-          const coulombConstant = 8.9875517923e9;
           const coulombStrength =
-            coulombConstant *
+            TwoWellsModel.COULOMB_CONSTANT *
             QuantumConstants.ELEMENTARY_CHARGE *
             QuantumConstants.ELEMENTARY_CHARGE;
           const r = Math.abs(x);
-          if (r > 1e-12) {
+          if (r > TwoWellsModel.COULOMB_MIN_DISTANCE) {
             // Avoid singularity at origin
             V = -coulombStrength / r;
           } else {
-            V = -coulombStrength / 1e-12;
+            V = -coulombStrength / TwoWellsModel.COULOMB_MIN_DISTANCE;
           }
           break;
         }

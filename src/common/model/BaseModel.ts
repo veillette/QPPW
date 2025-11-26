@@ -17,8 +17,94 @@ import QuantumConstants from "./QuantumConstants.js";
 import { SuperpositionType, SuperpositionConfig } from "./SuperpositionType.js";
 
 export abstract class BaseModel {
-  // Default time step for manual stepping (in seconds, ~1 frame at 60 FPS)
+  // ==================== CONSTANTS ====================
+
+  /**
+   * Default time step for manual stepping (in seconds).
+   * Corresponds to approximately 1 frame at 60 FPS.
+   */
   public static readonly MANUAL_STEP_SIZE = 0.016;
+
+  /**
+   * Minimum value for well width in nanometers.
+   * Ensures the well is large enough for meaningful quantum behavior.
+   */
+  private static readonly WELL_WIDTH_MIN = 0.1;
+
+  /**
+   * Maximum value for well width in nanometers.
+   * Limits the computational domain to reasonable sizes.
+   */
+  private static readonly WELL_WIDTH_MAX = 6.0;
+
+  /**
+   * Minimum value for well depth in electron volts.
+   * Ensures at least one bound state can exist.
+   */
+  private static readonly WELL_DEPTH_MIN = 0.1;
+
+  /**
+   * Maximum value for well depth in electron volts.
+   * Limits energy to reasonable values for atomic-scale systems.
+   */
+  private static readonly WELL_DEPTH_MAX = 15.0;
+
+  /**
+   * Minimum value for well offset (normalized position).
+   * Used for asymmetric potential configurations.
+   */
+  private static readonly WELL_OFFSET_MIN = 0.0;
+
+  /**
+   * Maximum value for well offset (normalized position).
+   * Used for asymmetric potential configurations.
+   */
+  private static readonly WELL_OFFSET_MAX = 1.0;
+
+  /**
+   * Minimum particle mass in units of electron mass.
+   * Allows lighter particles (e.g., 0.5 m_e).
+   */
+  private static readonly PARTICLE_MASS_MIN = 0.5;
+
+  /**
+   * Maximum particle mass in units of electron mass.
+   * Limits to slightly heavier than electron mass.
+   */
+  private static readonly PARTICLE_MASS_MAX = 1.1;
+
+  /**
+   * Minimum energy level index (0 = ground state).
+   * Energy levels are 0-indexed internally.
+   */
+  private static readonly ENERGY_LEVEL_INDEX_MIN = 0;
+
+  /**
+   * Maximum energy level index.
+   * Caps the number of accessible quantum states.
+   */
+  private static readonly ENERGY_LEVEL_INDEX_MAX = 99;
+
+  /**
+   * Minimum kinetic energy threshold as fraction of maximum kinetic energy.
+   * Used in classical probability calculations to prevent singularities at turning points.
+   * Value of 0.01 (1%) prevents infinities while preserving probability distribution shape.
+   */
+  private static readonly MIN_KINETIC_ENERGY_FRACTION = 0.01;
+
+  /**
+   * Speed multiplier for slow time evolution.
+   * Slows down the simulation by a factor of 10 for better observation.
+   */
+  private static readonly SLOW_SPEED_MULTIPLIER = 0.1;
+
+  /**
+   * Divisor for trapezoidal integration (averaging adjacent values).
+   * Used in numerical integration: (f(x_i) + f(x_{i+1})) / 2.
+   */
+  private static readonly TRAPEZOIDAL_DIVISOR = 2;
+
+  // ==================== PROPERTIES ====================
 
   // Simulation state properties
   public readonly isPlayingProperty: Property<boolean>;
@@ -76,23 +162,29 @@ export abstract class BaseModel {
 
     // Initialize well parameters with default values
     this.wellWidthProperty = new NumberProperty(1.0, {
-      range: new Range(0.1, 6.0),
+      range: new Range(BaseModel.WELL_WIDTH_MIN, BaseModel.WELL_WIDTH_MAX),
     }); // in nanometers
     this.wellDepthProperty = new NumberProperty(5.0, {
-      range: new Range(0.1, 15.0),
+      range: new Range(BaseModel.WELL_DEPTH_MIN, BaseModel.WELL_DEPTH_MAX),
     }); // in eV
     this.wellOffsetProperty = new NumberProperty(0.5, {
-      range: new Range(0.0, 1.0),
+      range: new Range(BaseModel.WELL_OFFSET_MIN, BaseModel.WELL_OFFSET_MAX),
     }); // normalized position
 
     // Initialize particle mass (1.0 = electron mass)
     this.particleMassProperty = new NumberProperty(1.0, {
-      range: new Range(0.5, 1.1),
+      range: new Range(
+        BaseModel.PARTICLE_MASS_MIN,
+        BaseModel.PARTICLE_MASS_MAX,
+      ),
     }); // 0.5 to 1.1 times electron mass
 
     // Initialize energy level selection (ground state by default)
     this.selectedEnergyLevelIndexProperty = new NumberProperty(0, {
-      range: new Range(0, 99),
+      range: new Range(
+        BaseModel.ENERGY_LEVEL_INDEX_MIN,
+        BaseModel.ENERGY_LEVEL_INDEX_MAX,
+      ),
     });
 
     // Initialize display settings
@@ -209,7 +301,7 @@ export abstract class BaseModel {
         const speedMultiplier = forced
           ? 1
           : this.timeSpeedProperty.value === TimeSpeed.SLOW
-            ? 1 / 10
+            ? BaseModel.SLOW_SPEED_MULTIPLIER
             : 1;
         const dtFemtoseconds = dt * speedMultiplier; // seconds to femtoseconds
         this.timeProperty.value += dtFemtoseconds;
@@ -258,9 +350,9 @@ export abstract class BaseModel {
       }
     }
 
-    // Use 1% of maximum kinetic energy as threshold to prevent singularities
+    // Use minimum kinetic energy threshold to prevent singularities
     // This preserves the shape while avoiding infinities at turning points
-    const minKE = 0.01 * maxKE;
+    const minKE = BaseModel.MIN_KINETIC_ENERGY_FRACTION * maxKE;
 
     // Second pass: calculate probability with threshold
     for (let i = 0; i < xGrid.length; i++) {
@@ -278,7 +370,9 @@ export abstract class BaseModel {
       // Trapezoidal integration for normalization
       if (i > 0) {
         const dx = xGrid[i] - xGrid[i - 1];
-        integralSum += ((probability + classicalProbability[i - 1]) * dx) / 2;
+        integralSum +=
+          ((probability + classicalProbability[i - 1]) * dx) /
+          BaseModel.TRAPEZOIDAL_DIVISOR;
       }
     }
 

@@ -19,6 +19,109 @@ import QPPWPreferences from "../../QPPWPreferences.js";
 export type DisplayMode = "probabilityDensity" | "waveFunction" | "phaseColor";
 
 export class ManyWellsModel extends BaseModel {
+  // ==================== CONSTANTS ====================
+
+  /**
+   * Default well width in nanometers for multi-square well.
+   */
+  private static readonly DEFAULT_WELL_WIDTH = 1.0;
+
+  /**
+   * Minimum well width in nanometers for multi-square well.
+   */
+  private static readonly WELL_WIDTH_MIN = 0.1;
+
+  /**
+   * Maximum well width in nanometers for multi-square well.
+   */
+  private static readonly WELL_WIDTH_MAX = 3.0;
+
+  /**
+   * Default number of wells in the potential.
+   */
+  private static readonly DEFAULT_NUMBER_OF_WELLS = 3;
+
+  /**
+   * Minimum number of wells.
+   */
+  private static readonly NUMBER_OF_WELLS_MIN = 1;
+
+  /**
+   * Maximum number of wells.
+   */
+  private static readonly NUMBER_OF_WELLS_MAX = 10;
+
+  /**
+   * Default well separation in nanometers.
+   * Distance between the centers of adjacent wells.
+   */
+  private static readonly DEFAULT_WELL_SEPARATION = 0.2;
+
+  /**
+   * Minimum well separation in nanometers.
+   */
+  private static readonly WELL_SEPARATION_MIN = 0.05;
+
+  /**
+   * Maximum well separation in nanometers.
+   */
+  private static readonly WELL_SEPARATION_MAX = 0.7;
+
+  /**
+   * Default electric field in eV/nm.
+   * No field applied by default.
+   */
+  private static readonly DEFAULT_ELECTRIC_FIELD = 0.0;
+
+  /**
+   * Minimum electric field in eV/nm.
+   * Corresponds to -5 eV tilt over 8 nm chart range.
+   */
+  private static readonly ELECTRIC_FIELD_MIN = -0.625;
+
+  /**
+   * Maximum electric field in eV/nm.
+   * Corresponds to +5 eV tilt over 8 nm chart range.
+   */
+  private static readonly ELECTRIC_FIELD_MAX = 0.625;
+
+  /**
+   * Default amplitude for superposition states.
+   * Normalized value for equal superposition (1/√2).
+   */
+  private static readonly DEFAULT_SUPERPOSITION_AMPLITUDE = 0.7;
+
+  /**
+   * Number of states to calculate for multi-well potentials.
+   * Larger value needed due to energy level splitting.
+   */
+  private static readonly NUM_STATES = 80;
+
+  /**
+   * Chart display range in nanometers (extends from -RANGE to +RANGE).
+   */
+  private static readonly CHART_DISPLAY_RANGE_NM = 4;
+
+  /**
+   * Coulomb's constant in N·m²/C².
+   * Used for multi-Coulomb potential calculations: k = 1/(4πε₀).
+   */
+  private static readonly COULOMB_CONSTANT = 8.9875517923e9;
+
+  /**
+   * Minimum distance for Coulomb potential calculations in meters.
+   * Prevents singularity at centers (r = 0).
+   */
+  private static readonly COULOMB_MIN_DISTANCE = 1e-12;
+
+  /**
+   * Half divisor for position calculations.
+   * Used to calculate midpoints and half-widths.
+   */
+  private static readonly HALF_DIVISOR = 2;
+
+  // ==================== PROPERTIES ====================
+
   // Number of wells (1-10)
   public readonly numberOfWellsProperty: NumberProperty;
 
@@ -39,22 +142,43 @@ export class ManyWellsModel extends BaseModel {
     this.potentialTypeProperty.value = PotentialType.MULTI_SQUARE_WELL;
 
     // Override well width range for multi-square well
-    this.wellWidthProperty.setValueAndRange(1.0, new Range(0.1, 3.0));
+    this.wellWidthProperty.setValueAndRange(
+      ManyWellsModel.DEFAULT_WELL_WIDTH,
+      new Range(ManyWellsModel.WELL_WIDTH_MIN, ManyWellsModel.WELL_WIDTH_MAX),
+    );
 
-    // Initialize number of wells (default: 3 wells)
-    this.numberOfWellsProperty = new NumberProperty(3, {
-      range: new Range(1, 10),
-    });
+    // Initialize number of wells
+    this.numberOfWellsProperty = new NumberProperty(
+      ManyWellsModel.DEFAULT_NUMBER_OF_WELLS,
+      {
+        range: new Range(
+          ManyWellsModel.NUMBER_OF_WELLS_MIN,
+          ManyWellsModel.NUMBER_OF_WELLS_MAX,
+        ),
+      },
+    );
 
     // Initialize model-specific well parameters
-    this.wellSeparationProperty = new NumberProperty(0.2, {
-      range: new Range(0.05, 0.7),
-    }); // in nanometers (spacing between wells)
+    this.wellSeparationProperty = new NumberProperty(
+      ManyWellsModel.DEFAULT_WELL_SEPARATION,
+      {
+        range: new Range(
+          ManyWellsModel.WELL_SEPARATION_MIN,
+          ManyWellsModel.WELL_SEPARATION_MAX,
+        ),
+      },
+    ); // in nanometers (spacing between wells)
 
-    // Initialize electric field (default: 0, range: ±0.625 eV/nm for ±5eV tilt over 8nm)
-    this.electricFieldProperty = new NumberProperty(0.0, {
-      range: new Range(-0.625, 0.625),
-    }); // in eV/nm
+    // Initialize electric field
+    this.electricFieldProperty = new NumberProperty(
+      ManyWellsModel.DEFAULT_ELECTRIC_FIELD,
+      {
+        range: new Range(
+          ManyWellsModel.ELECTRIC_FIELD_MIN,
+          ManyWellsModel.ELECTRIC_FIELD_MAX,
+        ),
+      },
+    ); // in eV/nm
 
     // Initialize model-specific display settings
     this.displayModeProperty = new Property<DisplayMode>("probabilityDensity");
@@ -63,7 +187,10 @@ export class ManyWellsModel extends BaseModel {
     // Override superposition config default
     this.superpositionConfigProperty.value = {
       type: SuperpositionType.PSI_I_PSI_J,
-      amplitudes: [0.7, 0.7], // Default to equal superposition
+      amplitudes: [
+        ManyWellsModel.DEFAULT_SUPERPOSITION_AMPLITUDE,
+        ManyWellsModel.DEFAULT_SUPERPOSITION_AMPLITUDE,
+      ], // Default to equal superposition
       phases: [0, 0],
     };
   }
@@ -127,21 +254,23 @@ export class ManyWellsModel extends BaseModel {
       this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
 
     // Calculate number of states based on potential type
-    const numStates = 80; // Default for multi-well potentials
+    const numStates = ManyWellsModel.NUM_STATES; // Default for multi-well potentials
 
     // Grid configuration
-    const CHART_DISPLAY_RANGE_NM = 4;
     const method = this.solver.getNumericalMethod();
     let numGridPoints = QPPWPreferences.gridPointsProperty.value;
 
     if (method === "fgh") {
       // FGH: round to nearest power of 2 for FFT efficiency
-      numGridPoints = Math.pow(2, Math.round(Math.log2(numGridPoints)));
+      numGridPoints = Math.pow(
+        ManyWellsModel.HALF_DIVISOR,
+        Math.round(Math.log2(numGridPoints)),
+      );
     }
 
     const gridConfig = {
-      xMin: -CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
-      xMax: CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
+      xMin: -ManyWellsModel.CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
+      xMax: ManyWellsModel.CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
       numPoints: numGridPoints,
     };
 
@@ -164,9 +293,8 @@ export class ManyWellsModel extends BaseModel {
         }
         case PotentialType.MULTI_COULOMB_1D: {
           // For Coulomb potentials, use coulombStrength parameter α = k*e²
-          const coulombConstant = 8.9875517923e9; // Coulomb's constant in N·m²/C²
           potentialParams.coulombStrength =
-            coulombConstant *
+            ManyWellsModel.COULOMB_CONSTANT *
             QuantumConstants.ELEMENTARY_CHARGE *
             QuantumConstants.ELEMENTARY_CHARGE;
           potentialParams.wellSeparation =
@@ -261,19 +389,20 @@ export class ManyWellsModel extends BaseModel {
       switch (this.potentialTypeProperty.value) {
         case PotentialType.MULTI_SQUARE_WELL: {
           // Multiple square wells arranged periodically
-          const halfWellWidth = wellWidth / 2;
+          const halfWellWidth = wellWidth / ManyWellsModel.HALF_DIVISOR;
           const period = wellWidth + wellSeparation;
 
           // Calculate total extent of the well array
           const totalExtent =
             numberOfWells * wellWidth + (numberOfWells - 1) * wellSeparation;
-          const arrayStart = -totalExtent / 2;
+          const arrayStart = -totalExtent / ManyWellsModel.HALF_DIVISOR;
 
           let inWell = false;
 
           // Check if x is inside any of the wells
           for (let wellIndex = 0; wellIndex < numberOfWells; wellIndex++) {
-            const wellCenter = arrayStart + wellIndex * period + wellWidth / 2;
+            const wellCenter =
+              arrayStart + wellIndex * period + wellWidth / ManyWellsModel.HALF_DIVISOR;
             const wellStart = wellCenter - halfWellWidth;
             const wellEnd = wellCenter + halfWellWidth;
 
@@ -289,15 +418,14 @@ export class ManyWellsModel extends BaseModel {
 
         case PotentialType.MULTI_COULOMB_1D: {
           // Multiple Coulomb centers arranged periodically
-          const coulombConstant = 8.9875517923e9;
           const coulombStrength =
-            coulombConstant *
+            ManyWellsModel.COULOMB_CONSTANT *
             QuantumConstants.ELEMENTARY_CHARGE *
             QuantumConstants.ELEMENTARY_CHARGE;
 
           // Calculate total extent of the Coulomb centers
           const totalExtent = (numberOfWells - 1) * wellSeparation;
-          const arrayStart = -totalExtent / 2;
+          const arrayStart = -totalExtent / ManyWellsModel.HALF_DIVISOR;
 
           // Sum contributions from all Coulomb centers
           V = 0;
@@ -305,11 +433,11 @@ export class ManyWellsModel extends BaseModel {
             const centerPosition = arrayStart + wellIndex * wellSeparation;
             const r = Math.abs(x - centerPosition);
 
-            if (r > 1e-12) {
+            if (r > ManyWellsModel.COULOMB_MIN_DISTANCE) {
               // Avoid singularity at center
               V += -coulombStrength / r;
             } else {
-              V += -coulombStrength / 1e-12;
+              V += -coulombStrength / ManyWellsModel.COULOMB_MIN_DISTANCE;
             }
           }
           break;

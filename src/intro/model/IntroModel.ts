@@ -16,6 +16,84 @@ import QuantumConstants from "../../common/model/QuantumConstants.js";
 export type DisplayMode = "probabilityDensity" | "waveFunction";
 
 export class IntroModel extends BaseModel {
+  // ==================== CONSTANTS ====================
+
+  /**
+   * Default barrier height in electron volts.
+   * Used for Rosen-Morse and Eckart potentials.
+   */
+  private static readonly DEFAULT_BARRIER_HEIGHT = 0.5;
+
+  /**
+   * Minimum barrier height in electron volts.
+   */
+  private static readonly BARRIER_HEIGHT_MIN = 0.0;
+
+  /**
+   * Maximum barrier height in electron volts.
+   */
+  private static readonly BARRIER_HEIGHT_MAX = 10.0;
+
+  /**
+   * Default potential offset in electron volts.
+   * Used for triangular potential configuration.
+   */
+  private static readonly DEFAULT_POTENTIAL_OFFSET = 0.0;
+
+  /**
+   * Minimum potential offset in electron volts.
+   */
+  private static readonly POTENTIAL_OFFSET_MIN = -5.0;
+
+  /**
+   * Maximum potential offset in electron volts.
+   */
+  private static readonly POTENTIAL_OFFSET_MAX = 15.0;
+
+  /**
+   * Number of bound states to calculate.
+   * Sufficient for most single-well potentials in the intro screen.
+   */
+  private static readonly NUM_BOUND_STATES = 10;
+
+  /**
+   * Chart display range in nanometers (extends from -RANGE to +RANGE).
+   * Defines the spatial extent of the visualization.
+   */
+  private static readonly CHART_DISPLAY_RANGE_NM = 4;
+
+  /**
+   * Number of grid points for analytical solution evaluation.
+   * High resolution ensures smooth wavefunction plots.
+   */
+  private static readonly ANALYTICAL_GRID_POINTS = 1000;
+
+  /**
+   * Spring constant multiplier for harmonic oscillator.
+   * Factor used to convert well depth and width to spring constant: k = 8*V₀/L².
+   */
+  private static readonly SPRING_CONSTANT_MULTIPLIER = 8;
+
+  /**
+   * Coulomb's constant in N·m²/C².
+   * Used for Coulomb potential calculations: k = 1/(4πε₀).
+   */
+  private static readonly COULOMB_CONSTANT = 8.9875517923e9;
+
+  /**
+   * Minimum distance for Coulomb potential calculations in meters.
+   * Prevents singularity at the origin (r = 0).
+   */
+  private static readonly COULOMB_MIN_DISTANCE = 1e-12;
+
+  /**
+   * Half divisor for trapezoidal integration.
+   * Used to calculate midpoint: (x[i+1] - x[i]) / 2.
+   */
+  private static readonly HALF_DIVISOR = 2;
+
+  // ==================== PROPERTIES ====================
+
   // Model-specific well parameters
   public readonly barrierHeightProperty: NumberProperty;
   public readonly potentialOffsetProperty: NumberProperty;
@@ -27,12 +105,24 @@ export class IntroModel extends BaseModel {
     super();
 
     // Initialize model-specific well parameters
-    this.barrierHeightProperty = new NumberProperty(0.5, {
-      range: new Range(0.0, 10.0),
-    });
-    this.potentialOffsetProperty = new NumberProperty(0.0, {
-      range: new Range(-5.0, 15.0),
-    });
+    this.barrierHeightProperty = new NumberProperty(
+      IntroModel.DEFAULT_BARRIER_HEIGHT,
+      {
+        range: new Range(
+          IntroModel.BARRIER_HEIGHT_MIN,
+          IntroModel.BARRIER_HEIGHT_MAX,
+        ),
+      },
+    );
+    this.potentialOffsetProperty = new NumberProperty(
+      IntroModel.DEFAULT_POTENTIAL_OFFSET,
+      {
+        range: new Range(
+          IntroModel.POTENTIAL_OFFSET_MIN,
+          IntroModel.POTENTIAL_OFFSET_MAX,
+        ),
+      },
+    );
 
     // Initialize model-specific display settings (simplified)
     this.displayModeProperty = new Property<DisplayMode>("probabilityDensity");
@@ -82,14 +172,12 @@ export class IntroModel extends BaseModel {
     const mass =
       this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
 
-    const numStates = 10;
-    const CHART_DISPLAY_RANGE_NM = 4;
-    const ANALYTICAL_GRID_POINTS = 1000;
+    const numStates = IntroModel.NUM_BOUND_STATES;
 
     const gridConfig = {
-      xMin: -CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
-      xMax: CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
-      numPoints: ANALYTICAL_GRID_POINTS,
+      xMin: -IntroModel.CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
+      xMax: IntroModel.CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
+      numPoints: IntroModel.ANALYTICAL_GRID_POINTS,
     };
 
     try {
@@ -105,7 +193,8 @@ export class IntroModel extends BaseModel {
           break;
         case PotentialType.HARMONIC_OSCILLATOR:
           potentialParams.springConstant =
-            (8 * wellDepth) / (wellWidth * wellWidth);
+            (IntroModel.SPRING_CONSTANT_MULTIPLIER * wellDepth) /
+            (wellWidth * wellWidth);
           break;
         case PotentialType.MORSE:
           potentialParams.dissociationEnergy = wellDepth;
@@ -139,9 +228,8 @@ export class IntroModel extends BaseModel {
           break;
         case PotentialType.COULOMB_1D:
         case PotentialType.COULOMB_3D: {
-          const coulombConstant = 8.9875517923e9;
           potentialParams.coulombStrength =
-            coulombConstant *
+            IntroModel.COULOMB_CONSTANT *
             QuantumConstants.ELEMENTARY_CHARGE *
             QuantumConstants.ELEMENTARY_CHARGE;
           break;
@@ -264,10 +352,9 @@ export class IntroModel extends BaseModel {
     }
 
     if (leftTurningPoint !== null && rightTurningPoint !== null) {
-      // Clamp turning points to chart's X-axis range (-X_AXIS_RANGE_NM to X_AXIS_RANGE_NM)
-      const X_AXIS_RANGE_NM = 4; // Define X_AXIS_RANGE_NM here
-      const minX = -X_AXIS_RANGE_NM;
-      const maxX = X_AXIS_RANGE_NM;
+      // Clamp turning points to chart's X-axis range
+      const minX = -IntroModel.CHART_DISPLAY_RANGE_NM;
+      const maxX = IntroModel.CHART_DISPLAY_RANGE_NM;
       leftTurningPoint = Math.max(minX, Math.min(maxX, leftTurningPoint));
       rightTurningPoint = Math.max(minX, Math.min(maxX, rightTurningPoint));
       return { left: leftTurningPoint, right: rightTurningPoint };
@@ -310,11 +397,17 @@ export class IntroModel extends BaseModel {
 
       let dx = 0;
       if (i === 0) {
-        dx = ((xGrid[1] - xGrid[0]) / 2) * QuantumConstants.M_TO_NM;
+        dx =
+          ((xGrid[1] - xGrid[0]) / IntroModel.HALF_DIVISOR) *
+          QuantumConstants.M_TO_NM;
       } else if (i === xGrid.length - 1) {
-        dx = ((xGrid[i] - xGrid[i - 1]) / 2) * QuantumConstants.M_TO_NM;
+        dx =
+          ((xGrid[i] - xGrid[i - 1]) / IntroModel.HALF_DIVISOR) *
+          QuantumConstants.M_TO_NM;
       } else {
-        dx = ((xGrid[i + 1] - xGrid[i - 1]) / 2) * QuantumConstants.M_TO_NM;
+        dx =
+          ((xGrid[i + 1] - xGrid[i - 1]) / IntroModel.HALF_DIVISOR) *
+          QuantumConstants.M_TO_NM;
       }
 
       totalProbability += probabilityDensity * dx;
@@ -353,7 +446,9 @@ export class IntroModel extends BaseModel {
           break;
 
         case PotentialType.HARMONIC_OSCILLATOR: {
-          const springConstant = (8 * wellDepth) / (wellWidth * wellWidth);
+          const springConstant =
+            (IntroModel.SPRING_CONSTANT_MULTIPLIER * wellDepth) /
+            (wellWidth * wellWidth);
           V = 0.5 * springConstant * x * x;
           break;
         }
@@ -410,16 +505,15 @@ export class IntroModel extends BaseModel {
 
         case PotentialType.COULOMB_1D:
         case PotentialType.COULOMB_3D: {
-          const coulombConstant = 8.9875517923e9;
           const coulombStrength =
-            coulombConstant *
+            IntroModel.COULOMB_CONSTANT *
             QuantumConstants.ELEMENTARY_CHARGE *
             QuantumConstants.ELEMENTARY_CHARGE;
           const r = Math.abs(x);
-          if (r > 1e-12) {
+          if (r > IntroModel.COULOMB_MIN_DISTANCE) {
             V = -coulombStrength / r;
           } else {
-            V = -coulombStrength / 1e-12;
+            V = -coulombStrength / IntroModel.COULOMB_MIN_DISTANCE;
           }
           break;
         }
