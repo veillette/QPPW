@@ -28,12 +28,12 @@ export class TwoWellsModel extends BaseModel {
   /**
    * Minimum well width in nanometers for double square well.
    */
-  private static readonly WELL_WIDTH_MIN = 0.1;
+  private static readonly TWO_WELL_WIDTH_MIN = 0.1;
 
   /**
    * Maximum well width in nanometers for double square well.
    */
-  private static readonly WELL_WIDTH_MAX = 3.0;
+  private static readonly TWO_WELL_WIDTH_MAX = 3.0;
 
   /**
    * Default well separation in nanometers.
@@ -167,7 +167,7 @@ export class TwoWellsModel extends BaseModel {
     // Override well width range for double square well
     this.wellWidthProperty.setValueAndRange(
       TwoWellsModel.DEFAULT_WELL_WIDTH,
-      new Range(TwoWellsModel.WELL_WIDTH_MIN, TwoWellsModel.WELL_WIDTH_MAX),
+      new Range(TwoWellsModel.TWO_WELL_WIDTH_MIN, TwoWellsModel.TWO_WELL_WIDTH_MAX),
     );
 
     // Initialize model-specific well parameters
