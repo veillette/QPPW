@@ -1622,7 +1622,7 @@ export class WaveFunctionChartNode extends Node {
     // Left marker drag listener
     this.leftMarkerHandle.addInputListener(
       new DragListener({
-        drag: (event: any) => {
+        drag: (event) => {
           const parentPoint = this.globalToLocalPoint(event.pointer.point);
           let newX = this.viewToDataX(parentPoint.x);
 
@@ -1638,7 +1638,7 @@ export class WaveFunctionChartNode extends Node {
     // Right marker drag listener
     this.rightMarkerHandle.addInputListener(
       new DragListener({
-        drag: (event: any) => {
+        drag: (event) => {
           const parentPoint = this.globalToLocalPoint(event.pointer.point);
           let newX = this.viewToDataX(parentPoint.x);
 

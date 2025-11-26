@@ -612,7 +612,7 @@ function findEvenParityState(xi0: number, stateIndex: number): number | null {
     if (Math.abs(f(root)) < 1e-8) {
       return root;
     }
-  } catch (e) {
+  } catch (_e) {
     // findRoot failed, continue to fallback methods
   }
 
@@ -665,7 +665,7 @@ function findOddParityState(xi0: number, stateIndex: number): number | null {
     if (Math.abs(f(root)) < 1e-8) {
       return root;
     }
-  } catch (e) {
+  } catch (_e) {
     // findRoot failed, continue to fallback methods
   }
 
