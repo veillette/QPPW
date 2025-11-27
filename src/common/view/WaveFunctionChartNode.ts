@@ -86,6 +86,15 @@ export class WaveFunctionChartNode extends Node {
   private leftMarkerXProperty: NumberProperty; // X position in nm
   private rightMarkerXProperty: NumberProperty; // X position in nm
 
+  // Curvature visualization tool
+  public readonly showCurvatureToolProperty: BooleanProperty;
+  private readonly curvatureToolContainer: Node; // Container for all curvature tool elements
+  private readonly curvatureMarker: Line;
+  private readonly curvatureMarkerHandle: Circle;
+  private readonly curvatureParabola: Path; // Parabola showing the curvature
+  private readonly curvatureLabel: Text;
+  private curvatureXProperty: NumberProperty; // X position in nm
+
   // Guard flag to prevent reentry during updates
   private isUpdating: boolean = false;
   // Flag to indicate if an update was requested while another update was in progress
@@ -365,6 +374,70 @@ export class WaveFunctionChartNode extends Node {
       this.areaLabel.visible = show;
       if (show) {
         this.updateAreaTool();
+      }
+    });
+
+    // Initialize curvature visualization tool
+    this.showCurvatureToolProperty = new BooleanProperty(false);
+
+    // Initialize marker position (default to 0nm, center)
+    this.curvatureXProperty = new NumberProperty(0);
+
+    // Create curvature tool container
+    this.curvatureToolContainer = new Node({
+      visible: false,
+    });
+    this.plotContentNode.addChild(this.curvatureToolContainer);
+
+    // Create marker line
+    this.curvatureMarker = new Line(0, 0, 0, 0, {
+      stroke: "rgba(255, 100, 100, 0.8)", // Semi-transparent red
+      lineWidth: 2,
+      lineDash: [4, 3],
+    });
+    this.curvatureToolContainer.addChild(this.curvatureMarker);
+
+    // Create marker handle (draggable circle)
+    this.curvatureMarkerHandle = new Circle(8, {
+      fill: "rgba(255, 100, 100, 0.9)",
+      stroke: QPPWColors.backgroundColorProperty,
+      lineWidth: 2,
+      cursor: "ew-resize",
+    });
+    this.curvatureToolContainer.addChild(this.curvatureMarkerHandle);
+
+    // Create parabola path
+    this.curvatureParabola = new Path(null, {
+      stroke: "rgba(255, 100, 100, 0.9)",
+      lineWidth: 3,
+      fill: null,
+    });
+    this.curvatureToolContainer.addChild(this.curvatureParabola);
+
+    // Create curvature label
+    this.curvatureLabel = new Text("", {
+      font: new PhetFont({ size: 14, weight: "bold" }),
+      fill: "rgba(255, 100, 100, 1)",
+      visible: false,
+    });
+    this.addChild(this.curvatureLabel);
+
+    // Setup drag listener for marker
+    this.setupCurvatureToolDragListener();
+
+    // Link curvature tool visibility to property
+    this.showCurvatureToolProperty.link((show: boolean) => {
+      this.curvatureToolContainer.visible = show;
+      this.curvatureLabel.visible = show;
+      if (show) {
+        this.updateCurvatureTool();
+      }
+    });
+
+    // Update curvature tool when marker position changes
+    this.curvatureXProperty.link(() => {
+      if (this.showCurvatureToolProperty.value) {
+        this.updateCurvatureTool();
       }
     });
 
@@ -650,6 +723,28 @@ export class WaveFunctionChartNode extends Node {
     this.model.selectedEnergyLevelIndexProperty.link(() => {
       if (this.showAreaToolProperty.value) {
         this.updateAreaTool();
+      }
+      if (this.showCurvatureToolProperty.value) {
+        this.updateCurvatureTool();
+      }
+    });
+
+    // Update curvature tool when potential or well parameters change
+    this.model.potentialTypeProperty.link(() => {
+      if (this.showCurvatureToolProperty.value) {
+        this.updateCurvatureTool();
+      }
+    });
+
+    this.model.wellWidthProperty.link(() => {
+      if (this.showCurvatureToolProperty.value) {
+        this.updateCurvatureTool();
+      }
+    });
+
+    this.model.wellDepthProperty.link(() => {
+      if (this.showCurvatureToolProperty.value) {
+        this.updateCurvatureTool();
       }
     });
 
@@ -2029,5 +2124,183 @@ export class WaveFunctionChartNode extends Node {
 
     // Convert to percentage
     return probability * 100;
+  }
+
+  /**
+   * Sets up the drag listener for the curvature tool marker.
+   */
+  private setupCurvatureToolDragListener(): void {
+    const dragListener = new DragListener({
+      drag: (event) => {
+        const parentPoint = this.globalToParentPoint(event.pointer.point);
+        const localX = parentPoint.x - this.chartMargins.left;
+        const dataX = this.viewToDataX(localX);
+
+        // Clamp to chart bounds
+        const clampedX = Math.max(
+          -X_AXIS_RANGE_NM,
+          Math.min(X_AXIS_RANGE_NM, dataX),
+        );
+        this.curvatureXProperty.value = clampedX;
+      },
+    });
+
+    this.curvatureMarkerHandle.addInputListener(dragListener);
+  }
+
+  /**
+   * Updates the curvature tool visualization.
+   */
+  private updateCurvatureTool(): void {
+    if (!this.showCurvatureToolProperty.value) {
+      return;
+    }
+
+    const x = this.curvatureXProperty.value;
+    const viewX = this.dataToViewX(x);
+    const yTop = this.chartMargins.top;
+    const yBottom = this.chartMargins.top + this.plotHeight;
+
+    // Update marker line
+    this.curvatureMarker.setLine(viewX, yTop, viewX, yBottom);
+
+    // Update marker handle
+    this.curvatureMarkerHandle.centerX = viewX;
+    this.curvatureMarkerHandle.centerY = yTop + 20;
+
+    // Calculate and display second derivative
+    const secondDerivative = this.calculateSecondDerivative(x);
+
+    if (secondDerivative !== null) {
+      // Create parabola shape
+      const parabolaShape = this.createCurvatureParabola(
+        x,
+        secondDerivative.value,
+        secondDerivative.wavefunctionValue,
+      );
+      this.curvatureParabola.shape = parabolaShape;
+
+      // Update label
+      this.curvatureLabel.string = `d²ψ/dx² = ${secondDerivative.value.toExponential(2)}`;
+      this.curvatureLabel.centerX = viewX;
+      this.curvatureLabel.bottom = yTop - 5;
+    } else {
+      this.curvatureParabola.shape = null;
+      this.curvatureLabel.string = "N/A";
+    }
+  }
+
+  /**
+   * Calculates the second derivative of the wavefunction at a given x position.
+   * @param xData - X position in nm
+   * @returns Object with second derivative value and wavefunction value, or null if not available
+   */
+  private calculateSecondDerivative(
+    xData: number,
+  ): { value: number; wavefunctionValue: number } | null {
+    const boundStates = this.model.getBoundStates();
+    if (!boundStates) {
+      return null;
+    }
+
+    // Only calculate for wavefunction mode
+    const displayMode = this.getEffectiveDisplayMode();
+    if (displayMode !== "waveFunction") {
+      return null;
+    }
+
+    const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
+    if (
+      selectedIndex < 0 ||
+      selectedIndex >= boundStates.wavefunctions.length
+    ) {
+      return null;
+    }
+
+    const xGrid = boundStates.xGrid;
+    const wavefunction = boundStates.wavefunctions[selectedIndex];
+
+    // Convert xData from nm to m
+    const xInM = xData * QuantumConstants.NM_TO_M;
+
+    // Find the grid points surrounding xData
+    let i1 = -1;
+    for (let i = 0; i < xGrid.length - 1; i++) {
+      if (xGrid[i] <= xInM && xInM <= xGrid[i + 1]) {
+        i1 = i;
+        break;
+      }
+    }
+
+    if (i1 === -1 || i1 === 0 || i1 >= xGrid.length - 2) {
+      return null; // Need at least one point on each side for second derivative
+    }
+
+    // Use finite difference to calculate second derivative
+    // f''(x) ≈ (f(x-h) - 2f(x) + f(x+h)) / h²
+    const h = xGrid[1] - xGrid[0]; // Grid spacing (assumes uniform grid)
+
+    // Interpolate wavefunction value at xData
+    const t = (xInM - xGrid[i1]) / (xGrid[i1 + 1] - xGrid[i1]);
+    const psi = wavefunction[i1] * (1 - t) + wavefunction[i1 + 1] * t;
+
+    // Calculate second derivative using three-point stencil
+    const psi_left = wavefunction[i1];
+    const psi_right = wavefunction[i1 + 1];
+    const secondDerivative = (psi_left - 2 * psi + psi_right) / (h * h);
+
+    return {
+      value: secondDerivative,
+      wavefunctionValue: psi,
+    };
+  }
+
+  /**
+   * Creates a parabola shape that matches the curvature at a point.
+   * @param xData - X position in nm
+   * @param secondDerivative - Second derivative value
+   * @param wavefunctionValue - Value of wavefunction at the point
+   * @returns Shape representing the parabola
+   */
+  private createCurvatureParabola(
+    xData: number,
+    secondDerivative: number,
+    wavefunctionValue: number,
+  ): Shape {
+    const shape = new Shape();
+
+    // Create a small parabola centered at (xData, wavefunctionValue)
+    // y = y0 + (1/2) * f''(x0) * (x - x0)²
+    const centerX = xData;
+    const centerY = wavefunctionValue;
+
+    // Width of parabola in nm (±0.3 nm from center)
+    const parabolaHalfWidth = 0.3;
+
+    const points: { x: number; y: number }[] = [];
+
+    // Generate parabola points
+    for (
+      let dx = -parabolaHalfWidth;
+      dx <= parabolaHalfWidth;
+      dx += parabolaHalfWidth / 10
+    ) {
+      const x = centerX + dx;
+      const y = centerY + 0.5 * secondDerivative * dx * dx;
+
+      const viewX = this.dataToViewX(x);
+      const viewY = this.dataToViewY(y);
+
+      points.push({ x: viewX, y: viewY });
+    }
+
+    if (points.length > 0) {
+      shape.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        shape.lineTo(points[i].x, points[i].y);
+      }
+    }
+
+    return shape;
   }
 }

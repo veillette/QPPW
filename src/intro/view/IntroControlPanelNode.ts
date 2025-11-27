@@ -19,16 +19,19 @@ interface ComboBoxItem<T> {
 
 export class IntroControlPanelNode extends Node {
   private readonly model: IntroModel;
+  private readonly probabilityChartNode?: import("../../common/view/WaveFunctionChartNode.js").WaveFunctionChartNode;
   private readonly waveFunctionChartNode?: import("../../common/view/WaveFunctionChartNode.js").WaveFunctionChartNode;
 
   public constructor(
     model: IntroModel,
     listBoxParent: Node,
+    probabilityChartNode?: import("../../common/view/WaveFunctionChartNode.js").WaveFunctionChartNode,
     waveFunctionChartNode?: import("../../common/view/WaveFunctionChartNode.js").WaveFunctionChartNode,
   ) {
     super();
 
     this.model = model;
+    this.probabilityChartNode = probabilityChartNode;
     this.waveFunctionChartNode = waveFunctionChartNode;
 
     // Create all control groups
@@ -240,10 +243,10 @@ export class IntroControlPanelNode extends Node {
       x: 20,
     });
 
-    // Area measurement tool checkbox (only in probability density mode)
-    const areaToolCheckboxContent = this.waveFunctionChartNode
+    // Area measurement tool checkbox (for probability density chart)
+    const areaToolCheckboxContent = this.probabilityChartNode
       ? new Checkbox(
-          this.waveFunctionChartNode.showAreaToolProperty,
+          this.probabilityChartNode.showAreaToolProperty,
           new Text("Measure Area", {
             font: new PhetFont(12),
             fill: QPPWColors.textFillProperty,
@@ -259,6 +262,25 @@ export class IntroControlPanelNode extends Node {
         })
       : null;
 
+    // Curvature visualization tool checkbox (for wavefunction chart)
+    const curvatureToolCheckboxContent = this.waveFunctionChartNode
+      ? new Checkbox(
+          this.waveFunctionChartNode.showCurvatureToolProperty,
+          new Text("Show Curvature", {
+            font: new PhetFont(12),
+            fill: QPPWColors.textFillProperty,
+          }),
+          { boxWidth: 16 },
+        )
+      : null;
+
+    const curvatureToolCheckbox = curvatureToolCheckboxContent
+      ? new Node({
+          children: [curvatureToolCheckboxContent],
+          x: 20,
+        })
+      : null;
+
     // Build children array (no display mode controls since intro screen shows separate charts)
     const children: Node[] = [
       classicalProbabilityCheckbox,
@@ -268,6 +290,11 @@ export class IntroControlPanelNode extends Node {
     // Add area tool checkbox if it exists
     if (areaToolCheckbox) {
       children.push(areaToolCheckbox);
+    }
+
+    // Add curvature tool checkbox if it exists
+    if (curvatureToolCheckbox) {
+      children.push(curvatureToolCheckbox);
     }
 
     return new VBox({

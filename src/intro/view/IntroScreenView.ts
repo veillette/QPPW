@@ -73,6 +73,7 @@ export class IntroScreenView extends BaseScreenView {
       model,
       this.listBoxParent,
       this.probabilityChart,
+      this.waveFunctionChart,
     );
     this.introControlPanel.left = chartsWidth + margin * 2;
     this.introControlPanel.top = margin;
