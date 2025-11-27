@@ -71,6 +71,8 @@ export class WaveFunctionChartNode extends Node {
   // Classical probability visualization
   private readonly leftTurningPointLine: Line;
   private readonly rightTurningPointLine: Line;
+  private readonly leftForbiddenBackground: Rectangle; // Faint rectangular background for left forbidden region
+  private readonly rightForbiddenBackground: Rectangle; // Faint rectangular background for right forbidden region
   private readonly leftForbiddenRegion: Path; // Area under classical probability curve in left forbidden region
   private readonly rightForbiddenRegion: Path; // Area under classical probability curve in right forbidden region
   private readonly forbiddenProbabilityLabel: Text; // Label showing the forbidden probability percentage
@@ -195,16 +197,31 @@ export class WaveFunctionChartNode extends Node {
     });
     this.plotContentNode.addChild(this.rightTurningPointLine);
 
+    // Create faint rectangular backgrounds for classically forbidden regions
+    this.leftForbiddenBackground = new Rectangle(0, 0, 1, 1, {
+      fill: "rgba(255, 200, 200, 0.1)", // Very faint red
+      stroke: null,
+      visible: false,
+    });
+    this.plotContentNode.addChild(this.leftForbiddenBackground);
+
+    this.rightForbiddenBackground = new Rectangle(0, 0, 1, 1, {
+      fill: "rgba(255, 200, 200, 0.1)", // Very faint red
+      stroke: null,
+      visible: false,
+    });
+    this.plotContentNode.addChild(this.rightForbiddenBackground);
+
     // Create classically forbidden regions (shaded areas that follow the classical probability curve)
     this.leftForbiddenRegion = new Path(null, {
-      fill: "rgba(255, 200, 200, 0.3)",
+      fill: "rgba(255, 200, 200, 0.3)", // Semi-transparent red
       stroke: null,
       visible: false,
     });
     this.plotContentNode.addChild(this.leftForbiddenRegion);
 
     this.rightForbiddenRegion = new Path(null, {
-      fill: "rgba(255, 200, 200, 0.3)",
+      fill: "rgba(255, 200, 200, 0.3)", // Semi-transparent red
       stroke: null,
       visible: false,
     });
@@ -238,6 +255,18 @@ export class WaveFunctionChartNode extends Node {
       this.forbiddenProbabilityLabel.visible = false;
     };
 
+    // Add listeners to background rectangles
+    this.leftForbiddenBackground.addInputListener({
+      enter: showForbiddenProbability,
+      exit: hideForbiddenProbability,
+    });
+
+    this.rightForbiddenBackground.addInputListener({
+      enter: showForbiddenProbability,
+      exit: hideForbiddenProbability,
+    });
+
+    // Add listeners to highlighted regions
     this.leftForbiddenRegion.addInputListener({
       enter: showForbiddenProbability,
       exit: hideForbiddenProbability,
@@ -962,6 +991,8 @@ export class WaveFunctionChartNode extends Node {
   private hideClassicalProbabilityVisualization(): void {
     this.leftTurningPointLine.visible = false;
     this.rightTurningPointLine.visible = false;
+    this.leftForbiddenBackground.visible = false;
+    this.rightForbiddenBackground.visible = false;
     this.leftForbiddenRegion.visible = false;
     this.rightForbiddenRegion.visible = false;
   }
@@ -1004,7 +1035,30 @@ export class WaveFunctionChartNode extends Node {
     this.rightTurningPointLine.setLine(xRight, yTop, xRight, yBottom);
     this.rightTurningPointLine.visible = true;
 
-    // Create and draw shaded forbidden regions that follow the classical probability curve
+    // Draw faint rectangular backgrounds for forbidden regions
+    // Left forbidden region (from left edge to left turning point)
+    const leftRegionX = this.chartMargins.left;
+    const leftRegionWidth = xLeft - leftRegionX;
+    this.leftForbiddenBackground.setRect(
+      leftRegionX,
+      yTop,
+      leftRegionWidth,
+      this.plotHeight,
+    );
+    this.leftForbiddenBackground.visible = true;
+
+    // Right forbidden region (from right turning point to right edge)
+    const rightRegionX = xRight;
+    const rightRegionWidth = this.chartMargins.left + this.plotWidth - xRight;
+    this.rightForbiddenBackground.setRect(
+      rightRegionX,
+      yTop,
+      rightRegionWidth,
+      this.plotHeight,
+    );
+    this.rightForbiddenBackground.visible = true;
+
+    // Create and draw highlighted forbidden regions that follow the classical probability curve
     const shapes = this.createForbiddenRegionShapes(turningPoints, selectedIndex);
 
     this.leftForbiddenRegion.shape = shapes.leftShape;
