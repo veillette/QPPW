@@ -103,6 +103,19 @@ export class PoschlTellerPotentialSolution extends AnalyticalSolution {
     return [points]; // Return as array with single element for simple single-well potential
   }
 
+  calculateWavefunctionFirstDerivative(
+    stateIndex: number,
+    xGrid: number[],
+  ): number[] {
+    return calculatePoschlTellerWavefunctionFirstDerivative(
+      this.potentialDepth,
+      this.wellWidth,
+      this.mass,
+      stateIndex,
+      xGrid,
+    );
+  }
+
   calculateWavefunctionSecondDerivative(
     stateIndex: number,
     xGrid: number[],
@@ -396,6 +409,60 @@ export function calculatePoschlTellerWavefunctionZeros(
   }
 
   return zeros;
+}
+
+/**
+ * Calculate the first derivative of the wavefunction for a Pöschl-Teller potential.
+ * Uses numerical differentiation on the analytical wavefunction.
+ *
+ * @param potentialDepth - Potential depth V_0 in Joules (positive value)
+ * @param wellWidth - Width parameter a in meters
+ * @param mass - Particle mass in kg
+ * @param stateIndex - Index of the eigenstate (0 for ground state, etc.)
+ * @param xGrid - Array of x positions in meters where derivatives should be evaluated
+ * @returns Array of first derivative values
+ */
+export function calculatePoschlTellerWavefunctionFirstDerivative(
+  potentialDepth: number,
+  wellWidth: number,
+  mass: number,
+  stateIndex: number,
+  xGrid: number[],
+): number[] {
+  const { HBAR } = QuantumConstants;
+  const V0 = potentialDepth;
+  const a = wellWidth;
+  const n = stateIndex;
+
+  const lambda = (a * Math.sqrt(2 * mass * V0)) / HBAR;
+  const alpha = lambda - n - 0.5;
+  const normalization =
+    Math.sqrt(((1 / a) * (2 * alpha)) / factorial(n)) * Math.sqrt(factorial(n));
+
+  const firstDerivative: number[] = [];
+  const h = 1e-12; // Small step for numerical differentiation
+
+  for (const x of xGrid) {
+    // Evaluate at x-h, x+h
+    const xMinus = x - h;
+    const xPlus = x + h;
+
+    const tanhMinus = Math.tanh(xMinus / a);
+    const sechMinus = 1.0 / Math.cosh(xMinus / a);
+    const jacobiMinus = jacobiPolynomial(n, alpha, alpha, tanhMinus);
+    const psiMinus = normalization * Math.pow(sechMinus, alpha) * jacobiMinus;
+
+    const tanhPlus = Math.tanh(xPlus / a);
+    const sechPlus = 1.0 / Math.cosh(xPlus / a);
+    const jacobiPlus = jacobiPolynomial(n, alpha, alpha, tanhPlus);
+    const psiPlus = normalization * Math.pow(sechPlus, alpha) * jacobiPlus;
+
+    // First derivative using central difference
+    const firstDeriv = (psiPlus - psiMinus) / (2 * h);
+    firstDerivative.push(firstDeriv);
+  }
+
+  return firstDerivative;
 }
 
 /**

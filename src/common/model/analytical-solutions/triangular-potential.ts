@@ -130,6 +130,29 @@ export class TriangularPotentialSolution extends AnalyticalSolution {
     return [points]; // Return as array with single element for simple single-well potential
   }
 
+  calculateWavefunctionFirstDerivative(
+    stateIndex: number,
+    xGrid: number[],
+  ): number[] {
+    // Need energy to calculate first derivative
+    // Solve if not already done
+    const result = this.solve(stateIndex + 1, {
+      xMin: xGrid[0],
+      xMax: xGrid[xGrid.length - 1],
+      numPoints: 100,
+    });
+    const energy = result.energies[stateIndex];
+
+    return calculateTriangularPotentialWavefunctionFirstDerivative(
+      this.height,
+      this.width,
+      this.offset,
+      this.mass,
+      energy,
+      xGrid,
+    );
+  }
+
   calculateWavefunctionSecondDerivative(
     stateIndex: number,
     xGrid: number[],
@@ -697,6 +720,87 @@ export function calculateTriangularPotentialWavefunctionZeros(
   }
 
   return zeros;
+}
+
+/**
+ * Calculate the first derivative of the wavefunction for a finite triangular potential.
+ * Uses numerical differentiation.
+ *
+ * @param height - Height of the potential barrier (Joules)
+ * @param width - Width of the triangular region (meters)
+ * @param offset - Energy offset/minimum of the well (Joules)
+ * @param mass - Particle mass in kg
+ * @param energy - Energy of the eigenstate in Joules
+ * @param xGrid - Array of x positions in meters where derivatives should be evaluated
+ * @returns Array of first derivative values
+ */
+export function calculateTriangularPotentialWavefunctionFirstDerivative(
+  height: number,
+  width: number,
+  offset: number,
+  mass: number,
+  energy: number,
+  xGrid: number[],
+): number[] {
+  const { HBAR } = QuantumConstants;
+  const F = height / width;
+  const V0 = height + offset;
+  const alpha = calculateAiryAlpha(mass, F);
+  const kappa = Math.sqrt(2 * mass * (V0 - energy)) / HBAR;
+  const x0 = (energy - offset) / F;
+
+  // Get coefficients A and B from boundary conditions
+  const z0 = alpha * (0 - x0);
+  const Ai0 = airyAi(z0);
+  const Bi0 = airyBi(z0);
+  const AiPrime0 = airyAiPrime(z0);
+  const BiPrime0 = airyBiPrime(z0);
+
+  const leftAi = kappa * Ai0 - alpha * AiPrime0;
+  const leftBi = kappa * Bi0 - alpha * BiPrime0;
+
+  let A: number, B: number;
+  if (Math.abs(leftAi) > 1e-12) {
+    const ratio = -leftBi / leftAi;
+    const normFactor = 1.0 / Math.sqrt(1.0 + ratio * ratio);
+    A = ratio * normFactor;
+    B = normFactor;
+  } else {
+    A = 1;
+    B = 0;
+  }
+
+  const firstDerivative: number[] = [];
+  const h = 1e-12;
+
+  // Helper function to evaluate wavefunction
+  const evaluatePsi = (x: number): number => {
+    if (x < 0) {
+      const psiAt0 = A * Ai0 + B * Bi0;
+      return psiAt0 * Math.exp(kappa * x);
+    } else if (x <= x0) {
+      const z = alpha * (x - x0);
+      return A * airyAi(z) + B * airyBi(z);
+    } else if (x < width) {
+      const z = alpha * (x - x0);
+      return airyAi(z);
+    } else {
+      const zAtWidth = alpha * (width - x0);
+      const psiAtWidth = airyAi(zAtWidth);
+      return psiAtWidth * Math.exp(-kappa * (x - width));
+    }
+  };
+
+  for (const x of xGrid) {
+    const psiMinus = evaluatePsi(x - h);
+    const psiPlus = evaluatePsi(x + h);
+
+    // First derivative using central difference
+    const firstDeriv = (psiPlus - psiMinus) / (2 * h);
+    firstDerivative.push(firstDeriv);
+  }
+
+  return firstDerivative;
 }
 
 /**

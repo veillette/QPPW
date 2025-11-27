@@ -194,6 +194,98 @@ export function calculateFiniteWellTurningPoints(
 }
 
 /**
+ * Calculate the first derivative of the wavefunction for a finite square well.
+ *
+ * Inside the well: ψ(x) = A cos(kx) or A sin(kx)
+ * - Even parity: ψ'(x) = -Ak sin(kx)
+ * - Odd parity: ψ'(x) = Ak cos(kx)
+ *
+ * Outside the well: ψ(x) = B exp(-κ|x|) or B sign(x) exp(-κ|x|)
+ * - Even parity: ψ'(x) = -B κ sign(x) exp(-κ|x|)
+ * - Odd parity: ψ'(x) = -B κ exp(-κ|x|)
+ *
+ * @param wellWidth - Width of the well (L) in meters
+ * @param wellDepth - Depth of the well (V₀) in Joules (positive value)
+ * @param mass - Particle mass in kg
+ * @param energy - Energy of the eigenstate in Joules
+ * @param parity - Parity of the state ("even" or "odd")
+ * @param xGrid - Array of x positions in meters where derivatives should be evaluated
+ * @returns Array of first derivative values
+ */
+export function calculateFiniteWellWavefunctionFirstDerivative(
+  wellWidth: number,
+  wellDepth: number,
+  mass: number,
+  energy: number,
+  parity: "even" | "odd",
+  xGrid: number[],
+): number[] {
+  const { HBAR } = QuantumConstants;
+  const halfWidth = wellWidth / 2;
+  const k = Math.sqrt(2 * mass * (energy + wellDepth)) / HBAR; // Inside well
+  const kappa = Math.sqrt(-2 * mass * energy) / HBAR; // Outside well (decay constant)
+
+  // Determine normalization constant (simplified version)
+  let normalization: number;
+  if (parity === "even") {
+    const cosVal = Math.cos(k * halfWidth);
+    const B = cosVal * Math.exp(kappa * halfWidth);
+    const integral =
+      2 * (halfWidth + Math.sin(2 * k * halfWidth) / (4 * k)) +
+      (2 * B * B) / (2 * kappa);
+    normalization = 1 / Math.sqrt(integral);
+  } else {
+    const sinVal = Math.sin(k * halfWidth);
+    const B = sinVal * Math.exp(kappa * halfWidth);
+    const integral =
+      2 * (halfWidth - Math.sin(2 * k * halfWidth) / (4 * k)) +
+      (2 * B * B) / (2 * kappa);
+    normalization = 1 / Math.sqrt(integral);
+  }
+
+  const firstDerivative: number[] = [];
+
+  for (const x of xGrid) {
+    if (Math.abs(x) <= halfWidth) {
+      // Inside the well
+      if (parity === "even") {
+        // ψ = A cos(kx), ψ' = -Ak sin(kx)
+        const firstDeriv = -normalization * k * Math.sin(k * x);
+        firstDerivative.push(firstDeriv);
+      } else {
+        // ψ = A sin(kx), ψ' = Ak cos(kx)
+        const firstDeriv = normalization * k * Math.cos(k * x);
+        firstDerivative.push(firstDeriv);
+      }
+    } else {
+      // Outside the well (exponentially decaying)
+      const absX = Math.abs(x);
+      const signX = x >= 0 ? 1 : -1;
+
+      if (parity === "even") {
+        // ψ = B exp(-κ|x|), ψ' = -B κ sign(x) exp(-κ|x|)
+        const cosVal = Math.cos(k * halfWidth);
+        const B = normalization * cosVal * Math.exp(kappa * halfWidth);
+        const expFactor = Math.exp(-kappa * absX);
+
+        const firstDeriv = -B * kappa * signX * expFactor;
+        firstDerivative.push(firstDeriv);
+      } else {
+        // ψ = B sign(x) exp(-κ|x|), ψ' = -B κ exp(-κ|x|)
+        const sinVal = Math.sin(k * halfWidth);
+        const B = normalization * sinVal * Math.exp(kappa * halfWidth);
+        const expFactor = Math.exp(-kappa * absX);
+
+        const firstDeriv = -B * kappa * expFactor;
+        firstDerivative.push(firstDeriv);
+      }
+    }
+  }
+
+  return firstDerivative;
+}
+
+/**
  * Calculate the second derivative of the wavefunction for a finite square well.
  *
  * Inside the well: ψ(x) = A cos(kx) or A sin(kx)
@@ -356,6 +448,49 @@ export class FiniteSquareWellSolution extends AnalyticalSolution {
       energy,
     );
     return [points]; // Return as array with single element for simple single-well potential
+  }
+
+  calculateWavefunctionFirstDerivative(
+    stateIndex: number,
+    xGrid: number[],
+  ): number[] {
+    // We need energy to calculate the first derivative
+    // For now, we'll need to solve to get energies or use a cached value
+    // This is a limitation - we'll use the parity from the stored array
+    const parity =
+      this.parities[stateIndex] || (stateIndex % 2 === 0 ? "even" : "odd");
+
+    // We need the energy, so we'll need to solve if we haven't already
+    // For simplicity, compute it on the fly
+    const { HBAR } = QuantumConstants;
+    const xi0 =
+      ((this.wellWidth / 2) * Math.sqrt(2 * this.mass * this.wellDepth)) / HBAR;
+
+    let xi: number | null = null;
+    if (parity === "even") {
+      xi = findEvenParityState(xi0, Math.floor(stateIndex / 2));
+    } else {
+      xi = findOddParityState(xi0, Math.floor(stateIndex / 2));
+    }
+
+    if (xi === null) {
+      // Return zeros if we can't find the energy
+      return new Array(xGrid.length).fill(0);
+    }
+
+    const energy =
+      (HBAR * HBAR * xi * xi) /
+        (2 * this.mass * (this.wellWidth / 2) * (this.wellWidth / 2)) -
+      this.wellDepth;
+
+    return calculateFiniteWellWavefunctionFirstDerivative(
+      this.wellWidth,
+      this.wellDepth,
+      this.mass,
+      energy,
+      parity,
+      xGrid,
+    );
   }
 
   calculateWavefunctionSecondDerivative(

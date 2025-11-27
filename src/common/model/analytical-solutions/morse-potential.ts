@@ -113,6 +113,20 @@ export class MorsePotentialSolution extends AnalyticalSolution {
     return [points]; // Return as array with single element for simple single-well potential
   }
 
+  calculateWavefunctionFirstDerivative(
+    stateIndex: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateMorsePotentialWavefunctionFirstDerivative(
+      this.dissociationEnergy,
+      this.wellWidth,
+      this.equilibriumPosition,
+      this.mass,
+      stateIndex,
+      xGrid,
+    );
+  }
+
   calculateWavefunctionSecondDerivative(
     stateIndex: number,
     xGrid: number[],
@@ -437,6 +451,67 @@ export function calculateMorsePotentialWavefunctionZeros(
   }
 
   return zeros;
+}
+
+/**
+ * Calculate the first derivative of the wavefunction for a Morse potential.
+ * Uses numerical differentiation on the analytical wavefunction.
+ *
+ * @param dissociationEnergy - Dissociation energy D_e in Joules
+ * @param wellWidth - Width parameter a in meters
+ * @param equilibriumPosition - Equilibrium position x_e in meters
+ * @param mass - Particle mass in kg
+ * @param stateIndex - Index of the eigenstate (0 for ground state, etc.)
+ * @param xGrid - Array of x positions in meters where derivatives should be evaluated
+ * @returns Array of first derivative values
+ */
+export function calculateMorsePotentialWavefunctionFirstDerivative(
+  dissociationEnergy: number,
+  wellWidth: number,
+  equilibriumPosition: number,
+  mass: number,
+  stateIndex: number,
+  xGrid: number[],
+): number[] {
+  const { HBAR } = QuantumConstants;
+  const De = dissociationEnergy;
+  const a = wellWidth;
+  const xe = equilibriumPosition;
+  const n = stateIndex;
+
+  const lambda = (a * Math.sqrt(2 * mass * De)) / HBAR;
+  const alpha = 2 * lambda - 2 * n - 1;
+  const normalization = Math.sqrt(factorial(n) / a / gamma(2 * lambda - n));
+
+  const firstDerivative: number[] = [];
+  const h = 1e-12; // Small step for numerical differentiation
+
+  for (const x of xGrid) {
+    // Evaluate at x-h and x+h
+    const xMinus = x - h;
+    const xPlus = x + h;
+
+    const zMinus = 2 * lambda * Math.exp(-(xMinus - xe) / a);
+    const zPlus = 2 * lambda * Math.exp(-(xPlus - xe) / a);
+
+    const psiMinus =
+      normalization *
+      Math.pow(zMinus, lambda - n - 0.5) *
+      Math.exp(-zMinus / 2) *
+      associatedLaguerre(n, alpha, zMinus);
+
+    const psiPlus =
+      normalization *
+      Math.pow(zPlus, lambda - n - 0.5) *
+      Math.exp(-zPlus / 2) *
+      associatedLaguerre(n, alpha, zPlus);
+
+    // First derivative using central difference
+    const firstDeriv = (psiPlus - psiMinus) / (2 * h);
+    firstDerivative.push(firstDeriv);
+  }
+
+  return firstDerivative;
 }
 
 /**

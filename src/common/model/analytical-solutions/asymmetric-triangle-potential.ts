@@ -110,6 +110,18 @@ export class AsymmetricTrianglePotentialSolution extends AnalyticalSolution {
     return [points]; // Return as array with single element for simple single-well potential
   }
 
+  calculateWavefunctionFirstDerivative(
+    stateIndex: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateAsymmetricTriangleWavefunctionFirstDerivative(
+      this.slope,
+      this.mass,
+      stateIndex,
+      xGrid,
+    );
+  }
+
   calculateWavefunctionSecondDerivative(
     stateIndex: number,
     xGrid: number[],
@@ -364,6 +376,54 @@ export function calculateAsymmetricTriangleWavefunctionZeros(
   }
 
   return zeros;
+}
+
+/**
+ * Calculate the first derivative of the wavefunction for an asymmetric triangle potential.
+ * Uses numerical differentiation on the analytical wavefunction.
+ *
+ * @param slope - Slope parameter F in Joules/meter (field strength)
+ * @param mass - Particle mass in kg
+ * @param energy - Energy of the eigenstate in Joules
+ * @param xGrid - Array of x positions in meters where derivatives should be evaluated
+ * @returns Array of first derivative values
+ */
+export function calculateAsymmetricTriangleWavefunctionFirstDerivative(
+  slope: number,
+  mass: number,
+  energy: number,
+  xGrid: number[],
+): number[] {
+  const F = slope;
+  const alpha = calculateAiryAlpha(mass, F);
+  const x0 = energy / F;
+
+  const firstDerivative: number[] = [];
+  const h = 1e-12; // Small step for numerical differentiation
+
+  for (const x of xGrid) {
+    if (x < 0) {
+      // In the infinite wall region, wavefunction is zero
+      firstDerivative.push(0);
+      continue;
+    }
+
+    // Evaluate at x-h, x+h
+    const xMinus = x - h;
+    const xPlus = x + h;
+
+    const zMinus = alpha * (xMinus - x0);
+    const psiMinus = xMinus < 0 ? 0 : airyAi(zMinus);
+
+    const zPlus = alpha * (xPlus - x0);
+    const psiPlus = airyAi(zPlus);
+
+    // First derivative using central difference
+    const firstDeriv = (psiPlus - psiMinus) / (2 * h);
+    firstDerivative.push(firstDeriv);
+  }
+
+  return firstDerivative;
 }
 
 /**
