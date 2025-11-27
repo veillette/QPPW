@@ -799,8 +799,10 @@ export abstract class BaseModel {
       const firstDerivativeInM = firstDerivativeArray[0];
 
       // Convert first derivative from m^(-3/2) to nm^(-3/2)
-      // dψ/dx in nm^(-3/2) = dψ/dx in m^(-3/2) * (m/nm)
-      firstDerivativeInNm = firstDerivativeInM * QuantumConstants.M_TO_NM;
+      // Since 1 m^(-3/2) = (10^9 nm)^(-3/2) = 10^(-13.5) nm^(-3/2)
+      // We multiply by 10^(-1.5) which is the same as dividing by 10^(1.5)
+      firstDerivativeInNm =
+        firstDerivativeInM / Math.pow(QuantumConstants.M_TO_NM, 1.5);
     } else {
       // Fall back to finite difference for first derivative
       // f'(x) ≈ (f(x+h) - f(x-h)) / (2h)
@@ -810,7 +812,9 @@ export abstract class BaseModel {
       const firstDerivativeInM = (psi_right - psi_left) / (2 * h);
 
       // Convert first derivative from m^(-3/2) to nm^(-3/2)
-      firstDerivativeInNm = firstDerivativeInM * QuantumConstants.M_TO_NM;
+      // Since 1 m^(-3/2) = (10^9 nm)^(-3/2) = 10^(-13.5) nm^(-3/2)
+      firstDerivativeInNm =
+        firstDerivativeInM / Math.pow(QuantumConstants.M_TO_NM, 1.5);
     }
 
     // Try to use analytical solution for second derivative (more accurate)
@@ -826,8 +830,10 @@ export abstract class BaseModel {
       const secondDerivativeInM = secondDerivativeArray[0];
 
       // Convert from m^(-5/2) to nm^(-5/2)
+      // Since 1 m^(-5/2) = (10^9 nm)^(-5/2) = 10^(-22.5) nm^(-5/2)
+      // We multiply by 10^(-2.5) which is the same as dividing by 10^(2.5)
       secondDerivativeInNm =
-        secondDerivativeInM * Math.pow(QuantumConstants.M_TO_NM, 2);
+        secondDerivativeInM / Math.pow(QuantumConstants.M_TO_NM, 2.5);
     } else {
       // Fall back to finite difference for second derivative
       // f''(x) ≈ (f(x-h) - 2f(x) + f(x+h)) / h²
@@ -837,8 +843,9 @@ export abstract class BaseModel {
       const secondDerivativeInM = (psi_left - 2 * value + psi_right) / (h * h);
 
       // Convert from m^(-5/2) to nm^(-5/2)
+      // Since 1 m^(-5/2) = (10^9 nm)^(-5/2) = 10^(-22.5) nm^(-5/2)
       secondDerivativeInNm =
-        secondDerivativeInM * Math.pow(QuantumConstants.M_TO_NM, 2);
+        secondDerivativeInM / Math.pow(QuantumConstants.M_TO_NM, 2.5);
     }
 
     return {
