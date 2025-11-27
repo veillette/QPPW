@@ -473,6 +473,47 @@ export abstract class BaseModel {
   }
 
   /**
+   * Get the first derivative of the wavefunction for a specific quantum number.
+   * Uses the analytical solution when available, which is more accurate than finite difference.
+   * @param n - The quantum number (1, 2, 3, ...)
+   * @param xGrid - Optional array of x positions in meters where derivatives should be evaluated.
+   *                If not provided, uses the default grid from bound states.
+   * @returns Array of first derivative values (in m^-3/2), or null if unavailable
+   */
+  public getWavefunctionFirstDerivative(
+    n: number,
+    xGrid?: number[],
+  ): number[] | null {
+    if (!this.boundStateResult) {
+      this.calculateBoundStates();
+    }
+
+    // Get analytical solution from solver
+    const analyticalSolution = this.solver.getAnalyticalSolution();
+
+    if (analyticalSolution && n > 0) {
+      // Use xGrid parameter or default grid from bound states (converted to meters)
+      const gridInMeters =
+        xGrid ||
+        (this.boundStateResult?.xGrid
+          ? this.boundStateResult.xGrid
+          : null);
+
+      if (!gridInMeters) {
+        return null;
+      }
+
+      // Calculate using analytical solution (stateIndex is 0-indexed)
+      return analyticalSolution.calculateWavefunctionFirstDerivative(
+        n - 1,
+        gridInMeters,
+      );
+    }
+
+    return null;
+  }
+
+  /**
    * Get the second derivative of the wavefunction for a specific quantum number.
    * Uses the analytical solution when available, which is more accurate than finite difference.
    * @param n - The quantum number (1, 2, 3, ...)
