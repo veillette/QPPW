@@ -2200,20 +2200,21 @@ export class WaveFunctionChartNode extends Node {
     this.curvatureMarkerHandle.centerX = viewX;
     this.curvatureMarkerHandle.centerY = yTop + 20;
 
-    // Calculate and display second derivative
-    const secondDerivative = this.calculateSecondDerivative(x);
+    // Calculate and display derivatives
+    const derivatives = this.calculateDerivatives(x);
 
-    if (secondDerivative !== null) {
-      // Create parabola shape
+    if (derivatives !== null) {
+      // Create parabola shape with first and second derivatives
       const parabolaShape = this.createCurvatureParabola(
         x,
-        secondDerivative.value,
-        secondDerivative.wavefunctionValue,
+        derivatives.firstDerivative,
+        derivatives.secondDerivative,
+        derivatives.wavefunctionValue,
       );
       this.curvatureParabola.shape = parabolaShape;
 
       // Update label with proper units (nm^-5/2)
-      this.curvatureLabel.string = `d²ψ/dx² = ${secondDerivative.value.toExponential(2)} nm⁻⁵ᐟ²`;
+      this.curvatureLabel.string = `d²ψ/dx² = ${derivatives.secondDerivative.toExponential(2)} nm⁻⁵ᐟ²`;
       this.curvatureLabel.centerX = viewX;
       this.curvatureLabel.bottom = yTop - 5;
     } else {
@@ -2223,15 +2224,19 @@ export class WaveFunctionChartNode extends Node {
   }
 
   /**
-   * Calculates the second derivative of the wavefunction at a given x position.
+   * Calculates the first and second derivatives of the wavefunction at a given x position.
    * Uses the analytical solution from the model when available for better accuracy,
    * falls back to finite difference method otherwise.
    * @param xData - X position in nm
-   * @returns Object with second derivative value and wavefunction value, or null if not available
+   * @returns Object with first derivative, second derivative, and wavefunction value, or null if not available
    */
-  private calculateSecondDerivative(
+  private calculateDerivatives(
     xData: number,
-  ): { value: number; wavefunctionValue: number } | null {
+  ): {
+    firstDerivative: number;
+    secondDerivative: number;
+    wavefunctionValue: number;
+  } | null {
     const boundStates = this.model.getBoundStates();
     if (!boundStates) {
       return null;
@@ -2270,70 +2275,80 @@ export class WaveFunctionChartNode extends Node {
       return null;
     }
 
+    // Need at least one point on each side for derivatives
+    if (i1 === 0 || i1 >= xGrid.length - 2) {
+      return null;
+    }
+
     // Interpolate wavefunction value at xData
     const t = (xInM - xGrid[i1]) / (xGrid[i1 + 1] - xGrid[i1]);
     const psi = wavefunction[i1] * (1 - t) + wavefunction[i1 + 1] * t;
 
-    // Try to use analytical solution first (more accurate)
+    // Grid spacing (assumes uniform grid)
+    const h = xGrid[1] - xGrid[0];
+
+    // Calculate first derivative using central difference
+    // f'(x) ≈ (f(x+h) - f(x-h)) / (2h)
+    const psi_left = wavefunction[i1];
+    const psi_right = wavefunction[i1 + 1];
+    const firstDerivativeInM = (psi_right - psi_left) / (2 * h);
+
+    // Convert first derivative from m^(-3/2) to nm^(-3/2)
+    // dψ/dx in nm^(-3/2) = dψ/dx in m^(-3/2) * (m/nm)
+    const firstDerivativeInNm =
+      firstDerivativeInM * QuantumConstants.M_TO_NM;
+
+    // Try to use analytical solution for second derivative (more accurate)
     const secondDerivativeArray = this.model.getWavefunctionSecondDerivative(
       selectedIndex + 1,
       [xInM],
     );
 
+    let secondDerivativeInNm: number;
+
     if (secondDerivativeArray && secondDerivativeArray.length > 0) {
-      // Analytical solution available - use it
+      // Analytical solution available for second derivative
       const secondDerivativeInM = secondDerivativeArray[0];
 
       // Convert from m^(-5/2) to nm^(-5/2)
-      const secondDerivativeInNm =
+      secondDerivativeInNm =
         secondDerivativeInM * Math.pow(QuantumConstants.M_TO_NM, 2);
+    } else {
+      // Fall back to finite difference for second derivative
+      // f''(x) ≈ (f(x-h) - 2f(x) + f(x+h)) / h²
+      const secondDerivativeInM = (psi_left - 2 * psi + psi_right) / (h * h);
 
-      return {
-        value: secondDerivativeInNm,
-        wavefunctionValue: psi,
-      };
+      // Convert from m^(-5/2) to nm^(-5/2)
+      secondDerivativeInNm =
+        secondDerivativeInM * Math.pow(QuantumConstants.M_TO_NM, 2);
     }
-
-    // Fall back to finite difference method
-    if (i1 === 0 || i1 >= xGrid.length - 2) {
-      return null; // Need at least one point on each side for second derivative
-    }
-
-    // Use finite difference to calculate second derivative
-    // f''(x) ≈ (f(x-h) - 2f(x) + f(x+h)) / h²
-    const h = xGrid[1] - xGrid[0]; // Grid spacing (assumes uniform grid)
-
-    // Calculate second derivative using three-point stencil
-    const psi_left = wavefunction[i1];
-    const psi_right = wavefunction[i1 + 1];
-    const secondDerivativeInM = (psi_left - 2 * psi + psi_right) / (h * h);
-
-    // Convert from m^(-5/2) to nm^(-5/2)
-    const secondDerivativeInNm =
-      secondDerivativeInM * Math.pow(QuantumConstants.M_TO_NM, 2);
 
     return {
-      value: secondDerivativeInNm,
+      firstDerivative: firstDerivativeInNm,
+      secondDerivative: secondDerivativeInNm,
       wavefunctionValue: psi,
     };
   }
 
   /**
    * Creates a parabola shape that matches the curvature at a point.
+   * Uses Taylor expansion: y = y₀ + y'₀(x - x₀) + (1/2)y''₀(x - x₀)²
    * @param xData - X position in nm
-   * @param secondDerivative - Second derivative value
-   * @param wavefunctionValue - Value of wavefunction at the point
+   * @param firstDerivative - First derivative value at the point (nm^-3/2)
+   * @param secondDerivative - Second derivative value at the point (nm^-5/2)
+   * @param wavefunctionValue - Value of wavefunction at the point (nm^-1/2)
    * @returns Shape representing the parabola
    */
   private createCurvatureParabola(
     xData: number,
+    firstDerivative: number,
     secondDerivative: number,
     wavefunctionValue: number,
   ): Shape {
     const shape = new Shape();
 
     // Create a small parabola centered at (xData, wavefunctionValue)
-    // y = y0 + (1/2) * f''(x0) * (x - x0)²
+    // Using Taylor expansion: y = y₀ + y'₀ * (x - x₀) + (1/2) * y''₀ * (x - x₀)²
     const centerX = xData;
     const centerY = wavefunctionValue;
 
@@ -2349,7 +2364,9 @@ export class WaveFunctionChartNode extends Node {
       dx += parabolaHalfWidth / 10
     ) {
       const x = centerX + dx;
-      const y = centerY + 0.5 * secondDerivative * dx * dx;
+      // Taylor expansion with first and second derivative terms
+      const y =
+        centerY + firstDerivative * dx + 0.5 * secondDerivative * dx * dx;
 
       const viewX = this.dataToViewX(x);
       const viewY = this.dataToViewY(y);
