@@ -1115,31 +1115,14 @@ export class WaveFunctionChartNode extends Node {
       return;
     }
 
-    const config = this.model.superpositionConfigProperty.value;
-    const numPoints = boundStates.xGrid.length;
-
-    // Compute the current superposition wavefunction magnitude
-    let maxAbs = 0;
-    for (let i = 0; i < numPoints; i++) {
-      let real = 0;
-      let imag = 0;
-
-      for (let n = 0; n < config.amplitudes.length; n++) {
-        const amplitude = config.amplitudes[n];
-        if (amplitude === 0 || n >= boundStates.wavefunctions.length) {
-          continue;
-        }
-
-        const eigenfunction = boundStates.wavefunctions[n];
-        const phase = config.phases[n];
-
-        real += amplitude * Math.cos(phase) * eigenfunction[i];
-        imag += amplitude * Math.sin(phase) * eigenfunction[i];
-      }
-
-      const magnitude = Math.sqrt(real * real + imag * imag);
-      maxAbs = Math.max(maxAbs, magnitude);
+    // Get time-evolved superposition from model (at current time, but phase doesn't affect magnitude)
+    const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
+    const superposition = this.model.getTimeEvolvedSuperposition(time);
+    if (!superposition) {
+      return;
     }
+
+    let maxAbs = superposition.maxMagnitude;
 
     // Guard against zero maxAbs (no valid states for superposition)
     if (maxAbs === 0) {
@@ -1173,54 +1156,20 @@ export class WaveFunctionChartNode extends Node {
       return;
     }
 
-    const config = this.model.superpositionConfigProperty.value;
+    // Get time-evolved superposition from model
     const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
-    const displayMode = this.getEffectiveDisplayMode();
-    const numPoints = boundStates.xGrid.length;
-
-    // Compute time-evolved superposition: ψ(x,t) = Σ c_n * e^(iφ_n) * ψ_n(x) * e^(-iE_n*t/ℏ)
-    const realPart = new Array(numPoints).fill(0);
-    const imagPart = new Array(numPoints).fill(0);
-
-    for (let n = 0; n < config.amplitudes.length; n++) {
-      const amplitude = config.amplitudes[n];
-      const initialPhase = config.phases[n];
-
-      if (amplitude === 0 || n >= boundStates.wavefunctions.length) {
-        continue;
-      }
-
-      const eigenfunction = boundStates.wavefunctions[n];
-      const energy = boundStates.energies[n];
-
-      // Time evolution phase for this eigenstate: -E_n*t/ℏ
-      const timePhase = -(energy * time) / QuantumConstants.HBAR;
-
-      // Total phase: initial phase + time evolution phase
-      const totalPhase = initialPhase + timePhase;
-
-      // Complex coefficient: c_n * e^(i*totalPhase) = c_n * (cos(totalPhase) + i*sin(totalPhase))
-      const realCoeff = amplitude * Math.cos(totalPhase);
-      const imagCoeff = amplitude * Math.sin(totalPhase);
-
-      // Add contribution to superposition
-      for (let i = 0; i < numPoints; i++) {
-        realPart[i] += realCoeff * eigenfunction[i];
-        imagPart[i] += imagCoeff * eigenfunction[i];
-      }
+    const superposition = this.model.getTimeEvolvedSuperposition(time);
+    if (!superposition) {
+      return;
     }
+
+    const displayMode = this.getEffectiveDisplayMode();
 
     // Now display based on display mode
     if (displayMode === "probabilityDensity") {
-      // |ψ|² = Real² + Imag²
-      const probabilityDensity = new Array(numPoints);
-      for (let i = 0; i < numPoints; i++) {
-        probabilityDensity[i] =
-          realPart[i] * realPart[i] + imagPart[i] * imagPart[i];
-      }
       this.plotProbabilityDensityFromArray(
         boundStates.xGrid,
-        probabilityDensity,
+        superposition.probabilityDensity,
       );
       this.probabilityDensityPath.visible = true;
       this.classicalProbabilityPath.visible = false; // Hide classical for superposition
@@ -1230,7 +1179,11 @@ export class WaveFunctionChartNode extends Node {
       this.phaseColorNode.visible = false;
     } else if (displayMode === "phaseColor") {
       // Magnitude and phase for coloring
-      this.plotPhaseColoredSuperposition(boundStates.xGrid, realPart, imagPart);
+      this.plotPhaseColoredSuperposition(
+        boundStates.xGrid,
+        superposition.realPart,
+        superposition.imagPart,
+      );
       this.probabilityDensityPath.visible = false;
       this.classicalProbabilityPath.visible = false;
       this.realPartPath.visible = false;
@@ -1239,17 +1192,11 @@ export class WaveFunctionChartNode extends Node {
       this.phaseColorNode.visible = true;
     } else {
       // Display real, imaginary, and magnitude components
-      const magnitude = new Array(numPoints);
-      for (let i = 0; i < numPoints; i++) {
-        magnitude[i] = Math.sqrt(
-          realPart[i] * realPart[i] + imagPart[i] * imagPart[i],
-        );
-      }
       this.plotSuperpositionComponents(
         boundStates.xGrid,
-        realPart,
-        imagPart,
-        magnitude,
+        superposition.realPart,
+        superposition.imagPart,
+        superposition.magnitude,
       );
       this.probabilityDensityPath.visible = false;
       this.classicalProbabilityPath.visible = false;
@@ -1261,7 +1208,7 @@ export class WaveFunctionChartNode extends Node {
     }
 
     // Update zeros visualization using the real part of the superposition
-    this.updateZerosVisualization(boundStates.xGrid, realPart);
+    this.updateZerosVisualization(boundStates.xGrid, superposition.realPart);
   }
 
   /**
@@ -2186,11 +2133,6 @@ export class WaveFunctionChartNode extends Node {
     xStart: number,
     xEnd: number,
   ): number | null {
-    const boundStates = this.model.getBoundStates();
-    if (!boundStates) {
-      return null;
-    }
-
     // Only calculate for probability density mode
     const displayMode = this.getEffectiveDisplayMode();
     if (displayMode !== "probabilityDensity") {
@@ -2201,101 +2143,17 @@ export class WaveFunctionChartNode extends Node {
     const superpositionType = this.model.superpositionTypeProperty.value;
     const isSuperposition = superpositionType !== SuperpositionType.SINGLE;
 
-    let probabilityDensity: number[];
+    const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
+    const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
 
-    if (isSuperposition && hasSuperpositionConfig(this.model)) {
-      // Calculate superposition probability density
-      const config = this.model.superpositionConfigProperty.value;
-      const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
-      const numPoints = boundStates.xGrid.length;
-
-      // Compute time-evolved superposition
-      const realPart = new Array(numPoints).fill(0);
-      const imagPart = new Array(numPoints).fill(0);
-
-      for (let n = 0; n < config.amplitudes.length; n++) {
-        const amplitude = config.amplitudes[n];
-        const initialPhase = config.phases[n];
-
-        if (amplitude === 0 || n >= boundStates.wavefunctions.length) {
-          continue;
-        }
-
-        const eigenfunction = boundStates.wavefunctions[n];
-        const energy = boundStates.energies[n];
-
-        // Time evolution phase for this eigenstate: -E_n*t/ℏ
-        const timePhase = -(energy * time) / QuantumConstants.HBAR;
-
-        // Total phase: initial phase + time evolution phase
-        const totalPhase = initialPhase + timePhase;
-
-        // Complex coefficient
-        const realCoeff = amplitude * Math.cos(totalPhase);
-        const imagCoeff = amplitude * Math.sin(totalPhase);
-
-        // Add contribution to superposition
-        for (let i = 0; i < numPoints; i++) {
-          realPart[i] += realCoeff * eigenfunction[i];
-          imagPart[i] += imagCoeff * eigenfunction[i];
-        }
-      }
-
-      // Calculate |ψ|²
-      probabilityDensity = new Array(numPoints);
-      for (let i = 0; i < numPoints; i++) {
-        probabilityDensity[i] =
-          realPart[i] * realPart[i] + imagPart[i] * imagPart[i];
-      }
-    } else {
-      // Single eigenstate
-      const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
-      if (
-        selectedIndex < 0 ||
-        selectedIndex >= boundStates.wavefunctions.length
-      ) {
-        return null;
-      }
-
-      const wavefunction = boundStates.wavefunctions[selectedIndex];
-      probabilityDensity = wavefunction.map((psi) => psi * psi);
-    }
-
-    // Integrate probability density in the region using trapezoidal rule
-    const xGrid = boundStates.xGrid;
-    let probability = 0;
-
-    for (let i = 0; i < xGrid.length - 1; i++) {
-      const x1 = xGrid[i] * QuantumConstants.M_TO_NM; // Convert to nm
-      const x2 = xGrid[i + 1] * QuantumConstants.M_TO_NM;
-
-      // Check if this segment overlaps with our region
-      if (x2 >= xStart && x1 <= xEnd) {
-        // Calculate overlap
-        const segmentStart = Math.max(x1, xStart);
-        const segmentEnd = Math.min(x2, xEnd);
-
-        if (segmentEnd > segmentStart) {
-          // Linearly interpolate probability density values at segment boundaries
-          const t1 = (segmentStart - x1) / (x2 - x1);
-          const t2 = (segmentEnd - x1) / (x2 - x1);
-
-          const p1 =
-            probabilityDensity[i] * (1 - t1) +
-            probabilityDensity[i + 1] * t1;
-          const p2 =
-            probabilityDensity[i] * (1 - t2) +
-            probabilityDensity[i + 1] * t2;
-
-          // Trapezoidal rule
-          const dx = segmentEnd - segmentStart;
-          probability += 0.5 * (p1 + p2) * dx * QuantumConstants.NM_TO_M;
-        }
-      }
-    }
-
-    // Convert to percentage
-    return probability * 100;
+    // Use model's calculation method
+    return this.model.getProbabilityInRegion(
+      xStart,
+      xEnd,
+      selectedIndex,
+      time,
+      isSuperposition,
+    );
   }
 
   /**
@@ -2377,11 +2235,6 @@ export class WaveFunctionChartNode extends Node {
     secondDerivative: number;
     wavefunctionValue: number;
   } | null {
-    const boundStates = this.model.getBoundStates();
-    if (!boundStates) {
-      return null;
-    }
-
     // Only calculate for wavefunction mode
     const displayMode = this.getEffectiveDisplayMode();
     if (displayMode !== "waveFunction") {
@@ -2389,102 +2242,17 @@ export class WaveFunctionChartNode extends Node {
     }
 
     const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
-    if (
-      selectedIndex < 0 ||
-      selectedIndex >= boundStates.wavefunctions.length
-    ) {
+
+    // Use model's calculation method
+    const result = this.model.getWavefunctionAtPosition(selectedIndex, xData);
+    if (!result) {
       return null;
-    }
-
-    const xGrid = boundStates.xGrid;
-    const wavefunction = boundStates.wavefunctions[selectedIndex];
-
-    // Convert xData from nm to m
-    const xInM = xData * QuantumConstants.NM_TO_M;
-
-    // Find the grid points surrounding xData for interpolation
-    let i1 = -1;
-    for (let i = 0; i < xGrid.length - 1; i++) {
-      if (xGrid[i] <= xInM && xInM <= xGrid[i + 1]) {
-        i1 = i;
-        break;
-      }
-    }
-
-    if (i1 === -1) {
-      return null;
-    }
-
-    // Need at least one point on each side for derivatives
-    if (i1 === 0 || i1 >= xGrid.length - 2) {
-      return null;
-    }
-
-    // Interpolate wavefunction value at xData
-    const t = (xInM - xGrid[i1]) / (xGrid[i1 + 1] - xGrid[i1]);
-    const psi = wavefunction[i1] * (1 - t) + wavefunction[i1 + 1] * t;
-
-    // Try to use analytical solution for first derivative (more accurate)
-    const firstDerivativeArray = this.model.getWavefunctionFirstDerivative(
-      selectedIndex + 1,
-      [xInM],
-    );
-
-    let firstDerivativeInNm: number;
-
-    if (firstDerivativeArray && firstDerivativeArray.length > 0) {
-      // Analytical solution available for first derivative
-      const firstDerivativeInM = firstDerivativeArray[0];
-
-      // Convert first derivative from m^(-3/2) to nm^(-3/2)
-      // dψ/dx in nm^(-3/2) = dψ/dx in m^(-3/2) * (m/nm)
-      firstDerivativeInNm = firstDerivativeInM * QuantumConstants.M_TO_NM;
-    } else {
-      // Fall back to finite difference for first derivative
-      // f'(x) ≈ (f(x+h) - f(x-h)) / (2h)
-      // Grid spacing (assumes uniform grid)
-      const h = xGrid[1] - xGrid[0];
-      const psi_left = wavefunction[i1];
-      const psi_right = wavefunction[i1 + 1];
-      const firstDerivativeInM = (psi_right - psi_left) / (2 * h);
-
-      // Convert first derivative from m^(-3/2) to nm^(-3/2)
-      firstDerivativeInNm = firstDerivativeInM * QuantumConstants.M_TO_NM;
-    }
-
-    // Try to use analytical solution for second derivative (more accurate)
-    const secondDerivativeArray = this.model.getWavefunctionSecondDerivative(
-      selectedIndex + 1,
-      [xInM],
-    );
-
-    let secondDerivativeInNm: number;
-
-    if (secondDerivativeArray && secondDerivativeArray.length > 0) {
-      // Analytical solution available for second derivative
-      const secondDerivativeInM = secondDerivativeArray[0];
-
-      // Convert from m^(-5/2) to nm^(-5/2)
-      secondDerivativeInNm =
-        secondDerivativeInM * Math.pow(QuantumConstants.M_TO_NM, 2);
-    } else {
-      // Fall back to finite difference for second derivative
-      // f''(x) ≈ (f(x-h) - 2f(x) + f(x+h)) / h²
-      // Grid spacing (assumes uniform grid)
-      const h = xGrid[1] - xGrid[0];
-      const psi_left = wavefunction[i1];
-      const psi_right = wavefunction[i1 + 1];
-      const secondDerivativeInM = (psi_left - 2 * psi + psi_right) / (h * h);
-
-      // Convert from m^(-5/2) to nm^(-5/2)
-      secondDerivativeInNm =
-        secondDerivativeInM * Math.pow(QuantumConstants.M_TO_NM, 2);
     }
 
     return {
-      firstDerivative: firstDerivativeInNm,
-      secondDerivative: secondDerivativeInNm,
-      wavefunctionValue: psi,
+      firstDerivative: result.firstDerivative,
+      secondDerivative: result.secondDerivative,
+      wavefunctionValue: result.value,
     };
   }
 

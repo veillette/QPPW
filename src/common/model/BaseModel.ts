@@ -564,4 +564,287 @@ export abstract class BaseModel {
     // Subclasses must override this method to provide potential-specific implementations
     return null;
   }
+
+  /**
+   * Calculate the time-evolved superposition wavefunction.
+   * Computes ψ(x,t) = Σ c_n * e^(iφ_n) * ψ_n(x) * e^(-iE_n*t/ℏ)
+   *
+   * @param timeInSeconds - Current time in seconds
+   * @returns Object containing real part, imaginary part, magnitude, probability density arrays,
+   *          or null if bound states are not available
+   */
+  public getTimeEvolvedSuperposition(
+    timeInSeconds: number,
+  ): {
+    realPart: number[];
+    imagPart: number[];
+    magnitude: number[];
+    probabilityDensity: number[];
+    maxMagnitude: number;
+  } | null {
+    const boundStates = this.getBoundStates();
+    if (!boundStates) {
+      return null;
+    }
+
+    const config = this.superpositionConfigProperty.value;
+    const numPoints = boundStates.xGrid.length;
+
+    // Initialize arrays
+    const realPart = new Array(numPoints).fill(0);
+    const imagPart = new Array(numPoints).fill(0);
+    const magnitude = new Array(numPoints);
+    const probabilityDensity = new Array(numPoints);
+
+    // Compute time-evolved superposition: ψ(x,t) = Σ c_n * e^(iφ_n) * ψ_n(x) * e^(-iE_n*t/ℏ)
+    for (let n = 0; n < config.amplitudes.length; n++) {
+      const amplitude = config.amplitudes[n];
+      const initialPhase = config.phases[n];
+
+      if (amplitude === 0 || n >= boundStates.wavefunctions.length) {
+        continue;
+      }
+
+      const eigenfunction = boundStates.wavefunctions[n];
+      const energy = boundStates.energies[n];
+
+      // Time evolution phase for this eigenstate: -E_n*t/ℏ
+      const timePhase = -(energy * timeInSeconds) / QuantumConstants.HBAR;
+
+      // Total phase: initial phase + time evolution phase
+      const totalPhase = initialPhase + timePhase;
+
+      // Complex coefficient: c_n * e^(i*totalPhase) = c_n * (cos(totalPhase) + i*sin(totalPhase))
+      const realCoeff = amplitude * Math.cos(totalPhase);
+      const imagCoeff = amplitude * Math.sin(totalPhase);
+
+      // Add contribution to superposition
+      for (let i = 0; i < numPoints; i++) {
+        realPart[i] += realCoeff * eigenfunction[i];
+        imagPart[i] += imagCoeff * eigenfunction[i];
+      }
+    }
+
+    // Calculate magnitude and probability density
+    let maxMagnitude = 0;
+    for (let i = 0; i < numPoints; i++) {
+      magnitude[i] = Math.sqrt(
+        realPart[i] * realPart[i] + imagPart[i] * imagPart[i],
+      );
+      probabilityDensity[i] =
+        realPart[i] * realPart[i] + imagPart[i] * imagPart[i];
+      maxMagnitude = Math.max(maxMagnitude, magnitude[i]);
+    }
+
+    return {
+      realPart,
+      imagPart,
+      magnitude,
+      probabilityDensity,
+      maxMagnitude,
+    };
+  }
+
+  /**
+   * Calculate the probability of finding the particle in a specified region.
+   * Uses trapezoidal integration of the probability density.
+   *
+   * For single eigenstate: Uses |ψ_n(x)|²
+   * For superposition: Uses time-evolved superposition probability density
+   *
+   * @param xStartNm - Start x position in nanometers
+   * @param xEndNm - End x position in nanometers
+   * @param energyIndex - Energy level index (0-indexed) for single eigenstate
+   * @param timeInSeconds - Current time in seconds (for superposition)
+   * @param isSuperposition - Whether to calculate for superposition or single state
+   * @returns Probability as a percentage (0-100), or null if not available
+   */
+  public getProbabilityInRegion(
+    xStartNm: number,
+    xEndNm: number,
+    energyIndex: number,
+    timeInSeconds: number,
+    isSuperposition: boolean,
+  ): number | null {
+    const boundStates = this.getBoundStates();
+    if (!boundStates) {
+      return null;
+    }
+
+    let probabilityDensity: number[];
+
+    if (isSuperposition) {
+      // Calculate time-evolved superposition probability density
+      const superposition = this.getTimeEvolvedSuperposition(timeInSeconds);
+      if (!superposition) {
+        return null;
+      }
+      probabilityDensity = superposition.probabilityDensity;
+    } else {
+      // Single eigenstate
+      if (
+        energyIndex < 0 ||
+        energyIndex >= boundStates.wavefunctions.length
+      ) {
+        return null;
+      }
+
+      const wavefunction = boundStates.wavefunctions[energyIndex];
+      probabilityDensity = wavefunction.map((psi) => psi * psi);
+    }
+
+    // Integrate probability density in the region using trapezoidal rule
+    const xGrid = boundStates.xGrid;
+    let probability = 0;
+
+    for (let i = 0; i < xGrid.length - 1; i++) {
+      const x1 = xGrid[i] * QuantumConstants.M_TO_NM; // Convert to nm
+      const x2 = xGrid[i + 1] * QuantumConstants.M_TO_NM;
+
+      // Check if this segment overlaps with our region
+      if (x2 >= xStartNm && x1 <= xEndNm) {
+        // Calculate overlap
+        const segmentStart = Math.max(x1, xStartNm);
+        const segmentEnd = Math.min(x2, xEndNm);
+
+        if (segmentEnd > segmentStart) {
+          // Linearly interpolate probability density values at segment boundaries
+          const t1 = (segmentStart - x1) / (x2 - x1);
+          const t2 = (segmentEnd - x1) / (x2 - x1);
+
+          const p1 =
+            probabilityDensity[i] * (1 - t1) +
+            probabilityDensity[i + 1] * t1;
+          const p2 =
+            probabilityDensity[i] * (1 - t2) +
+            probabilityDensity[i + 1] * t2;
+
+          // Trapezoidal rule
+          const dx = segmentEnd - segmentStart;
+          probability += 0.5 * (p1 + p2) * dx * QuantumConstants.NM_TO_M;
+        }
+      }
+    }
+
+    // Convert to percentage
+    return probability * 100;
+  }
+
+  /**
+   * Get the wavefunction value and derivatives at a specific position.
+   * Uses analytical derivatives when available, falls back to finite difference.
+   *
+   * @param energyIndex - Energy level index (0-indexed)
+   * @param xNm - Position in nanometers
+   * @returns Object with wavefunction value and derivatives in nm units, or null if unavailable
+   */
+  public getWavefunctionAtPosition(
+    energyIndex: number,
+    xNm: number,
+  ): {
+    value: number;
+    firstDerivative: number;
+    secondDerivative: number;
+  } | null {
+    const boundStates = this.getBoundStates();
+    if (!boundStates) {
+      return null;
+    }
+
+    if (
+      energyIndex < 0 ||
+      energyIndex >= boundStates.wavefunctions.length
+    ) {
+      return null;
+    }
+
+    const xGrid = boundStates.xGrid;
+    const wavefunction = boundStates.wavefunctions[energyIndex];
+
+    // Convert xNm from nm to m
+    const xInM = xNm * QuantumConstants.NM_TO_M;
+
+    // Find the grid points surrounding xNm for interpolation
+    let i1 = -1;
+    for (let i = 0; i < xGrid.length - 1; i++) {
+      if (xGrid[i] <= xInM && xInM <= xGrid[i + 1]) {
+        i1 = i;
+        break;
+      }
+    }
+
+    if (i1 === -1) {
+      return null;
+    }
+
+    // Need at least one point on each side for derivatives
+    if (i1 === 0 || i1 >= xGrid.length - 2) {
+      return null;
+    }
+
+    // Interpolate wavefunction value at xNm
+    const t = (xInM - xGrid[i1]) / (xGrid[i1 + 1] - xGrid[i1]);
+    const value = wavefunction[i1] * (1 - t) + wavefunction[i1 + 1] * t;
+
+    // Try to use analytical solution for first derivative (more accurate)
+    const firstDerivativeArray = this.getWavefunctionFirstDerivative(
+      energyIndex + 1,
+      [xInM],
+    );
+
+    let firstDerivativeInNm: number;
+
+    if (firstDerivativeArray && firstDerivativeArray.length > 0) {
+      // Analytical solution available for first derivative
+      const firstDerivativeInM = firstDerivativeArray[0];
+
+      // Convert first derivative from m^(-3/2) to nm^(-3/2)
+      // dψ/dx in nm^(-3/2) = dψ/dx in m^(-3/2) * (m/nm)
+      firstDerivativeInNm = firstDerivativeInM * QuantumConstants.M_TO_NM;
+    } else {
+      // Fall back to finite difference for first derivative
+      // f'(x) ≈ (f(x+h) - f(x-h)) / (2h)
+      const h = xGrid[1] - xGrid[0];
+      const psi_left = wavefunction[i1];
+      const psi_right = wavefunction[i1 + 1];
+      const firstDerivativeInM = (psi_right - psi_left) / (2 * h);
+
+      // Convert first derivative from m^(-3/2) to nm^(-3/2)
+      firstDerivativeInNm = firstDerivativeInM * QuantumConstants.M_TO_NM;
+    }
+
+    // Try to use analytical solution for second derivative (more accurate)
+    const secondDerivativeArray = this.getWavefunctionSecondDerivative(
+      energyIndex + 1,
+      [xInM],
+    );
+
+    let secondDerivativeInNm: number;
+
+    if (secondDerivativeArray && secondDerivativeArray.length > 0) {
+      // Analytical solution available for second derivative
+      const secondDerivativeInM = secondDerivativeArray[0];
+
+      // Convert from m^(-5/2) to nm^(-5/2)
+      secondDerivativeInNm =
+        secondDerivativeInM * Math.pow(QuantumConstants.M_TO_NM, 2);
+    } else {
+      // Fall back to finite difference for second derivative
+      // f''(x) ≈ (f(x-h) - 2f(x) + f(x+h)) / h²
+      const h = xGrid[1] - xGrid[0];
+      const psi_left = wavefunction[i1];
+      const psi_right = wavefunction[i1 + 1];
+      const secondDerivativeInM = (psi_left - 2 * value + psi_right) / (h * h);
+
+      // Convert from m^(-5/2) to nm^(-5/2)
+      secondDerivativeInNm =
+        secondDerivativeInM * Math.pow(QuantumConstants.M_TO_NM, 2);
+    }
+
+    return {
+      value,
+      firstDerivative: firstDerivativeInNm,
+      secondDerivative: secondDerivativeInNm,
+    };
+  }
 }
