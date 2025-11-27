@@ -12,9 +12,10 @@ import { Range } from "scenerystack/dot";
 import { TimeSpeed } from "scenerystack";
 import Schrodinger1DSolver, { NumericalMethod } from "./Schrodinger1DSolver.js";
 import QPPWPreferences from "../../QPPWPreferences.js";
-import { PotentialType, BoundStateResult } from "./PotentialFunction.js";
+import { PotentialType, BoundStateResult, WavenumberTransformResult } from "./PotentialFunction.js";
 import QuantumConstants from "./QuantumConstants.js";
 import { SuperpositionType, SuperpositionConfig } from "./SuperpositionType.js";
+import { convertToWavenumber } from "./analytical-solutions/fourier-transform-helper.js";
 
 export abstract class BaseModel {
   // ==================== CONSTANTS ====================
@@ -396,6 +397,47 @@ export abstract class BaseModel {
       this.calculateBoundStates();
     }
     return this.boundStateResult;
+  }
+
+  /**
+   * Get the Fourier transform of bound state wavefunctions in wavenumber space.
+   * Returns the wavenumber grid k and the transformed wavefunctions |φ(k)|.
+   *
+   * @param numWavenumberPoints - Optional number of points in wavenumber space
+   * @param kMax - Optional maximum wavenumber value in rad/m
+   * @returns Wavenumber transform result, or null if not available
+   */
+  public getWavenumberTransform(
+    numWavenumberPoints?: number,
+    kMax?: number
+  ): WavenumberTransformResult | null {
+    // Ensure bound states are calculated
+    const boundStates = this.getBoundStates();
+    if (!boundStates) {
+      return null;
+    }
+
+    // Get the analytical solution from the solver
+    const analyticalSolution = this.solver.getAnalyticalSolution();
+    if (!analyticalSolution) {
+      return null;
+    }
+
+    // Calculate Fourier transform in momentum space
+    const mass = this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
+
+    // Convert kMax to pMax if provided: p = ℏk
+    const pMax = kMax ? kMax * QuantumConstants.HBAR : undefined;
+
+    const fourierResult = analyticalSolution.calculateFourierTransform(
+      boundStates,
+      mass,
+      numWavenumberPoints,
+      pMax
+    );
+
+    // Convert to wavenumber space using the helper function
+    return convertToWavenumber(fourierResult);
   }
 
   /**

@@ -13,12 +13,14 @@ import {
 import { IntroModel } from "../model/IntroModel.js";
 import { EnergyChartNode } from "../../common/view/EnergyChartNode.js";
 import { WaveFunctionChartNode } from "../../common/view/WaveFunctionChartNode.js";
+import { WavenumberChartNode } from "../../common/view/WavenumberChartNode.js";
 import { IntroControlPanelNode } from "./IntroControlPanelNode.js";
 import stringManager from "../../i18n/StringManager.js";
 
 export class IntroScreenView extends BaseScreenView {
   private introControlPanel: IntroControlPanelNode;
   private probabilityChart: WaveFunctionChartNode;
+  private wavenumberChart: WavenumberChartNode;
 
   public constructor(model: IntroModel, options?: ScreenViewOptions) {
     super(model, options);
@@ -32,6 +34,7 @@ export class IntroScreenView extends BaseScreenView {
     const energyChartHeight = 200;
     const probabilityChartHeight = 150;
     const waveFunctionChartHeight = 150;
+    const wavenumberChartHeight = 140;
 
     // Create the energy chart (top plot)
     this.energyChart = new EnergyChartNode(model, {
@@ -46,11 +49,17 @@ export class IntroScreenView extends BaseScreenView {
       fixedDisplayMode: "probabilityDensity",
     });
 
-    // Create the wave function chart (bottom plot) - always shows wavefunction
+    // Create the wave function chart - always shows wavefunction
     this.waveFunctionChart = new WaveFunctionChartNode(model, {
       width: chartsWidth,
       height: waveFunctionChartHeight,
       fixedDisplayMode: "waveFunction",
+    });
+
+    // Create the wavenumber chart (bottom plot) - shows |φ(k)|²
+    this.wavenumberChart = new WavenumberChartNode(model, {
+      width: chartsWidth,
+      height: wavenumberChartHeight,
     });
 
     // Position charts stacked vertically
@@ -64,6 +73,10 @@ export class IntroScreenView extends BaseScreenView {
     this.waveFunctionChart.left = margin;
     this.waveFunctionChart.top =
       this.probabilityChart.top + probabilityChartHeight + chartSpacing;
+
+    this.wavenumberChart.left = margin;
+    this.wavenumberChart.top =
+      this.waveFunctionChart.top + waveFunctionChartHeight + chartSpacing;
 
     // Create listbox parent node for ComboBox popups
     this.listBoxParent = new Node();
@@ -82,6 +95,7 @@ export class IntroScreenView extends BaseScreenView {
     this.addChild(this.energyChart);
     this.addChild(this.probabilityChart);
     this.addChild(this.waveFunctionChart);
+    this.addChild(this.wavenumberChart);
     this.addChild(this.introControlPanel);
     this.addChild(this.listBoxParent); // ListBox parent must be added last for proper z-ordering
   }
