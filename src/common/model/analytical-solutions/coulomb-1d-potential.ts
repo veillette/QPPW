@@ -105,6 +105,18 @@ export class Coulomb1DPotentialSolution extends AnalyticalSolution {
     return [points]; // Return as array with single element for simple single-well potential
   }
 
+  calculateWavefunctionFirstDerivative(
+    stateIndex: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateCoulomb1DWavefunctionFirstDerivative(
+      this.coulombStrength,
+      this.mass,
+      stateIndex,
+      xGrid,
+    );
+  }
+
   calculateWavefunctionSecondDerivative(
     stateIndex: number,
     xGrid: number[],
@@ -394,6 +406,66 @@ export function calculateCoulomb1DWavefunctionZeros(
   // Sort zeros
   zeros.sort((a, b) => a - b);
   return zeros;
+}
+
+/**
+ * Calculate the first derivative of the wavefunction for a 1D Coulomb potential.
+ * Uses numerical differentiation on the analytical wavefunction.
+ *
+ * @param coulombStrength - Coulomb strength parameter α in J·m
+ * @param mass - Particle mass in kg
+ * @param stateIndex - Index of the eigenstate (0 for ground state, etc.)
+ * @param xGrid - Array of x positions in meters where derivatives should be evaluated
+ * @returns Array of first derivative values
+ */
+export function calculateCoulomb1DWavefunctionFirstDerivative(
+  coulombStrength: number,
+  mass: number,
+  stateIndex: number,
+  xGrid: number[],
+): number[] {
+  const { HBAR } = QuantumConstants;
+  const alpha = coulombStrength;
+  const n = stateIndex;
+  const nEff = n + 0.5;
+  const a0 = (HBAR * HBAR) / (mass * alpha);
+  const a_n = nEff * a0;
+  const normalization = Math.sqrt(1.0 / (2 * a_n * (n + 1) * (n + 1)));
+
+  const firstDerivative: number[] = [];
+  const h = 1e-12; // Small step for numerical differentiation
+
+  // Helper function to evaluate wavefunction
+  const evaluatePsi = (x: number): number => {
+    const absX = Math.abs(x);
+    const rho = (2 * absX) / a_n;
+    const laguerre = associatedLaguerre(n, 1, rho);
+    const radialPart = normalization * rho * Math.exp(-rho / 2) * laguerre;
+    return Math.sign(x) * radialPart;
+  };
+
+  for (const x of xGrid) {
+    // Handle near-singularity carefully
+    if (Math.abs(x) < 2 * h) {
+      // Very close to singularity - use the fact that ψ(x) ~ x near origin
+      // So ψ'(0) should be approximately constant (normalization factor)
+      firstDerivative.push(normalization);
+      continue;
+    }
+
+    // Evaluate at x-h and x+h
+    const xMinus = x - h;
+    const xPlus = x + h;
+
+    const psiMinus = evaluatePsi(xMinus);
+    const psiPlus = evaluatePsi(xPlus);
+
+    // First derivative using central difference
+    const firstDeriv = (psiPlus - psiMinus) / (2 * h);
+    firstDerivative.push(firstDeriv);
+  }
+
+  return firstDerivative;
 }
 
 /**

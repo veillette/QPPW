@@ -95,6 +95,22 @@ export abstract class AnalyticalSolution {
   ): Array<{ left: number; right: number }>;
 
   /**
+   * Calculate the first derivative of the wavefunction.
+   *
+   * The first derivative provides information about the slope of the wavefunction
+   * at each position. This is useful for analyzing the momentum distribution,
+   * probability current, and other quantum mechanical properties.
+   *
+   * @param stateIndex - Index of the eigenstate (0 for ground state, 1 for first excited, etc.)
+   * @param xGrid - Array of x positions in meters where derivatives should be evaluated
+   * @returns Array of first derivative values
+   */
+  abstract calculateWavefunctionFirstDerivative(
+    stateIndex: number,
+    xGrid: number[],
+  ): number[];
+
+  /**
    * Calculate the second derivative of the wavefunction.
    *
    * The second derivative is related to the Schrödinger equation:

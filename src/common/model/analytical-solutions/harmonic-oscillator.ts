@@ -203,6 +203,60 @@ export function calculateHarmonicOscillatorTurningPoints(
 }
 
 /**
+ * Calculate the first derivative of the wavefunction for a harmonic oscillator.
+ *
+ * For ψ_n(x) = N_n * exp(-αx²/2) * H_n(ξ) where ξ = αx and α = mω/ℏ:
+ * ψ'_n(x) = N_n * α * exp(-αx²/2) * [H'_n(ξ) - ξ * H_n(ξ)]
+ *         = N_n * α * exp(-αx²/2) * [2n H_{n-1}(ξ) - ξ * H_n(ξ)]
+ * using the Hermite polynomial recursion relation H'_n(ξ) = 2n H_{n-1}(ξ)
+ *
+ * @param springConstant - Spring constant k in N/m
+ * @param mass - Particle mass in kg
+ * @param stateIndex - Index of the eigenstate (0 for ground state, 1 for first excited, etc.)
+ * @param xGrid - Array of x positions in meters where derivatives should be evaluated
+ * @returns Array of first derivative values
+ */
+export function calculateHarmonicOscillatorWavefunctionFirstDerivative(
+  springConstant: number,
+  mass: number,
+  stateIndex: number,
+  xGrid: number[],
+): number[] {
+  const { HBAR } = QuantumConstants;
+  const n = stateIndex; // Quantum number (0, 1, 2, ...)
+  const omega = Math.sqrt(springConstant / mass);
+  const alpha = Math.sqrt((mass * omega) / HBAR);
+  const normalization =
+    (1 / Math.sqrt(Math.pow(2, n) * factorial(n))) *
+    Math.pow(alpha / Math.PI, 0.25);
+
+  const firstDerivative: number[] = [];
+
+  for (const x of xGrid) {
+    const xi = alpha * x;
+    const gaussianFactor = Math.exp((-xi * xi) / 2);
+    const hermite_n = hermitePolynomial(n, xi);
+
+    // Calculate H'_n(ξ) = 2n H_{n-1}(ξ)
+    let hermite_derivative = 0;
+    if (n > 0) {
+      const hermite_n_minus_1 = hermitePolynomial(n - 1, xi);
+      hermite_derivative = 2 * n * hermite_n_minus_1;
+    }
+
+    // ψ' = N * α * exp(-αx²/2) * [H'_n(ξ) - ξ * H_n(ξ)]
+    const firstDeriv =
+      normalization *
+      alpha *
+      gaussianFactor *
+      (hermite_derivative - xi * hermite_n);
+    firstDerivative.push(firstDeriv);
+  }
+
+  return firstDerivative;
+}
+
+/**
  * Calculate the second derivative of the wavefunction for a harmonic oscillator.
  *
  * For ψ_n(x) = N_n * exp(-αx²/2) * H_n(√α x) where α = mω/ℏ and N_n is normalization:
@@ -320,6 +374,18 @@ export class HarmonicOscillatorSolution extends AnalyticalSolution {
       energy,
     );
     return [points]; // Return as array with single element for simple single-well potential
+  }
+
+  calculateWavefunctionFirstDerivative(
+    stateIndex: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateHarmonicOscillatorWavefunctionFirstDerivative(
+      this.springConstant,
+      this.mass,
+      stateIndex,
+      xGrid,
+    );
   }
 
   calculateWavefunctionSecondDerivative(

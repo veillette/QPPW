@@ -140,6 +140,49 @@ export function calculateInfiniteWellTurningPoints(
 }
 
 /**
+ * Calculate the first derivative of the wavefunction for an infinite square well.
+ *
+ * For ψ_n(x) = √(2/L) sin(nπ(x + L/2)/L):
+ * - ψ'_n(x) = √(2/L) * (nπ/L) * cos(nπ(x + L/2)/L)
+ *
+ * @param wellWidth - Width of the well (L) in meters
+ * @param stateIndex - Index of the eigenstate (0 for ground state, 1 for first excited, etc.)
+ * @param xGrid - Array of x positions in meters where derivatives should be evaluated
+ * @returns Array of first derivative values
+ */
+export function calculateInfiniteWellWavefunctionFirstDerivative(
+  wellWidth: number,
+  stateIndex: number,
+  xGrid: number[],
+): number[] {
+  const n = stateIndex + 1; // Quantum number (1, 2, 3, ...)
+  const L = wellWidth;
+  const halfWidth = L / 2;
+  const normalization = Math.sqrt(2 / L);
+  const waveFactor = (n * Math.PI) / L;
+
+  const firstDerivative: number[] = [];
+
+  for (const x of xGrid) {
+    // Check if x is inside the well [-L/2, L/2]
+    if (x >= -halfWidth && x <= halfWidth) {
+      // Shift coordinate to [0, L] range for standard formula
+      const xShifted = x + halfWidth;
+
+      // ψ'_n(x) = normalization * waveFactor * cos(waveFactor * xShifted)
+      const firstDeriv =
+        normalization * waveFactor * Math.cos(waveFactor * xShifted);
+      firstDerivative.push(firstDeriv);
+    } else {
+      // Outside the well, wavefunction and derivatives are zero
+      firstDerivative.push(0);
+    }
+  }
+
+  return firstDerivative;
+}
+
+/**
  * Calculate the second derivative of the wavefunction for an infinite square well.
  *
  * For ψ_n(x) = √(2/L) sin(nπ(x + L/2)/L):
@@ -227,6 +270,17 @@ export class InfiniteSquareWellSolution extends AnalyticalSolution {
   ): Array<{ left: number; right: number }> {
     const points = calculateInfiniteWellTurningPoints(this.wellWidth, energy);
     return [points]; // Return as array with single element for simple single-well potential
+  }
+
+  calculateWavefunctionFirstDerivative(
+    stateIndex: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateInfiniteWellWavefunctionFirstDerivative(
+      this.wellWidth,
+      stateIndex,
+      xGrid,
+    );
   }
 
   calculateWavefunctionSecondDerivative(

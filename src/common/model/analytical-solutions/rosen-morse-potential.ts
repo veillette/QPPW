@@ -116,6 +116,20 @@ export class RosenMorsePotentialSolution extends AnalyticalSolution {
     return [points]; // Return as array with single element for simple single-well potential
   }
 
+  calculateWavefunctionFirstDerivative(
+    stateIndex: number,
+    xGrid: number[],
+  ): number[] {
+    return calculateRosenMorsePotentialWavefunctionFirstDerivative(
+      this.potentialDepth,
+      this.barrierHeight,
+      this.wellWidth,
+      this.mass,
+      stateIndex,
+      xGrid,
+    );
+  }
+
   calculateWavefunctionSecondDerivative(
     stateIndex: number,
     xGrid: number[],
@@ -535,6 +549,84 @@ export function calculateRosenMorsePotentialWavefunctionZeros(
   }
 
   return zeros;
+}
+
+/**
+ * Calculate the first derivative of the wavefunction for a Rosen-Morse potential.
+ * Uses numerical differentiation on the analytical wavefunction.
+ *
+ * @param potentialDepth - Potential depth V_0 in Joules (positive value)
+ * @param barrierHeight - Barrier height V_1 in Joules
+ * @param wellWidth - Width parameter a in meters
+ * @param mass - Particle mass in kg
+ * @param stateIndex - Index of the eigenstate (0 for ground state, etc.)
+ * @param xGrid - Array of x positions in meters where derivatives should be evaluated
+ * @returns Array of first derivative values
+ */
+export function calculateRosenMorsePotentialWavefunctionFirstDerivative(
+  potentialDepth: number,
+  barrierHeight: number,
+  wellWidth: number,
+  mass: number,
+  stateIndex: number,
+  xGrid: number[],
+): number[] {
+  const { HBAR } = QuantumConstants;
+  const V0 = potentialDepth;
+  const V1 = barrierHeight;
+  const a = wellWidth;
+  const n = stateIndex;
+
+  const lambda = (a * Math.sqrt(2 * mass * V0)) / HBAR;
+  const mu = (a * Math.sqrt(2 * mass) * V1) / (2 * HBAR * Math.sqrt(V0));
+  const lambdaEff = Math.sqrt(lambda * lambda - mu * mu);
+
+  const s = lambdaEff - n - 0.5;
+  const alpha_jac = s - mu;
+  const beta_jac = s + mu;
+
+  const normalization = Math.sqrt(
+    ((1 / a) * (2 * s)) /
+      (factorial(n) *
+        Math.exp(
+          logGamma(n + alpha_jac + 1) +
+            logGamma(n + beta_jac + 1) -
+            logGamma(n + alpha_jac + beta_jac + 1),
+        )),
+  );
+
+  const firstDerivative: number[] = [];
+  const h = 1e-12; // Small step for numerical differentiation
+
+  for (const x of xGrid) {
+    // Evaluate at x-h, x+h
+    const xMinus = x - h;
+    const xPlus = x + h;
+
+    const tanhMinus = Math.tanh(xMinus / a);
+    const sechMinus = 1.0 / Math.cosh(xMinus / a);
+    const jacobiMinus = jacobiPolynomial(n, alpha_jac, beta_jac, tanhMinus);
+    const psiMinus =
+      normalization *
+      Math.pow(sechMinus, s) *
+      Math.exp(mu * tanhMinus) *
+      jacobiMinus;
+
+    const tanhPlus = Math.tanh(xPlus / a);
+    const sechPlus = 1.0 / Math.cosh(xPlus / a);
+    const jacobiPlus = jacobiPolynomial(n, alpha_jac, beta_jac, tanhPlus);
+    const psiPlus =
+      normalization *
+      Math.pow(sechPlus, s) *
+      Math.exp(mu * tanhPlus) *
+      jacobiPlus;
+
+    // First derivative using central difference
+    const firstDeriv = (psiPlus - psiMinus) / (2 * h);
+    firstDerivative.push(firstDeriv);
+  }
+
+  return firstDerivative;
 }
 
 /**
