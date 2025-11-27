@@ -2,12 +2,31 @@
  * Helper functions for computing Fourier transforms of wavefunctions.
  *
  * This module provides default implementations for analytical solutions
- * that don't have closed-form Fourier transforms.
+ * that don't have closed-form Fourier transforms, as well as utilities
+ * for converting between momentum and wavenumber representations.
+ *
+ * @example
+ * ```typescript
+ * // Get Fourier transform in momentum space
+ * const solver = new FiniteSquareWellSolution(wellWidth, wellDepth, mass);
+ * const positionResult = solver.solve(numStates, gridConfig);
+ * const momentumResult = solver.calculateFourierTransform(positionResult, mass);
+ *
+ * // Convert to wavenumber space if preferred for visualization
+ * const wavenumberResult = convertToWavenumber(momentumResult);
+ * console.log(wavenumberResult.kGrid); // Wavenumber values in rad/m
+ * console.log(wavenumberResult.wavenumberWavefunctions); // Same wavefunctions
+ *
+ * // Convert back to momentum space if needed
+ * const backToMomentum = convertToMomentum(wavenumberResult);
+ * ```
  */
 
+import QuantumConstants from "../QuantumConstants.js";
 import {
   BoundStateResult,
   FourierTransformResult,
+  WavenumberTransformResult,
 } from "../PotentialFunction.js";
 import { numericalFourierTransform } from "../LinearAlgebraUtils.js";
 
@@ -70,5 +89,63 @@ export function computeNumericalFourierTransform(
     pGrid,
     momentumWavefunctions,
     method: "numerical",
+  };
+}
+
+/**
+ * Convert a Fourier transform result from momentum space to wavenumber space.
+ *
+ * The relationship between momentum and wavenumber is:
+ *   k = p/ℏ
+ *
+ * where:
+ *   - p is momentum in kg·m/s
+ *   - k is wavenumber in rad/m (or 1/m)
+ *   - ℏ is the reduced Planck constant
+ *
+ * The wavefunctions remain the same, only the grid is converted.
+ * Note: The normalization is preserved because ∫|φ(p)|² dp = ∫|φ(k)|² ℏ dk,
+ * but since we're returning the same wavefunction values, the view layer
+ * should account for the ℏ factor if needed for proper normalization plots.
+ *
+ * @param fourierResult - Fourier transform result in momentum space
+ * @returns Fourier transform result in wavenumber space
+ */
+export function convertToWavenumber(
+  fourierResult: FourierTransformResult,
+): WavenumberTransformResult {
+  const { HBAR } = QuantumConstants;
+
+  // Convert momentum grid to wavenumber grid: k = p/ℏ
+  const kGrid = fourierResult.pGrid.map((p) => p / HBAR);
+
+  return {
+    kGrid,
+    wavenumberWavefunctions: fourierResult.momentumWavefunctions,
+    method: fourierResult.method,
+  };
+}
+
+/**
+ * Convert a wavenumber transform result back to momentum space.
+ *
+ * The relationship between wavenumber and momentum is:
+ *   p = ℏk
+ *
+ * @param wavenumberResult - Fourier transform result in wavenumber space
+ * @returns Fourier transform result in momentum space
+ */
+export function convertToMomentum(
+  wavenumberResult: WavenumberTransformResult,
+): FourierTransformResult {
+  const { HBAR } = QuantumConstants;
+
+  // Convert wavenumber grid to momentum grid: p = ℏk
+  const pGrid = wavenumberResult.kGrid.map((k) => k * HBAR);
+
+  return {
+    pGrid,
+    momentumWavefunctions: wavenumberResult.wavenumberWavefunctions,
+    method: wavenumberResult.method,
   };
 }

@@ -96,6 +96,20 @@ export interface FourierTransformResult {
   method: 'analytical' | 'numerical';
 }
 
+/**
+ * Result from computing the Fourier transform in wavenumber representation.
+ * This is the same as FourierTransformResult but with wavenumber k = p/ℏ instead of momentum p.
+ * The wavenumber representation is often more convenient for visualization and analysis.
+ */
+export interface WavenumberTransformResult {
+  /** Wavenumber values in rad/m (or 1/m) */
+  kGrid: number[];
+  /** Fourier-transformed wavefunctions in wavenumber space (each row is one eigenstate) */
+  wavenumberWavefunctions: number[][];
+  /** Method used to compute the transform ('analytical' or 'numerical') */
+  method: 'analytical' | 'numerical';
+}
+
 qppw.register("PotentialFunction", { PotentialType });
 
 export default PotentialFunction;
