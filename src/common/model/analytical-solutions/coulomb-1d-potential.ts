@@ -45,9 +45,11 @@ import {
   BoundStateResult,
   GridConfig,
   PotentialFunction,
+  FourierTransformResult,
 } from "../PotentialFunction.js";
 import { associatedLaguerre } from "./math-utilities.js";
 import { AnalyticalSolution } from "./AnalyticalSolution.js";
+import { computeNumericalFourierTransform } from "./fourier-transform-helper.js";
 
 /**
  * Class-based implementation of 1D Coulomb potential analytical solution.
@@ -128,6 +130,21 @@ export class Coulomb1DPotentialSolution extends AnalyticalSolution {
       xGrid,
     );
   }
+  calculateFourierTransform(
+    boundStateResult: BoundStateResult,
+    mass: number,
+    numMomentumPoints?: number,
+    pMax?: number,
+  ): FourierTransformResult {
+    return computeNumericalFourierTransform(
+      boundStateResult,
+      mass,
+      Math.abs(boundStateResult.energies[0]),
+      numMomentumPoints,
+      pMax,
+    );
+  }
+
 }
 
 /**

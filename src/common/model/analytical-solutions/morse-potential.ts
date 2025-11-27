@@ -39,9 +39,11 @@ import {
   BoundStateResult,
   GridConfig,
   PotentialFunction,
+  FourierTransformResult,
 } from "../PotentialFunction.js";
 import { associatedLaguerre, factorial, gamma } from "./math-utilities.js";
 import { AnalyticalSolution } from "./AnalyticalSolution.js";
+import { computeNumericalFourierTransform } from "./fourier-transform-helper.js";
 
 /**
  * Class-based implementation of Morse potential analytical solution.
@@ -140,6 +142,21 @@ export class MorsePotentialSolution extends AnalyticalSolution {
       xGrid,
     );
   }
+  calculateFourierTransform(
+    boundStateResult: BoundStateResult,
+    mass: number,
+    numMomentumPoints?: number,
+    pMax?: number,
+  ): FourierTransformResult {
+    return computeNumericalFourierTransform(
+      boundStateResult,
+      mass,
+      this.dissociationEnergy,
+      numMomentumPoints,
+      pMax,
+    );
+  }
+
 }
 
 /**

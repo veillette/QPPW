@@ -44,6 +44,7 @@ import {
   BoundStateResult,
   GridConfig,
   PotentialFunction,
+  FourierTransformResult,
 } from "../PotentialFunction.js";
 import { airyAi } from "./math-utilities.js";
 import {
@@ -54,6 +55,7 @@ import {
   normalizeWavefunction,
 } from "./airy-utilities.js";
 import { AnalyticalSolution } from "./AnalyticalSolution.js";
+import { computeNumericalFourierTransform } from "./fourier-transform-helper.js";
 
 /**
  * Class-based implementation of asymmetric triangle potential analytical solution.
@@ -133,6 +135,21 @@ export class AsymmetricTrianglePotentialSolution extends AnalyticalSolution {
       xGrid,
     );
   }
+  calculateFourierTransform(
+    boundStateResult: BoundStateResult,
+    mass: number,
+    numMomentumPoints?: number,
+    pMax?: number,
+  ): FourierTransformResult {
+    return computeNumericalFourierTransform(
+      boundStateResult,
+      mass,
+      this.slope * this.wellWidth,
+      numMomentumPoints,
+      pMax,
+    );
+  }
+
 }
 
 /**
