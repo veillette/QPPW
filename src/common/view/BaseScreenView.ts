@@ -33,7 +33,7 @@ export interface ScreenStringProperties {
 }
 
 export abstract class BaseScreenView extends ScreenView {
-  protected readonly resetAllButton: ResetAllButton;
+  protected readonly resetButton: ResetAllButton;
   protected readonly model:
     | BaseModel
     | OneWellModel
@@ -57,15 +57,15 @@ export abstract class BaseScreenView extends ScreenView {
     this.model = model;
 
     // Create the reset all button in the bottom-right corner
-    this.resetAllButton = new ResetAllButton({
+    this.resetButton = new ResetAllButton({
       listener: () => {
-        model.resetAll();
+        model.reset();
         this.reset();
       },
       right: this.layoutBounds.maxX - 10,
       bottom: this.layoutBounds.maxY - 10,
     });
-    this.addChild(this.resetAllButton);
+    this.addChild(this.resetButton);
   }
 
   /**
