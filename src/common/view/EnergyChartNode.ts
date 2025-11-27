@@ -16,8 +16,9 @@ import {
   TickMarkSet,
   TickLabelSet,
 } from "scenerystack/bamboo";
-import { OneWellModel } from "../../one-well/model/OneWellModel.js";
-import { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
+import type { ScreenModel } from "../model/ScreenModels.js";
+import type { OneWellModel } from "../../one-well/model/OneWellModel.js";
+import type { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
 import { PotentialType, BoundStateResult } from "../model/PotentialFunction.js";
 import QuantumConstants from "../model/QuantumConstants.js";
 import QPPWColors from "../../QPPWColors.js";
@@ -77,10 +78,7 @@ function getEnergyAxisRange(potentialType: PotentialType): {
 }
 
 export class EnergyChartNode extends Node {
-  private readonly model:
-    | OneWellModel
-    | TwoWellsModel
-    | import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel;
+  private readonly model: ScreenModel;
   private readonly chartWidth: number;
   private readonly chartHeight: number;
   private readonly chartMargins = { left: 60, right: 20, top: 40, bottom: 50 };
@@ -117,10 +115,7 @@ export class EnergyChartNode extends Node {
   private hoveredEnergyLevelIndex: number | null = null;
 
   public constructor(
-    model:
-      | OneWellModel
-      | TwoWellsModel
-      | import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel,
+    model: ScreenModel,
     options?: { width?: number; height?: number },
   ) {
     super();

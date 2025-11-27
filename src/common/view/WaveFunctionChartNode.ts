@@ -15,8 +15,9 @@ import {
   TickMarkSet,
   TickLabelSet,
 } from "scenerystack/bamboo";
-import { OneWellModel } from "../../one-well/model/OneWellModel.js";
-import { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
+import type { ScreenModel } from "../model/ScreenModels.js";
+import type { OneWellModel } from "../../one-well/model/OneWellModel.js";
+import type { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
 import { BoundStateResult } from "../model/PotentialFunction.js";
 import QuantumConstants from "../model/QuantumConstants.js";
 import QPPWColors from "../../QPPWColors.js";
@@ -29,10 +30,7 @@ import QPPWPreferences from "../../QPPWPreferences.js";
 const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
 
 export class WaveFunctionChartNode extends Node {
-  private readonly model:
-    | OneWellModel
-    | TwoWellsModel
-    | import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel;
+  private readonly model: ScreenModel;
   private readonly chartWidth: number;
   private readonly chartHeight: number;
   private readonly chartMargins = { left: 60, right: 20, top: 10, bottom: 40 };
@@ -93,18 +91,26 @@ export class WaveFunctionChartNode extends Node {
   // Flag to indicate if an update was requested while another update was in progress
   private updatePending: boolean = false;
 
+  // Optional fixed display mode (overrides model's display mode)
+  private readonly fixedDisplayMode?:
+    | "probabilityDensity"
+    | "waveFunction"
+    | "phaseColor";
+
   public constructor(
-    model:
-      | OneWellModel
-      | TwoWellsModel
-      | import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel,
-    options?: { width?: number; height?: number },
+    model: ScreenModel,
+    options?: {
+      width?: number;
+      height?: number;
+      fixedDisplayMode?: "probabilityDensity" | "waveFunction" | "phaseColor";
+    },
   ) {
     super();
 
     this.model = model;
     this.chartWidth = options?.width ?? 600;
     this.chartHeight = options?.height ?? 140;
+    this.fixedDisplayMode = options?.fixedDisplayMode;
 
     this.plotWidth =
       this.chartWidth - this.chartMargins.left - this.chartMargins.right;
@@ -568,15 +574,15 @@ export class WaveFunctionChartNode extends Node {
     // Update visibility of wave function components
     this.model.showRealPartProperty.link((show: boolean) => {
       this.realPartPath.visible =
-        show && this.model.displayModeProperty.value === "waveFunction";
+        show && this.getEffectiveDisplayMode() === "waveFunction";
     });
     this.model.showImaginaryPartProperty.link((show: boolean) => {
       this.imaginaryPartPath.visible =
-        show && this.model.displayModeProperty.value === "waveFunction";
+        show && this.getEffectiveDisplayMode() === "waveFunction";
     });
     this.model.showMagnitudeProperty.link((show: boolean) => {
       this.magnitudePath.visible =
-        show && this.model.displayModeProperty.value === "waveFunction";
+        show && this.getEffectiveDisplayMode() === "waveFunction";
     });
 
     // Update visibility of classical probability (only for OneWellModel)
@@ -604,13 +610,67 @@ export class WaveFunctionChartNode extends Node {
         this.updateAreaTool();
       }
     });
+
+    // Update area tool when potential or well parameters change
+    this.model.potentialTypeProperty.link(() => {
+      if (this.showAreaToolProperty.value) {
+        this.updateAreaTool();
+      }
+    });
+
+    this.model.wellWidthProperty.link(() => {
+      if (this.showAreaToolProperty.value) {
+        this.updateAreaTool();
+      }
+    });
+
+    this.model.wellDepthProperty.link(() => {
+      if (this.showAreaToolProperty.value) {
+        this.updateAreaTool();
+      }
+    });
+
+    if ("barrierHeightProperty" in this.model) {
+      this.model.barrierHeightProperty.link(() => {
+        if (this.showAreaToolProperty.value) {
+          this.updateAreaTool();
+        }
+      });
+    }
+
+    if ("potentialOffsetProperty" in this.model) {
+      this.model.potentialOffsetProperty.link(() => {
+        if (this.showAreaToolProperty.value) {
+          this.updateAreaTool();
+        }
+      });
+    }
+
+    // Update area tool when selected energy level changes
+    this.model.selectedEnergyLevelIndexProperty.link(() => {
+      if (this.showAreaToolProperty.value) {
+        this.updateAreaTool();
+      }
+    });
+
+    // Initialize labels (important for fixed display mode charts)
+    this.updateYAxisLabel();
+    this.updateStateLabel();
+  }
+
+  /**
+   * Gets the effective display mode, using the fixed display mode if set,
+   * otherwise falling back to the model's display mode.
+   */
+  private getEffectiveDisplayMode(): string {
+    return this.fixedDisplayMode || this.model.displayModeProperty.value;
   }
 
   /**
    * Updates the Y-axis label based on display mode.
    */
   private updateYAxisLabel(): void {
-    const displayMode = this.model.displayModeProperty.value;
+    const displayMode = this.getEffectiveDisplayMode();
     if (displayMode === "probabilityDensity") {
       this.yAxisLabel.string = "Probability Density";
     } else if (displayMode === "phaseColor") {
@@ -624,7 +684,7 @@ export class WaveFunctionChartNode extends Node {
    * Updates the state label showing which wavefunction is displayed.
    */
   private updateStateLabel(): void {
-    const displayMode = this.model.displayModeProperty.value;
+    const displayMode = this.getEffectiveDisplayMode();
     const superpositionType = this.model.superpositionTypeProperty.value;
 
     // Check if we're in a superposition state (not PSI_K which is single eigenstate)
@@ -851,7 +911,7 @@ export class WaveFunctionChartNode extends Node {
     ) {
       const wavefunction = boundStates.wavefunctions[selectedIndex];
       const maxAbs = Math.max(...wavefunction.map((v) => Math.abs(v)));
-      const displayMode = this.model.displayModeProperty.value;
+      const displayMode = this.getEffectiveDisplayMode();
 
       if (displayMode === "probabilityDensity") {
         this.yMinProperty.value = 0;
@@ -916,7 +976,7 @@ export class WaveFunctionChartNode extends Node {
       maxAbs = 1; // Use default range
     }
 
-    const displayMode = this.model.displayModeProperty.value;
+    const displayMode = this.getEffectiveDisplayMode();
 
     if (displayMode === "probabilityDensity") {
       this.yMinProperty.value = 0;
@@ -945,7 +1005,7 @@ export class WaveFunctionChartNode extends Node {
     const config = (this.model as OneWellModel).superpositionConfigProperty
       .value;
     const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
-    const displayMode = this.model.displayModeProperty.value;
+    const displayMode = this.getEffectiveDisplayMode();
     const numPoints = boundStates.xGrid.length;
 
     // Compute time-evolved superposition: ψ(x,t) = Σ c_n * e^(iφ_n) * ψ_n(x) * e^(-iE_n*t/ℏ)
@@ -1054,7 +1114,7 @@ export class WaveFunctionChartNode extends Node {
   ): void {
     const xGrid = boundStates.xGrid;
     const wavefunction = boundStates.wavefunctions[selectedIndex];
-    const displayMode = this.model.displayModeProperty.value;
+    const displayMode = this.getEffectiveDisplayMode();
     const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
     const energy = boundStates.energies[selectedIndex];
 
@@ -1730,7 +1790,7 @@ export class WaveFunctionChartNode extends Node {
     }
 
     // Only show area for probability density mode
-    const displayMode = this.model.displayModeProperty.value;
+    const displayMode = this.getEffectiveDisplayMode();
     if (displayMode !== "probabilityDensity") {
       return shape; // Return empty shape
     }
@@ -1864,7 +1924,7 @@ export class WaveFunctionChartNode extends Node {
     }
 
     // Only calculate for probability density mode
-    const displayMode = this.model.displayModeProperty.value;
+    const displayMode = this.getEffectiveDisplayMode();
     if (displayMode !== "probabilityDensity") {
       return null;
     }

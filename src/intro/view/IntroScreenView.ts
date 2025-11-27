@@ -18,43 +18,52 @@ import stringManager from "../../i18n/StringManager.js";
 
 export class IntroScreenView extends BaseScreenView {
   private introControlPanel: IntroControlPanelNode;
+  private probabilityChart: WaveFunctionChartNode;
 
   public constructor(model: IntroModel, options?: ScreenViewOptions) {
     super(model, options);
 
     // Calculate layout dimensions
     const margin = 10;
+    const chartSpacing = 15;
 
     // Fixed chart dimensions
     const chartsWidth = 600;
-    const energyChartHeight = 300;
-    const waveFunctionChartHeight = 180;
+    const energyChartHeight = 200;
+    const probabilityChartHeight = 150;
+    const waveFunctionChartHeight = 150;
 
     // Create the energy chart (top plot)
-    // Cast to OneWellModel since IntroModel has all necessary properties
-    this.energyChart = new EnergyChartNode(
-      model as unknown as import("../../one-well/model/OneWellModel.js").OneWellModel,
-      {
-        width: chartsWidth,
-        height: energyChartHeight,
-      },
-    );
+    this.energyChart = new EnergyChartNode(model, {
+      width: chartsWidth,
+      height: energyChartHeight,
+    });
 
-    // Create the wave function chart (bottom plot)
-    this.waveFunctionChart = new WaveFunctionChartNode(
-      model as unknown as import("../../one-well/model/OneWellModel.js").OneWellModel,
-      {
-        width: chartsWidth,
-        height: waveFunctionChartHeight,
-      },
-    );
+    // Create the probability density chart (middle plot) - always shows probability density
+    this.probabilityChart = new WaveFunctionChartNode(model, {
+      width: chartsWidth,
+      height: probabilityChartHeight,
+      fixedDisplayMode: "probabilityDensity",
+    });
 
-    // Position charts
+    // Create the wave function chart (bottom plot) - always shows wavefunction
+    this.waveFunctionChart = new WaveFunctionChartNode(model, {
+      width: chartsWidth,
+      height: waveFunctionChartHeight,
+      fixedDisplayMode: "waveFunction",
+    });
+
+    // Position charts stacked vertically
     this.energyChart.left = margin;
     this.energyChart.top = 10;
 
+    this.probabilityChart.left = margin;
+    this.probabilityChart.top =
+      this.energyChart.top + energyChartHeight + chartSpacing;
+
     this.waveFunctionChart.left = margin;
-    this.waveFunctionChart.top = margin + energyChartHeight + 30;
+    this.waveFunctionChart.top =
+      this.probabilityChart.top + probabilityChartHeight + chartSpacing;
 
     // Create listbox parent node for ComboBox popups
     this.listBoxParent = new Node();
@@ -63,13 +72,14 @@ export class IntroScreenView extends BaseScreenView {
     this.introControlPanel = new IntroControlPanelNode(
       model,
       this.listBoxParent,
-      this.waveFunctionChart,
+      this.probabilityChart,
     );
     this.introControlPanel.left = chartsWidth + margin * 2;
     this.introControlPanel.top = margin;
 
     // Add all components to the view
     this.addChild(this.energyChart);
+    this.addChild(this.probabilityChart);
     this.addChild(this.waveFunctionChart);
     this.addChild(this.introControlPanel);
     this.addChild(this.listBoxParent); // ListBox parent must be added last for proper z-ordering

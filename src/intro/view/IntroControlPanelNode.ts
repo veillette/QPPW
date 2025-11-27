@@ -4,13 +4,7 @@
  */
 
 import { Node, Text, VBox, HBox, HSeparator } from "scenerystack/scenery";
-import {
-  Panel,
-  Checkbox,
-  VerticalAquaRadioButtonGroup,
-  ComboBox,
-  HSlider,
-} from "scenerystack/sun";
+import { Panel, Checkbox, ComboBox, HSlider } from "scenerystack/sun";
 import { Dimension2 } from "scenerystack/dot";
 import { IntroModel } from "../model/IntroModel.js";
 import { PotentialType } from "../../common/model/PotentialFunction.js";
@@ -212,47 +206,11 @@ export class IntroControlPanelNode extends Node {
   }
 
   /**
-   * Creates the Bottom Chart control group (without phase color option).
+   * Creates the Bottom Chart control group (for probability density chart only).
+   * Display mode controls removed since intro screen shows both charts separately.
    */
   private createBottomChartGroup(): Node {
-    // Display mode radio buttons - only probability density and wavefunction
-    const displayModeItems = [
-      {
-        value: "probabilityDensity" as const,
-        createNode: () =>
-          new Text(stringManager.probabilityDensityStringProperty, {
-            font: new PhetFont(14),
-            fill: QPPWColors.textFillProperty,
-          }),
-      },
-      {
-        value: "waveFunction" as const,
-        createNode: () =>
-          new Text(stringManager.wavefunctionStringProperty, {
-            font: new PhetFont(14),
-            fill: QPPWColors.textFillProperty,
-          }),
-      },
-      // Phase color option is NOT included in intro screen
-    ];
-
-    const displayModeRadioButtonGroup = new VerticalAquaRadioButtonGroup(
-      this.model.displayModeProperty,
-      displayModeItems,
-      {
-        spacing: 8,
-        radioButtonOptions: {
-          radius: 8,
-        },
-      },
-    );
-
-    const displayLabel = new Text(stringManager.displayStringProperty, {
-      font: new PhetFont(14),
-      fill: QPPWColors.textFillProperty,
-    });
-
-    // Classical probability checkbox (only in probability density mode)
+    // Classical probability checkbox
     const classicalProbabilityCheckboxContent = new Checkbox(
       this.model.showClassicalProbabilityProperty,
       new Text(stringManager.classicalProbabilityDensityStringProperty, {
@@ -301,22 +259,8 @@ export class IntroControlPanelNode extends Node {
         })
       : null;
 
-    // Enable/disable classical probability checkbox based on display mode
-    this.model.displayModeProperty.link((mode: string) => {
-      // Enable classical probability checkbox only in probability density mode
-      classicalProbabilityCheckboxContent.enabled =
-        mode === "probabilityDensity";
-
-      // Enable area tool checkbox only in probability density mode
-      if (areaToolCheckboxContent) {
-        areaToolCheckboxContent.enabled = mode === "probabilityDensity";
-      }
-    });
-
-    // Build children array (no wavefunction view checkboxes in intro screen)
+    // Build children array (no display mode controls since intro screen shows separate charts)
     const children: Node[] = [
-      displayLabel,
-      displayModeRadioButtonGroup,
       classicalProbabilityCheckbox,
       showZerosCheckbox,
     ];
