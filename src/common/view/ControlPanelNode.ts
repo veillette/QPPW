@@ -19,9 +19,17 @@ import {
   HSlider,
 } from "scenerystack/sun";
 import { Dimension2 } from "scenerystack/dot";
-import { OneWellModel } from "../../one-well/model/OneWellModel.js";
-import { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
-import { ManyWellsModel } from "../../many-wells/model/ManyWellsModel.js";
+import type { OneWellModel } from "../../one-well/model/OneWellModel.js";
+import type { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
+import type { ManyWellsModel } from "../../many-wells/model/ManyWellsModel.js";
+import {
+  isOneWellModel,
+  isManyWellsModel,
+  hasBarrierHeight,
+  hasPotentialOffset,
+  hasWellSeparation,
+  hasElectricField,
+} from "../model/ModelTypeGuards.js";
 import { PotentialType } from "../model/PotentialFunction.js";
 import { SuperpositionType } from "../model/SuperpositionType.js";
 import { SuperpositionDialog } from "./SuperpositionDialog.js";
@@ -352,21 +360,20 @@ export class ControlPanelNode extends Node {
 
     // Coherent state displacement slider (OneWellModel only)
     let displacementRow: Node | null = null;
-    if ("coherentDisplacementProperty" in this.model) {
-      const oneWellModel = this.model as OneWellModel;
+    if (isOneWellModel(this.model)) {
 
       const displacementValueText = new Text("", {
         font: new PhetFont(12),
         fill: QPPWColors.textFillProperty,
       });
 
-      oneWellModel.coherentDisplacementProperty.link((displacement: number) => {
+      this.model.coherentDisplacementProperty.link((displacement: number) => {
         displacementValueText.string = `${displacement.toFixed(2)} nm`;
       });
 
       const displacementSlider = new HSlider(
-        oneWellModel.coherentDisplacementProperty,
-        oneWellModel.coherentDisplacementProperty.range!,
+        this.model.coherentDisplacementProperty,
+        this.model.coherentDisplacementProperty.range!,
         {
           trackSize: new Dimension2(120, 4),
           thumbSize: new Dimension2(15, 30),
@@ -732,16 +739,14 @@ export class ControlPanelNode extends Node {
     });
 
     let barrierHeightRow: Node | null = null;
-    if ("barrierHeightProperty" in this.model) {
-      const oneWellModel = this.model as OneWellModel;
-
-      oneWellModel.barrierHeightProperty.link((height: number) => {
+    if (hasBarrierHeight(this.model)) {
+      this.model.barrierHeightProperty.link((height: number) => {
         barrierHeightValueText.string = `${height.toFixed(2)} eV`;
       });
 
       const barrierHeightSlider = new HSlider(
-        oneWellModel.barrierHeightProperty,
-        oneWellModel.barrierHeightProperty.range!,
+        this.model.barrierHeightProperty,
+        this.model.barrierHeightProperty.range!,
         {
           trackSize: new Dimension2(150, 4),
           thumbSize: new Dimension2(15, 30),
@@ -771,16 +776,14 @@ export class ControlPanelNode extends Node {
     });
 
     let offsetRow: Node | null = null;
-    if ("potentialOffsetProperty" in this.model) {
-      const oneWellModel = this.model as OneWellModel;
-
-      oneWellModel.potentialOffsetProperty.link((offset: number) => {
+    if (hasPotentialOffset(this.model)) {
+      this.model.potentialOffsetProperty.link((offset: number) => {
         offsetValueText.string = `${offset.toFixed(2)} eV`;
       });
 
       const offsetSlider = new HSlider(
-        oneWellModel.potentialOffsetProperty,
-        oneWellModel.potentialOffsetProperty.range!,
+        this.model.potentialOffsetProperty,
+        this.model.potentialOffsetProperty.range!,
         {
           trackSize: new Dimension2(150, 4),
           thumbSize: new Dimension2(15, 30),
@@ -811,16 +814,14 @@ export class ControlPanelNode extends Node {
 
     // Check if the model has wellSeparationProperty (TwoWellsModel or ManyWellsModel)
     let separationRow: Node | null = null;
-    if ("wellSeparationProperty" in this.model) {
-      const wellModel = this.model as TwoWellsModel | ManyWellsModel;
-
-      wellModel.wellSeparationProperty.link((separation: number) => {
+    if (hasWellSeparation(this.model)) {
+      this.model.wellSeparationProperty.link((separation: number) => {
         separationValueText.string = `${separation.toFixed(2)} nm`;
       });
 
       const separationSlider = new HSlider(
-        wellModel.wellSeparationProperty,
-        wellModel.wellSeparationProperty.range!,
+        this.model.wellSeparationProperty,
+        this.model.wellSeparationProperty.range!,
         {
           trackSize: new Dimension2(150, 4),
           thumbSize: new Dimension2(15, 30),
@@ -851,16 +852,14 @@ export class ControlPanelNode extends Node {
 
     // Check if the model has numberOfWellsProperty (ManyWellsModel)
     let numberOfWellsRow: Node | null = null;
-    if ("numberOfWellsProperty" in this.model) {
-      const manyWellsModel = this.model as ManyWellsModel;
-
-      manyWellsModel.numberOfWellsProperty.link((numberOfWells: number) => {
+    if (isManyWellsModel(this.model)) {
+      this.model.numberOfWellsProperty.link((numberOfWells: number) => {
         numberOfWellsValueText.string = `${numberOfWells}`;
       });
 
       const numberOfWellsSlider = new HSlider(
-        manyWellsModel.numberOfWellsProperty,
-        manyWellsModel.numberOfWellsProperty.range!,
+        this.model.numberOfWellsProperty,
+        this.model.numberOfWellsProperty.range!,
         {
           trackSize: new Dimension2(150, 4),
           thumbSize: new Dimension2(15, 30),
@@ -953,16 +952,14 @@ export class ControlPanelNode extends Node {
     });
 
     let electricFieldRow: Node | null = null;
-    if ("electricFieldProperty" in this.model) {
-      const manyWellsModel = this.model as ManyWellsModel;
-
-      manyWellsModel.electricFieldProperty.link((field: number) => {
+    if (hasElectricField(this.model)) {
+      this.model.electricFieldProperty.link((field: number) => {
         electricFieldValueText.string = `${field.toFixed(3)} eV/nm`;
       });
 
       const electricFieldSlider = new HSlider(
-        manyWellsModel.electricFieldProperty,
-        manyWellsModel.electricFieldProperty.range!,
+        this.model.electricFieldProperty,
+        this.model.electricFieldProperty.range!,
         {
           trackSize: new Dimension2(150, 4),
           thumbSize: new Dimension2(15, 30),

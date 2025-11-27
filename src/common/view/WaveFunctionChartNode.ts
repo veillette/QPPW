@@ -16,8 +16,13 @@ import {
   TickLabelSet,
 } from "scenerystack/bamboo";
 import type { ScreenModel } from "../model/ScreenModels.js";
-import type { OneWellModel } from "../../one-well/model/OneWellModel.js";
-import type { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
+import {
+  hasWellOffset,
+  hasWellSeparation,
+  hasSuperpositionConfig,
+  hasClassicallyForbiddenProbability,
+  hasClassicalTurningPoints,
+} from "../model/ModelTypeGuards.js";
 import { BoundStateResult } from "../model/PotentialFunction.js";
 import QuantumConstants from "../model/QuantumConstants.js";
 import QPPWColors from "../../QPPWColors.js";
@@ -219,12 +224,11 @@ export class WaveFunctionChartNode extends Node {
     const showForbiddenProbability = () => {
       const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
       if (
-        "getClassicallyForbiddenProbability" in this.model &&
+        hasClassicallyForbiddenProbability(this.model) &&
         selectedIndex >= 0
       ) {
-        const percentage = (
-          this.model as OneWellModel
-        ).getClassicallyForbiddenProbability(selectedIndex);
+        const percentage =
+          this.model.getClassicallyForbiddenProbability(selectedIndex);
         this.forbiddenProbabilityLabel.string = `Classically Forbidden: ${percentage.toFixed(1)}%`;
         this.forbiddenProbabilityLabel.visible = true;
       }
@@ -605,16 +609,14 @@ export class WaveFunctionChartNode extends Node {
     this.model.potentialTypeProperty.link(() => this.update());
     this.model.wellWidthProperty.link(() => this.update());
     this.model.wellDepthProperty.link(() => this.update());
-    if ("wellOffsetProperty" in this.model) {
+    if (hasWellOffset(this.model)) {
       this.model.wellOffsetProperty.link(() => this.update());
     }
     this.model.particleMassProperty.link(() => this.update());
 
-    // Link to wellSeparationProperty if available (TwoWellsModel only)
-    if ("wellSeparationProperty" in this.model) {
-      (this.model as TwoWellsModel).wellSeparationProperty.link(() =>
-        this.update(),
-      );
+    // Link to wellSeparationProperty if available (TwoWellsModel and ManyWellsModel)
+    if (hasWellSeparation(this.model)) {
+      this.model.wellSeparationProperty.link(() => this.update());
     }
 
     // Update when grid points preference changes (affects wavefunction resolution)
@@ -747,6 +749,46 @@ export class WaveFunctionChartNode extends Node {
         this.updateCurvatureTool();
       }
     });
+
+    if ("barrierHeightProperty" in this.model) {
+      this.model.barrierHeightProperty.link(() => {
+        if (this.showCurvatureToolProperty.value) {
+          this.updateCurvatureTool();
+        }
+      });
+    }
+
+    if ("potentialOffsetProperty" in this.model) {
+      this.model.potentialOffsetProperty.link(() => {
+        if (this.showCurvatureToolProperty.value) {
+          this.updateCurvatureTool();
+        }
+      });
+    }
+
+    if ("wellSeparationProperty" in this.model) {
+      this.model.wellSeparationProperty.link(() => {
+        if (this.showCurvatureToolProperty.value) {
+          this.updateCurvatureTool();
+        }
+      });
+    }
+
+    if ("numberOfWellsProperty" in this.model) {
+      this.model.numberOfWellsProperty.link(() => {
+        if (this.showCurvatureToolProperty.value) {
+          this.updateCurvatureTool();
+        }
+      });
+    }
+
+    if ("electricFieldProperty" in this.model) {
+      this.model.electricFieldProperty.link(() => {
+        if (this.showCurvatureToolProperty.value) {
+          this.updateCurvatureTool();
+        }
+      });
+    }
 
     // Initialize labels (important for fixed display mode charts)
     this.updateYAxisLabel();
@@ -931,13 +973,10 @@ export class WaveFunctionChartNode extends Node {
     boundStates: BoundStateResult,
     selectedIndex: number,
   ): void {
-    // Only show if the checkbox is checked and we have a OneWellModel
-    const showClassical =
-      this.model.showClassicalProbabilityProperty.value &&
-      "getClassicalTurningPoints" in this.model;
-
+    // Early return if conditions aren't met
     if (
-      !showClassical ||
+      !this.model.showClassicalProbabilityProperty.value ||
+      !hasClassicalTurningPoints(this.model) ||
       selectedIndex < 0 ||
       selectedIndex >= boundStates.energies.length
     ) {
@@ -945,10 +984,8 @@ export class WaveFunctionChartNode extends Node {
       return;
     }
 
-    // Get turning points
-    const turningPoints = (
-      this.model as OneWellModel
-    ).getClassicalTurningPoints(selectedIndex);
+    // TypeScript now knows this.model has getClassicalTurningPoints
+    const turningPoints = this.model.getClassicalTurningPoints(selectedIndex);
 
     if (!turningPoints) {
       this.hideClassicalProbabilityVisualization();
@@ -1028,7 +1065,7 @@ export class WaveFunctionChartNode extends Node {
    */
   private updateViewRangeForSuperpositionFromModel(): void {
     const boundStates = this.model.getBoundStates();
-    if (!boundStates || !("superpositionConfigProperty" in this.model)) {
+    if (!boundStates || !hasSuperpositionConfig(this.model)) {
       return;
     }
 
@@ -1038,8 +1075,7 @@ export class WaveFunctionChartNode extends Node {
       return;
     }
 
-    const config = (this.model as OneWellModel).superpositionConfigProperty
-      .value;
+    const config = this.model.superpositionConfigProperty.value;
     const numPoints = boundStates.xGrid.length;
 
     // Compute the current superposition wavefunction magnitude
@@ -1093,12 +1129,11 @@ export class WaveFunctionChartNode extends Node {
    */
   private updateSuperpositionWavefunction(): void {
     const boundStates = this.model.getBoundStates();
-    if (!boundStates || !("superpositionConfigProperty" in this.model)) {
+    if (!boundStates || !hasSuperpositionConfig(this.model)) {
       return;
     }
 
-    const config = (this.model as OneWellModel).superpositionConfigProperty
-      .value;
+    const config = this.model.superpositionConfigProperty.value;
     const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
     const displayMode = this.getEffectiveDisplayMode();
     const numPoints = boundStates.xGrid.length;
@@ -1225,14 +1260,13 @@ export class WaveFunctionChartNode extends Node {
       this.magnitudePath.visible = false;
       this.phaseColorNode.visible = false;
 
-      // Plot classical probability if enabled (only for OneWellModel)
+      // Plot classical probability if enabled
       if (
         "showClassicalProbabilityProperty" in this.model &&
         this.model.showClassicalProbabilityProperty.value
       ) {
-        const classicalProbability = (
-          this.model as OneWellModel
-        ).getClassicalProbabilityDensity(selectedIndex);
+        const classicalProbability =
+          this.model.getClassicalProbabilityDensity(selectedIndex);
         if (classicalProbability) {
           this.plotClassicalProbabilityDensity(xGrid, classicalProbability);
           this.classicalProbabilityPath.visible = true;
@@ -1896,10 +1930,9 @@ export class WaveFunctionChartNode extends Node {
 
     let probabilityDensity: number[];
 
-    if (isSuperposition && "superpositionConfigProperty" in this.model) {
+    if (isSuperposition && hasSuperpositionConfig(this.model)) {
       // Calculate superposition probability density
-      const config = (this.model as OneWellModel).superpositionConfigProperty
-        .value;
+      const config = this.model.superpositionConfigProperty.value;
       const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
       const numPoints = boundStates.xGrid.length;
 
@@ -2030,10 +2063,9 @@ export class WaveFunctionChartNode extends Node {
 
     let probabilityDensity: number[];
 
-    if (isSuperposition && "superpositionConfigProperty" in this.model) {
+    if (isSuperposition && hasSuperpositionConfig(this.model)) {
       // Calculate superposition probability density
-      const config = (this.model as OneWellModel).superpositionConfigProperty
-        .value;
+      const config = this.model.superpositionConfigProperty.value;
       const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
       const numPoints = boundStates.xGrid.length;
 
@@ -2180,8 +2212,8 @@ export class WaveFunctionChartNode extends Node {
       );
       this.curvatureParabola.shape = parabolaShape;
 
-      // Update label
-      this.curvatureLabel.string = `d²ψ/dx² = ${secondDerivative.value.toExponential(2)}`;
+      // Update label with proper units (nm^-5/2)
+      this.curvatureLabel.string = `d²ψ/dx² = ${secondDerivative.value.toExponential(2)} nm⁻⁵ᐟ²`;
       this.curvatureLabel.centerX = viewX;
       this.curvatureLabel.bottom = yTop - 5;
     } else {
@@ -2192,6 +2224,8 @@ export class WaveFunctionChartNode extends Node {
 
   /**
    * Calculates the second derivative of the wavefunction at a given x position.
+   * Uses the analytical solution from the model when available for better accuracy,
+   * falls back to finite difference method otherwise.
    * @param xData - X position in nm
    * @returns Object with second derivative value and wavefunction value, or null if not available
    */
@@ -2223,7 +2257,7 @@ export class WaveFunctionChartNode extends Node {
     // Convert xData from nm to m
     const xInM = xData * QuantumConstants.NM_TO_M;
 
-    // Find the grid points surrounding xData
+    // Find the grid points surrounding xData for interpolation
     let i1 = -1;
     for (let i = 0; i < xGrid.length - 1; i++) {
       if (xGrid[i] <= xInM && xInM <= xGrid[i + 1]) {
@@ -2232,7 +2266,36 @@ export class WaveFunctionChartNode extends Node {
       }
     }
 
-    if (i1 === -1 || i1 === 0 || i1 >= xGrid.length - 2) {
+    if (i1 === -1) {
+      return null;
+    }
+
+    // Interpolate wavefunction value at xData
+    const t = (xInM - xGrid[i1]) / (xGrid[i1 + 1] - xGrid[i1]);
+    const psi = wavefunction[i1] * (1 - t) + wavefunction[i1 + 1] * t;
+
+    // Try to use analytical solution first (more accurate)
+    const secondDerivativeArray = this.model.getWavefunctionSecondDerivative(
+      selectedIndex + 1,
+      [xInM],
+    );
+
+    if (secondDerivativeArray && secondDerivativeArray.length > 0) {
+      // Analytical solution available - use it
+      const secondDerivativeInM = secondDerivativeArray[0];
+
+      // Convert from m^(-5/2) to nm^(-5/2)
+      const secondDerivativeInNm =
+        secondDerivativeInM * Math.pow(QuantumConstants.M_TO_NM, 2);
+
+      return {
+        value: secondDerivativeInNm,
+        wavefunctionValue: psi,
+      };
+    }
+
+    // Fall back to finite difference method
+    if (i1 === 0 || i1 >= xGrid.length - 2) {
       return null; // Need at least one point on each side for second derivative
     }
 
@@ -2240,17 +2303,17 @@ export class WaveFunctionChartNode extends Node {
     // f''(x) ≈ (f(x-h) - 2f(x) + f(x+h)) / h²
     const h = xGrid[1] - xGrid[0]; // Grid spacing (assumes uniform grid)
 
-    // Interpolate wavefunction value at xData
-    const t = (xInM - xGrid[i1]) / (xGrid[i1 + 1] - xGrid[i1]);
-    const psi = wavefunction[i1] * (1 - t) + wavefunction[i1 + 1] * t;
-
     // Calculate second derivative using three-point stencil
     const psi_left = wavefunction[i1];
     const psi_right = wavefunction[i1 + 1];
-    const secondDerivative = (psi_left - 2 * psi + psi_right) / (h * h);
+    const secondDerivativeInM = (psi_left - 2 * psi + psi_right) / (h * h);
+
+    // Convert from m^(-5/2) to nm^(-5/2)
+    const secondDerivativeInNm =
+      secondDerivativeInM * Math.pow(QuantumConstants.M_TO_NM, 2);
 
     return {
-      value: secondDerivative,
+      value: secondDerivativeInNm,
       wavefunctionValue: psi,
     };
   }

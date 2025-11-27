@@ -1014,7 +1014,9 @@ export class OneWellModel extends BaseModel {
       return;
     }
 
-    const numStates = this.boundStateResult.energies.length;
+    // Extract to local constant for type narrowing
+    const boundStates = this.boundStateResult;
+    const numStates = boundStates.energies.length;
     let amplitudes: number[];
     let phases: number[];
 
@@ -1112,12 +1114,12 @@ export class OneWellModel extends BaseModel {
           const displacementIndex = Math.round(
             ((displacement + 4 * QuantumConstants.NM_TO_M) /
               (8 * QuantumConstants.NM_TO_M)) *
-              (this.boundStateResult!.xGrid.length - 1),
+              (boundStates.xGrid.length - 1),
           );
           const clampedIndex = clamp(
             displacementIndex,
             0,
-            this.boundStateResult!.xGrid.length - 1,
+            boundStates.xGrid.length - 1,
           );
 
           // Weight each eigenstate by its wavefunction value at the displacement position
@@ -1129,9 +1131,8 @@ export class OneWellModel extends BaseModel {
           ); // Center around a middle eigenstate
 
           for (let n = 0; n < numStates; n++) {
-            if (n < this.boundStateResult!.wavefunctions.length) {
-              const psi_n_at_x =
-                this.boundStateResult!.wavefunctions[n][clampedIndex];
+            if (n < boundStates.wavefunctions.length) {
+              const psi_n_at_x = boundStates.wavefunctions[n][clampedIndex];
 
               // Gaussian envelope in eigenstate space
               const gaussianWeight = Math.exp(

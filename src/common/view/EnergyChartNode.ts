@@ -17,8 +17,15 @@ import {
   TickLabelSet,
 } from "scenerystack/bamboo";
 import type { ScreenModel } from "../model/ScreenModels.js";
-import type { OneWellModel } from "../../one-well/model/OneWellModel.js";
-import type { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
+import {
+  isTwoWellsModel,
+  isManyWellsModel,
+  hasBarrierHeight,
+  hasPotentialOffset,
+  hasWellSeparation,
+  hasElectricField,
+  hasClassicalTurningPoints,
+} from "../model/ModelTypeGuards.js";
 import { PotentialType, BoundStateResult } from "../model/PotentialFunction.js";
 import QuantumConstants from "../model/QuantumConstants.js";
 import QPPWColors from "../../QPPWColors.js";
@@ -498,32 +505,24 @@ export class EnergyChartNode extends Node {
     });
 
     // Link to wellSeparationProperty if available (TwoWellsModel and ManyWellsModel)
-    if ("wellSeparationProperty" in this.model) {
-      (this.model as TwoWellsModel).wellSeparationProperty.link(() =>
-        this.update(),
-      );
+    if (hasWellSeparation(this.model)) {
+      this.model.wellSeparationProperty.link(() => this.update());
     }
 
     // Link to numberOfWellsProperty and electricFieldProperty if available (ManyWellsModel only)
-    if ("numberOfWellsProperty" in this.model) {
-      const manyWellsModel = this
-        .model as import("../../many-wells/model/ManyWellsModel.js").ManyWellsModel;
-      manyWellsModel.numberOfWellsProperty.link(() => this.update());
-      if ("electricFieldProperty" in manyWellsModel) {
-        manyWellsModel.electricFieldProperty.link(() => this.update());
+    if (isManyWellsModel(this.model)) {
+      this.model.numberOfWellsProperty.link(() => this.update());
+      if (hasElectricField(this.model)) {
+        this.model.electricFieldProperty.link(() => this.update());
       }
     }
 
     // Link to barrierHeightProperty and potentialOffsetProperty if available (OneWellModel only)
-    if ("barrierHeightProperty" in this.model) {
-      (this.model as OneWellModel).barrierHeightProperty.link(() =>
-        this.update(),
-      );
+    if (hasBarrierHeight(this.model)) {
+      this.model.barrierHeightProperty.link(() => this.update());
     }
-    if ("potentialOffsetProperty" in this.model) {
-      (this.model as OneWellModel).potentialOffsetProperty.link(() =>
-        this.update(),
-      );
+    if (hasPotentialOffset(this.model)) {
+      this.model.potentialOffsetProperty.link(() => this.update());
     }
 
     // Update classical probability visualization when property changes
@@ -576,15 +575,12 @@ export class EnergyChartNode extends Node {
    * Updates the classical turning point lines.
    */
   private updateClassicalTurningPoints(boundStates: BoundStateResult): void {
-    // Only show if the checkbox is checked and we have a OneWellModel
-    const showClassical =
-      this.model.showClassicalProbabilityProperty.value &&
-      "getClassicalTurningPoints" in this.model;
-
     const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
 
+    // Early return if conditions aren't met
     if (
-      !showClassical ||
+      !this.model.showClassicalProbabilityProperty.value ||
+      !hasClassicalTurningPoints(this.model) ||
       selectedIndex < 0 ||
       selectedIndex >= boundStates.energies.length
     ) {
@@ -593,10 +589,8 @@ export class EnergyChartNode extends Node {
       return;
     }
 
-    // Get turning points
-    const turningPoints = (
-      this.model as OneWellModel
-    ).getClassicalTurningPoints(selectedIndex);
+    // TypeScript now knows this.model has getClassicalTurningPoints
+    const turningPoints = this.model.getClassicalTurningPoints(selectedIndex);
 
     if (!turningPoints) {
       this.leftTurningPointLine.visible = false;
@@ -757,11 +751,10 @@ export class EnergyChartNode extends Node {
       // V(x) = offset + (height/width) * x for 0 < x < width
       // V(x) = height + offset for x > width
 
-      // Get the offset from potentialOffsetProperty (OneWellModel only)
-      const offset =
-        "potentialOffsetProperty" in this.model
-          ? (this.model as OneWellModel).potentialOffsetProperty.value
-          : 0;
+      // Get the offset from potentialOffsetProperty (OneWellModel or IntroModel only)
+      const offset = hasPotentialOffset(this.model)
+        ? this.model.potentialOffsetProperty.value
+        : 0;
       const height = wellDepth;
       const barrierTop = height + offset;
       const slope = height / wellWidth; // eV/nm
@@ -831,8 +824,12 @@ export class EnergyChartNode extends Node {
       // Convention: V=0 in wells, V=wellDepth in barrier
       // This matches the analytical solution convention
       // Wells are centered at ±(separation/2 + wellWidth/2)
-      const separation = (this.model as TwoWellsModel).wellSeparationProperty
-        .value;
+
+      if (!isTwoWellsModel(this.model)) {
+        return; // DOUBLE_SQUARE_WELL requires TwoWellsModel
+      }
+
+      const separation = this.model.wellSeparationProperty.value;
 
       const leftWellCenter = -(separation / 2 + wellWidth / 2);
       const rightWellCenter = separation / 2 + wellWidth / 2;
@@ -925,10 +922,9 @@ export class EnergyChartNode extends Node {
     } else if (potentialType === PotentialType.ROSEN_MORSE) {
       // Draw Rosen-Morse potential: V(x) = -V_0 / cosh²(x/a) + V_1 * tanh(x/a)
       const centerX = xCenter;
-      const barrierHeight =
-        "barrierHeightProperty" in this.model
-          ? (this.model as OneWellModel).barrierHeightProperty.value
-          : 0;
+      const barrierHeight = hasBarrierHeight(this.model)
+        ? this.model.barrierHeightProperty.value
+        : 0;
       const numPoints = 200;
       let firstPoint = true;
 
@@ -955,10 +951,9 @@ export class EnergyChartNode extends Node {
     } else if (potentialType === PotentialType.ECKART) {
       // Draw Eckart potential: V(x) = V_0 / (1 + exp(x/a))² - V_1 / (1 + exp(x/a))
       const centerX = xCenter;
-      const barrierHeight =
-        "barrierHeightProperty" in this.model
-          ? (this.model as OneWellModel).barrierHeightProperty.value
-          : 0;
+      const barrierHeight = hasBarrierHeight(this.model)
+        ? this.model.barrierHeightProperty.value
+        : 0;
       const numPoints = 200;
       let firstPoint = true;
 
