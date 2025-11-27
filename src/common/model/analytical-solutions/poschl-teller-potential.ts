@@ -38,9 +38,11 @@ import {
   BoundStateResult,
   GridConfig,
   PotentialFunction,
+  FourierTransformResult,
 } from "../PotentialFunction.js";
 import { jacobiPolynomial, factorial } from "./math-utilities.js";
 import { AnalyticalSolution } from "./AnalyticalSolution.js";
+import { computeNumericalFourierTransform } from "./fourier-transform-helper.js";
 
 /**
  * Class-based implementation of Pöschl-Teller potential analytical solution.
@@ -128,6 +130,21 @@ export class PoschlTellerPotentialSolution extends AnalyticalSolution {
       xGrid,
     );
   }
+  calculateFourierTransform(
+    boundStateResult: BoundStateResult,
+    mass: number,
+    numMomentumPoints?: number,
+    pMax?: number,
+  ): FourierTransformResult {
+    return computeNumericalFourierTransform(
+      boundStateResult,
+      mass,
+      this.potentialDepth,
+      numMomentumPoints,
+      pMax,
+    );
+  }
+
 }
 
 /**

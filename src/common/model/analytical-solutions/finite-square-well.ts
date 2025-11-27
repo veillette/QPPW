@@ -40,9 +40,11 @@ import {
   BoundStateResult,
   GridConfig,
   PotentialFunction,
+  FourierTransformResult,
 } from "../PotentialFunction.js";
 import { AnalyticalSolution } from "./AnalyticalSolution.js";
 import { findRootHybrid } from "./root-finding-utils.js";
+import { computeNumericalFourierTransform } from "./fourier-transform-helper.js";
 
 /**
  * Create the potential function for a finite square well.
@@ -533,6 +535,22 @@ export class FiniteSquareWellSolution extends AnalyticalSolution {
       energy,
       parity,
       xGrid,
+    );
+  }
+
+  calculateFourierTransform(
+    boundStateResult: BoundStateResult,
+    mass: number,
+    numMomentumPoints?: number,
+    pMax?: number,
+  ): FourierTransformResult {
+    // Use the helper function with energy scale based on well depth
+    return computeNumericalFourierTransform(
+      boundStateResult,
+      mass,
+      this.wellDepth,
+      numMomentumPoints,
+      pMax,
     );
   }
 }

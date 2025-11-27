@@ -80,6 +80,22 @@ export interface EnergyOnlyResult {
   method: SolverMethod;
 }
 
+/**
+ * Result from computing the Fourier transform of a wavefunction.
+ * The Fourier transform of ψ(x) is:
+ * φ(p) = (1/√(2πℏ)) ∫ ψ(x) e^(-ipx/ℏ) dx
+ *
+ * where p is momentum in kg·m/s.
+ */
+export interface FourierTransformResult {
+  /** Momentum values in kg·m/s */
+  pGrid: number[];
+  /** Fourier-transformed wavefunctions in momentum space (each row is one eigenstate) */
+  momentumWavefunctions: number[][];
+  /** Method used to compute the transform ('analytical' or 'numerical') */
+  method: 'analytical' | 'numerical';
+}
+
 qppw.register("PotentialFunction", { PotentialType });
 
 export default PotentialFunction;
