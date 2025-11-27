@@ -2424,19 +2424,33 @@ export class WaveFunctionChartNode extends Node {
     const t = (xInM - xGrid[i1]) / (xGrid[i1 + 1] - xGrid[i1]);
     const psi = wavefunction[i1] * (1 - t) + wavefunction[i1 + 1] * t;
 
-    // Grid spacing (assumes uniform grid)
-    const h = xGrid[1] - xGrid[0];
+    // Try to use analytical solution for first derivative (more accurate)
+    const firstDerivativeArray = this.model.getWavefunctionFirstDerivative(
+      selectedIndex + 1,
+      [xInM],
+    );
 
-    // Calculate first derivative using central difference
-    // f'(x) ≈ (f(x+h) - f(x-h)) / (2h)
-    const psi_left = wavefunction[i1];
-    const psi_right = wavefunction[i1 + 1];
-    const firstDerivativeInM = (psi_right - psi_left) / (2 * h);
+    let firstDerivativeInNm: number;
 
-    // Convert first derivative from m^(-3/2) to nm^(-3/2)
-    // dψ/dx in nm^(-3/2) = dψ/dx in m^(-3/2) * (m/nm)
-    const firstDerivativeInNm =
-      firstDerivativeInM * QuantumConstants.M_TO_NM;
+    if (firstDerivativeArray && firstDerivativeArray.length > 0) {
+      // Analytical solution available for first derivative
+      const firstDerivativeInM = firstDerivativeArray[0];
+
+      // Convert first derivative from m^(-3/2) to nm^(-3/2)
+      // dψ/dx in nm^(-3/2) = dψ/dx in m^(-3/2) * (m/nm)
+      firstDerivativeInNm = firstDerivativeInM * QuantumConstants.M_TO_NM;
+    } else {
+      // Fall back to finite difference for first derivative
+      // f'(x) ≈ (f(x+h) - f(x-h)) / (2h)
+      // Grid spacing (assumes uniform grid)
+      const h = xGrid[1] - xGrid[0];
+      const psi_left = wavefunction[i1];
+      const psi_right = wavefunction[i1 + 1];
+      const firstDerivativeInM = (psi_right - psi_left) / (2 * h);
+
+      // Convert first derivative from m^(-3/2) to nm^(-3/2)
+      firstDerivativeInNm = firstDerivativeInM * QuantumConstants.M_TO_NM;
+    }
 
     // Try to use analytical solution for second derivative (more accurate)
     const secondDerivativeArray = this.model.getWavefunctionSecondDerivative(
@@ -2456,6 +2470,10 @@ export class WaveFunctionChartNode extends Node {
     } else {
       // Fall back to finite difference for second derivative
       // f''(x) ≈ (f(x-h) - 2f(x) + f(x+h)) / h²
+      // Grid spacing (assumes uniform grid)
+      const h = xGrid[1] - xGrid[0];
+      const psi_left = wavefunction[i1];
+      const psi_right = wavefunction[i1 + 1];
       const secondDerivativeInM = (psi_left - 2 * psi + psi_right) / (h * h);
 
       // Convert from m^(-5/2) to nm^(-5/2)
