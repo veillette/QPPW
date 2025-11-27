@@ -253,18 +253,10 @@ export abstract class BaseModel {
   protected abstract onSolverMethodChanged(method: NumericalMethod): void;
 
   /**
-   * Resets the model to its initial state.
-   * This is the public API method that delegates to resetAll().
+   * Resets all properties to their initial state.
+   * Subclasses should override this method and call super.reset().
    */
   public reset(): void {
-    this.resetAll();
-  }
-
-  /**
-   * Resets all properties to their initial state.
-   * Subclasses should override this method and call super.resetAll().
-   */
-  public resetAll(): void {
     this.isPlayingProperty.reset();
     this.timeProperty.reset();
     this.timeSpeedProperty.reset();
