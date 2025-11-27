@@ -71,8 +71,10 @@ export class WaveFunctionChartNode extends Node {
   // Classical probability visualization
   private readonly leftTurningPointLine: Line;
   private readonly rightTurningPointLine: Line;
-  private readonly leftForbiddenRegion: Rectangle;
-  private readonly rightForbiddenRegion: Rectangle;
+  private readonly leftForbiddenBackground: Rectangle; // Faint rectangular background for left forbidden region
+  private readonly rightForbiddenBackground: Rectangle; // Faint rectangular background for right forbidden region
+  private readonly leftForbiddenRegion: Path; // Area under classical probability curve in left forbidden region
+  private readonly rightForbiddenRegion: Path; // Area under classical probability curve in right forbidden region
   private readonly forbiddenProbabilityLabel: Text; // Label showing the forbidden probability percentage
 
   // Zeros visualization
@@ -195,16 +197,31 @@ export class WaveFunctionChartNode extends Node {
     });
     this.plotContentNode.addChild(this.rightTurningPointLine);
 
-    // Create classically forbidden regions (shaded areas)
-    this.leftForbiddenRegion = new Rectangle(0, 0, 1, 1, {
-      fill: "rgba(255, 200, 200, 0.3)",
+    // Create faint rectangular backgrounds for classically forbidden regions
+    this.leftForbiddenBackground = new Rectangle(0, 0, 1, 1, {
+      fill: "rgba(255, 200, 200, 0.1)", // Very faint red
+      stroke: null,
+      visible: false,
+    });
+    this.plotContentNode.addChild(this.leftForbiddenBackground);
+
+    this.rightForbiddenBackground = new Rectangle(0, 0, 1, 1, {
+      fill: "rgba(255, 200, 200, 0.1)", // Very faint red
+      stroke: null,
+      visible: false,
+    });
+    this.plotContentNode.addChild(this.rightForbiddenBackground);
+
+    // Create classically forbidden regions (shaded areas that follow the classical probability curve)
+    this.leftForbiddenRegion = new Path(null, {
+      fill: "rgba(255, 200, 200, 0.3)", // Semi-transparent red
       stroke: null,
       visible: false,
     });
     this.plotContentNode.addChild(this.leftForbiddenRegion);
 
-    this.rightForbiddenRegion = new Rectangle(0, 0, 1, 1, {
-      fill: "rgba(255, 200, 200, 0.3)",
+    this.rightForbiddenRegion = new Path(null, {
+      fill: "rgba(255, 200, 200, 0.3)", // Semi-transparent red
       stroke: null,
       visible: false,
     });
@@ -238,6 +255,18 @@ export class WaveFunctionChartNode extends Node {
       this.forbiddenProbabilityLabel.visible = false;
     };
 
+    // Add listeners to background rectangles
+    this.leftForbiddenBackground.addInputListener({
+      enter: showForbiddenProbability,
+      exit: hideForbiddenProbability,
+    });
+
+    this.rightForbiddenBackground.addInputListener({
+      enter: showForbiddenProbability,
+      exit: hideForbiddenProbability,
+    });
+
+    // Add listeners to highlighted regions
     this.leftForbiddenRegion.addInputListener({
       enter: showForbiddenProbability,
       exit: hideForbiddenProbability,
@@ -962,6 +991,8 @@ export class WaveFunctionChartNode extends Node {
   private hideClassicalProbabilityVisualization(): void {
     this.leftTurningPointLine.visible = false;
     this.rightTurningPointLine.visible = false;
+    this.leftForbiddenBackground.visible = false;
+    this.rightForbiddenBackground.visible = false;
     this.leftForbiddenRegion.visible = false;
     this.rightForbiddenRegion.visible = false;
   }
@@ -1004,27 +1035,36 @@ export class WaveFunctionChartNode extends Node {
     this.rightTurningPointLine.setLine(xRight, yTop, xRight, yBottom);
     this.rightTurningPointLine.visible = true;
 
-    // Draw shaded forbidden regions
+    // Draw faint rectangular backgrounds for forbidden regions
     // Left forbidden region (from left edge to left turning point)
     const leftRegionX = this.chartMargins.left;
     const leftRegionWidth = xLeft - leftRegionX;
-    this.leftForbiddenRegion.setRect(
+    this.leftForbiddenBackground.setRect(
       leftRegionX,
       yTop,
       leftRegionWidth,
       this.plotHeight,
     );
-    this.leftForbiddenRegion.visible = true;
+    this.leftForbiddenBackground.visible = true;
 
     // Right forbidden region (from right turning point to right edge)
     const rightRegionX = xRight;
     const rightRegionWidth = this.chartMargins.left + this.plotWidth - xRight;
-    this.rightForbiddenRegion.setRect(
+    this.rightForbiddenBackground.setRect(
       rightRegionX,
       yTop,
       rightRegionWidth,
       this.plotHeight,
     );
+    this.rightForbiddenBackground.visible = true;
+
+    // Create and draw highlighted forbidden regions that follow the classical probability curve
+    const shapes = this.createForbiddenRegionShapes(turningPoints, selectedIndex);
+
+    this.leftForbiddenRegion.shape = shapes.leftShape;
+    this.leftForbiddenRegion.visible = true;
+
+    this.rightForbiddenRegion.shape = shapes.rightShape;
     this.rightForbiddenRegion.visible = true;
   }
 
@@ -2033,6 +2073,106 @@ export class WaveFunctionChartNode extends Node {
     shape.close();
 
     return shape;
+  }
+
+  /**
+   * Creates shapes that highlight the area under the classical probability curve
+   * in the forbidden regions (left and right of turning points).
+   * @param turningPoints - Left and right turning points in nm
+   * @param selectedIndex - Index of the selected energy level
+   * @returns Object with left and right shapes representing forbidden regions
+   */
+  private createForbiddenRegionShapes(
+    turningPoints: { left: number; right: number },
+    selectedIndex: number,
+  ): { leftShape: Shape; rightShape: Shape } {
+    const leftShape = new Shape();
+    const rightShape = new Shape();
+
+    const boundStates = this.model.getBoundStates();
+    if (!boundStates) {
+      return { leftShape, rightShape }; // Return empty shapes
+    }
+
+    // Get classical probability density data
+    const classicalProbability =
+      this.model.getClassicalProbabilityDensity(selectedIndex);
+    if (!classicalProbability) {
+      return { leftShape, rightShape }; // Return empty shapes
+    }
+
+    const xGrid = boundStates.xGrid;
+    const y0 = this.dataToViewY(0); // Baseline
+
+    // Build left forbidden region (from left edge to left turning point)
+    const leftPoints: { x: number; y: number }[] = [];
+    for (let i = 0; i < xGrid.length; i++) {
+      const xData = xGrid[i] * QuantumConstants.M_TO_NM; // Convert to nm
+
+      if (xData <= turningPoints.left) {
+        const x = this.dataToViewX(xData);
+        const y = this.dataToViewY(classicalProbability[i]);
+        leftPoints.push({ x, y });
+      }
+    }
+
+    if (leftPoints.length > 0) {
+      // Start at bottom-left (baseline at left edge)
+      const leftEdgeX = this.chartMargins.left;
+      leftShape.moveTo(leftEdgeX, y0);
+
+      // Draw line up to the first point's y-coordinate
+      leftShape.lineTo(leftEdgeX, leftPoints[0].y);
+
+      // Trace along the curve
+      for (let i = 0; i < leftPoints.length; i++) {
+        leftShape.lineTo(leftPoints[i].x, leftPoints[i].y);
+      }
+
+      // Draw line down from last point to baseline
+      const lastPoint = leftPoints[leftPoints.length - 1];
+      leftShape.lineTo(lastPoint.x, y0);
+
+      // Close the shape
+      leftShape.close();
+    }
+
+    // Build right forbidden region (from right turning point to right edge)
+    const rightPoints: { x: number; y: number }[] = [];
+    for (let i = 0; i < xGrid.length; i++) {
+      const xData = xGrid[i] * QuantumConstants.M_TO_NM; // Convert to nm
+
+      if (xData >= turningPoints.right) {
+        const x = this.dataToViewX(xData);
+        const y = this.dataToViewY(classicalProbability[i]);
+        rightPoints.push({ x, y });
+      }
+    }
+
+    if (rightPoints.length > 0) {
+      // Start at bottom-left of right region (baseline at right turning point)
+      const firstPoint = rightPoints[0];
+      rightShape.moveTo(firstPoint.x, y0);
+
+      // Draw line up to the first point's y-coordinate
+      rightShape.lineTo(firstPoint.x, firstPoint.y);
+
+      // Trace along the curve
+      for (let i = 0; i < rightPoints.length; i++) {
+        rightShape.lineTo(rightPoints[i].x, rightPoints[i].y);
+      }
+
+      // Draw line down from last point to baseline
+      const lastPoint = rightPoints[rightPoints.length - 1];
+      const rightEdgeX = this.chartMargins.left + this.plotWidth;
+      rightShape.lineTo(rightEdgeX, lastPoint.y);
+      rightShape.lineTo(rightEdgeX, y0);
+
+      // Close the shape
+      rightShape.close();
+    }
+
+    return { leftShape, rightShape };
   }
 
   /**
