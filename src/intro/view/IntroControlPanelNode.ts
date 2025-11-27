@@ -281,6 +281,25 @@ export class IntroControlPanelNode extends Node {
         })
       : null;
 
+    // Derivative visualization tool checkbox (for wavefunction chart)
+    const derivativeToolCheckboxContent = this.waveFunctionChartNode
+      ? new Checkbox(
+          this.waveFunctionChartNode.showDerivativeToolProperty,
+          new Text("Show Derivative", {
+            font: new PhetFont(12),
+            fill: QPPWColors.textFillProperty,
+          }),
+          { boxWidth: 16 },
+        )
+      : null;
+
+    const derivativeToolCheckbox = derivativeToolCheckboxContent
+      ? new Node({
+          children: [derivativeToolCheckboxContent],
+          x: 20,
+        })
+      : null;
+
     // Build children array (no display mode controls since intro screen shows separate charts)
     const children: Node[] = [
       classicalProbabilityCheckbox,
@@ -295,6 +314,11 @@ export class IntroControlPanelNode extends Node {
     // Add curvature tool checkbox if it exists
     if (curvatureToolCheckbox) {
       children.push(curvatureToolCheckbox);
+    }
+
+    // Add derivative tool checkbox if it exists
+    if (derivativeToolCheckbox) {
+      children.push(derivativeToolCheckbox);
     }
 
     return new VBox({

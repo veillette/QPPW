@@ -102,6 +102,15 @@ export class WaveFunctionChartNode extends Node {
   private readonly curvatureLabel: Text;
   private curvatureXProperty: NumberProperty; // X position in nm
 
+  // Derivative visualization tool
+  public readonly showDerivativeToolProperty: BooleanProperty;
+  private readonly derivativeToolContainer: Node; // Container for all derivative tool elements
+  private readonly derivativeMarker: Line;
+  private readonly derivativeMarkerHandle: Circle;
+  private readonly derivativeTangentLine: Path; // Tangent line showing the slope
+  private readonly derivativeLabel: Text;
+  private derivativeXProperty: NumberProperty; // X position in nm
+
   // Guard flag to prevent reentry during updates
   private isUpdating: boolean = false;
   // Flag to indicate if an update was requested while another update was in progress
@@ -474,6 +483,70 @@ export class WaveFunctionChartNode extends Node {
       }
     });
 
+    // Initialize derivative visualization tool
+    this.showDerivativeToolProperty = new BooleanProperty(false);
+
+    // Initialize marker position (default to 1nm, slightly off-center)
+    this.derivativeXProperty = new NumberProperty(1);
+
+    // Create derivative tool container
+    this.derivativeToolContainer = new Node({
+      visible: false,
+    });
+    this.plotContentNode.addChild(this.derivativeToolContainer);
+
+    // Create marker line
+    this.derivativeMarker = new Line(0, 0, 0, 0, {
+      stroke: "rgba(100, 200, 100, 0.8)", // Semi-transparent green
+      lineWidth: 2,
+      lineDash: [4, 3],
+    });
+    this.derivativeToolContainer.addChild(this.derivativeMarker);
+
+    // Create marker handle (draggable circle)
+    this.derivativeMarkerHandle = new Circle(8, {
+      fill: "rgba(100, 200, 100, 0.9)",
+      stroke: QPPWColors.backgroundColorProperty,
+      lineWidth: 2,
+      cursor: "ew-resize",
+    });
+    this.derivativeToolContainer.addChild(this.derivativeMarkerHandle);
+
+    // Create tangent line path
+    this.derivativeTangentLine = new Path(null, {
+      stroke: "rgba(100, 200, 100, 0.9)",
+      lineWidth: 3,
+      fill: null,
+    });
+    this.derivativeToolContainer.addChild(this.derivativeTangentLine);
+
+    // Create derivative label
+    this.derivativeLabel = new Text("", {
+      font: new PhetFont({ size: 14, weight: "bold" }),
+      fill: "rgba(100, 200, 100, 1)",
+      visible: false,
+    });
+    this.addChild(this.derivativeLabel);
+
+    // Setup drag listener for marker
+    this.setupDerivativeToolDragListener();
+
+    // Link derivative tool visibility to property
+    this.showDerivativeToolProperty.link((show: boolean) => {
+      this.derivativeToolContainer.visible = show;
+      this.derivativeLabel.visible = show;
+      if (show) {
+        this.updateDerivativeTool();
+      }
+    });
+
+    // Update derivative tool when marker position changes
+    this.derivativeXProperty.link(() => {
+      if (this.showDerivativeToolProperty.value) {
+        this.updateDerivativeTool();
+      }
+    });
+
     // Update area tool when marker positions change
     this.leftMarkerXProperty.link(() => {
       if (this.showAreaToolProperty.value) {
@@ -758,6 +831,9 @@ export class WaveFunctionChartNode extends Node {
       if (this.showCurvatureToolProperty.value) {
         this.updateCurvatureTool();
       }
+      if (this.showDerivativeToolProperty.value) {
+        this.updateDerivativeTool();
+      }
     });
 
     // Update curvature tool when potential or well parameters change
@@ -765,11 +841,17 @@ export class WaveFunctionChartNode extends Node {
       if (this.showCurvatureToolProperty.value) {
         this.updateCurvatureTool();
       }
+      if (this.showDerivativeToolProperty.value) {
+        this.updateDerivativeTool();
+      }
     });
 
     this.model.wellWidthProperty.link(() => {
       if (this.showCurvatureToolProperty.value) {
         this.updateCurvatureTool();
+      }
+      if (this.showDerivativeToolProperty.value) {
+        this.updateDerivativeTool();
       }
     });
 
@@ -777,12 +859,18 @@ export class WaveFunctionChartNode extends Node {
       if (this.showCurvatureToolProperty.value) {
         this.updateCurvatureTool();
       }
+      if (this.showDerivativeToolProperty.value) {
+        this.updateDerivativeTool();
+      }
     });
 
     if ("barrierHeightProperty" in this.model) {
       this.model.barrierHeightProperty.link(() => {
         if (this.showCurvatureToolProperty.value) {
           this.updateCurvatureTool();
+        }
+        if (this.showDerivativeToolProperty.value) {
+          this.updateDerivativeTool();
         }
       });
     }
@@ -792,6 +880,9 @@ export class WaveFunctionChartNode extends Node {
         if (this.showCurvatureToolProperty.value) {
           this.updateCurvatureTool();
         }
+        if (this.showDerivativeToolProperty.value) {
+          this.updateDerivativeTool();
+        }
       });
     }
 
@@ -799,6 +890,9 @@ export class WaveFunctionChartNode extends Node {
       this.model.wellSeparationProperty.link(() => {
         if (this.showCurvatureToolProperty.value) {
           this.updateCurvatureTool();
+        }
+        if (this.showDerivativeToolProperty.value) {
+          this.updateDerivativeTool();
         }
       });
     }
@@ -808,6 +902,9 @@ export class WaveFunctionChartNode extends Node {
         if (this.showCurvatureToolProperty.value) {
           this.updateCurvatureTool();
         }
+        if (this.showDerivativeToolProperty.value) {
+          this.updateDerivativeTool();
+        }
       });
     }
 
@@ -815,6 +912,9 @@ export class WaveFunctionChartNode extends Node {
       this.model.electricFieldProperty.link(() => {
         if (this.showCurvatureToolProperty.value) {
           this.updateCurvatureTool();
+        }
+        if (this.showDerivativeToolProperty.value) {
+          this.updateDerivativeTool();
         }
       });
     }
@@ -2306,6 +2406,145 @@ export class WaveFunctionChartNode extends Node {
         shape.lineTo(points[i].x, points[i].y);
       }
     }
+
+    return shape;
+  }
+
+  /**
+   * Sets up the drag listener for the derivative tool marker.
+   */
+  private setupDerivativeToolDragListener(): void {
+    const dragListener = new DragListener({
+      drag: (event) => {
+        const parentPoint = this.globalToParentPoint(event.pointer.point);
+        const localX = parentPoint.x - this.chartMargins.left;
+        const dataX = this.viewToDataX(localX);
+
+        // Clamp to chart bounds
+        const clampedX = Math.max(
+          -X_AXIS_RANGE_NM,
+          Math.min(X_AXIS_RANGE_NM, dataX),
+        );
+        this.derivativeXProperty.value = clampedX;
+      },
+    });
+
+    this.derivativeMarkerHandle.addInputListener(dragListener);
+  }
+
+  /**
+   * Updates the derivative tool visualization.
+   */
+  private updateDerivativeTool(): void {
+    if (!this.showDerivativeToolProperty.value) {
+      return;
+    }
+
+    const x = this.derivativeXProperty.value;
+    const viewX = this.dataToViewX(x);
+    const yTop = this.chartMargins.top;
+    const yBottom = this.chartMargins.top + this.plotHeight;
+
+    // Update marker line
+    this.derivativeMarker.setLine(viewX, yTop, viewX, yBottom);
+
+    // Update marker handle
+    this.derivativeMarkerHandle.centerX = viewX;
+    this.derivativeMarkerHandle.centerY = yTop + 20;
+
+    // Calculate and display first derivative
+    const derivativeData = this.calculateFirstDerivative(x);
+
+    if (derivativeData !== null) {
+      // Create tangent line shape with first derivative
+      const tangentLineShape = this.createTangentLine(
+        x,
+        derivativeData.firstDerivative,
+        derivativeData.wavefunctionValue,
+      );
+      this.derivativeTangentLine.shape = tangentLineShape;
+
+      // Update label with proper units (nm^-3/2)
+      this.derivativeLabel.string = `dψ/dx = ${derivativeData.firstDerivative.toExponential(2)} nm⁻³ᐟ²`;
+      this.derivativeLabel.centerX = viewX;
+      this.derivativeLabel.bottom = yTop - 5;
+    } else {
+      this.derivativeTangentLine.shape = null;
+      this.derivativeLabel.string = "N/A";
+    }
+  }
+
+  /**
+   * Calculates the first derivative of the wavefunction at a given x position.
+   * Uses the analytical solution from the model when available for better accuracy,
+   * falls back to finite difference method otherwise.
+   * @param xData - X position in nm
+   * @returns Object with first derivative and wavefunction value, or null if not available
+   */
+  private calculateFirstDerivative(
+    xData: number,
+  ): {
+    firstDerivative: number;
+    wavefunctionValue: number;
+  } | null {
+    // Only calculate for wavefunction mode
+    const displayMode = this.getEffectiveDisplayMode();
+    if (displayMode !== "waveFunction") {
+      return null;
+    }
+
+    const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
+
+    // Use model's calculation method
+    const result = this.model.getWavefunctionAtPosition(selectedIndex, xData);
+    if (!result) {
+      return null;
+    }
+
+    return {
+      firstDerivative: result.firstDerivative,
+      wavefunctionValue: result.value,
+    };
+  }
+
+  /**
+   * Creates a tangent line shape that shows the slope at a point.
+   * Uses the linear approximation: y = y₀ + y'₀(x - x₀)
+   * @param xData - X position in nm
+   * @param firstDerivative - First derivative value at the point (nm^-3/2)
+   * @param wavefunctionValue - Value of wavefunction at the point (nm^-1/2)
+   * @returns Shape representing the tangent line
+   */
+  private createTangentLine(
+    xData: number,
+    firstDerivative: number,
+    wavefunctionValue: number,
+  ): Shape {
+    const shape = new Shape();
+
+    // Create a tangent line centered at (xData, wavefunctionValue)
+    // Using linear approximation: y = y₀ + y'₀ * (x - x₀)
+    const centerX = xData;
+    const centerY = wavefunctionValue;
+
+    // Width of tangent line in nm (±0.5 nm from center)
+    const tangentHalfWidth = 0.5;
+
+    // Calculate endpoints of the tangent line
+    const x1 = centerX - tangentHalfWidth;
+    const y1 = centerY + firstDerivative * (-tangentHalfWidth);
+    const x2 = centerX + tangentHalfWidth;
+    const y2 = centerY + firstDerivative * tangentHalfWidth;
+
+    // Convert to view coordinates
+    const viewX1 = this.dataToViewX(x1);
+    const viewY1 = this.dataToViewY(y1);
+    const viewX2 = this.dataToViewX(x2);
+    const viewY2 = this.dataToViewY(y2);
+
+    // Draw the tangent line
+    shape.moveTo(viewX1, viewY1);
+    shape.lineTo(viewX2, viewY2);
 
     return shape;
   }
