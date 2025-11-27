@@ -82,7 +82,8 @@ export class WaveFunctionChartNode extends Node {
   private readonly rightMarker: Line;
   private readonly leftMarkerHandle: Circle;
   private readonly rightMarkerHandle: Circle;
-  private readonly areaRegion: Rectangle;
+  private readonly areaBackgroundRegion: Rectangle; // Faint rectangular background
+  private readonly areaRegion: Path; // Area under the curve
   private readonly areaLabel: Text;
   private leftMarkerXProperty: NumberProperty; // X position in nm
   private rightMarkerXProperty: NumberProperty; // X position in nm
@@ -293,9 +294,16 @@ export class WaveFunctionChartNode extends Node {
     });
     this.plotContentNode.addChild(this.areaToolContainer);
 
-    // Create shaded region between markers
-    this.areaRegion = new Rectangle(0, 0, 1, 1, {
-      fill: "rgba(100, 150, 255, 0.2)", // Semi-transparent blue
+    // Create faint background rectangle showing the measurement region
+    this.areaBackgroundRegion = new Rectangle(0, 0, 1, 1, {
+      fill: "rgba(100, 150, 255, 0.1)", // Very faint blue
+      stroke: null,
+    });
+    this.areaToolContainer.addChild(this.areaBackgroundRegion);
+
+    // Create shaded region between markers (follows the curve)
+    this.areaRegion = new Path(null, {
+      fill: "rgba(100, 150, 255, 0.3)", // Semi-transparent blue
       stroke: null,
     });
     this.areaToolContainer.addChild(this.areaRegion);
@@ -1680,13 +1688,17 @@ export class WaveFunctionChartNode extends Node {
     this.rightMarkerHandle.centerX = rightViewX;
     this.rightMarkerHandle.centerY = yTop + 15;
 
-    // Update shaded region
-    this.areaRegion.setRect(
+    // Update faint background rectangle (shows full measurement region)
+    this.areaBackgroundRegion.setRect(
       leftViewX,
       yTop,
       rightViewX - leftViewX,
       this.plotHeight,
     );
+
+    // Create shape that follows the probability density curve
+    const shape = this.createAreaShape(leftX, rightX);
+    this.areaRegion.shape = shape;
 
     // Calculate probability in the selected region
     const probability = this.calculateProbabilityInRegion(leftX, rightX);
@@ -1700,6 +1712,139 @@ export class WaveFunctionChartNode extends Node {
     } else {
       this.areaLabel.string = "N/A";
     }
+  }
+
+  /**
+   * Creates a shape that highlights the area under the probability density curve
+   * between the specified x positions.
+   * @param xStart - Start x position in nm
+   * @param xEnd - End x position in nm
+   * @returns Shape representing the area under the curve
+   */
+  private createAreaShape(xStart: number, xEnd: number): Shape {
+    const shape = new Shape();
+
+    const boundStates = this.model.getBoundStates();
+    if (!boundStates) {
+      return shape; // Return empty shape
+    }
+
+    // Only show area for probability density mode
+    const displayMode = this.model.displayModeProperty.value;
+    if (displayMode !== "probabilityDensity") {
+      return shape; // Return empty shape
+    }
+
+    // Get probability density data
+    const superpositionType = this.model.superpositionTypeProperty.value;
+    const isSuperposition = superpositionType !== SuperpositionType.SINGLE;
+
+    let probabilityDensity: number[];
+
+    if (isSuperposition && "superpositionConfigProperty" in this.model) {
+      // Calculate superposition probability density
+      const config = (this.model as OneWellModel).superpositionConfigProperty
+        .value;
+      const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
+      const numPoints = boundStates.xGrid.length;
+
+      // Compute time-evolved superposition
+      const realPart = new Array(numPoints).fill(0);
+      const imagPart = new Array(numPoints).fill(0);
+
+      for (let n = 0; n < config.amplitudes.length; n++) {
+        const amplitude = config.amplitudes[n];
+        const initialPhase = config.phases[n];
+
+        if (amplitude === 0 || n >= boundStates.wavefunctions.length) {
+          continue;
+        }
+
+        const eigenfunction = boundStates.wavefunctions[n];
+        const energy = boundStates.energies[n];
+
+        // Time evolution phase for this eigenstate: -E_n*t/ℏ
+        const timePhase = -(energy * time) / QuantumConstants.HBAR;
+
+        // Total phase: initial phase + time evolution phase
+        const totalPhase = initialPhase + timePhase;
+
+        // Complex coefficient
+        const realCoeff = amplitude * Math.cos(totalPhase);
+        const imagCoeff = amplitude * Math.sin(totalPhase);
+
+        // Add contribution to superposition
+        for (let i = 0; i < numPoints; i++) {
+          realPart[i] += realCoeff * eigenfunction[i];
+          imagPart[i] += imagCoeff * eigenfunction[i];
+        }
+      }
+
+      // Calculate |ψ|²
+      probabilityDensity = new Array(numPoints);
+      for (let i = 0; i < numPoints; i++) {
+        probabilityDensity[i] =
+          realPart[i] * realPart[i] + imagPart[i] * imagPart[i];
+      }
+    } else {
+      // Single eigenstate
+      const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
+      if (
+        selectedIndex < 0 ||
+        selectedIndex >= boundStates.wavefunctions.length
+      ) {
+        return shape; // Return empty shape
+      }
+
+      const wavefunction = boundStates.wavefunctions[selectedIndex];
+      probabilityDensity = wavefunction.map((psi) => psi * psi);
+    }
+
+    // Build points array for the region
+    const xGrid = boundStates.xGrid;
+    const points: { x: number; y: number }[] = [];
+
+    // Get the y-coordinate for y=0 (baseline)
+    const y0 = this.dataToViewY(0);
+
+    // Add points within the region
+    for (let i = 0; i < xGrid.length; i++) {
+      const xData = xGrid[i] * QuantumConstants.M_TO_NM; // Convert to nm
+
+      if (xData >= xStart && xData <= xEnd) {
+        const x = this.dataToViewX(xData);
+        const y = this.dataToViewY(probabilityDensity[i]);
+        points.push({ x, y });
+      }
+    }
+
+    if (points.length === 0) {
+      return shape; // Return empty shape if no points in region
+    }
+
+    // Create the shape: start at baseline on left, trace curve, return to baseline on right
+    const leftViewX = this.dataToViewX(xStart);
+    const rightViewX = this.dataToViewX(xEnd);
+
+    // Start at bottom-left (baseline at left marker)
+    shape.moveTo(leftViewX, y0);
+
+    // Draw line up to the first point's y-coordinate
+    shape.lineTo(leftViewX, points[0].y);
+
+    // Trace along the curve
+    for (let i = 0; i < points.length; i++) {
+      shape.lineTo(points[i].x, points[i].y);
+    }
+
+    // Draw line down from last point to baseline
+    shape.lineTo(rightViewX, points[points.length - 1].y);
+    shape.lineTo(rightViewX, y0);
+
+    // Close the shape back to starting point
+    shape.close();
+
+    return shape;
   }
 
   /**
