@@ -25,11 +25,17 @@ interface ComboBoxItem<T> {
 
 export class IntroControlPanelNode extends Node {
   private readonly model: IntroModel;
+  private readonly waveFunctionChartNode?: import("../../common/view/WaveFunctionChartNode.js").WaveFunctionChartNode;
 
-  public constructor(model: IntroModel, listBoxParent: Node) {
+  public constructor(
+    model: IntroModel,
+    listBoxParent: Node,
+    waveFunctionChartNode?: import("../../common/view/WaveFunctionChartNode.js").WaveFunctionChartNode,
+  ) {
     super();
 
     this.model = model;
+    this.waveFunctionChartNode = waveFunctionChartNode;
 
     // Create all control groups
     const energyChartGroup = this.createEnergyChartGroup(listBoxParent);
@@ -261,13 +267,6 @@ export class IntroControlPanelNode extends Node {
       x: 20,
     });
 
-    // Enable/disable classical probability checkbox based on display mode
-    this.model.displayModeProperty.link((mode: string) => {
-      // Enable classical probability checkbox only in probability density mode
-      classicalProbabilityCheckboxContent.enabled =
-        mode === "probabilityDensity";
-    });
-
     // Show Zeros checkbox
     const showZerosCheckboxContent = new Checkbox(
       this.model.showZerosProperty,
@@ -283,6 +282,37 @@ export class IntroControlPanelNode extends Node {
       x: 20,
     });
 
+    // Area measurement tool checkbox (only in probability density mode)
+    const areaToolCheckboxContent = this.waveFunctionChartNode
+      ? new Checkbox(
+          this.waveFunctionChartNode.showAreaToolProperty,
+          new Text("Measure Area", {
+            font: new PhetFont(12),
+            fill: QPPWColors.textFillProperty,
+          }),
+          { boxWidth: 16 },
+        )
+      : null;
+
+    const areaToolCheckbox = areaToolCheckboxContent
+      ? new Node({
+          children: [areaToolCheckboxContent],
+          x: 20,
+        })
+      : null;
+
+    // Enable/disable classical probability checkbox based on display mode
+    this.model.displayModeProperty.link((mode: string) => {
+      // Enable classical probability checkbox only in probability density mode
+      classicalProbabilityCheckboxContent.enabled =
+        mode === "probabilityDensity";
+
+      // Enable area tool checkbox only in probability density mode
+      if (areaToolCheckboxContent) {
+        areaToolCheckboxContent.enabled = mode === "probabilityDensity";
+      }
+    });
+
     // Build children array (no wavefunction view checkboxes in intro screen)
     const children: Node[] = [
       displayLabel,
@@ -290,6 +320,11 @@ export class IntroControlPanelNode extends Node {
       classicalProbabilityCheckbox,
       showZerosCheckbox,
     ];
+
+    // Add area tool checkbox if it exists
+    if (areaToolCheckbox) {
+      children.push(areaToolCheckbox);
+    }
 
     return new VBox({
       spacing: 8,
