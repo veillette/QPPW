@@ -59,7 +59,7 @@ export abstract class BaseScreenView extends ScreenView {
     // Create the reset all button in the bottom-right corner
     this.resetAllButton = new ResetAllButton({
       listener: () => {
-        model.resetAll();
+        model.reset();
         this.reset();
       },
       right: this.layoutBounds.maxX - 10,

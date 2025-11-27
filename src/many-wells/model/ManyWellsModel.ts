@@ -227,8 +227,8 @@ export class ManyWellsModel extends BaseModel {
    * Resets all properties to their initial state.
    * Override from BaseModel to reset model-specific properties.
    */
-  public override resetAll(): void {
-    super.resetAll();
+  public override reset(): void {
+    super.reset();
     this.numberOfWellsProperty.reset();
     this.wellSeparationProperty.reset();
     this.electricFieldProperty.reset();
