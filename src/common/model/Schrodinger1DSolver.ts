@@ -100,11 +100,98 @@ export interface WellParameters {
 }
 
 /**
+ * Configuration for creating analytical solutions and potentials using factory pattern.
+ */
+interface PotentialConfig {
+  /** Class constructor for analytical solution */
+  solutionClass: new (...args: any[]) => AnalyticalSolution;
+  /** Class constructor for potential */
+  potentialClass: new (...args: any[]) => BasePotential;
+  /** Function to extract constructor parameters from WellParameters */
+  paramExtractor: (params: WellParameters) => any[];
+  /** List of required parameter keys */
+  requiredParams: (keyof WellParameters)[];
+}
+
+/**
  * Main class for solving the 1D time-independent Schrödinger equation.
  */
 export class Schrodinger1DSolver {
   private numericalMethod: NumericalMethod;
   private analyticalSolution: AnalyticalSolution | null = null;
+
+  /**
+   * Factory configurations for all potential types.
+   * Single source of truth for potential creation logic.
+   */
+  private static readonly POTENTIAL_CONFIGS: Partial<Record<PotentialType, PotentialConfig>> = {
+    [PotentialType.INFINITE_WELL]: {
+      solutionClass: InfiniteSquareWellSolution,
+      potentialClass: InfiniteSquareWellPotential,
+      paramExtractor: (p) => [p.wellWidth],
+      requiredParams: ['wellWidth'],
+    },
+    [PotentialType.FINITE_WELL]: {
+      solutionClass: FiniteSquareWellSolution,
+      potentialClass: FiniteSquareWellPotential,
+      paramExtractor: (p) => [p.wellWidth, p.wellDepth],
+      requiredParams: ['wellWidth', 'wellDepth'],
+    },
+    [PotentialType.HARMONIC_OSCILLATOR]: {
+      solutionClass: HarmonicOscillatorSolution,
+      potentialClass: HarmonicOscillatorPotential,
+      paramExtractor: (p) => [p.springConstant],
+      requiredParams: ['springConstant'],
+    },
+    [PotentialType.MORSE]: {
+      solutionClass: MorsePotentialSolution,
+      potentialClass: MorsePotential,
+      paramExtractor: (p) => [p.dissociationEnergy, p.wellWidth, p.equilibriumPosition],
+      requiredParams: ['dissociationEnergy', 'wellWidth', 'equilibriumPosition'],
+    },
+    [PotentialType.POSCHL_TELLER]: {
+      solutionClass: PoschlTellerPotentialSolution,
+      potentialClass: PoschlTellerPotential,
+      paramExtractor: (p) => [p.potentialDepth, p.wellWidth],
+      requiredParams: ['potentialDepth', 'wellWidth'],
+    },
+    [PotentialType.ROSEN_MORSE]: {
+      solutionClass: RosenMorsePotentialSolution,
+      potentialClass: RosenMorsePotential,
+      paramExtractor: (p) => [p.potentialDepth, p.barrierHeight, p.wellWidth],
+      requiredParams: ['potentialDepth', 'barrierHeight', 'wellWidth'],
+    },
+    [PotentialType.ECKART]: {
+      solutionClass: EckartPotentialSolution,
+      potentialClass: EckartPotential,
+      paramExtractor: (p) => [p.potentialDepth, p.barrierHeight, p.wellWidth],
+      requiredParams: ['potentialDepth', 'barrierHeight', 'wellWidth'],
+    },
+    [PotentialType.ASYMMETRIC_TRIANGLE]: {
+      solutionClass: AsymmetricTrianglePotentialSolution,
+      potentialClass: AsymmetricTrianglePotential,
+      paramExtractor: (p) => [p.slope, p.wellWidth],
+      requiredParams: ['slope', 'wellWidth'],
+    },
+    [PotentialType.COULOMB_1D]: {
+      solutionClass: Coulomb1DPotentialSolution,
+      potentialClass: Coulomb1DPotential,
+      paramExtractor: (p) => [p.coulombStrength],
+      requiredParams: ['coulombStrength'],
+    },
+    [PotentialType.COULOMB_3D]: {
+      solutionClass: Coulomb3DPotentialSolution,
+      potentialClass: Coulomb3DPotential,
+      paramExtractor: (p) => [p.coulombStrength],
+      requiredParams: ['coulombStrength'],
+    },
+    [PotentialType.TRIANGULAR]: {
+      solutionClass: TriangularPotentialSolution,
+      potentialClass: TriangularPotential,
+      paramExtractor: (p) => [p.wellDepth, p.wellWidth, p.energyOffset],
+      requiredParams: ['wellWidth', 'wellDepth', 'energyOffset'],
+    },
+  };
 
   /**
    * Create a new solver instance.
@@ -179,6 +266,19 @@ export class Schrodinger1DSolver {
   }
 
   /**
+   * Check if all required parameters are present and defined in WellParameters.
+   * @param params - Well parameters to validate
+   * @param requiredParams - List of required parameter keys
+   * @returns true if all required parameters are defined
+   */
+  private static hasRequiredParams(
+    params: WellParameters,
+    requiredParams: (keyof WellParameters)[],
+  ): boolean {
+    return requiredParams.every((key) => params[key] !== undefined);
+  }
+
+  /**
    * Create an analytical solution instance based on well parameters.
    * Returns null if the potential type doesn't have an analytical solution
    * or if required parameters are missing.
@@ -191,164 +291,15 @@ export class Schrodinger1DSolver {
     wellParams: WellParameters,
     mass: number,
   ): AnalyticalSolution | null {
-    switch (wellParams.type) {
-      case PotentialType.INFINITE_WELL:
-        if (wellParams.wellWidth !== undefined) {
-          return new InfiniteSquareWellSolution(wellParams.wellWidth, mass);
-        }
-        break;
-
-      case PotentialType.FINITE_WELL:
-        if (
-          wellParams.wellWidth !== undefined &&
-          wellParams.wellDepth !== undefined
-        ) {
-          return new FiniteSquareWellSolution(
-            wellParams.wellWidth,
-            wellParams.wellDepth,
-            mass,
-          );
-        }
-        break;
-
-      case PotentialType.HARMONIC_OSCILLATOR:
-        if (wellParams.springConstant !== undefined) {
-          return new HarmonicOscillatorSolution(
-            wellParams.springConstant,
-            mass,
-          );
-        }
-        break;
-
-      case PotentialType.MORSE:
-        if (
-          wellParams.dissociationEnergy !== undefined &&
-          wellParams.wellWidth !== undefined &&
-          wellParams.equilibriumPosition !== undefined
-        ) {
-          return new MorsePotentialSolution(
-            wellParams.dissociationEnergy,
-            wellParams.wellWidth,
-            wellParams.equilibriumPosition,
-            mass,
-          );
-        }
-        break;
-
-      case PotentialType.POSCHL_TELLER:
-        if (
-          wellParams.potentialDepth !== undefined &&
-          wellParams.wellWidth !== undefined
-        ) {
-          return new PoschlTellerPotentialSolution(
-            wellParams.potentialDepth,
-            wellParams.wellWidth,
-            mass,
-          );
-        }
-        break;
-
-      case PotentialType.ROSEN_MORSE:
-        if (
-          wellParams.potentialDepth !== undefined &&
-          wellParams.barrierHeight !== undefined &&
-          wellParams.wellWidth !== undefined
-        ) {
-          return new RosenMorsePotentialSolution(
-            wellParams.potentialDepth,
-            wellParams.barrierHeight,
-            wellParams.wellWidth,
-            mass,
-          );
-        }
-        break;
-
-      case PotentialType.ECKART:
-        if (
-          wellParams.potentialDepth !== undefined &&
-          wellParams.barrierHeight !== undefined &&
-          wellParams.wellWidth !== undefined
-        ) {
-          return new EckartPotentialSolution(
-            wellParams.potentialDepth,
-            wellParams.barrierHeight,
-            wellParams.wellWidth,
-            mass,
-          );
-        }
-        break;
-
-      case PotentialType.ASYMMETRIC_TRIANGLE:
-        if (
-          wellParams.slope !== undefined &&
-          wellParams.wellWidth !== undefined
-        ) {
-          return new AsymmetricTrianglePotentialSolution(
-            wellParams.slope,
-            wellParams.wellWidth,
-            mass,
-          );
-        }
-        break;
-
-      case PotentialType.COULOMB_1D:
-        if (wellParams.coulombStrength !== undefined) {
-          return new Coulomb1DPotentialSolution(
-            wellParams.coulombStrength,
-            mass,
-          );
-        }
-        break;
-
-      case PotentialType.COULOMB_3D:
-        if (wellParams.coulombStrength !== undefined) {
-          return new Coulomb3DPotentialSolution(
-            wellParams.coulombStrength,
-            mass,
-          );
-        }
-        break;
-
-      case PotentialType.TRIANGULAR:
-        if (
-          wellParams.wellWidth !== undefined &&
-          wellParams.wellDepth !== undefined &&
-          wellParams.energyOffset !== undefined
-        ) {
-          return new TriangularPotentialSolution(
-            wellParams.wellDepth,
-            wellParams.wellWidth,
-            wellParams.energyOffset,
-            mass,
-          );
-        }
-        break;
-
-      case PotentialType.DOUBLE_SQUARE_WELL:
-        // Double well doesn't have a class yet - still uses function
-        // Keep existing behavior for backward compatibility
-        if (
-          wellParams.wellWidth !== undefined &&
-          wellParams.wellDepth !== undefined &&
-          wellParams.wellSeparation !== undefined
-        ) {
-          // We'll handle this in the calling method
-          return null;
-        }
-        break;
-
-      case PotentialType.MULTI_SQUARE_WELL:
-        // Multi-square well doesn't have a class yet - still uses function
-        return null;
-
-      case PotentialType.MULTI_COULOMB_1D:
-        // Multi-Coulomb 1D doesn't have a class yet - still uses function
-        return null;
-
-      default:
-        return null;
+    // Use factory pattern for configured potential types
+    const config = Schrodinger1DSolver.POTENTIAL_CONFIGS[wellParams.type];
+    if (config && Schrodinger1DSolver.hasRequiredParams(wellParams, config.requiredParams)) {
+      const args = [...config.paramExtractor(wellParams), mass];
+      return new config.solutionClass(...args);
     }
 
+    // Handle special cases that don't have classes yet (multi-well potentials)
+    // These will be handled in handleSpecialCases() method
     return null;
   }
 
@@ -574,138 +525,14 @@ export class Schrodinger1DSolver {
     wellParams: WellParameters,
     mass: number,
   ): BasePotential | null {
-    switch (wellParams.type) {
-      case PotentialType.INFINITE_WELL:
-        if (wellParams.wellWidth !== undefined) {
-          return new InfiniteSquareWellPotential(wellParams.wellWidth, mass);
-        }
-        break;
-
-      case PotentialType.FINITE_WELL:
-        if (
-          wellParams.wellWidth !== undefined &&
-          wellParams.wellDepth !== undefined
-        ) {
-          return new FiniteSquareWellPotential(
-            wellParams.wellWidth,
-            wellParams.wellDepth,
-            mass,
-          );
-        }
-        break;
-
-      case PotentialType.HARMONIC_OSCILLATOR:
-        if (wellParams.springConstant !== undefined) {
-          return new HarmonicOscillatorPotential(
-            wellParams.springConstant,
-            mass,
-          );
-        }
-        break;
-
-      case PotentialType.MORSE:
-        if (
-          wellParams.dissociationEnergy !== undefined &&
-          wellParams.wellWidth !== undefined &&
-          wellParams.equilibriumPosition !== undefined
-        ) {
-          return new MorsePotential(
-            wellParams.dissociationEnergy,
-            wellParams.wellWidth,
-            wellParams.equilibriumPosition,
-            mass,
-          );
-        }
-        break;
-
-      case PotentialType.POSCHL_TELLER:
-        if (
-          wellParams.potentialDepth !== undefined &&
-          wellParams.wellWidth !== undefined
-        ) {
-          return new PoschlTellerPotential(
-            wellParams.potentialDepth,
-            wellParams.wellWidth,
-            mass,
-          );
-        }
-        break;
-
-      case PotentialType.ROSEN_MORSE:
-        if (
-          wellParams.potentialDepth !== undefined &&
-          wellParams.barrierHeight !== undefined &&
-          wellParams.wellWidth !== undefined
-        ) {
-          return new RosenMorsePotential(
-            wellParams.potentialDepth,
-            wellParams.barrierHeight,
-            wellParams.wellWidth,
-            mass,
-          );
-        }
-        break;
-
-      case PotentialType.ECKART:
-        if (
-          wellParams.potentialDepth !== undefined &&
-          wellParams.barrierHeight !== undefined &&
-          wellParams.wellWidth !== undefined
-        ) {
-          return new EckartPotential(
-            wellParams.potentialDepth,
-            wellParams.barrierHeight,
-            wellParams.wellWidth,
-            mass,
-          );
-        }
-        break;
-
-      case PotentialType.ASYMMETRIC_TRIANGLE:
-        if (
-          wellParams.slope !== undefined &&
-          wellParams.wellWidth !== undefined
-        ) {
-          return new AsymmetricTrianglePotential(
-            wellParams.slope,
-            wellParams.wellWidth,
-            mass,
-          );
-        }
-        break;
-
-      case PotentialType.COULOMB_1D:
-        if (wellParams.coulombStrength !== undefined) {
-          return new Coulomb1DPotential(wellParams.coulombStrength, mass);
-        }
-        break;
-
-      case PotentialType.COULOMB_3D:
-        if (wellParams.coulombStrength !== undefined) {
-          return new Coulomb3DPotential(wellParams.coulombStrength, mass);
-        }
-        break;
-
-      case PotentialType.TRIANGULAR:
-        if (
-          wellParams.wellWidth !== undefined &&
-          wellParams.wellDepth !== undefined &&
-          wellParams.energyOffset !== undefined
-        ) {
-          return new TriangularPotential(
-            wellParams.wellDepth,
-            wellParams.wellWidth,
-            wellParams.energyOffset,
-            mass,
-          );
-        }
-        break;
-
-      default:
-        // For types not yet converted to classes (multi-well types, custom)
-        return null;
+    // Use factory pattern for configured potential types
+    const config = Schrodinger1DSolver.POTENTIAL_CONFIGS[wellParams.type];
+    if (config && Schrodinger1DSolver.hasRequiredParams(wellParams, config.requiredParams)) {
+      const args = [...config.paramExtractor(wellParams), mass];
+      return new config.potentialClass(...args);
     }
 
+    // For types not yet converted to classes (multi-well types, custom)
     return null;
   }
 
