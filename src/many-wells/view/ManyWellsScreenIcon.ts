@@ -34,17 +34,6 @@ const BAND_Y_POSITIONS = Array.from(
   (_, i) => BAND_TOP + i * BAND_SPACING,
 );
 
-// Colors
-const BACKGROUND_GRADIENT_TOP = "#1a1a3a";
-const BACKGROUND_GRADIENT_BOTTOM = "#0a0a1f";
-const POTENTIAL_STROKE_COLOR = "#9696c8";
-const BARRIER_GRADIENT_EDGE = "#b43232";
-const BARRIER_GRADIENT_CENTER = "#ff6b3d";
-const BLOCH_WAVE_COLOR = "#00c8ff";
-
-// Energy band colors
-const BAND_COLORS = ["#00ff96", "#ffff64", "#00c8ff", "#ff96ff"];
-
 // Line widths
 const POTENTIAL_LINE_WIDTH = 2;
 const BLOCH_WAVE_LINE_WIDTH = 1.5;
@@ -56,10 +45,18 @@ const BAND_OPACITY_DECREMENT = 0.1;
 
 export class ManyWellsScreenIcon extends ScreenIcon {
   public constructor() {
+    // Energy band colors from QPPWColors
+    const BAND_COLORS = [
+      QPPWColors.band1Property.value,
+      QPPWColors.band2Property.value,
+      QPPWColors.band3Property.value,
+      QPPWColors.band4Property.value,
+    ];
+
     // Create background with gradient
     const backgroundGradient = new LinearGradient(0, 0, 0, ICON_HEIGHT)
-      .addColorStop(0, BACKGROUND_GRADIENT_TOP)
-      .addColorStop(1, BACKGROUND_GRADIENT_BOTTOM);
+      .addColorStop(0, QPPWColors.iconBackgroundTopProperty.value)
+      .addColorStop(1, QPPWColors.iconBackgroundBottomProperty.value);
 
     const background = new Rectangle(0, 0, ICON_WIDTH, ICON_HEIGHT, {
       fill: backgroundGradient,
@@ -93,7 +90,7 @@ export class ManyWellsScreenIcon extends ScreenIcon {
     }
 
     const potential = new Path(potentialShape, {
-      stroke: POTENTIAL_STROKE_COLOR,
+      stroke: QPPWColors.iconWellStrokeProperty,
       lineWidth: POTENTIAL_LINE_WIDTH,
     });
 
@@ -108,9 +105,9 @@ export class ManyWellsScreenIcon extends ScreenIcon {
         barrierX + BARRIER_WIDTH,
         0,
       )
-        .addColorStop(0, BARRIER_GRADIENT_EDGE)
-        .addColorStop(0.5, BARRIER_GRADIENT_CENTER)
-        .addColorStop(1, BARRIER_GRADIENT_EDGE);
+        .addColorStop(0, QPPWColors.iconBarrierEdgeProperty.value)
+        .addColorStop(0.5, QPPWColors.iconBarrierCenterProperty.value)
+        .addColorStop(1, QPPWColors.iconBarrierEdgeProperty.value);
 
       barriers.push(
         new Rectangle(barrierX, WELL_TOP, BARRIER_WIDTH, WELL_DEPTH, {
@@ -170,7 +167,7 @@ export class ManyWellsScreenIcon extends ScreenIcon {
     }
 
     const blochWave = new Path(waveShape, {
-      stroke: BLOCH_WAVE_COLOR,
+      stroke: QPPWColors.iconWaveFunctionProperty,
       lineWidth: BLOCH_WAVE_LINE_WIDTH,
     });
 

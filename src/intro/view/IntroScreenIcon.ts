@@ -26,13 +26,6 @@ const PROBABILITY_BASELINE = WELL_BOTTOM - 2;
 const WAVE_AMPLITUDE = 8;
 const PROBABILITY_AMPLITUDE = 15;
 
-// Colors - using a welcoming intro theme
-const BACKGROUND_GRADIENT_TOP = "#2a2a4a";
-const BACKGROUND_GRADIENT_BOTTOM = "#1a1a2f";
-const WELL_STROKE_COLOR = "#a8a8d8";
-const WAVE_FUNCTION_COLOR = "#00d4ff";
-const PROBABILITY_FILL_COLOR = "rgba(100, 200, 255, 0.5)";
-
 // Line widths
 const WELL_LINE_WIDTH = 3;
 const WAVE_LINE_WIDTH = 2.5;
@@ -41,8 +34,8 @@ export class IntroScreenIcon extends ScreenIcon {
   public constructor() {
     // Create background with gradient
     const backgroundGradient = new LinearGradient(0, 0, 0, ICON_HEIGHT)
-      .addColorStop(0, BACKGROUND_GRADIENT_TOP)
-      .addColorStop(1, BACKGROUND_GRADIENT_BOTTOM);
+      .addColorStop(0, QPPWColors.iconBackgroundTopProperty.value)
+      .addColorStop(1, QPPWColors.iconBackgroundBottomProperty.value);
 
     const background = new Rectangle(0, 0, ICON_WIDTH, ICON_HEIGHT, {
       fill: backgroundGradient,
@@ -57,7 +50,7 @@ export class IntroScreenIcon extends ScreenIcon {
       .lineTo(ICON_WIDTH - PADDING, WELL_TOP);
 
     const well = new Path(wellShape, {
-      stroke: WELL_STROKE_COLOR,
+      stroke: QPPWColors.iconWellStrokeProperty,
       lineWidth: WELL_LINE_WIDTH,
     });
 
@@ -71,7 +64,7 @@ export class IntroScreenIcon extends ScreenIcon {
     }
 
     const waveFunction = new Path(waveShape, {
-      stroke: WAVE_FUNCTION_COLOR,
+      stroke: QPPWColors.iconWaveFunctionProperty,
       lineWidth: WAVE_LINE_WIDTH,
     });
 
@@ -91,7 +84,7 @@ export class IntroScreenIcon extends ScreenIcon {
       .close();
 
     const probabilityFill = new Path(probabilityShape, {
-      fill: PROBABILITY_FILL_COLOR,
+      fill: QPPWColors.iconProbabilityFillProperty,
     });
 
     const iconNode = new Node({

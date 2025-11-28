@@ -37,17 +37,6 @@ const ENERGY_LEVEL_HEIGHT = 1.5;
 const LEFT_ENERGY_X = PADDING + 3;
 const RIGHT_ENERGY_X = RIGHT_WELL_START + 2;
 
-// Colors
-const BACKGROUND_GRADIENT_TOP = "#1a1a3a";
-const BACKGROUND_GRADIENT_BOTTOM = "#0a0a1f";
-const WELL_STROKE_COLOR = "#9696c8";
-const BARRIER_GRADIENT_EDGE = "#b43232";
-const BARRIER_GRADIENT_CENTER = "#ff6b3d";
-const LEFT_WAVE_COLOR = "#00c8ff";
-const RIGHT_WAVE_COLOR = "#ff9632";
-const TUNNEL_EFFECT_COLOR = "#a020f0";
-const ENERGY_LEVEL_COLOR = "#00ff96";
-
 // Line widths
 const WELL_LINE_WIDTH = 2.5;
 const WAVE_LINE_WIDTH = 2;
@@ -62,8 +51,8 @@ export class TwoWellsScreenIcon extends ScreenIcon {
   public constructor() {
     // Create background with gradient
     const backgroundGradient = new LinearGradient(0, 0, 0, ICON_HEIGHT)
-      .addColorStop(0, BACKGROUND_GRADIENT_TOP)
-      .addColorStop(1, BACKGROUND_GRADIENT_BOTTOM);
+      .addColorStop(0, QPPWColors.iconBackgroundTopProperty.value)
+      .addColorStop(1, QPPWColors.iconBackgroundBottomProperty.value);
 
     const background = new Rectangle(0, 0, ICON_WIDTH, ICON_HEIGHT, {
       fill: backgroundGradient,
@@ -82,7 +71,7 @@ export class TwoWellsScreenIcon extends ScreenIcon {
       .lineTo(ICON_WIDTH - PADDING, WELL_TOP);
 
     const well = new Path(wellShape, {
-      stroke: WELL_STROKE_COLOR,
+      stroke: QPPWColors.iconWellStrokeProperty,
       lineWidth: WELL_LINE_WIDTH,
     });
 
@@ -93,9 +82,9 @@ export class TwoWellsScreenIcon extends ScreenIcon {
       RIGHT_WELL_START,
       0,
     )
-      .addColorStop(0, BARRIER_GRADIENT_EDGE)
-      .addColorStop(0.5, BARRIER_GRADIENT_CENTER)
-      .addColorStop(1, BARRIER_GRADIENT_EDGE);
+      .addColorStop(0, QPPWColors.iconBarrierEdgeProperty.value)
+      .addColorStop(0.5, QPPWColors.iconBarrierCenterProperty.value)
+      .addColorStop(1, QPPWColors.iconBarrierEdgeProperty.value);
 
     const barrierHeight = WELL_BOTTOM - BARRIER_TOP;
     const barrier = new Rectangle(
@@ -121,7 +110,7 @@ export class TwoWellsScreenIcon extends ScreenIcon {
     }
 
     const leftWave = new Path(leftWaveShape, {
-      stroke: LEFT_WAVE_COLOR,
+      stroke: QPPWColors.iconWaveFunctionProperty,
       lineWidth: WAVE_LINE_WIDTH,
     });
 
@@ -137,7 +126,7 @@ export class TwoWellsScreenIcon extends ScreenIcon {
     }
 
     const rightWave = new Path(rightWaveShape, {
-      stroke: RIGHT_WAVE_COLOR,
+      stroke: QPPWColors.wavefunctionImaginaryProperty,
       lineWidth: WAVE_LINE_WIDTH,
     });
 
@@ -147,7 +136,7 @@ export class TwoWellsScreenIcon extends ScreenIcon {
       .lineTo(RIGHT_WELL_START + 2, TUNNEL_Y);
 
     const tunnelEffect = new Path(tunnelShape, {
-      stroke: TUNNEL_EFFECT_COLOR,
+      stroke: QPPWColors.iconTunnelEffectProperty,
       lineWidth: TUNNEL_LINE_WIDTH,
       lineDash: [2, 2],
       opacity: TUNNEL_OPACITY,
@@ -160,7 +149,7 @@ export class TwoWellsScreenIcon extends ScreenIcon {
       ENERGY_LEVEL_WIDTH,
       ENERGY_LEVEL_HEIGHT,
       {
-        fill: ENERGY_LEVEL_COLOR,
+        fill: QPPWColors.iconEnergyLevelProperty,
         opacity: ENERGY_LEVEL_OPACITY,
       },
     );
@@ -171,7 +160,7 @@ export class TwoWellsScreenIcon extends ScreenIcon {
       ENERGY_LEVEL_WIDTH,
       ENERGY_LEVEL_HEIGHT,
       {
-        fill: ENERGY_LEVEL_COLOR,
+        fill: QPPWColors.iconEnergyLevelProperty,
         opacity: ENERGY_LEVEL_OPACITY,
       },
     );

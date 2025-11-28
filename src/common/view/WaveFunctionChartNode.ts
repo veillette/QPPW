@@ -212,14 +212,14 @@ export class WaveFunctionChartNode extends Node {
 
     // Create faint rectangular backgrounds for classically forbidden regions
     this.leftForbiddenBackground = new Rectangle(0, 0, 1, 1, {
-      fill: "rgba(255, 200, 200, 0.1)", // Very faint red
+      fill: QPPWColors.forbiddenRegionLightProperty,
       stroke: null,
       visible: false,
     });
     this.plotContentNode.addChild(this.leftForbiddenBackground);
 
     this.rightForbiddenBackground = new Rectangle(0, 0, 1, 1, {
-      fill: "rgba(255, 200, 200, 0.1)", // Very faint red
+      fill: QPPWColors.forbiddenRegionLightProperty,
       stroke: null,
       visible: false,
     });
@@ -227,14 +227,14 @@ export class WaveFunctionChartNode extends Node {
 
     // Create classically forbidden regions (shaded areas that follow the classical probability curve)
     this.leftForbiddenRegion = new Path(null, {
-      fill: "rgba(255, 200, 200, 0.3)", // Semi-transparent red
+      fill: QPPWColors.forbiddenRegionDarkProperty,
       stroke: null,
       visible: false,
     });
     this.plotContentNode.addChild(this.leftForbiddenRegion);
 
     this.rightForbiddenRegion = new Path(null, {
-      fill: "rgba(255, 200, 200, 0.3)", // Semi-transparent red
+      fill: QPPWColors.forbiddenRegionDarkProperty,
       stroke: null,
       visible: false,
     });
@@ -357,14 +357,14 @@ export class WaveFunctionChartNode extends Node {
 
     // Create faint background rectangle showing the measurement region
     this.areaBackgroundRegion = new Rectangle(0, 0, 1, 1, {
-      fill: "rgba(100, 150, 255, 0.1)", // Very faint blue
+      fill: QPPWColors.areaMeasurementLightProperty,
       stroke: null,
     });
     this.areaToolContainer.addChild(this.areaBackgroundRegion);
 
     // Create shaded region between markers (follows the curve)
     this.areaRegion = new Path(null, {
-      fill: "rgba(100, 150, 255, 0.3)", // Semi-transparent blue
+      fill: QPPWColors.areaMeasurementDarkProperty,
       stroke: null,
     });
     this.areaToolContainer.addChild(this.areaRegion);
@@ -437,7 +437,7 @@ export class WaveFunctionChartNode extends Node {
 
     // Create marker line
     this.curvatureMarker = new Line(0, 0, 0, 0, {
-      stroke: "rgba(255, 100, 100, 0.8)", // Semi-transparent red
+      stroke: QPPWColors.curvatureToolStrokeProperty,
       lineWidth: 2,
       lineDash: [4, 3],
     });
@@ -445,7 +445,7 @@ export class WaveFunctionChartNode extends Node {
 
     // Create marker handle (draggable circle)
     this.curvatureMarkerHandle = new Circle(8, {
-      fill: "rgba(255, 100, 100, 0.9)",
+      fill: QPPWColors.curvatureToolFillLightProperty,
       stroke: QPPWColors.backgroundColorProperty,
       lineWidth: 2,
       cursor: "ew-resize",
@@ -454,7 +454,7 @@ export class WaveFunctionChartNode extends Node {
 
     // Create parabola path
     this.curvatureParabola = new Path(null, {
-      stroke: "rgba(255, 100, 100, 0.9)",
+      stroke: QPPWColors.curvatureToolFillLightProperty,
       lineWidth: 3,
       fill: null,
     });
@@ -463,7 +463,7 @@ export class WaveFunctionChartNode extends Node {
     // Create curvature label
     this.curvatureLabel = new Text("", {
       font: new PhetFont({ size: 14, weight: "bold" }),
-      fill: "rgba(255, 100, 100, 1)",
+      fill: QPPWColors.curvatureToolFillDarkProperty,
       visible: false,
     });
     this.addChild(this.curvatureLabel);
@@ -501,7 +501,7 @@ export class WaveFunctionChartNode extends Node {
 
     // Create marker line
     this.derivativeMarker = new Line(0, 0, 0, 0, {
-      stroke: "rgba(100, 200, 100, 0.8)", // Semi-transparent green
+      stroke: QPPWColors.derivativeToolStrokeProperty,
       lineWidth: 2,
       lineDash: [4, 3],
     });
@@ -509,7 +509,7 @@ export class WaveFunctionChartNode extends Node {
 
     // Create marker handle (draggable circle)
     this.derivativeMarkerHandle = new Circle(8, {
-      fill: "rgba(100, 200, 100, 0.9)",
+      fill: QPPWColors.derivativeToolFillLightProperty,
       stroke: QPPWColors.backgroundColorProperty,
       lineWidth: 2,
       cursor: "ew-resize",
@@ -518,7 +518,7 @@ export class WaveFunctionChartNode extends Node {
 
     // Create tangent line path
     this.derivativeTangentLine = new Path(null, {
-      stroke: "rgba(100, 200, 100, 0.9)",
+      stroke: QPPWColors.derivativeToolFillLightProperty,
       lineWidth: 3,
       fill: null,
     });
@@ -527,7 +527,7 @@ export class WaveFunctionChartNode extends Node {
     // Create derivative label
     this.derivativeLabel = new Text("", {
       font: new PhetFont({ size: 14, weight: "bold" }),
-      fill: "rgba(100, 200, 100, 1)",
+      fill: QPPWColors.derivativeToolFillDarkProperty,
       visible: false,
     });
     this.addChild(this.derivativeLabel);
@@ -1554,7 +1554,7 @@ export class WaveFunctionChartNode extends Node {
     // Ensure we have enough rectangles in the pool
     while (this.phaseColorStrips.length < numStrips) {
       const rect = new Rectangle(0, 0, 1, 1, {
-        fill: "white",
+        fill: QPPWColors.phaseIndicatorProperty,
         stroke: null,
       });
       this.phaseColorStrips.push(rect);
@@ -1729,7 +1729,7 @@ export class WaveFunctionChartNode extends Node {
     // Ensure we have enough rectangles in the pool
     while (this.phaseColorStrips.length < numStrips) {
       const rect = new Rectangle(0, 0, 1, 1, {
-        fill: "white",
+        fill: QPPWColors.phaseIndicatorProperty,
         stroke: null,
       });
       this.phaseColorStrips.push(rect);

@@ -29,14 +29,6 @@ const ENERGY_LEVEL_HEIGHT = 2;
 const WAVE_AMPLITUDE = 10;
 const PROBABILITY_AMPLITUDE = 18;
 
-// Colors
-const BACKGROUND_GRADIENT_TOP = "#1a1a3a";
-const BACKGROUND_GRADIENT_BOTTOM = "#0a0a1f";
-const WELL_STROKE_COLOR = "#9696c8";
-const WAVE_FUNCTION_COLOR = "#00c8ff";
-const PROBABILITY_FILL_COLOR = "rgba(255, 200, 0, 0.4)";
-const ENERGY_LEVEL_COLOR = "#00ff96";
-
 // Line widths
 const WELL_LINE_WIDTH = 3;
 const WAVE_LINE_WIDTH = 2.5;
@@ -48,8 +40,8 @@ export class OneWellScreenIcon extends ScreenIcon {
   public constructor() {
     // Create background with gradient
     const backgroundGradient = new LinearGradient(0, 0, 0, ICON_HEIGHT)
-      .addColorStop(0, BACKGROUND_GRADIENT_TOP)
-      .addColorStop(1, BACKGROUND_GRADIENT_BOTTOM);
+      .addColorStop(0, QPPWColors.iconBackgroundTopProperty.value)
+      .addColorStop(1, QPPWColors.iconBackgroundBottomProperty.value);
 
     const background = new Rectangle(0, 0, ICON_WIDTH, ICON_HEIGHT, {
       fill: backgroundGradient,
@@ -64,7 +56,7 @@ export class OneWellScreenIcon extends ScreenIcon {
       .lineTo(ICON_WIDTH - PADDING, WELL_TOP);
 
     const well = new Path(wellShape, {
-      stroke: WELL_STROKE_COLOR,
+      stroke: QPPWColors.iconWellStrokeProperty,
       lineWidth: WELL_LINE_WIDTH,
     });
 
@@ -78,7 +70,7 @@ export class OneWellScreenIcon extends ScreenIcon {
     }
 
     const waveFunction = new Path(waveShape, {
-      stroke: WAVE_FUNCTION_COLOR,
+      stroke: QPPWColors.iconWaveFunctionProperty,
       lineWidth: WAVE_LINE_WIDTH,
     });
 
@@ -98,7 +90,7 @@ export class OneWellScreenIcon extends ScreenIcon {
       .close();
 
     const probabilityFill = new Path(probabilityShape, {
-      fill: PROBABILITY_FILL_COLOR,
+      fill: QPPWColors.wavefunctionProbabilityFillProperty,
     });
 
     // Energy level indicator
@@ -108,7 +100,7 @@ export class OneWellScreenIcon extends ScreenIcon {
       ENERGY_LEVEL_WIDTH,
       ENERGY_LEVEL_HEIGHT,
       {
-        fill: ENERGY_LEVEL_COLOR,
+        fill: QPPWColors.iconEnergyLevelProperty,
         opacity: ENERGY_LEVEL_OPACITY,
       },
     );
