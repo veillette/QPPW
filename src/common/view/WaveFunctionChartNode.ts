@@ -3,9 +3,9 @@
  * for the selected energy state. This is the bottom chart in the One Well screen.
  */
 
-import { Node, Line, Path, Text, Rectangle, Circle, DragListener } from "scenerystack/scenery";
+import { Node, Line, Path, Text } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
-import { NumberProperty, BooleanProperty } from "scenerystack/axon";
+import { NumberProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
 import {
@@ -20,17 +20,20 @@ import {
   hasWellOffset,
   hasWellSeparation,
   hasSuperpositionConfig,
-  hasClassicallyForbiddenProbability,
-  hasClassicalTurningPoints,
 } from "../model/ModelTypeGuards.js";
 import { BoundStateResult } from "../model/PotentialFunction.js";
 import QuantumConstants from "../model/QuantumConstants.js";
 import QPPWColors from "../../QPPWColors.js";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { SuperpositionType } from "../model/SuperpositionType.js";
-import stringManager from "../../i18n/StringManager.js";
 import QPPWPreferences from "../../QPPWPreferences.js";
 import type { ScreenViewState } from "./ScreenViewStates.js";
+import { AreaMeasurementTool } from "./chart-tools/AreaMeasurementTool.js";
+import { CurvatureTool } from "./chart-tools/CurvatureTool.js";
+import { DerivativeTool } from "./chart-tools/DerivativeTool.js";
+import { ZerosVisualization } from "./chart-tools/ZerosVisualization.js";
+import { PhaseColorVisualization } from "./chart-tools/PhaseColorVisualization.js";
+import { ClassicalProbabilityOverlay } from "./chart-tools/ClassicalProbabilityOverlay.js";
 
 // Chart axis range constant (shared with EnergyChartNode)
 const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
@@ -62,56 +65,18 @@ export class WaveFunctionChartNode extends Node {
   private readonly imaginaryPartPath: Path;
   private readonly magnitudePath: Path;
   private readonly probabilityDensityPath: Path;
-  private readonly classicalProbabilityPath: Path;
-  private readonly phaseColorNode: Node; // Container for phase-colored visualization
-  private phaseColorStrips: Rectangle[]; // Pool of rectangles for phase visualization
   private readonly zeroLine: Line;
   private readonly axesNode: Node;
   private yAxisLabel!: Text;
   private readonly stateLabelNode: Text; // Label showing which wavefunction is displayed
 
-  // Classical probability visualization
-  private readonly leftTurningPointLine: Line;
-  private readonly rightTurningPointLine: Line;
-  private readonly leftForbiddenBackground: Rectangle; // Faint rectangular background for left forbidden region
-  private readonly rightForbiddenBackground: Rectangle; // Faint rectangular background for right forbidden region
-  private readonly leftForbiddenRegion: Path; // Area under classical probability curve in left forbidden region
-  private readonly rightForbiddenRegion: Path; // Area under classical probability curve in right forbidden region
-  private readonly forbiddenProbabilityLabel: Text; // Label showing the forbidden probability percentage
-
-  // Zeros visualization
-  private readonly zerosNode: Node; // Container for zero markers
-
-  // Area measurement tool
-  public readonly showAreaToolProperty: BooleanProperty;
-  private readonly areaToolContainer: Node; // Container for all area tool elements
-  private readonly leftMarker: Line;
-  private readonly rightMarker: Line;
-  private readonly leftMarkerHandle: Circle;
-  private readonly rightMarkerHandle: Circle;
-  private readonly areaBackgroundRegion: Rectangle; // Faint rectangular background
-  private readonly areaRegion: Path; // Area under the curve
-  private readonly areaLabel: Text;
-  private leftMarkerXProperty: NumberProperty; // X position in nm
-  private rightMarkerXProperty: NumberProperty; // X position in nm
-
-  // Curvature visualization tool
-  public readonly showCurvatureToolProperty: BooleanProperty;
-  private readonly curvatureToolContainer: Node; // Container for all curvature tool elements
-  private readonly curvatureMarker: Line;
-  private readonly curvatureMarkerHandle: Circle;
-  private readonly curvatureParabola: Path; // Parabola showing the curvature
-  private readonly curvatureLabel: Text;
-  private curvatureXProperty: NumberProperty; // X position in nm
-
-  // Derivative visualization tool
-  public readonly showDerivativeToolProperty: BooleanProperty;
-  private readonly derivativeToolContainer: Node; // Container for all derivative tool elements
-  private readonly derivativeMarker: Line;
-  private readonly derivativeMarkerHandle: Circle;
-  private readonly derivativeTangentLine: Path; // Tangent line showing the slope
-  private readonly derivativeLabel: Text;
-  private derivativeXProperty: NumberProperty; // X position in nm
+  // Tool components
+  private readonly areaMeasurementTool: AreaMeasurementTool;
+  private readonly curvatureTool: CurvatureTool;
+  private readonly derivativeTool: DerivativeTool;
+  private readonly zerosVisualization: ZerosVisualization;
+  private readonly phaseColorVisualization: PhaseColorVisualization;
+  private readonly classicalProbabilityOverlay: ClassicalProbabilityOverlay;
 
   // Guard flag to prevent reentry during updates
   private isUpdating: boolean = false;
@@ -123,6 +88,19 @@ export class WaveFunctionChartNode extends Node {
     | "probabilityDensity"
     | "waveFunction"
     | "phaseColor";
+
+  // Public getters for tool show properties (for control panels)
+  public get showAreaToolProperty() {
+    return this.areaMeasurementTool.showProperty;
+  }
+
+  public get showCurvatureToolProperty() {
+    return this.curvatureTool.showProperty;
+  }
+
+  public get showDerivativeToolProperty() {
+    return this.derivativeTool.showProperty;
+  }
 
   public constructor(
     model: ScreenModel,
@@ -193,103 +171,6 @@ export class WaveFunctionChartNode extends Node {
     });
     this.plotContentNode.addChild(this.zeroLine);
 
-    // Create classical turning point lines
-    this.leftTurningPointLine = new Line(0, 0, 0, 0, {
-      stroke: QPPWColors.energyLevelSelectedProperty,
-      lineWidth: 2,
-      lineDash: [8, 4],
-      visible: false,
-    });
-    this.plotContentNode.addChild(this.leftTurningPointLine);
-
-    this.rightTurningPointLine = new Line(0, 0, 0, 0, {
-      stroke: QPPWColors.energyLevelSelectedProperty,
-      lineWidth: 2,
-      lineDash: [8, 4],
-      visible: false,
-    });
-    this.plotContentNode.addChild(this.rightTurningPointLine);
-
-    // Create faint rectangular backgrounds for classically forbidden regions
-    this.leftForbiddenBackground = new Rectangle(0, 0, 1, 1, {
-      fill: QPPWColors.forbiddenRegionLightProperty,
-      stroke: null,
-      visible: false,
-    });
-    this.plotContentNode.addChild(this.leftForbiddenBackground);
-
-    this.rightForbiddenBackground = new Rectangle(0, 0, 1, 1, {
-      fill: QPPWColors.forbiddenRegionLightProperty,
-      stroke: null,
-      visible: false,
-    });
-    this.plotContentNode.addChild(this.rightForbiddenBackground);
-
-    // Create classically forbidden regions (shaded areas that follow the classical probability curve)
-    this.leftForbiddenRegion = new Path(null, {
-      fill: QPPWColors.forbiddenRegionDarkProperty,
-      stroke: null,
-      visible: false,
-    });
-    this.plotContentNode.addChild(this.leftForbiddenRegion);
-
-    this.rightForbiddenRegion = new Path(null, {
-      fill: QPPWColors.forbiddenRegionDarkProperty,
-      stroke: null,
-      visible: false,
-    });
-    this.plotContentNode.addChild(this.rightForbiddenRegion);
-
-    // Create forbidden probability label (appears on hover)
-    this.forbiddenProbabilityLabel = new Text("", {
-      font: new PhetFont(14),
-      fill: QPPWColors.labelFillProperty,
-      visible: false,
-      centerX: this.chartWidth / 2,
-      top: this.chartMargins.top + 30,
-    });
-    this.addChild(this.forbiddenProbabilityLabel);
-
-    // Add hover listeners to forbidden regions to show probability percentage
-    const showForbiddenProbability = () => {
-      const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
-      if (
-        hasClassicallyForbiddenProbability(this.model) &&
-        selectedIndex >= 0
-      ) {
-        const percentage =
-          this.model.getClassicallyForbiddenProbability(selectedIndex);
-        this.forbiddenProbabilityLabel.string = `Classically Forbidden: ${percentage.toFixed(1)}%`;
-        this.forbiddenProbabilityLabel.visible = true;
-      }
-    };
-
-    const hideForbiddenProbability = () => {
-      this.forbiddenProbabilityLabel.visible = false;
-    };
-
-    // Add listeners to background rectangles
-    this.leftForbiddenBackground.addInputListener({
-      enter: showForbiddenProbability,
-      exit: hideForbiddenProbability,
-    });
-
-    this.rightForbiddenBackground.addInputListener({
-      enter: showForbiddenProbability,
-      exit: hideForbiddenProbability,
-    });
-
-    // Add listeners to highlighted regions
-    this.leftForbiddenRegion.addInputListener({
-      enter: showForbiddenProbability,
-      exit: hideForbiddenProbability,
-    });
-
-    this.rightForbiddenRegion.addInputListener({
-      enter: showForbiddenProbability,
-      exit: hideForbiddenProbability,
-    });
-
     // Create wave function paths
     this.realPartPath = new Path(null, {
       stroke: QPPWColors.wavefunctionRealProperty,
@@ -319,250 +200,63 @@ export class WaveFunctionChartNode extends Node {
     });
     this.plotContentNode.addChild(this.probabilityDensityPath);
 
-    this.classicalProbabilityPath = new Path(null, {
-      stroke: QPPWColors.classicalProbabilityProperty,
-      lineWidth: 2,
-      lineDash: [5, 3],
-      visible: false,
+    // Initialize tool components
+    const toolOptions = {
+      chartMargins: this.chartMargins,
+      plotWidth: this.plotWidth,
+      plotHeight: this.plotHeight,
+      chartWidth: this.chartWidth,
+      xMinProperty: this.xMinProperty,
+      xMaxProperty: this.xMaxProperty,
+      yMinProperty: this.yMinProperty,
+      yMaxProperty: this.yMaxProperty,
+      dataToViewX: this.dataToViewX.bind(this),
+      dataToViewY: this.dataToViewY.bind(this),
+      viewToDataX: this.viewToDataX.bind(this),
+      parentNode: this,
+    };
+
+    // Create classical probability overlay
+    this.classicalProbabilityOverlay = new ClassicalProbabilityOverlay(model, toolOptions);
+    this.plotContentNode.addChild(this.classicalProbabilityOverlay);
+
+    // Create phase color visualization
+    this.phaseColorVisualization = new PhaseColorVisualization({
+      dataToViewX: this.dataToViewX.bind(this),
+      dataToViewY: this.dataToViewY.bind(this),
     });
-    this.plotContentNode.addChild(this.classicalProbabilityPath);
+    this.plotContentNode.addChild(this.phaseColorVisualization);
 
-    // Create phase color visualization node
-    this.phaseColorNode = new Node({
-      visible: false,
+    // Create zeros visualization
+    this.zerosVisualization = new ZerosVisualization({
+      dataToViewX: this.dataToViewX.bind(this),
+      dataToViewY: this.dataToViewY.bind(this),
     });
-    this.plotContentNode.addChild(this.phaseColorNode);
+    this.plotContentNode.addChild(this.zerosVisualization);
 
-    // Initialize rectangle pool for phase color visualization (will be populated on first use)
-    this.phaseColorStrips = [];
+    // Create area measurement tool
+    this.areaMeasurementTool = new AreaMeasurementTool(
+      model,
+      () => this.getEffectiveDisplayMode(),
+      toolOptions,
+    );
+    this.plotContentNode.addChild(this.areaMeasurementTool);
 
-    // Create zeros visualization node
-    this.zerosNode = new Node({
-      visible: false,
-    });
-    this.plotContentNode.addChild(this.zerosNode);
+    // Create curvature tool
+    this.curvatureTool = new CurvatureTool(
+      model,
+      () => this.getEffectiveDisplayMode(),
+      toolOptions,
+    );
+    this.plotContentNode.addChild(this.curvatureTool);
 
-    // Initialize area measurement tool
-    this.showAreaToolProperty = new BooleanProperty(false);
-
-    // Initialize marker positions (default to -1nm and +1nm)
-    this.leftMarkerXProperty = new NumberProperty(-1);
-    this.rightMarkerXProperty = new NumberProperty(1);
-
-    // Create area tool container
-    this.areaToolContainer = new Node({
-      visible: false,
-    });
-    this.plotContentNode.addChild(this.areaToolContainer);
-
-    // Create faint background rectangle showing the measurement region
-    this.areaBackgroundRegion = new Rectangle(0, 0, 1, 1, {
-      fill: QPPWColors.areaMeasurementLightProperty,
-      stroke: null,
-    });
-    this.areaToolContainer.addChild(this.areaBackgroundRegion);
-
-    // Create shaded region between markers (follows the curve)
-    this.areaRegion = new Path(null, {
-      fill: QPPWColors.areaMeasurementDarkProperty,
-      stroke: null,
-    });
-    this.areaToolContainer.addChild(this.areaRegion);
-
-    // Create left marker line
-    this.leftMarker = new Line(0, 0, 0, 0, {
-      stroke: QPPWColors.energyLevelSelectedProperty,
-      lineWidth: 2,
-      lineDash: [6, 4],
-    });
-    this.areaToolContainer.addChild(this.leftMarker);
-
-    // Create right marker line
-    this.rightMarker = new Line(0, 0, 0, 0, {
-      stroke: QPPWColors.energyLevelSelectedProperty,
-      lineWidth: 2,
-      lineDash: [6, 4],
-    });
-    this.areaToolContainer.addChild(this.rightMarker);
-
-    // Create left marker handle (draggable circle at top)
-    this.leftMarkerHandle = new Circle(8, {
-      fill: QPPWColors.energyLevelSelectedProperty,
-      stroke: QPPWColors.backgroundColorProperty,
-      lineWidth: 2,
-      cursor: "ew-resize",
-    });
-    this.areaToolContainer.addChild(this.leftMarkerHandle);
-
-    // Create right marker handle (draggable circle at top)
-    this.rightMarkerHandle = new Circle(8, {
-      fill: QPPWColors.energyLevelSelectedProperty,
-      stroke: QPPWColors.backgroundColorProperty,
-      lineWidth: 2,
-      cursor: "ew-resize",
-    });
-    this.areaToolContainer.addChild(this.rightMarkerHandle);
-
-    // Create area percentage label
-    this.areaLabel = new Text("", {
-      font: new PhetFont({ size: 16, weight: "bold" }),
-      fill: QPPWColors.labelFillProperty,
-      visible: false,
-    });
-    this.addChild(this.areaLabel);
-
-    // Setup drag listeners for markers
-    this.setupAreaToolDragListeners();
-
-    // Link area tool visibility to property
-    this.showAreaToolProperty.link((show: boolean) => {
-      this.areaToolContainer.visible = show;
-      this.areaLabel.visible = show;
-      if (show) {
-        this.updateAreaTool();
-      }
-    });
-
-    // Initialize curvature visualization tool
-    this.showCurvatureToolProperty = new BooleanProperty(false);
-
-    // Initialize marker position (default to 0nm, center)
-    this.curvatureXProperty = new NumberProperty(0);
-
-    // Create curvature tool container
-    this.curvatureToolContainer = new Node({
-      visible: false,
-    });
-    this.plotContentNode.addChild(this.curvatureToolContainer);
-
-    // Create marker line
-    this.curvatureMarker = new Line(0, 0, 0, 0, {
-      stroke: QPPWColors.curvatureToolStrokeProperty,
-      lineWidth: 2,
-      lineDash: [4, 3],
-    });
-    this.curvatureToolContainer.addChild(this.curvatureMarker);
-
-    // Create marker handle (draggable circle)
-    this.curvatureMarkerHandle = new Circle(8, {
-      fill: QPPWColors.curvatureToolFillLightProperty,
-      stroke: QPPWColors.backgroundColorProperty,
-      lineWidth: 2,
-      cursor: "ew-resize",
-    });
-    this.curvatureToolContainer.addChild(this.curvatureMarkerHandle);
-
-    // Create parabola path
-    this.curvatureParabola = new Path(null, {
-      stroke: QPPWColors.curvatureToolFillLightProperty,
-      lineWidth: 3,
-      fill: null,
-    });
-    this.curvatureToolContainer.addChild(this.curvatureParabola);
-
-    // Create curvature label
-    this.curvatureLabel = new Text("", {
-      font: new PhetFont({ size: 14, weight: "bold" }),
-      fill: QPPWColors.curvatureToolFillDarkProperty,
-      visible: false,
-    });
-    this.addChild(this.curvatureLabel);
-
-    // Setup drag listener for marker
-    this.setupCurvatureToolDragListener();
-
-    // Link curvature tool visibility to property
-    this.showCurvatureToolProperty.link((show: boolean) => {
-      this.curvatureToolContainer.visible = show;
-      this.curvatureLabel.visible = show;
-      if (show) {
-        this.updateCurvatureTool();
-      }
-    });
-
-    // Update curvature tool when marker position changes
-    this.curvatureXProperty.link(() => {
-      if (this.showCurvatureToolProperty.value) {
-        this.updateCurvatureTool();
-      }
-    });
-
-    // Initialize derivative visualization tool
-    this.showDerivativeToolProperty = new BooleanProperty(false);
-
-    // Initialize marker position (default to 1nm, slightly off-center)
-    this.derivativeXProperty = new NumberProperty(1);
-
-    // Create derivative tool container
-    this.derivativeToolContainer = new Node({
-      visible: false,
-    });
-    this.plotContentNode.addChild(this.derivativeToolContainer);
-
-    // Create marker line
-    this.derivativeMarker = new Line(0, 0, 0, 0, {
-      stroke: QPPWColors.derivativeToolStrokeProperty,
-      lineWidth: 2,
-      lineDash: [4, 3],
-    });
-    this.derivativeToolContainer.addChild(this.derivativeMarker);
-
-    // Create marker handle (draggable circle)
-    this.derivativeMarkerHandle = new Circle(8, {
-      fill: QPPWColors.derivativeToolFillLightProperty,
-      stroke: QPPWColors.backgroundColorProperty,
-      lineWidth: 2,
-      cursor: "ew-resize",
-    });
-    this.derivativeToolContainer.addChild(this.derivativeMarkerHandle);
-
-    // Create tangent line path
-    this.derivativeTangentLine = new Path(null, {
-      stroke: QPPWColors.derivativeToolFillLightProperty,
-      lineWidth: 3,
-      fill: null,
-    });
-    this.derivativeToolContainer.addChild(this.derivativeTangentLine);
-
-    // Create derivative label
-    this.derivativeLabel = new Text("", {
-      font: new PhetFont({ size: 14, weight: "bold" }),
-      fill: QPPWColors.derivativeToolFillDarkProperty,
-      visible: false,
-    });
-    this.addChild(this.derivativeLabel);
-
-    // Setup drag listener for marker
-    this.setupDerivativeToolDragListener();
-
-    // Link derivative tool visibility to property
-    this.showDerivativeToolProperty.link((show: boolean) => {
-      this.derivativeToolContainer.visible = show;
-      this.derivativeLabel.visible = show;
-      if (show) {
-        this.updateDerivativeTool();
-      }
-    });
-
-    // Update derivative tool when marker position changes
-    this.derivativeXProperty.link(() => {
-      if (this.showDerivativeToolProperty.value) {
-        this.updateDerivativeTool();
-      }
-    });
-
-    // Update area tool when marker positions change
-    this.leftMarkerXProperty.link(() => {
-      if (this.showAreaToolProperty.value) {
-        this.updateAreaTool();
-      }
-    });
-
-    this.rightMarkerXProperty.link(() => {
-      if (this.showAreaToolProperty.value) {
-        this.updateAreaTool();
-      }
-    });
+    // Create derivative tool
+    this.derivativeTool = new DerivativeTool(
+      model,
+      () => this.getEffectiveDisplayMode(),
+      toolOptions,
+    );
+    this.plotContentNode.addChild(this.derivativeTool);
 
     // Create state label in upper right corner (outside clipped area)
     this.stateLabelNode = new Text("", {
@@ -603,100 +297,68 @@ export class WaveFunctionChartNode extends Node {
           {
             stroke: QPPWColors.gridLineProperty,
             lineWidth: 1,
+            lineDash: [5, 5],
           },
         );
         axesNode.addChild(gridLine);
       }
     }
 
-    // Y-axis at left edge using bamboo AxisLine (at model x=-4nm)
-    const yAxisLeftNode = new AxisLine(
-      this.chartTransform,
-      Orientation.VERTICAL,
-      {
-        stroke: QPPWColors.axisProperty,
-        lineWidth: 2,
-        value: this.xMinProperty.value,
-      },
-    );
-    yAxisLeftNode.x = this.chartMargins.left;
-    yAxisLeftNode.y = this.chartMargins.top;
-    axesNode.addChild(yAxisLeftNode);
+    // X-axis line at the bottom
+    const xAxis = new AxisLine(this.chartTransform, Orientation.HORIZONTAL);
+    xAxis.x = this.chartMargins.left;
+    xAxis.y = this.chartMargins.top + this.plotHeight;
+    axesNode.addChild(xAxis);
 
-    // Y-axis at origin using bamboo AxisLine (at model x=0)
-    const yAxisNode = new AxisLine(this.chartTransform, Orientation.VERTICAL, {
-      stroke: QPPWColors.axisProperty,
-      lineWidth: 2,
-      value: 0,
-      opacity: 0.3,
-    });
-    yAxisNode.x = this.chartMargins.left;
-    yAxisNode.y = this.chartMargins.top;
-    axesNode.addChild(yAxisNode);
-
-    // X-axis using bamboo AxisLine (at model y=0)
-    const xAxisNode = new AxisLine(
+    // X-axis tick marks
+    const xTickMarkSet = new TickMarkSet(
       this.chartTransform,
       Orientation.HORIZONTAL,
+      2, // spacing
       {
-        stroke: QPPWColors.axisProperty,
-        lineWidth: 2,
-        value: 0,
-      },
-    );
-    xAxisNode.x = this.chartMargins.left;
-    xAxisNode.y = this.chartMargins.top;
-    axesNode.addChild(xAxisNode);
-
-    // X-axis tick marks using bamboo TickMarkSet
-    const xTickMarksNode = new TickMarkSet(
-      this.chartTransform,
-      Orientation.HORIZONTAL,
-      2,
-      {
-        edge: "max",
-        extent: 8,
-        stroke: QPPWColors.axisProperty,
+        stroke: QPPWColors.labelFillProperty,
         lineWidth: 1,
       },
     );
-    xTickMarksNode.x = this.chartMargins.left;
-    xTickMarksNode.y = this.chartMargins.top + this.plotHeight;
-    axesNode.addChild(xTickMarksNode);
+    xTickMarkSet.x = this.chartMargins.left;
+    xTickMarkSet.y = this.chartMargins.top + this.plotHeight;
+    axesNode.addChild(xTickMarkSet);
 
-    // X-axis tick labels using bamboo TickLabelSet
-    const xTickLabelsNode = new TickLabelSet(
+    // X-axis tick labels
+    const xTickLabelSet = new TickLabelSet(
       this.chartTransform,
       Orientation.HORIZONTAL,
-      2,
+      2, // spacing
       {
-        edge: "max",
         createLabel: (value: number) =>
-          new Text(value.toFixed(0), {
-            font: new PhetFont(12),
+          new Text(value.toString(), {
+            font: new PhetFont(14),
             fill: QPPWColors.labelFillProperty,
           }),
       },
     );
-    xTickLabelsNode.x = this.chartMargins.left;
-    xTickLabelsNode.y = this.chartMargins.top + this.plotHeight;
-    axesNode.addChild(xTickLabelsNode);
+    xTickLabelSet.x = this.chartMargins.left;
+    xTickLabelSet.y = this.chartMargins.top + this.plotHeight + 4;
+    axesNode.addChild(xTickLabelSet);
 
-    // Y-axis label (will be updated based on display mode)
-    this.yAxisLabel = new Text(
-      stringManager.probabilityDensityAxisStringProperty,
-      {
-        font: new PhetFont(14),
-        fill: QPPWColors.labelFillProperty,
-        rotation: -Math.PI / 2,
-        centerX: this.chartMargins.left - 40,
-        centerY: this.chartHeight / 2,
-      },
-    );
+    // Y-axis line on the left
+    const yAxis = new AxisLine(this.chartTransform, Orientation.VERTICAL);
+    yAxis.x = this.chartMargins.left;
+    yAxis.y = this.chartMargins.top;
+    axesNode.addChild(yAxis);
+
+    // Y-axis label
+    this.yAxisLabel = new Text("", {
+      font: new PhetFont(14),
+      fill: QPPWColors.labelFillProperty,
+      centerX: 15,
+      centerY: this.chartHeight / 2,
+      rotation: -Math.PI / 2,
+    });
     axesNode.addChild(this.yAxisLabel);
 
     // X-axis label
-    const xLabelText = new Text(stringManager.positionNmAxisStringProperty, {
+    const xLabelText = new Text("Position (nm)", {
       font: new PhetFont(14),
       fill: QPPWColors.labelFillProperty,
       centerX: this.chartWidth / 2,
@@ -778,149 +440,58 @@ export class WaveFunctionChartNode extends Node {
       this.update();
     });
 
-    // Update area tool when display mode changes or when data updates
+    // Link tool updates to model changes
+    const updateTools = () => {
+      const displayMode = this.getEffectiveDisplayMode();
+      if (this.areaMeasurementTool.showProperty.value) {
+        this.areaMeasurementTool.update(displayMode);
+      }
+      if (this.curvatureTool.showProperty.value) {
+        this.curvatureTool.update(displayMode);
+      }
+      if (this.derivativeTool.showProperty.value) {
+        this.derivativeTool.update(displayMode);
+      }
+    };
+
+    // Update tools when display mode changes
     this.viewState.displayModeProperty.link(() => {
-      if (this.showAreaToolProperty.value) {
-        this.updateAreaTool();
-      }
+      updateTools();
     });
 
-    // Update area tool when time changes (for superposition states)
+    // Update tools when time changes (for superposition states)
     this.model.timeProperty.link(() => {
-      if (this.showAreaToolProperty.value && this.model.isPlayingProperty.value) {
-        this.updateAreaTool();
+      if (this.model.isPlayingProperty.value) {
+        updateTools();
       }
     });
 
-    // Update area tool when potential or well parameters change
-    this.model.potentialTypeProperty.link(() => {
-      if (this.showAreaToolProperty.value) {
-        this.updateAreaTool();
-      }
-    });
-
-    this.model.wellWidthProperty.link(() => {
-      if (this.showAreaToolProperty.value) {
-        this.updateAreaTool();
-      }
-    });
-
-    this.model.wellDepthProperty.link(() => {
-      if (this.showAreaToolProperty.value) {
-        this.updateAreaTool();
-      }
-    });
+    // Update tools when potential or well parameters change
+    this.model.potentialTypeProperty.link(updateTools);
+    this.model.wellWidthProperty.link(updateTools);
+    this.model.wellDepthProperty.link(updateTools);
 
     if ("barrierHeightProperty" in this.model) {
-      this.model.barrierHeightProperty.link(() => {
-        if (this.showAreaToolProperty.value) {
-          this.updateAreaTool();
-        }
-      });
+      this.model.barrierHeightProperty.link(updateTools);
     }
 
     if ("potentialOffsetProperty" in this.model) {
-      this.model.potentialOffsetProperty.link(() => {
-        if (this.showAreaToolProperty.value) {
-          this.updateAreaTool();
-        }
-      });
+      this.model.potentialOffsetProperty.link(updateTools);
     }
 
-    // Update area tool when selected energy level changes
-    this.model.selectedEnergyLevelIndexProperty.link(() => {
-      if (this.showAreaToolProperty.value) {
-        this.updateAreaTool();
-      }
-      if (this.showCurvatureToolProperty.value) {
-        this.updateCurvatureTool();
-      }
-      if (this.showDerivativeToolProperty.value) {
-        this.updateDerivativeTool();
-      }
-    });
-
-    // Update curvature tool when potential or well parameters change
-    this.model.potentialTypeProperty.link(() => {
-      if (this.showCurvatureToolProperty.value) {
-        this.updateCurvatureTool();
-      }
-      if (this.showDerivativeToolProperty.value) {
-        this.updateDerivativeTool();
-      }
-    });
-
-    this.model.wellWidthProperty.link(() => {
-      if (this.showCurvatureToolProperty.value) {
-        this.updateCurvatureTool();
-      }
-      if (this.showDerivativeToolProperty.value) {
-        this.updateDerivativeTool();
-      }
-    });
-
-    this.model.wellDepthProperty.link(() => {
-      if (this.showCurvatureToolProperty.value) {
-        this.updateCurvatureTool();
-      }
-      if (this.showDerivativeToolProperty.value) {
-        this.updateDerivativeTool();
-      }
-    });
-
-    if ("barrierHeightProperty" in this.model) {
-      this.model.barrierHeightProperty.link(() => {
-        if (this.showCurvatureToolProperty.value) {
-          this.updateCurvatureTool();
-        }
-        if (this.showDerivativeToolProperty.value) {
-          this.updateDerivativeTool();
-        }
-      });
-    }
-
-    if ("potentialOffsetProperty" in this.model) {
-      this.model.potentialOffsetProperty.link(() => {
-        if (this.showCurvatureToolProperty.value) {
-          this.updateCurvatureTool();
-        }
-        if (this.showDerivativeToolProperty.value) {
-          this.updateDerivativeTool();
-        }
-      });
-    }
+    // Update tools when selected energy level changes
+    this.model.selectedEnergyLevelIndexProperty.link(updateTools);
 
     if ("wellSeparationProperty" in this.model) {
-      this.model.wellSeparationProperty.link(() => {
-        if (this.showCurvatureToolProperty.value) {
-          this.updateCurvatureTool();
-        }
-        if (this.showDerivativeToolProperty.value) {
-          this.updateDerivativeTool();
-        }
-      });
+      this.model.wellSeparationProperty.link(updateTools);
     }
 
     if ("numberOfWellsProperty" in this.model) {
-      this.model.numberOfWellsProperty.link(() => {
-        if (this.showCurvatureToolProperty.value) {
-          this.updateCurvatureTool();
-        }
-        if (this.showDerivativeToolProperty.value) {
-          this.updateDerivativeTool();
-        }
-      });
+      this.model.numberOfWellsProperty.link(updateTools);
     }
 
     if ("electricFieldProperty" in this.model) {
-      this.model.electricFieldProperty.link(() => {
-        if (this.showCurvatureToolProperty.value) {
-          this.updateCurvatureTool();
-        }
-        if (this.showDerivativeToolProperty.value) {
-          this.updateDerivativeTool();
-        }
-      });
+      this.model.electricFieldProperty.link(updateTools);
     }
 
     // Initialize labels (important for fixed display mode charts)
@@ -956,8 +527,6 @@ export class WaveFunctionChartNode extends Node {
   private updateStateLabel(): void {
     const displayMode = this.getEffectiveDisplayMode();
     const superpositionType = this.model.superpositionTypeProperty.value;
-
-    // Check if we're in a superposition state (not PSI_K which is single eigenstate)
     const isSuperposition = superpositionType !== SuperpositionType.SINGLE;
 
     if (isSuperposition) {
@@ -993,31 +562,34 @@ export class WaveFunctionChartNode extends Node {
     } else {
       // Display single eigenstate label
       const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
+      const boundStates = this.model.getBoundStates();
 
-      if (selectedIndex < 0) {
+      if (!boundStates || selectedIndex < 0) {
         this.stateLabelNode.string = "";
         return;
       }
 
-      // Convert index to subscript (n starts from 0 for display)
-      const n = selectedIndex;
-      const subscript = this.toSubscript(n);
+      if (selectedIndex >= boundStates.wavefunctions.length) {
+        this.stateLabelNode.string = "";
+        return;
+      }
+
+      // Format: ψ₁, ψ₂, etc. (or |ψ₁|² for probability density)
+      const stateNumber = selectedIndex + 1;
+      const stateLabel = `ψ${this.toSubscript(stateNumber)}`;
 
       if (displayMode === "probabilityDensity") {
-        // Probability density: |ψ_n|²
-        this.stateLabelNode.string = `|ψ${subscript}|²`;
+        this.stateLabelNode.string = `|${stateLabel}|²`;
       } else if (displayMode === "phaseColor") {
-        // Magnitude: |ψ_n|
-        this.stateLabelNode.string = `|ψ${subscript}|`;
+        this.stateLabelNode.string = `|${stateLabel}|`;
       } else {
-        // Wavefunction: ψ_n
-        this.stateLabelNode.string = `ψ${subscript}`;
+        this.stateLabelNode.string = stateLabel;
       }
     }
   }
 
   /**
-   * Converts a number to Unicode subscript characters.
+   * Converts a number to subscript Unicode characters.
    */
   private toSubscript(num: number): string {
     const subscriptDigits = ["₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉"];
@@ -1028,10 +600,6 @@ export class WaveFunctionChartNode extends Node {
       .join("");
   }
 
-  /**
-   * Main update method - recalculates and redraws everything.
-   * Called automatically when model properties change, but can also be called explicitly (e.g., during reset).
-   */
   public update(): void {
     // Prevent reentry - if an update is in progress, mark that another update is pending
     if (this.isUpdating) {
@@ -1061,7 +629,7 @@ export class WaveFunctionChartNode extends Node {
           this.updateSuperpositionWavefunction();
           this.updateStateLabel();
           // Hide classical probability visualization for superpositions
-          this.hideClassicalProbabilityVisualization();
+          this.classicalProbabilityOverlay.hide();
         } else {
           // Display single eigenstate
           const selectedIndex =
@@ -1077,9 +645,12 @@ export class WaveFunctionChartNode extends Node {
           this.updateZeroLine();
           this.updateWaveFunction(boundStates, selectedIndex);
           this.updateStateLabel();
-          this.updateClassicalProbabilityVisualization(
+
+          // Update classical probability visualization
+          this.classicalProbabilityOverlay.update(
             boundStates,
             selectedIndex,
+            this.viewState.showClassicalProbabilityProperty.value,
           );
         }
       } while (this.updatePending);
@@ -1087,89 +658,6 @@ export class WaveFunctionChartNode extends Node {
       this.isUpdating = false;
       this.updatePending = false;
     }
-  }
-
-  /**
-   * Hides the classical probability visualization.
-   */
-  private hideClassicalProbabilityVisualization(): void {
-    this.leftTurningPointLine.visible = false;
-    this.rightTurningPointLine.visible = false;
-    this.leftForbiddenBackground.visible = false;
-    this.rightForbiddenBackground.visible = false;
-    this.leftForbiddenRegion.visible = false;
-    this.rightForbiddenRegion.visible = false;
-  }
-
-  /**
-   * Updates the classical probability visualization (turning points and forbidden regions).
-   */
-  private updateClassicalProbabilityVisualization(
-    boundStates: BoundStateResult,
-    selectedIndex: number,
-  ): void {
-    // Early return if conditions aren't met
-    if (
-      !this.viewState.showClassicalProbabilityProperty.value ||
-      !hasClassicalTurningPoints(this.model) ||
-      selectedIndex < 0 ||
-      selectedIndex >= boundStates.energies.length
-    ) {
-      this.hideClassicalProbabilityVisualization();
-      return;
-    }
-
-    // TypeScript now knows this.model has getClassicalTurningPoints
-    const turningPoints = this.model.getClassicalTurningPoints(selectedIndex);
-
-    if (!turningPoints) {
-      this.hideClassicalProbabilityVisualization();
-      return;
-    }
-
-    // Draw vertical lines at turning points
-    const xLeft = this.dataToViewX(turningPoints.left);
-    const xRight = this.dataToViewX(turningPoints.right);
-    const yTop = this.chartMargins.top;
-    const yBottom = this.chartMargins.top + this.plotHeight;
-
-    this.leftTurningPointLine.setLine(xLeft, yTop, xLeft, yBottom);
-    this.leftTurningPointLine.visible = true;
-
-    this.rightTurningPointLine.setLine(xRight, yTop, xRight, yBottom);
-    this.rightTurningPointLine.visible = true;
-
-    // Draw faint rectangular backgrounds for forbidden regions
-    // Left forbidden region (from left edge to left turning point)
-    const leftRegionX = this.chartMargins.left;
-    const leftRegionWidth = xLeft - leftRegionX;
-    this.leftForbiddenBackground.setRect(
-      leftRegionX,
-      yTop,
-      leftRegionWidth,
-      this.plotHeight,
-    );
-    this.leftForbiddenBackground.visible = true;
-
-    // Right forbidden region (from right turning point to right edge)
-    const rightRegionX = xRight;
-    const rightRegionWidth = this.chartMargins.left + this.plotWidth - xRight;
-    this.rightForbiddenBackground.setRect(
-      rightRegionX,
-      yTop,
-      rightRegionWidth,
-      this.plotHeight,
-    );
-    this.rightForbiddenBackground.visible = true;
-
-    // Create and draw highlighted forbidden regions that follow the classical probability curve
-    const shapes = this.createForbiddenRegionShapes(turningPoints, selectedIndex);
-
-    this.leftForbiddenRegion.shape = shapes.leftShape;
-    this.leftForbiddenRegion.visible = true;
-
-    this.rightForbiddenRegion.shape = shapes.rightShape;
-    this.rightForbiddenRegion.visible = true;
   }
 
   /**
@@ -1182,30 +670,51 @@ export class WaveFunctionChartNode extends Node {
   ): void {
     // Calculate Y range based on wave function values
     if (
-      selectedIndex >= 0 &&
-      selectedIndex < boundStates.wavefunctions.length
+      selectedIndex < 0 ||
+      selectedIndex >= boundStates.wavefunctions.length
     ) {
-      const wavefunction = boundStates.wavefunctions[selectedIndex];
-      const maxAbs = Math.max(...wavefunction.map((v) => Math.abs(v)));
-      const displayMode = this.getEffectiveDisplayMode();
-
-      if (displayMode === "probabilityDensity") {
-        this.yMinProperty.value = 0;
-        this.yMaxProperty.value = maxAbs * maxAbs * 1.2; // 20% margin
-      } else {
-        this.yMinProperty.value = -maxAbs * 1.2;
-        this.yMaxProperty.value = maxAbs * 1.2;
-      }
+      return;
     }
 
-    // Update ChartTransform with new Y range (X range is fixed)
-    this.chartTransform.setModelYRange(
-      new Range(this.yMinProperty.value, this.yMaxProperty.value),
-    );
+    const wavefunction = boundStates.wavefunctions[selectedIndex];
+    const displayMode = this.getEffectiveDisplayMode();
+
+    let yMin = 0;
+    let yMax = 0;
+
+    if (displayMode === "probabilityDensity" || displayMode === "phaseColor") {
+      // For probability density, always start at 0 and find the max
+      const probabilityDensity = wavefunction.map((psi) => psi * psi);
+      yMax = Math.max(...probabilityDensity);
+      yMin = 0;
+    } else {
+      // For wave function, use symmetric range around zero
+      const maxAbs = Math.max(...wavefunction.map(Math.abs));
+      yMin = -maxAbs;
+      yMax = maxAbs;
+    }
+
+    // Add some padding (10%)
+    const padding = (yMax - yMin) * 0.1;
+    yMin -= padding;
+    yMax += padding;
+
+    // Ensure non-zero range
+    if (yMax - yMin < 0.01) {
+      yMin = -0.01;
+      yMax = 0.01;
+    }
+
+    // Update properties
+    this.yMinProperty.value = yMin;
+    this.yMaxProperty.value = yMax;
+
+    // Update chart transform
+    this.chartTransform.setModelYRange(new Range(yMin, yMax));
   }
 
   /**
-   * Updates the view range for superposition wavefunctions by computing from model.
+   * Updates the view range for superposition wavefunctions.
    */
   private updateViewRangeForSuperpositionFromModel(): void {
     const boundStates = this.model.getBoundStates();
@@ -1213,46 +722,89 @@ export class WaveFunctionChartNode extends Node {
       return;
     }
 
-    // Guard against empty wavefunctions
-    if (boundStates.wavefunctions.length === 0) {
-      console.warn("No bound states available for superposition view range");
-      return;
-    }
-
-    // Get time-evolved superposition from model (at current time, but phase doesn't affect magnitude)
+    const config = this.model.superpositionConfigProperty.value;
     const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
-    const superposition = this.model.getTimeEvolvedSuperposition(time);
-    if (!superposition) {
-      return;
+    const numPoints = boundStates.xGrid.length;
+
+    // Compute time-evolved superposition
+    const realPart = new Array(numPoints).fill(0);
+    const imagPart = new Array(numPoints).fill(0);
+
+    for (let n = 0; n < config.amplitudes.length; n++) {
+      const amplitude = config.amplitudes[n];
+      const initialPhase = config.phases[n];
+
+      if (amplitude === 0 || n >= boundStates.wavefunctions.length) {
+        continue;
+      }
+
+      const eigenfunction = boundStates.wavefunctions[n];
+      const energy = boundStates.energies[n];
+
+      // Time evolution phase for this eigenstate: -E_n*t/ℏ
+      const timePhase = -(energy * time) / QuantumConstants.HBAR;
+
+      // Total phase: initial phase + time evolution phase
+      const totalPhase = initialPhase + timePhase;
+
+      // Complex coefficient
+      const realCoeff = amplitude * Math.cos(totalPhase);
+      const imagCoeff = amplitude * Math.sin(totalPhase);
+
+      // Add contribution to superposition
+      for (let i = 0; i < numPoints; i++) {
+        realPart[i] += realCoeff * eigenfunction[i];
+        imagPart[i] += imagCoeff * eigenfunction[i];
+      }
     }
 
-    let maxAbs = superposition.maxMagnitude;
-
-    // Guard against zero maxAbs (no valid states for superposition)
-    if (maxAbs === 0) {
-      console.warn("No valid states for superposition, using default range");
-      maxAbs = 1; // Use default range
-    }
-
+    // Calculate Y range based on display mode
     const displayMode = this.getEffectiveDisplayMode();
+    let yMin = 0;
+    let yMax = 0;
 
-    if (displayMode === "probabilityDensity") {
-      this.yMinProperty.value = 0;
-      this.yMaxProperty.value = maxAbs * maxAbs * 1.2; // 20% margin
+    if (displayMode === "probabilityDensity" || displayMode === "phaseColor") {
+      // For probability density or phase color, find max of |ψ|²
+      const probabilityDensity = realPart.map(
+        (re, i) => re * re + imagPart[i] * imagPart[i],
+      );
+      yMax = Math.max(...probabilityDensity);
+      yMin = 0;
     } else {
-      this.yMinProperty.value = -maxAbs * 1.2;
-      this.yMaxProperty.value = maxAbs * 1.2;
+      // For wave function components, use symmetric range
+      const maxReal = Math.max(...realPart.map(Math.abs));
+      const maxImag = Math.max(...imagPart.map(Math.abs));
+      const maxMagnitude = Math.max(
+        ...realPart.map((re, i) =>
+          Math.sqrt(re * re + imagPart[i] * imagPart[i]),
+        ),
+      );
+      const maxAbs = Math.max(maxReal, maxImag, maxMagnitude);
+      yMin = -maxAbs;
+      yMax = maxAbs;
     }
 
-    // Update ChartTransform with new Y range (X range is fixed)
-    this.chartTransform.setModelYRange(
-      new Range(this.yMinProperty.value, this.yMaxProperty.value),
-    );
+    // Add some padding (10%)
+    const padding = (yMax - yMin) * 0.1;
+    yMin -= padding;
+    yMax += padding;
+
+    // Ensure non-zero range
+    if (yMax - yMin < 0.01) {
+      yMin = -0.01;
+      yMax = 0.01;
+    }
+
+    // Update properties
+    this.yMinProperty.value = yMin;
+    this.yMaxProperty.value = yMax;
+
+    // Update chart transform
+    this.chartTransform.setModelYRange(new Range(yMin, yMax));
   }
 
   /**
-   * Updates the wavefunction display for a superposition state with proper time evolution.
-   * Each eigenstate component evolves with its own energy: ψ(x,t) = Σ c_n * ψ_n(x) * e^(-iE_n*t/ℏ)
+   * Updates the superposition wavefunction visualization.
    */
   private updateSuperpositionWavefunction(): void {
     const boundStates = this.model.getBoundStates();
@@ -1260,140 +812,197 @@ export class WaveFunctionChartNode extends Node {
       return;
     }
 
-    // Get time-evolved superposition from model
+    const config = this.model.superpositionConfigProperty.value;
     const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
-    const superposition = this.model.getTimeEvolvedSuperposition(time);
-    if (!superposition) {
-      return;
+    const numPoints = boundStates.xGrid.length;
+
+    // Compute time-evolved superposition
+    const realPart = new Array(numPoints).fill(0);
+    const imagPart = new Array(numPoints).fill(0);
+
+    for (let n = 0; n < config.amplitudes.length; n++) {
+      const amplitude = config.amplitudes[n];
+      const initialPhase = config.phases[n];
+
+      if (amplitude === 0 || n >= boundStates.wavefunctions.length) {
+        continue;
+      }
+
+      const eigenfunction = boundStates.wavefunctions[n];
+      const energy = boundStates.energies[n];
+
+      // Time evolution phase for this eigenstate: -E_n*t/ℏ
+      const timePhase = -(energy * time) / QuantumConstants.HBAR;
+
+      // Total phase: initial phase + time evolution phase
+      const totalPhase = initialPhase + timePhase;
+
+      // Complex coefficient
+      const realCoeff = amplitude * Math.cos(totalPhase);
+      const imagCoeff = amplitude * Math.sin(totalPhase);
+
+      // Add contribution to superposition
+      for (let i = 0; i < numPoints; i++) {
+        realPart[i] += realCoeff * eigenfunction[i];
+        imagPart[i] += imagCoeff * eigenfunction[i];
+      }
     }
 
+    // Display based on mode
     const displayMode = this.getEffectiveDisplayMode();
 
-    // Now display based on display mode
     if (displayMode === "probabilityDensity") {
+      // Calculate |ψ|²
+      const probabilityDensity = new Array(numPoints);
+      for (let i = 0; i < numPoints; i++) {
+        probabilityDensity[i] =
+          realPart[i] * realPart[i] + imagPart[i] * imagPart[i];
+      }
+
       this.plotProbabilityDensityFromArray(
         boundStates.xGrid,
-        superposition.probabilityDensity,
+        probabilityDensity,
       );
-      this.probabilityDensityPath.visible = true;
-      this.classicalProbabilityPath.visible = false; // Hide classical for superposition
-      this.realPartPath.visible = false;
-      this.imaginaryPartPath.visible = false;
-      this.magnitudePath.visible = false;
-      this.phaseColorNode.visible = false;
-    } else if (displayMode === "phaseColor") {
-      // Magnitude and phase for coloring
-      this.plotPhaseColoredSuperposition(
-        boundStates.xGrid,
-        superposition.realPart,
-        superposition.imagPart,
-      );
-      this.probabilityDensityPath.visible = false;
-      this.classicalProbabilityPath.visible = false;
-      this.realPartPath.visible = false;
-      this.imaginaryPartPath.visible = false;
-      this.magnitudePath.visible = false;
-      this.phaseColorNode.visible = true;
-    } else {
-      // Display real, imaginary, and magnitude components
-      this.plotSuperpositionComponents(
-        boundStates.xGrid,
-        superposition.realPart,
-        superposition.imagPart,
-        superposition.magnitude,
-      );
-      this.probabilityDensityPath.visible = false;
-      this.classicalProbabilityPath.visible = false;
-      this.realPartPath.visible = this.viewState.showRealPartProperty.value;
-      this.imaginaryPartPath.visible =
-        this.viewState.showImaginaryPartProperty.value;
-      this.magnitudePath.visible = this.viewState.showMagnitudeProperty.value;
-      this.phaseColorNode.visible = false;
-    }
 
-    // Update zeros visualization using the real part of the superposition
-    this.updateZerosVisualization(boundStates.xGrid, superposition.realPart);
+      // Hide wavefunction components and phase color
+      this.realPartPath.visible = false;
+      this.imaginaryPartPath.visible = false;
+      this.magnitudePath.visible = false;
+      this.phaseColorVisualization.hide();
+
+      // Update zeros visualization if enabled
+      if (this.viewState.showZerosProperty.value) {
+        // For superposition, show zeros of the real part
+        this.zerosVisualization.showProperty.value = true;
+        this.zerosVisualization.update(boundStates.xGrid, realPart);
+      } else {
+        this.zerosVisualization.showProperty.value = false;
+      }
+    } else if (displayMode === "phaseColor") {
+      // Plot phase-colored superposition
+      this.phaseColorVisualization.show();
+      this.phaseColorVisualization.plotSuperposition(
+        boundStates.xGrid,
+        realPart,
+        imagPart,
+      );
+
+      // Hide other paths
+      this.probabilityDensityPath.shape = null;
+      this.realPartPath.visible = false;
+      this.imaginaryPartPath.visible = false;
+      this.magnitudePath.visible = false;
+
+      // Hide zeros for phase color mode
+      this.zerosVisualization.showProperty.value = false;
+    } else {
+      // waveFunction mode - show real, imaginary, and magnitude
+      this.plotSuperpositionComponents(boundStates.xGrid, realPart, imagPart);
+
+      // Hide probability density and phase color
+      this.probabilityDensityPath.shape = null;
+      this.phaseColorVisualization.hide();
+
+      // Update zeros visualization if enabled
+      if (this.viewState.showZerosProperty.value) {
+        this.zerosVisualization.showProperty.value = true;
+        this.zerosVisualization.update(boundStates.xGrid, realPart);
+      } else {
+        this.zerosVisualization.showProperty.value = false;
+      }
+    }
   }
 
   /**
-   * Updates the zero-line reference.
+   * Updates the zero line position.
    */
   private updateZeroLine(): void {
     const y = this.dataToViewY(0);
-    this.zeroLine.x1 = this.chartMargins.left;
-    this.zeroLine.y1 = y;
-    this.zeroLine.x2 = this.chartWidth - this.chartMargins.right;
-    this.zeroLine.y2 = y;
+    this.zeroLine.setLine(
+      this.chartMargins.left,
+      y,
+      this.chartMargins.left + this.plotWidth,
+      y,
+    );
   }
 
   /**
-   * Updates the wave function or probability density plot.
+   * Updates the wave function visualization for a single eigenstate.
    */
   private updateWaveFunction(
     boundStates: BoundStateResult,
     selectedIndex: number,
   ): void {
+    if (
+      selectedIndex < 0 ||
+      selectedIndex >= boundStates.wavefunctions.length
+    ) {
+      return;
+    }
+
     const xGrid = boundStates.xGrid;
     const wavefunction = boundStates.wavefunctions[selectedIndex];
     const displayMode = this.getEffectiveDisplayMode();
-    const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
-    const energy = boundStates.energies[selectedIndex];
-
-    // Calculate time evolution phase
-    const phase = -(energy * time) / QuantumConstants.HBAR;
 
     if (displayMode === "probabilityDensity") {
-      // Plot probability density |ψ|²
+      // Plot probability density (|ψ|²)
       this.plotProbabilityDensity(xGrid, wavefunction);
-      this.probabilityDensityPath.visible = true;
+
+      // Hide wavefunction component paths and phase color
       this.realPartPath.visible = false;
       this.imaginaryPartPath.visible = false;
       this.magnitudePath.visible = false;
-      this.phaseColorNode.visible = false;
+      this.phaseColorVisualization.hide();
 
-      // Plot classical probability if enabled
-      if (
-        "showClassicalProbabilityProperty" in this.model &&
-        this.viewState.showClassicalProbabilityProperty.value
-      ) {
-        const classicalProbability =
-          this.model.getClassicalProbabilityDensity(selectedIndex);
-        if (classicalProbability) {
-          this.plotClassicalProbabilityDensity(xGrid, classicalProbability);
-          this.classicalProbabilityPath.visible = true;
-        } else {
-          this.classicalProbabilityPath.visible = false;
-        }
+      // Update zeros visualization if enabled
+      if (this.viewState.showZerosProperty.value) {
+        this.zerosVisualization.showProperty.value = true;
+        this.zerosVisualization.update(xGrid, wavefunction);
       } else {
-        this.classicalProbabilityPath.visible = false;
+        this.zerosVisualization.showProperty.value = false;
       }
     } else if (displayMode === "phaseColor") {
-      // Plot magnitude with phase-colored fill
-      this.plotPhaseColoredWavefunction(xGrid, wavefunction, phase);
-      this.probabilityDensityPath.visible = false;
-      this.classicalProbabilityPath.visible = false;
+      // Calculate global time evolution phase
+      const energy = boundStates.energies[selectedIndex];
+      const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
+      const globalPhase = -(energy * time) / QuantumConstants.HBAR;
+
+      // Plot phase-colored wavefunction
+      this.phaseColorVisualization.show();
+      this.phaseColorVisualization.plotWavefunction(
+        xGrid,
+        wavefunction,
+        globalPhase,
+      );
+
+      // Hide other paths
+      this.probabilityDensityPath.shape = null;
       this.realPartPath.visible = false;
       this.imaginaryPartPath.visible = false;
       this.magnitudePath.visible = false;
-      this.phaseColorNode.visible = true;
-    } else {
-      // Plot wave function components
-      this.plotWaveFunctionComponents(xGrid, wavefunction, phase);
-      this.probabilityDensityPath.visible = false;
-      this.classicalProbabilityPath.visible = false;
-      this.realPartPath.visible = this.viewState.showRealPartProperty.value;
-      this.imaginaryPartPath.visible =
-        this.viewState.showImaginaryPartProperty.value;
-      this.magnitudePath.visible = this.viewState.showMagnitudeProperty.value;
-      this.phaseColorNode.visible = false;
-    }
 
-    // Update zeros visualization (works for all display modes)
-    this.updateZerosVisualization(xGrid, wavefunction);
+      // Hide zeros for phase color mode
+      this.zerosVisualization.showProperty.value = false;
+    } else {
+      // waveFunction mode - show real part, imaginary part, and magnitude
+      this.plotWaveFunctionComponents(xGrid, wavefunction);
+
+      // Hide probability density and phase color
+      this.probabilityDensityPath.shape = null;
+      this.phaseColorVisualization.hide();
+
+      // Update zeros visualization if enabled
+      if (this.viewState.showZerosProperty.value) {
+        this.zerosVisualization.showProperty.value = true;
+        this.zerosVisualization.update(xGrid, wavefunction);
+      } else {
+        this.zerosVisualization.showProperty.value = false;
+      }
+    }
   }
 
   /**
-   * Plots the probability density with smooth curves.
+   * Plots the probability density (|ψ|²) for a single eigenstate.
    */
   private plotProbabilityDensity(
     xGrid: number[],
@@ -1401,226 +1010,117 @@ export class WaveFunctionChartNode extends Node {
   ): void {
     const shape = new Shape();
 
-    // Start at zero on the left
-    const x0 = this.dataToViewX(xGrid[0] * QuantumConstants.M_TO_NM);
-    const y0 = this.dataToViewY(0);
-    shape.moveTo(x0, y0);
-
     // Build points array
     const points: { x: number; y: number }[] = [];
     for (let i = 0; i < xGrid.length; i++) {
       const x = this.dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
-      const probabilityDensity = wavefunction[i] * wavefunction[i];
+      const psi = wavefunction[i];
+      const probabilityDensity = psi * psi;
       const y = this.dataToViewY(probabilityDensity);
       points.push({ x, y });
     }
 
-    // Draw smooth curve using quadratic bezier curves
-    if (points.length > 0) {
-      shape.lineTo(points[0].x, points[0].y);
-
-      for (let i = 0; i < points.length - 1; i++) {
-        const p0 = points[i];
-        const p1 = points[i + 1];
-
-        // Control point is midpoint for simple smoothing
-        const cpX = (p0.x + p1.x) / 2;
-        const cpY = (p0.y + p1.y) / 2;
-
-        shape.quadraticCurveTo(cpX, cpY, p1.x, p1.y);
-      }
+    if (points.length === 0) {
+      this.probabilityDensityPath.shape = null;
+      return;
     }
 
-    // Close at zero on the right
-    const xEnd = this.dataToViewX(
-      xGrid[xGrid.length - 1] * QuantumConstants.M_TO_NM,
-    );
-    shape.lineTo(xEnd, y0);
+    // Create filled area under the curve
+    const y0 = this.dataToViewY(0); // baseline
+
+    // Start at bottom-left
+    shape.moveTo(points[0].x, y0);
+    shape.lineTo(points[0].x, points[0].y);
+
+    // Trace the curve
+    for (let i = 0; i < points.length - 1; i++) {
+      shape.lineTo(points[i].x, points[i].y);
+    }
+
+    // Close the shape back to baseline
+    shape.lineTo(points[points.length - 1].x, points[points.length - 1].y);
+    shape.lineTo(points[points.length - 1].x, y0);
     shape.close();
 
     this.probabilityDensityPath.shape = shape;
   }
 
   /**
-   * Plots the classical probability density with smooth curves.
-   */
-  private plotClassicalProbabilityDensity(
-    xGrid: number[],
-    classicalProbability: number[],
-  ): void {
-    const shape = new Shape();
-
-    // Build points array
-    const points: { x: number; y: number }[] = [];
-    for (let i = 0; i < xGrid.length; i++) {
-      const x = this.dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
-      const y = this.dataToViewY(classicalProbability[i]);
-      points.push({ x, y });
-    }
-
-    // Draw  curve
-    if (points.length > 0) {
-      shape.moveTo(points[0].x, points[0].y);
-
-      for (let i = 0; i < points.length - 1; i++) {
-        shape.lineTo(points[i].x, points[i].y);
-      }
-    }
-
-    this.classicalProbabilityPath.shape = shape;
-  }
-
-  /**
-   * Plots wave function components (real, imaginary, magnitude) with smooth curves.
+   * Plots the wave function components (real, imaginary, magnitude) for waveFunction display mode.
    */
   private plotWaveFunctionComponents(
     xGrid: number[],
     wavefunction: number[],
-    phase: number,
   ): void {
-    const realShape = new Shape();
-    const imagShape = new Shape();
-    const magShape = new Shape();
+    const energy =
+      this.model.getBoundStates()!.energies[
+        this.model.selectedEnergyLevelIndexProperty.value
+      ];
+    const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
 
-    const cosPhi = Math.cos(phase);
-    const sinPhi = Math.sin(phase);
+    // Calculate time evolution phase for the eigenstate: -E_n*t/ℏ
+    const globalPhase = -(energy * time) / QuantumConstants.HBAR;
 
-    // Build points arrays
+    // Apply time evolution to get real and imaginary parts
+    const realPart = wavefunction.map((psi) => psi * Math.cos(globalPhase));
+    const imagPart = wavefunction.map((psi) => -psi * Math.sin(globalPhase));
+
+    // Build points for each component
     const realPoints: { x: number; y: number }[] = [];
     const imagPoints: { x: number; y: number }[] = [];
-    const magPoints: { x: number; y: number }[] = [];
+    const magnitudePoints: { x: number; y: number }[] = [];
 
     for (let i = 0; i < xGrid.length; i++) {
       const x = this.dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
-      const psi = wavefunction[i];
 
-      // Apply time evolution: ψ(x,t) = ψ(x) * e^(-iEt/ℏ)
-      const realPart = psi * cosPhi;
-      const imagPart = -psi * sinPhi;
-      const magnitude = Math.abs(psi);
-
-      const yReal = this.dataToViewY(realPart);
-      const yImag = this.dataToViewY(imagPart);
-      const yMag = this.dataToViewY(magnitude);
-
-      realPoints.push({ x, y: yReal });
-      imagPoints.push({ x, y: yImag });
-      magPoints.push({ x, y: yMag });
+      realPoints.push({ x, y: this.dataToViewY(realPart[i]) });
+      imagPoints.push({ x, y: this.dataToViewY(imagPart[i]) });
+      magnitudePoints.push({ x, y: this.dataToViewY(wavefunction[i]) });
     }
 
-    // Draw smooth curves using quadratic bezier curves
-    const drawSmoothCurve = (
-      shape: Shape,
-      points: { x: number; y: number }[],
-    ) => {
-      if (points.length > 0) {
-        shape.moveTo(points[0].x, points[0].y);
-
-        for (let i = 0; i < points.length - 1; i++) {
-          const p0 = points[i];
-          const p1 = points[i + 1];
-
-          // Control point is midpoint for simple smoothing
-          const cpX = (p0.x + p1.x) / 2;
-          const cpY = (p0.y + p1.y) / 2;
-
-          shape.quadraticCurveTo(cpX, cpY, p1.x, p1.y);
-        }
+    // Plot real part
+    const realShape = new Shape();
+    if (realPoints.length > 0) {
+      realShape.moveTo(realPoints[0].x, realPoints[0].y);
+      for (let i = 1; i < realPoints.length; i++) {
+        realShape.lineTo(realPoints[i].x, realPoints[i].y);
       }
-    };
-
-    drawSmoothCurve(realShape, realPoints);
-    drawSmoothCurve(imagShape, imagPoints);
-    drawSmoothCurve(magShape, magPoints);
-
+    }
     this.realPartPath.shape = realShape;
+    this.realPartPath.visible = this.viewState.showRealPartProperty.value;
+
+    // Plot imaginary part
+    const imagShape = new Shape();
+    if (imagPoints.length > 0) {
+      imagShape.moveTo(imagPoints[0].x, imagPoints[0].y);
+      for (let i = 1; i < imagPoints.length; i++) {
+        imagShape.lineTo(imagPoints[i].x, imagPoints[i].y);
+      }
+    }
     this.imaginaryPartPath.shape = imagShape;
-    this.magnitudePath.shape = magShape;
+    this.imaginaryPartPath.visible =
+      this.viewState.showImaginaryPartProperty.value;
+
+    // Plot magnitude
+    const magnitudeShape = new Shape();
+    if (magnitudePoints.length > 0) {
+      magnitudeShape.moveTo(magnitudePoints[0].x, magnitudePoints[0].y);
+      for (let i = 1; i < magnitudePoints.length; i++) {
+        magnitudeShape.lineTo(magnitudePoints[i].x, magnitudePoints[i].y);
+      }
+    }
+    this.magnitudePath.shape = magnitudeShape;
+    this.magnitudePath.visible = this.viewState.showMagnitudeProperty.value;
   }
 
   /**
-   * Plots the wavefunction magnitude with rainbow coloring based on phase.
-   * This creates a visualization where vertical strips are colored according to the local phase.
-   * Reuses rectangle nodes from a pool to avoid creating/destroying nodes each frame.
-   */
-  private plotPhaseColoredWavefunction(
-    xGrid: number[],
-    wavefunction: number[],
-    globalPhase: number,
-  ): void {
-    const y0 = this.dataToViewY(0);
-    const numStrips = xGrid.length - 1;
-
-    // Ensure we have enough rectangles in the pool
-    while (this.phaseColorStrips.length < numStrips) {
-      const rect = new Rectangle(0, 0, 1, 1, {
-        fill: QPPWColors.phaseIndicatorProperty,
-        stroke: null,
-      });
-      this.phaseColorStrips.push(rect);
-      this.phaseColorNode.addChild(rect);
-    }
-
-    // Update each strip
-    for (let i = 0; i < numStrips; i++) {
-      const x1 = this.dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
-      const x2 = this.dataToViewX(xGrid[i + 1] * QuantumConstants.M_TO_NM);
-      const stripWidth = x2 - x1;
-
-      const psi = wavefunction[i];
-      const magnitude = Math.abs(psi);
-
-      // Apply global time evolution phase
-      const cosPhi = Math.cos(globalPhase);
-      const sinPhi = Math.sin(globalPhase);
-
-      // Apply time evolution: ψ(x,t) = ψ(x) * e^(-iEt/ℏ)
-      const realPart = psi * cosPhi;
-      const imagPart = -psi * sinPhi;
-
-      // Calculate local phase: arg(ψ) = atan2(Im(ψ), Re(ψ))
-      const localPhase = Math.atan2(imagPart, realPart);
-
-      // Normalize phase to [0, 1] for hue (0 to 360 degrees)
-      // phase ranges from -π to π, so we normalize to 0 to 1
-      const normalizedPhase = (localPhase + Math.PI) / (2 * Math.PI);
-      const hue = Math.round(normalizedPhase * 360); // 0 to 360 degrees (must be integer for CSS)
-
-      // Create color using HSL: hue varies with phase, saturation and lightness are fixed
-      const saturation = 80; // 80% saturation for vibrant colors
-      const lightness = 60; // 60% lightness for good visibility
-      const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-
-      // Height of the strip is proportional to magnitude
-      const yTop = this.dataToViewY(magnitude);
-      const stripHeight = Math.abs(y0 - yTop);
-
-      // Update the rectangle from the pool
-      const strip = this.phaseColorStrips[i];
-      strip.setRect(x1, Math.min(y0, yTop), stripWidth, stripHeight);
-      strip.fill = color;
-      strip.visible = stripHeight > 0.1; // Only show if visible
-    }
-
-    // Hide any extra strips we're not using
-    for (let i = numStrips; i < this.phaseColorStrips.length; i++) {
-      this.phaseColorStrips[i].visible = false;
-    }
-  }
-
-  /**
-   * Plots probability density from a pre-computed array.
+   * Plots probability density from a pre-calculated array.
    */
   private plotProbabilityDensityFromArray(
     xGrid: number[],
     probabilityDensity: number[],
   ): void {
     const shape = new Shape();
-
-    // Start at zero on the left
-    const x0 = this.dataToViewX(xGrid[0] * QuantumConstants.M_TO_NM);
-    const y0 = this.dataToViewY(0);
-    shape.moveTo(x0, y0);
 
     // Build points array
     const points: { x: number; y: number }[] = [];
@@ -1630,926 +1130,145 @@ export class WaveFunctionChartNode extends Node {
       points.push({ x, y });
     }
 
-    // Draw smooth curve using quadratic bezier curves
-    if (points.length > 0) {
-      shape.lineTo(points[0].x, points[0].y);
-
-      for (let i = 0; i < points.length - 1; i++) {
-        const p0 = points[i];
-        const p1 = points[i + 1];
-
-        // Control point is midpoint for simple smoothing
-        const cpX = (p0.x + p1.x) / 2;
-        const cpY = (p0.y + p1.y) / 2;
-
-        shape.quadraticCurveTo(cpX, cpY, p1.x, p1.y);
-      }
+    if (points.length === 0) {
+      this.probabilityDensityPath.shape = null;
+      return;
     }
 
-    // Close at zero on the right
-    const xEnd = this.dataToViewX(
-      xGrid[xGrid.length - 1] * QuantumConstants.M_TO_NM,
-    );
-    shape.lineTo(xEnd, y0);
+    // Create filled area under the curve
+    const y0 = this.dataToViewY(0); // baseline
+
+    // Start at bottom-left
+    shape.moveTo(points[0].x, y0);
+    shape.lineTo(points[0].x, points[0].y);
+
+    // Trace the curve
+    for (let i = 0; i < points.length - 1; i++) {
+      shape.lineTo(points[i].x, points[i].y);
+    }
+
+    // Close the shape back to baseline
+    shape.lineTo(points[points.length - 1].x, points[points.length - 1].y);
+    shape.lineTo(points[points.length - 1].x, y0);
     shape.close();
 
     this.probabilityDensityPath.shape = shape;
   }
 
   /**
-   * Plots superposition components (real, imaginary, magnitude) from arrays.
+   * Plots superposition components (real, imaginary, magnitude).
    */
   private plotSuperpositionComponents(
     xGrid: number[],
     realPart: number[],
     imagPart: number[],
-    magnitude: number[],
   ): void {
-    const realShape = new Shape();
-    const imagShape = new Shape();
-    const magShape = new Shape();
-
-    // Build points arrays
+    // Build points for each component
     const realPoints: { x: number; y: number }[] = [];
     const imagPoints: { x: number; y: number }[] = [];
-    const magPoints: { x: number; y: number }[] = [];
+    const magnitudePoints: { x: number; y: number }[] = [];
 
     for (let i = 0; i < xGrid.length; i++) {
       const x = this.dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
-      const yReal = this.dataToViewY(realPart[i]);
-      const yImag = this.dataToViewY(imagPart[i]);
-      const yMag = this.dataToViewY(magnitude[i]);
+      const magnitude = Math.sqrt(
+        realPart[i] * realPart[i] + imagPart[i] * imagPart[i],
+      );
 
-      realPoints.push({ x, y: yReal });
-      imagPoints.push({ x, y: yImag });
-      magPoints.push({ x, y: yMag });
+      realPoints.push({ x, y: this.dataToViewY(realPart[i]) });
+      imagPoints.push({ x, y: this.dataToViewY(imagPart[i]) });
+      magnitudePoints.push({ x, y: this.dataToViewY(magnitude) });
     }
 
-    // Draw smooth curves using quadratic bezier curves
-    const drawSmoothCurve = (
-      shape: Shape,
-      points: { x: number; y: number }[],
-    ) => {
-      if (points.length > 0) {
-        shape.moveTo(points[0].x, points[0].y);
-
-        for (let i = 0; i < points.length - 1; i++) {
-          const p0 = points[i];
-          const p1 = points[i + 1];
-
-          // Control point is midpoint for simple smoothing
-          const cpX = (p0.x + p1.x) / 2;
-          const cpY = (p0.y + p1.y) / 2;
-
-          shape.quadraticCurveTo(cpX, cpY, p1.x, p1.y);
-        }
+    // Plot real part
+    const realShape = new Shape();
+    if (realPoints.length > 0) {
+      realShape.moveTo(realPoints[0].x, realPoints[0].y);
+      for (let i = 1; i < realPoints.length; i++) {
+        realShape.lineTo(realPoints[i].x, realPoints[i].y);
       }
-    };
-
-    drawSmoothCurve(realShape, realPoints);
-    drawSmoothCurve(imagShape, imagPoints);
-    drawSmoothCurve(magShape, magPoints);
-
+    }
     this.realPartPath.shape = realShape;
+    this.realPartPath.visible = this.viewState.showRealPartProperty.value;
+
+    // Plot imaginary part
+    const imagShape = new Shape();
+    if (imagPoints.length > 0) {
+      imagShape.moveTo(imagPoints[0].x, imagPoints[0].y);
+      for (let i = 1; i < imagPoints.length; i++) {
+        imagShape.lineTo(imagPoints[i].x, imagPoints[i].y);
+      }
+    }
     this.imaginaryPartPath.shape = imagShape;
-    this.magnitudePath.shape = magShape;
+    this.imaginaryPartPath.visible =
+      this.viewState.showImaginaryPartProperty.value;
+
+    // Plot magnitude
+    const magnitudeShape = new Shape();
+    if (magnitudePoints.length > 0) {
+      magnitudeShape.moveTo(magnitudePoints[0].x, magnitudePoints[0].y);
+      for (let i = 1; i < magnitudePoints.length; i++) {
+        magnitudeShape.lineTo(magnitudePoints[i].x, magnitudePoints[i].y);
+      }
+    }
+    this.magnitudePath.shape = magnitudeShape;
+    this.magnitudePath.visible = this.viewState.showMagnitudeProperty.value;
   }
 
   /**
-   * Plots phase-colored superposition from real and imaginary parts.
-   */
-  private plotPhaseColoredSuperposition(
-    xGrid: number[],
-    realPart: number[],
-    imagPart: number[],
-  ): void {
-    const y0 = this.dataToViewY(0);
-    const numStrips = xGrid.length - 1;
-
-    // Ensure we have enough rectangles in the pool
-    while (this.phaseColorStrips.length < numStrips) {
-      const rect = new Rectangle(0, 0, 1, 1, {
-        fill: QPPWColors.phaseIndicatorProperty,
-        stroke: null,
-      });
-      this.phaseColorStrips.push(rect);
-      this.phaseColorNode.addChild(rect);
-    }
-
-    // Update each strip
-    for (let i = 0; i < numStrips; i++) {
-      const x1 = this.dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
-      const x2 = this.dataToViewX(xGrid[i + 1] * QuantumConstants.M_TO_NM);
-      const stripWidth = x2 - x1;
-
-      const real = realPart[i];
-      const imag = imagPart[i];
-      const magnitude = Math.sqrt(real * real + imag * imag);
-
-      // Calculate local phase: arg(ψ) = atan2(Im(ψ), Re(ψ))
-      const localPhase = Math.atan2(imag, real);
-
-      // Normalize phase to [0, 1] for hue (0 to 360 degrees)
-      // phase ranges from -π to π, so we normalize to 0 to 1
-      const normalizedPhase = (localPhase + Math.PI) / (2 * Math.PI);
-      const hue = Math.round(normalizedPhase * 360); // 0 to 360 degrees (must be integer for CSS)
-
-      // Create color using HSL: hue varies with phase, saturation and lightness are fixed
-      const saturation = 80; // 80% saturation for vibrant colors
-      const lightness = 60; // 60% lightness for good visibility
-      const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-
-      // Height of the strip is proportional to magnitude
-      const yTop = this.dataToViewY(magnitude);
-      const stripHeight = Math.abs(y0 - yTop);
-
-      // Update the rectangle from the pool
-      const strip = this.phaseColorStrips[i];
-      strip.setRect(x1, Math.min(y0, yTop), stripWidth, stripHeight);
-      strip.fill = color;
-      strip.visible = stripHeight > 0.1; // Only show if visible
-    }
-
-    // Hide any extra strips we're not using
-    for (let i = numStrips; i < this.phaseColorStrips.length; i++) {
-      this.phaseColorStrips[i].visible = false;
-    }
-  }
-
-  /**
-   * Updates only the time evolution (for animation).
+   * Updates the wave function visualization during time evolution.
+   * This is optimized to only update what changes with time.
    */
   private updateTimeEvolution(): void {
-    // Prevent reentry - if an update is in progress, mark that another update is pending
-    if (this.isUpdating) {
-      this.updatePending = true;
-      return;
-    }
-
-    this.isUpdating = true;
-    try {
-      if (this.model.isPlayingProperty.value) {
-        const boundStates = this.model.getBoundStates();
-        if (boundStates) {
-          // Check if we're displaying a superposition or a single eigenstate
-          const superpositionType = this.model.superpositionTypeProperty.value;
-          const isSuperposition =
-            superpositionType !== SuperpositionType.SINGLE;
-
-          if (isSuperposition && "superpositionConfigProperty" in this.model) {
-            // Display superposition wavefunction with proper time evolution
-            this.updateSuperpositionWavefunction();
-          } else {
-            // Display single eigenstate
-            const selectedIndex =
-              this.model.selectedEnergyLevelIndexProperty.value;
-            if (
-              selectedIndex >= 0 &&
-              selectedIndex < boundStates.wavefunctions.length
-            ) {
-              this.updateWaveFunction(boundStates, selectedIndex);
-            }
-          }
-        }
-      }
-    } finally {
-      this.isUpdating = false;
-    }
-  }
-
-  /**
-   * Finds zeros (nodes) in the wavefunction data.
-   * Zeros occur where the wavefunction changes sign.
-   * @param xGrid - Array of x positions in meters
-   * @param wavefunction - Array of wavefunction values
-   * @returns Array of x positions (in nm) where zeros occur
-   */
-  private findZeros(xGrid: number[], wavefunction: number[]): number[] {
-    const zeros: number[] = [];
-
-    for (let i = 0; i < wavefunction.length - 1; i++) {
-      const y1 = wavefunction[i];
-      const y2 = wavefunction[i + 1];
-
-      // Check for sign change (zero crossing)
-      if (y1 * y2 < 0) {
-        // Linear interpolation to find more accurate zero position
-        const x1 = xGrid[i];
-        const x2 = xGrid[i + 1];
-        const zeroX = x1 - y1 * (x2 - x1) / (y2 - y1);
-        zeros.push(zeroX * QuantumConstants.M_TO_NM); // Convert to nm
-      }
-    }
-
-    return zeros;
-  }
-
-  /**
-   * Updates the visualization of wavefunction zeros (nodes).
-   * @param xGrid - Array of x positions in meters
-   * @param wavefunction - Array of wavefunction values (real part for complex wavefunctions)
-   */
-  private updateZerosVisualization(xGrid: number[], wavefunction: number[]): void {
-    // Clear existing zeros
-    this.zerosNode.removeAllChildren();
-
-    // Only show if enabled
-    if (!this.viewState.showZerosProperty.value) {
-      this.zerosNode.visible = false;
-      return;
-    }
-
-    // Find zeros
-    const zeros = this.findZeros(xGrid, wavefunction);
-
-    // Create circles at each zero position
-    zeros.forEach(zeroX => {
-      const x = this.dataToViewX(zeroX);
-      const y = this.dataToViewY(0); // Zeros are at y=0
-
-      const circle = new Circle(4, {
-        fill: QPPWColors.energyLevelSelectedProperty,
-        stroke: QPPWColors.backgroundColorProperty,
-        lineWidth: 1.5,
-        centerX: x,
-        centerY: y,
-      });
-
-      this.zerosNode.addChild(circle);
-    });
-
-    this.zerosNode.visible = zeros.length > 0;
-  }
-
-  /**
-   * Converts data X coordinate to view X coordinate using ChartTransform.
-   */
-  private dataToViewX(x: number): number {
-    return this.chartMargins.left + this.chartTransform.modelToViewX(x);
-  }
-
-  /**
-   * Converts data Y coordinate to view Y coordinate using ChartTransform.
-   * ChartTransform handles the Y-axis inversion (higher model Y = lower view Y).
-   */
-  private dataToViewY(y: number): number {
-    return this.chartMargins.top + this.chartTransform.modelToViewY(y);
-  }
-
-  /**
-   * Converts view X coordinate to data X coordinate using ChartTransform.
-   */
-  private viewToDataX(x: number): number {
-    return this.chartTransform.viewToModelX(x - this.chartMargins.left);
-  }
-
-  /**
-   * Sets up drag listeners for the area measurement tool markers.
-   */
-  private setupAreaToolDragListeners(): void {
-    // Left marker drag listener
-    this.leftMarkerHandle.addInputListener(
-      new DragListener({
-        drag: (event) => {
-          const parentPoint = this.globalToLocalPoint(event.pointer.point);
-          let newX = this.viewToDataX(parentPoint.x);
-
-          // Constrain to chart bounds and ensure left marker stays left of right marker
-          newX = Math.max(this.xMinProperty.value, newX);
-          newX = Math.min(this.rightMarkerXProperty.value - 0.1, newX);
-
-          this.leftMarkerXProperty.value = newX;
-        },
-      }),
-    );
-
-    // Right marker drag listener
-    this.rightMarkerHandle.addInputListener(
-      new DragListener({
-        drag: (event) => {
-          const parentPoint = this.globalToLocalPoint(event.pointer.point);
-          let newX = this.viewToDataX(parentPoint.x);
-
-          // Constrain to chart bounds and ensure right marker stays right of left marker
-          newX = Math.min(this.xMaxProperty.value, newX);
-          newX = Math.max(this.leftMarkerXProperty.value + 0.1, newX);
-
-          this.rightMarkerXProperty.value = newX;
-        },
-      }),
-    );
-  }
-
-  /**
-   * Updates the area measurement tool visualization and calculates the probability.
-   */
-  private updateAreaTool(): void {
-    if (!this.showAreaToolProperty.value) {
-      return;
-    }
-
-    const leftX = this.leftMarkerXProperty.value;
-    const rightX = this.rightMarkerXProperty.value;
-
-    // Convert to view coordinates
-    const leftViewX = this.dataToViewX(leftX);
-    const rightViewX = this.dataToViewX(rightX);
-    const yTop = this.chartMargins.top;
-    const yBottom = this.chartMargins.top + this.plotHeight;
-
-    // Update marker lines
-    this.leftMarker.setLine(leftViewX, yTop, leftViewX, yBottom);
-    this.rightMarker.setLine(rightViewX, yTop, rightViewX, yBottom);
-
-    // Update marker handles (circles at top)
-    this.leftMarkerHandle.centerX = leftViewX;
-    this.leftMarkerHandle.centerY = yTop + 15;
-
-    this.rightMarkerHandle.centerX = rightViewX;
-    this.rightMarkerHandle.centerY = yTop + 15;
-
-    // Update faint background rectangle (shows full measurement region)
-    this.areaBackgroundRegion.setRect(
-      leftViewX,
-      yTop,
-      rightViewX - leftViewX,
-      this.plotHeight,
-    );
-
-    // Create shape that follows the probability density curve
-    const shape = this.createAreaShape(leftX, rightX);
-    this.areaRegion.shape = shape;
-
-    // Calculate probability in the selected region
-    const probability = this.calculateProbabilityInRegion(leftX, rightX);
-
-    // Update label
-    if (probability !== null) {
-      this.areaLabel.string = `${probability.toFixed(1)}%`;
-      // Position label at the center between markers, near the top
-      this.areaLabel.centerX = (leftViewX + rightViewX) / 2;
-      this.areaLabel.top = this.chartMargins.top + 35;
-    } else {
-      this.areaLabel.string = "N/A";
-    }
-  }
-
-  /**
-   * Creates a shape that highlights the area under the probability density curve
-   * between the specified x positions.
-   * @param xStart - Start x position in nm
-   * @param xEnd - End x position in nm
-   * @returns Shape representing the area under the curve
-   */
-  private createAreaShape(xStart: number, xEnd: number): Shape {
-    const shape = new Shape();
-
-    const boundStates = this.model.getBoundStates();
-    if (!boundStates) {
-      return shape; // Return empty shape
-    }
-
-    // Only show area for probability density mode
+    // Only update if we're in a mode that shows time-dependent changes
     const displayMode = this.getEffectiveDisplayMode();
-    if (displayMode !== "probabilityDensity") {
-      return shape; // Return empty shape
-    }
-
-    // Get probability density data
     const superpositionType = this.model.superpositionTypeProperty.value;
     const isSuperposition = superpositionType !== SuperpositionType.SINGLE;
 
-    let probabilityDensity: number[];
-
-    if (isSuperposition && hasSuperpositionConfig(this.model)) {
-      // Calculate superposition probability density
-      const config = this.model.superpositionConfigProperty.value;
-      const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
-      const numPoints = boundStates.xGrid.length;
-
-      // Compute time-evolved superposition
-      const realPart = new Array(numPoints).fill(0);
-      const imagPart = new Array(numPoints).fill(0);
-
-      for (let n = 0; n < config.amplitudes.length; n++) {
-        const amplitude = config.amplitudes[n];
-        const initialPhase = config.phases[n];
-
-        if (amplitude === 0 || n >= boundStates.wavefunctions.length) {
-          continue;
-        }
-
-        const eigenfunction = boundStates.wavefunctions[n];
-        const energy = boundStates.energies[n];
-
-        // Time evolution phase for this eigenstate: -E_n*t/ℏ
-        const timePhase = -(energy * time) / QuantumConstants.HBAR;
-
-        // Total phase: initial phase + time evolution phase
-        const totalPhase = initialPhase + timePhase;
-
-        // Complex coefficient
-        const realCoeff = amplitude * Math.cos(totalPhase);
-        const imagCoeff = amplitude * Math.sin(totalPhase);
-
-        // Add contribution to superposition
-        for (let i = 0; i < numPoints; i++) {
-          realPart[i] += realCoeff * eigenfunction[i];
-          imagPart[i] += imagCoeff * eigenfunction[i];
-        }
+    if (isSuperposition) {
+      // Superposition wavefunctions evolve in time
+      this.updateSuperpositionWavefunction();
+    } else if (displayMode === "waveFunction" || displayMode === "phaseColor") {
+      // Single eigenstates show time evolution in waveFunction and phaseColor modes
+      const boundStates = this.model.getBoundStates();
+      if (!boundStates) {
+        return;
       }
 
-      // Calculate |ψ|²
-      probabilityDensity = new Array(numPoints);
-      for (let i = 0; i < numPoints; i++) {
-        probabilityDensity[i] =
-          realPart[i] * realPart[i] + imagPart[i] * imagPart[i];
-      }
-    } else {
-      // Single eigenstate
       const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
       if (
         selectedIndex < 0 ||
         selectedIndex >= boundStates.wavefunctions.length
       ) {
-        return shape; // Return empty shape
+        return;
       }
 
-      const wavefunction = boundStates.wavefunctions[selectedIndex];
-      probabilityDensity = wavefunction.map((psi) => psi * psi);
+      this.updateWaveFunction(boundStates, selectedIndex);
     }
-
-    // Build points array for the region
-    const xGrid = boundStates.xGrid;
-    const points: { x: number; y: number }[] = [];
-
-    // Get the y-coordinate for y=0 (baseline)
-    const y0 = this.dataToViewY(0);
-
-    // Add points within the region
-    for (let i = 0; i < xGrid.length; i++) {
-      const xData = xGrid[i] * QuantumConstants.M_TO_NM; // Convert to nm
-
-      if (xData >= xStart && xData <= xEnd) {
-        const x = this.dataToViewX(xData);
-        const y = this.dataToViewY(probabilityDensity[i]);
-        points.push({ x, y });
-      }
-    }
-
-    if (points.length === 0) {
-      return shape; // Return empty shape if no points in region
-    }
-
-    // Create the shape: start at baseline on left, trace curve, return to baseline on right
-    const leftViewX = this.dataToViewX(xStart);
-    const rightViewX = this.dataToViewX(xEnd);
-
-    // Start at bottom-left (baseline at left marker)
-    shape.moveTo(leftViewX, y0);
-
-    // Draw line up to the first point's y-coordinate
-    shape.lineTo(leftViewX, points[0].y);
-
-    // Trace along the curve
-    for (let i = 0; i < points.length; i++) {
-      shape.lineTo(points[i].x, points[i].y);
-    }
-
-    // Draw line down from last point to baseline
-    shape.lineTo(rightViewX, points[points.length - 1].y);
-    shape.lineTo(rightViewX, y0);
-
-    // Close the shape back to starting point
-    shape.close();
-
-    return shape;
+    // For probability density mode with single eigenstates, nothing changes with time
   }
 
   /**
-   * Creates shapes that highlight the area under the classical probability curve
-   * in the forbidden regions (left and right of turning points).
-   * @param turningPoints - Left and right turning points in nm
-   * @param selectedIndex - Index of the selected energy level
-   * @returns Object with left and right shapes representing forbidden regions
+   * Coordinate transformation: data (nm) to view (pixels).
    */
-  private createForbiddenRegionShapes(
-    turningPoints: { left: number; right: number },
-    selectedIndex: number,
-  ): { leftShape: Shape; rightShape: Shape } {
-    const leftShape = new Shape();
-    const rightShape = new Shape();
-
-    const boundStates = this.model.getBoundStates();
-    if (!boundStates) {
-      return { leftShape, rightShape }; // Return empty shapes
-    }
-
-    // Get classical probability density data
-    const classicalProbability =
-      this.model.getClassicalProbabilityDensity(selectedIndex);
-    if (!classicalProbability) {
-      return { leftShape, rightShape }; // Return empty shapes
-    }
-
-    const xGrid = boundStates.xGrid;
-    const y0 = this.dataToViewY(0); // Baseline
-
-    // Build left forbidden region (from left edge to left turning point)
-    const leftPoints: { x: number; y: number }[] = [];
-    for (let i = 0; i < xGrid.length; i++) {
-      const xData = xGrid[i] * QuantumConstants.M_TO_NM; // Convert to nm
-
-      if (xData <= turningPoints.left) {
-        const x = this.dataToViewX(xData);
-        const y = this.dataToViewY(classicalProbability[i]);
-        leftPoints.push({ x, y });
-      }
-    }
-
-    if (leftPoints.length > 0) {
-      // Start at bottom-left (baseline at left edge)
-      const leftEdgeX = this.chartMargins.left;
-      leftShape.moveTo(leftEdgeX, y0);
-
-      // Draw line up to the first point's y-coordinate
-      leftShape.lineTo(leftEdgeX, leftPoints[0].y);
-
-      // Trace along the curve
-      for (let i = 0; i < leftPoints.length; i++) {
-        leftShape.lineTo(leftPoints[i].x, leftPoints[i].y);
-      }
-
-      // Draw line down from last point to baseline
-      const lastPoint = leftPoints[leftPoints.length - 1];
-      leftShape.lineTo(lastPoint.x, y0);
-
-      // Close the shape
-      leftShape.close();
-    }
-
-    // Build right forbidden region (from right turning point to right edge)
-    const rightPoints: { x: number; y: number }[] = [];
-    for (let i = 0; i < xGrid.length; i++) {
-      const xData = xGrid[i] * QuantumConstants.M_TO_NM; // Convert to nm
-
-      if (xData >= turningPoints.right) {
-        const x = this.dataToViewX(xData);
-        const y = this.dataToViewY(classicalProbability[i]);
-        rightPoints.push({ x, y });
-      }
-    }
-
-    if (rightPoints.length > 0) {
-      // Start at bottom-left of right region (baseline at right turning point)
-      const firstPoint = rightPoints[0];
-      rightShape.moveTo(firstPoint.x, y0);
-
-      // Draw line up to the first point's y-coordinate
-      rightShape.lineTo(firstPoint.x, firstPoint.y);
-
-      // Trace along the curve
-      for (let i = 0; i < rightPoints.length; i++) {
-        rightShape.lineTo(rightPoints[i].x, rightPoints[i].y);
-      }
-
-      // Draw line down from last point to baseline
-      const lastPoint = rightPoints[rightPoints.length - 1];
-      const rightEdgeX = this.chartMargins.left + this.plotWidth;
-      rightShape.lineTo(rightEdgeX, lastPoint.y);
-      rightShape.lineTo(rightEdgeX, y0);
-
-      // Close the shape
-      rightShape.close();
-    }
-
-    return { leftShape, rightShape };
-  }
-
-  /**
-   * Calculates the probability (area under the curve) in the specified region.
-   * Uses trapezoidal integration of the probability density.
-   * @param xStart - Start x position in nm
-   * @param xEnd - End x position in nm
-   * @returns Probability as a percentage (0-100), or null if not available
-   */
-  private calculateProbabilityInRegion(
-    xStart: number,
-    xEnd: number,
-  ): number | null {
-    // Only calculate for probability density mode
-    const displayMode = this.getEffectiveDisplayMode();
-    if (displayMode !== "probabilityDensity") {
-      return null;
-    }
-
-    // Check if we're displaying a superposition or a single eigenstate
-    const superpositionType = this.model.superpositionTypeProperty.value;
-    const isSuperposition = superpositionType !== SuperpositionType.SINGLE;
-
-    const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
-    const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
-
-    // Use model's calculation method
-    return this.model.getProbabilityInRegion(
-      xStart,
-      xEnd,
-      selectedIndex,
-      time,
-      isSuperposition,
+  private dataToViewX(x: number): number {
+    return (
+      this.chartMargins.left + this.chartTransform.modelToViewX(x)
     );
   }
 
   /**
-   * Sets up the drag listener for the curvature tool marker.
+   * Coordinate transformation: data value to view (pixels).
    */
-  private setupCurvatureToolDragListener(): void {
-    const dragListener = new DragListener({
-      drag: (event) => {
-        const parentPoint = this.globalToParentPoint(event.pointer.point);
-        const localX = parentPoint.x - this.chartMargins.left;
-        const dataX = this.viewToDataX(localX);
-
-        // Clamp to chart bounds
-        const clampedX = Math.max(
-          -X_AXIS_RANGE_NM,
-          Math.min(X_AXIS_RANGE_NM, dataX),
-        );
-        this.curvatureXProperty.value = clampedX;
-      },
-    });
-
-    this.curvatureMarkerHandle.addInputListener(dragListener);
+  private dataToViewY(y: number): number {
+    return (
+      this.chartMargins.top + this.chartTransform.modelToViewY(y)
+    );
   }
 
   /**
-   * Updates the curvature tool visualization.
+   * Coordinate transformation: view (pixels) to data (nm).
    */
-  private updateCurvatureTool(): void {
-    if (!this.showCurvatureToolProperty.value) {
-      return;
-    }
-
-    const x = this.curvatureXProperty.value;
-    const viewX = this.dataToViewX(x);
-    const yTop = this.chartMargins.top;
-    const yBottom = this.chartMargins.top + this.plotHeight;
-
-    // Update marker line
-    this.curvatureMarker.setLine(viewX, yTop, viewX, yBottom);
-
-    // Update marker handle
-    this.curvatureMarkerHandle.centerX = viewX;
-    this.curvatureMarkerHandle.centerY = yTop + 20;
-
-    // Calculate and display derivatives
-    const derivatives = this.calculateDerivatives(x);
-
-    if (derivatives !== null) {
-      // Create parabola shape with first and second derivatives
-      const parabolaShape = this.createCurvatureParabola(
-        x,
-        derivatives.firstDerivative,
-        derivatives.secondDerivative,
-        derivatives.wavefunctionValue,
-      );
-      this.curvatureParabola.shape = parabolaShape;
-
-      // Update label with proper units (nm^-5/2)
-      this.curvatureLabel.string = `d²ψ/dx² = ${derivatives.secondDerivative.toExponential(2)} nm⁻⁵ᐟ²`;
-      this.curvatureLabel.centerX = viewX;
-      this.curvatureLabel.bottom = yTop - 5;
-    } else {
-      this.curvatureParabola.shape = null;
-      this.curvatureLabel.string = "N/A";
-    }
-  }
-
-  /**
-   * Calculates the first and second derivatives of the wavefunction at a given x position.
-   * Uses the analytical solution from the model when available for better accuracy,
-   * falls back to finite difference method otherwise.
-   * @param xData - X position in nm
-   * @returns Object with first derivative, second derivative, and wavefunction value, or null if not available
-   */
-  private calculateDerivatives(
-    xData: number,
-  ): {
-    firstDerivative: number;
-    secondDerivative: number;
-    wavefunctionValue: number;
-  } | null {
-    // Only calculate for wavefunction mode
-    const displayMode = this.getEffectiveDisplayMode();
-    if (displayMode !== "waveFunction") {
-      return null;
-    }
-
-    const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
-
-    // Use model's calculation method
-    const result = this.model.getWavefunctionAtPosition(selectedIndex, xData);
-    if (!result) {
-      return null;
-    }
-
-    return {
-      firstDerivative: result.firstDerivative,
-      secondDerivative: result.secondDerivative,
-      wavefunctionValue: result.value,
-    };
-  }
-
-  /**
-   * Creates a parabola shape that matches the curvature at a point.
-   * Uses Taylor expansion: y = y₀ + y'₀(x - x₀) + (1/2)y''₀(x - x₀)²
-   * @param xData - X position in nm
-   * @param firstDerivative - First derivative value at the point (nm^-3/2)
-   * @param secondDerivative - Second derivative value at the point (nm^-5/2)
-   * @param wavefunctionValue - Value of wavefunction at the point (nm^-1/2)
-   * @returns Shape representing the parabola
-   */
-  private createCurvatureParabola(
-    xData: number,
-    firstDerivative: number,
-    secondDerivative: number,
-    wavefunctionValue: number,
-  ): Shape {
-    const shape = new Shape();
-
-    // Create a small parabola centered at (xData, wavefunctionValue)
-    // Using Taylor expansion: y = y₀ + y'₀ * (x - x₀) + (1/2) * y''₀ * (x - x₀)²
-    const centerX = xData;
-    const centerY = wavefunctionValue;
-
-    // Width of parabola in nm (±0.3 nm from center)
-    const parabolaHalfWidth = 0.3;
-
-    const points: { x: number; y: number }[] = [];
-
-    // Generate parabola points
-    for (
-      let dx = -parabolaHalfWidth;
-      dx <= parabolaHalfWidth;
-      dx += parabolaHalfWidth / 10
-    ) {
-      const x = centerX + dx;
-      // Taylor expansion with first and second derivative terms
-      const y =
-        centerY + firstDerivative * dx + 0.5 * secondDerivative * dx * dx;
-
-      const viewX = this.dataToViewX(x);
-      const viewY = this.dataToViewY(y);
-
-      points.push({ x: viewX, y: viewY });
-    }
-
-    if (points.length > 0) {
-      shape.moveTo(points[0].x, points[0].y);
-      for (let i = 1; i < points.length; i++) {
-        shape.lineTo(points[i].x, points[i].y);
-      }
-    }
-
-    return shape;
-  }
-
-  /**
-   * Sets up the drag listener for the derivative tool marker.
-   */
-  private setupDerivativeToolDragListener(): void {
-    const dragListener = new DragListener({
-      drag: (event) => {
-        const parentPoint = this.globalToParentPoint(event.pointer.point);
-        const localX = parentPoint.x - this.chartMargins.left;
-        const dataX = this.viewToDataX(localX);
-
-        // Clamp to chart bounds
-        const clampedX = Math.max(
-          -X_AXIS_RANGE_NM,
-          Math.min(X_AXIS_RANGE_NM, dataX),
-        );
-        this.derivativeXProperty.value = clampedX;
-      },
-    });
-
-    this.derivativeMarkerHandle.addInputListener(dragListener);
-  }
-
-  /**
-   * Updates the derivative tool visualization.
-   */
-  private updateDerivativeTool(): void {
-    if (!this.showDerivativeToolProperty.value) {
-      return;
-    }
-
-    const x = this.derivativeXProperty.value;
-    const viewX = this.dataToViewX(x);
-    const yTop = this.chartMargins.top;
-    const yBottom = this.chartMargins.top + this.plotHeight;
-
-    // Update marker line
-    this.derivativeMarker.setLine(viewX, yTop, viewX, yBottom);
-
-    // Update marker handle
-    this.derivativeMarkerHandle.centerX = viewX;
-    this.derivativeMarkerHandle.centerY = yTop + 20;
-
-    // Calculate and display first derivative
-    const derivativeData = this.calculateFirstDerivative(x);
-
-    if (derivativeData !== null) {
-      // Create tangent line shape with first derivative
-      const tangentLineShape = this.createTangentLine(
-        x,
-        derivativeData.firstDerivative,
-        derivativeData.wavefunctionValue,
-      );
-      this.derivativeTangentLine.shape = tangentLineShape;
-
-      // Update label with proper units (nm^-3/2)
-      this.derivativeLabel.string = `dψ/dx = ${derivativeData.firstDerivative.toExponential(2)} nm⁻³ᐟ²`;
-      this.derivativeLabel.centerX = viewX;
-      this.derivativeLabel.bottom = yTop - 5;
-    } else {
-      this.derivativeTangentLine.shape = null;
-      this.derivativeLabel.string = "N/A";
-    }
-  }
-
-  /**
-   * Calculates the first derivative of the wavefunction at a given x position.
-   * Uses the analytical solution from the model when available for better accuracy,
-   * falls back to finite difference method otherwise.
-   * @param xData - X position in nm
-   * @returns Object with first derivative and wavefunction value, or null if not available
-   */
-  private calculateFirstDerivative(
-    xData: number,
-  ): {
-    firstDerivative: number;
-    wavefunctionValue: number;
-  } | null {
-    // Only calculate for wavefunction mode
-    const displayMode = this.getEffectiveDisplayMode();
-    if (displayMode !== "waveFunction") {
-      return null;
-    }
-
-    const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
-
-    // Use model's calculation method
-    const result = this.model.getWavefunctionAtPosition(selectedIndex, xData);
-    if (!result) {
-      return null;
-    }
-
-    return {
-      firstDerivative: result.firstDerivative,
-      wavefunctionValue: result.value,
-    };
-  }
-
-  /**
-   * Creates a tangent line shape that shows the slope at a point.
-   * Uses the linear approximation: y = y₀ + y'₀(x - x₀)
-   * @param xData - X position in nm
-   * @param firstDerivative - First derivative value at the point (nm^-3/2)
-   * @param wavefunctionValue - Value of wavefunction at the point (nm^-1/2)
-   * @returns Shape representing the tangent line
-   */
-  private createTangentLine(
-    xData: number,
-    firstDerivative: number,
-    wavefunctionValue: number,
-  ): Shape {
-    const shape = new Shape();
-
-    // Create a tangent line centered at (xData, wavefunctionValue)
-    // Using linear approximation: y = y₀ + y'₀ * (x - x₀)
-    const centerX = xData;
-    const centerY = wavefunctionValue;
-
-    // Width of tangent line in nm (±0.5 nm from center)
-    const tangentHalfWidth = 0.5;
-
-    // Calculate endpoints of the tangent line
-    const x1 = centerX - tangentHalfWidth;
-    const y1 = centerY + firstDerivative * (-tangentHalfWidth);
-    const x2 = centerX + tangentHalfWidth;
-    const y2 = centerY + firstDerivative * tangentHalfWidth;
-
-    // Convert to view coordinates
-    const viewX1 = this.dataToViewX(x1);
-    const viewY1 = this.dataToViewY(y1);
-    const viewX2 = this.dataToViewX(x2);
-    const viewY2 = this.dataToViewY(y2);
-
-    // Draw the tangent line
-    shape.moveTo(viewX1, viewY1);
-    shape.lineTo(viewX2, viewY2);
-
-    return shape;
+  private viewToDataX(x: number): number {
+    return this.chartTransform.viewToModelX(x - this.chartMargins.left);
   }
 }
