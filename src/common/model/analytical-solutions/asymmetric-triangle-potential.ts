@@ -40,6 +40,7 @@
  * Boundary condition: ψ(0) = 0 leads to Ai(-αx_n) = 0, giving αx_n = -z_n.
  */
 
+import QuantumConstants from "../QuantumConstants.js";
 import {
   BoundStateResult,
   GridConfig,
@@ -128,11 +129,51 @@ export class AsymmetricTrianglePotentialSolution extends AnalyticalSolution {
     stateIndex: number,
     xGrid: number[],
   ): number[] {
+    // Get energy from Airy zero
+    const z_n = getAiryZero(stateIndex);
+    const energy = calculateTriangularWellEnergy(z_n, this.mass, this.slope);
+
     return calculateAsymmetricTriangleWavefunctionSecondDerivative(
       this.slope,
       this.mass,
-      stateIndex,
+      energy,
       xGrid,
+    );
+  }
+
+  calculateWavefunctionMinMax(
+    stateIndex: number,
+    xMin: number,
+    xMax: number,
+    numPoints?: number,
+  ): { min: number; max: number } {
+    return calculateAsymmetricTriangleWavefunctionMinMax(
+      this.slope,
+      this.mass,
+      stateIndex,
+      xMin,
+      xMax,
+      numPoints,
+    );
+  }
+
+  calculateSuperpositionMinMax(
+    coefficients: Array<[number, number]>,
+    energies: number[],
+    time: number,
+    xMin: number,
+    xMax: number,
+    numPoints?: number,
+  ): { min: number; max: number } {
+    return calculateAsymmetricTriangleSuperpositionMinMax(
+      this.slope,
+      this.mass,
+      coefficients,
+      energies,
+      time,
+      xMin,
+      xMax,
+      numPoints,
     );
   }
   calculateFourierTransform(
@@ -492,4 +533,124 @@ export function calculateAsymmetricTriangleWavefunctionSecondDerivative(
   }
 
   return secondDerivative;
+}
+
+/**
+ * Calculate the minimum and maximum values of the wavefunction for an asymmetric triangle potential.
+ *
+ * @param slope - Slope parameter F in Joules/meter (field strength)
+ * @param mass - Particle mass in kg
+ * @param stateIndex - Index of the eigenstate (0 for ground state, etc.)
+ * @param xMin - Left boundary of the region in meters
+ * @param xMax - Right boundary of the region in meters
+ * @param numPoints - Number of points to sample (default: 1000)
+ * @returns Object containing min and max values of the wavefunction
+ */
+export function calculateAsymmetricTriangleWavefunctionMinMax(
+  slope: number,
+  mass: number,
+  stateIndex: number,
+  xMin: number,
+  xMax: number,
+  numPoints: number = 1000,
+): { min: number; max: number } {
+  const F = slope;
+  const alpha = calculateAiryAlpha(mass, F);
+
+  // Get energy from Airy zero
+  const z_n = getAiryZero(stateIndex);
+  const energy = calculateTriangularWellEnergy(z_n, mass, F);
+  const x0 = energy / F;
+
+  let min = Infinity;
+  let max = -Infinity;
+
+  const dx = (xMax - xMin) / (numPoints - 1);
+
+  for (let i = 0; i < numPoints; i++) {
+    const x = xMin + i * dx;
+
+    let psi: number;
+    if (x < 0) {
+      psi = 0;
+    } else {
+      const z = alpha * (x - x0);
+      psi = airyAi(z);
+    }
+
+    if (psi < min) min = psi;
+    if (psi > max) max = psi;
+  }
+
+  return { min, max };
+}
+
+/**
+ * Calculate the minimum and maximum values of a superposition of wavefunctions
+ * for an asymmetric triangle potential.
+ *
+ * The superposition is: Ψ(x,t) = Σ cₙ ψₙ(x) exp(-iEₙt/ℏ)
+ * We return the min/max of the real part of this complex-valued function.
+ *
+ * @param slope - Slope parameter F in Joules/meter (field strength)
+ * @param mass - Particle mass in kg
+ * @param coefficients - Complex coefficients for each eigenstate (as [real, imag] pairs)
+ * @param energies - Energy eigenvalues in Joules
+ * @param time - Time in seconds
+ * @param xMin - Left boundary of the region in meters
+ * @param xMax - Right boundary of the region in meters
+ * @param numPoints - Number of points to sample (default: 1000)
+ * @returns Object containing min and max values of the superposition's real part
+ */
+export function calculateAsymmetricTriangleSuperpositionMinMax(
+  slope: number,
+  mass: number,
+  coefficients: Array<[number, number]>,
+  energies: number[],
+  time: number,
+  xMin: number,
+  xMax: number,
+  numPoints: number = 1000,
+): { min: number; max: number } {
+  const { HBAR } = QuantumConstants;
+  const F = slope;
+  const alpha = calculateAiryAlpha(mass, F);
+
+  let min = Infinity;
+  let max = -Infinity;
+
+  const dx = (xMax - xMin) / (numPoints - 1);
+
+  for (let i = 0; i < numPoints; i++) {
+    const x = xMin + i * dx;
+    let realPart = 0;
+
+    for (let n = 0; n < coefficients.length; n++) {
+      const [cReal, cImag] = coefficients[n];
+      const energy = energies[n];
+
+      const x0 = energy / F;
+
+      let psi: number;
+      if (x < 0) {
+        psi = 0;
+      } else {
+        const z = alpha * (x - x0);
+        psi = airyAi(z);
+      }
+
+      // Time evolution: exp(-iEt/ℏ) = cos(Et/ℏ) - i*sin(Et/ℏ)
+      const phase = (-energy * time) / HBAR;
+      const cosPhase = Math.cos(phase);
+      const sinPhase = Math.sin(phase);
+
+      // Complex multiplication: real part
+      realPart += cReal * psi * cosPhase + cImag * psi * sinPhase;
+    }
+
+    if (realPart < min) min = realPart;
+    if (realPart > max) max = realPart;
+  }
+
+  return { min, max };
 }

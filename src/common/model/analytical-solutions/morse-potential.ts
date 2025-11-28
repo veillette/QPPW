@@ -142,6 +142,46 @@ export class MorsePotentialSolution extends AnalyticalSolution {
       xGrid,
     );
   }
+
+  calculateWavefunctionMinMax(
+    stateIndex: number,
+    xMin: number,
+    xMax: number,
+    numPoints?: number,
+  ): { min: number; max: number } {
+    return calculateMorsePotentialWavefunctionMinMax(
+      this.dissociationEnergy,
+      this.wellWidth,
+      this.equilibriumPosition,
+      this.mass,
+      stateIndex,
+      xMin,
+      xMax,
+      numPoints,
+    );
+  }
+
+  calculateSuperpositionMinMax(
+    coefficients: Array<[number, number]>,
+    energies: number[],
+    time: number,
+    xMin: number,
+    xMax: number,
+    numPoints?: number,
+  ): { min: number; max: number } {
+    return calculateMorsePotentialSuperpositionMinMax(
+      this.dissociationEnergy,
+      this.wellWidth,
+      this.equilibriumPosition,
+      this.mass,
+      coefficients,
+      energies,
+      time,
+      xMin,
+      xMax,
+      numPoints,
+    );
+  }
   calculateFourierTransform(
     boundStateResult: BoundStateResult,
     mass: number,
@@ -597,4 +637,140 @@ export function calculateMorsePotentialWavefunctionSecondDerivative(
   }
 
   return secondDerivative;
+}
+
+/**
+ * Calculate the minimum and maximum values of the wavefunction for a Morse potential.
+ *
+ * For ψ_n(z) = N_n · z^(λ-n-1/2) · exp(-z/2) · L_n^(2λ-2n-1)(z), the function is sampled
+ * at multiple points in the range [xMin, xMax] to find the extrema.
+ *
+ * @param dissociationEnergy - Dissociation energy D_e in Joules
+ * @param wellWidth - Width parameter a in meters
+ * @param equilibriumPosition - Equilibrium position x_e in meters
+ * @param mass - Particle mass in kg
+ * @param stateIndex - Index of the eigenstate (0 for ground state, 1 for first excited, etc.)
+ * @param xMin - Left boundary of the region in meters
+ * @param xMax - Right boundary of the region in meters
+ * @param numPoints - Number of points to sample (default: 1000)
+ * @returns Object containing min and max values of the wavefunction
+ */
+export function calculateMorsePotentialWavefunctionMinMax(
+  dissociationEnergy: number,
+  wellWidth: number,
+  equilibriumPosition: number,
+  mass: number,
+  stateIndex: number,
+  xMin: number,
+  xMax: number,
+  numPoints: number = 1000,
+): { min: number; max: number } {
+  const { HBAR } = QuantumConstants;
+  const De = dissociationEnergy;
+  const a = wellWidth;
+  const xe = equilibriumPosition;
+  const n = stateIndex;
+
+  const lambda = (a * Math.sqrt(2 * mass * De)) / HBAR;
+  const alpha = 2 * lambda - 2 * n - 1;
+  const normalization = Math.sqrt(factorial(n) / a / gamma(2 * lambda - n));
+
+  let min = Infinity;
+  let max = -Infinity;
+
+  const dx = (xMax - xMin) / (numPoints - 1);
+
+  for (let i = 0; i < numPoints; i++) {
+    const x = xMin + i * dx;
+
+    const z = 2 * lambda * Math.exp(-(x - xe) / a);
+    const exponent = lambda - n - 0.5;
+    const laguerre = associatedLaguerre(n, alpha, z);
+    const psi =
+      normalization * Math.pow(z, exponent) * Math.exp(-z / 2) * laguerre;
+
+    if (psi < min) min = psi;
+    if (psi > max) max = psi;
+  }
+
+  return { min, max };
+}
+
+/**
+ * Calculate the minimum and maximum values of a superposition of wavefunctions
+ * for a Morse potential.
+ *
+ * The superposition is: Ψ(x,t) = Σ cₙ ψₙ(x) exp(-iEₙt/ℏ)
+ * We return the min/max of the real part of this complex-valued function.
+ *
+ * @param dissociationEnergy - Dissociation energy D_e in Joules
+ * @param wellWidth - Width parameter a in meters
+ * @param equilibriumPosition - Equilibrium position x_e in meters
+ * @param mass - Particle mass in kg
+ * @param coefficients - Complex coefficients for each eigenstate (as [real, imag] pairs)
+ * @param energies - Energy eigenvalues in Joules
+ * @param time - Time in seconds
+ * @param xMin - Left boundary of the region in meters
+ * @param xMax - Right boundary of the region in meters
+ * @param numPoints - Number of points to sample (default: 1000)
+ * @returns Object containing min and max values of the superposition's real part
+ */
+export function calculateMorsePotentialSuperpositionMinMax(
+  dissociationEnergy: number,
+  wellWidth: number,
+  equilibriumPosition: number,
+  mass: number,
+  coefficients: Array<[number, number]>,
+  energies: number[],
+  time: number,
+  xMin: number,
+  xMax: number,
+  numPoints: number = 1000,
+): { min: number; max: number } {
+  const { HBAR } = QuantumConstants;
+  const De = dissociationEnergy;
+  const a = wellWidth;
+  const xe = equilibriumPosition;
+
+  const lambda = (a * Math.sqrt(2 * mass * De)) / HBAR;
+
+  let min = Infinity;
+  let max = -Infinity;
+
+  const dx = (xMax - xMin) / (numPoints - 1);
+
+  for (let i = 0; i < numPoints; i++) {
+    const x = xMin + i * dx;
+
+    // Calculate superposition at this position
+    let realPart = 0;
+
+    for (let n = 0; n < coefficients.length; n++) {
+      const [cReal, cImag] = coefficients[n];
+      const energy = energies[n];
+
+      // Calculate wavefunction value
+      const alpha = 2 * lambda - 2 * n - 1;
+      const normalization = Math.sqrt(factorial(n) / a / gamma(2 * lambda - n));
+      const z = 2 * lambda * Math.exp(-(x - xe) / a);
+      const exponent = lambda - n - 0.5;
+      const laguerre = associatedLaguerre(n, alpha, z);
+      const psi =
+        normalization * Math.pow(z, exponent) * Math.exp(-z / 2) * laguerre;
+
+      // Time evolution: exp(-iEt/ℏ) = cos(Et/ℏ) - i*sin(Et/ℏ)
+      const phase = (-energy * time) / HBAR;
+      const cosPhase = Math.cos(phase);
+      const sinPhase = Math.sin(phase);
+
+      // Complex multiplication: (cReal + i*cImag) * psi * (cosPhase - i*sinPhase)
+      // Real part: cReal * psi * cosPhase + cImag * psi * sinPhase
+      realPart += cReal * psi * cosPhase + cImag * psi * sinPhase;
+    }
+
+    if (realPart < min) min = realPart;
+    if (realPart > max) max = realPart;
+  }
+
+  return { min, max };
 }

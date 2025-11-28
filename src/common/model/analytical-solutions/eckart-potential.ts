@@ -147,6 +147,46 @@ export class EckartPotentialSolution extends AnalyticalSolution {
       xGrid,
     );
   }
+
+  calculateWavefunctionMinMax(
+    stateIndex: number,
+    xMin: number,
+    xMax: number,
+    numPoints?: number,
+  ): { min: number; max: number } {
+    return calculateEckartPotentialWavefunctionMinMax(
+      this.potentialDepth,
+      this.barrierHeight,
+      this.wellWidth,
+      this.mass,
+      stateIndex,
+      xMin,
+      xMax,
+      numPoints,
+    );
+  }
+
+  calculateSuperpositionMinMax(
+    coefficients: Array<[number, number]>,
+    energies: number[],
+    time: number,
+    xMin: number,
+    xMax: number,
+    numPoints?: number,
+  ): { min: number; max: number } {
+    return calculateEckartPotentialSuperpositionMinMax(
+      this.potentialDepth,
+      this.barrierHeight,
+      this.wellWidth,
+      this.mass,
+      coefficients,
+      energies,
+      time,
+      xMin,
+      xMax,
+      numPoints,
+    );
+  }
   calculateFourierTransform(
     boundStateResult: BoundStateResult,
     mass: number,
@@ -757,4 +797,175 @@ export function calculateEckartPotentialWavefunctionSecondDerivative(
   }
 
   return secondDerivative;
+}
+
+/**
+ * Calculate the minimum and maximum values of the wavefunction for an Eckart potential.
+ *
+ * @param potentialDepth - Potential depth V_0 in Joules
+ * @param barrierHeight - Barrier height V_1 in Joules
+ * @param wellWidth - Width parameter a in meters
+ * @param mass - Particle mass in kg
+ * @param stateIndex - Index of the eigenstate (0 for ground state, etc.)
+ * @param xMin - Left boundary of the region in meters
+ * @param xMax - Right boundary of the region in meters
+ * @param numPoints - Number of points to sample (default: 1000)
+ * @returns Object containing min and max values of the wavefunction
+ */
+export function calculateEckartPotentialWavefunctionMinMax(
+  potentialDepth: number,
+  barrierHeight: number,
+  wellWidth: number,
+  mass: number,
+  stateIndex: number,
+  xMin: number,
+  xMax: number,
+  numPoints: number = 1000,
+): { min: number; max: number } {
+  const { HBAR } = QuantumConstants;
+  const V0 = potentialDepth;
+  const V1 = barrierHeight;
+  const a = wellWidth;
+  const n = stateIndex;
+
+  const alpha_param = (a * Math.sqrt(2 * mass * V0)) / HBAR;
+  const beta_param =
+    (V1 * a * Math.sqrt(2 * mass)) / (2 * HBAR * Math.sqrt(V0));
+
+  const s1 = -0.5 + Math.sqrt(0.25 + alpha_param);
+  const s2 = -0.5 + Math.sqrt(0.25 + alpha_param - beta_param);
+
+  const alpha_jac = 2 * (s2 - n) - 1;
+  const beta_jac = 2 * (s1 - s2 + n);
+
+  const normalization = Math.sqrt(
+    (1 / a) *
+      factorial(n) *
+      Math.exp(
+        logGamma(2 * s2 - n) +
+          logGamma(alpha_jac + beta_jac + n + 1) -
+          logGamma(n + alpha_jac + 1) -
+          logGamma(n + beta_jac + 1),
+      ),
+  );
+
+  let min = Infinity;
+  let max = -Infinity;
+
+  const dx = (xMax - xMin) / (numPoints - 1);
+
+  for (let i = 0; i < numPoints; i++) {
+    const x = xMin + i * dx;
+
+    const xi = Math.exp(x / a);
+    const xiPlus1 = 1 + xi;
+    const jacobiArg = 1 - (2 * xi) / xiPlus1;
+    const jacobiPoly = jacobiPolynomial(n, alpha_jac, beta_jac, jacobiArg);
+    const psi =
+      normalization *
+      Math.pow(xi, s2 - n) *
+      Math.pow(xiPlus1, -s1 - s2 + n) *
+      jacobiPoly;
+
+    if (psi < min) min = psi;
+    if (psi > max) max = psi;
+  }
+
+  return { min, max };
+}
+
+/**
+ * Calculate the minimum and maximum values of a superposition of wavefunctions
+ * for an Eckart potential.
+ *
+ * The superposition is: Ψ(x,t) = Σ cₙ ψₙ(x) exp(-iEₙt/ℏ)
+ * We return the min/max of the real part of this complex-valued function.
+ *
+ * @param potentialDepth - Potential depth V_0 in Joules
+ * @param barrierHeight - Barrier height V_1 in Joules
+ * @param wellWidth - Width parameter a in meters
+ * @param mass - Particle mass in kg
+ * @param coefficients - Complex coefficients for each eigenstate (as [real, imag] pairs)
+ * @param energies - Energy eigenvalues in Joules
+ * @param time - Time in seconds
+ * @param xMin - Left boundary of the region in meters
+ * @param xMax - Right boundary of the region in meters
+ * @param numPoints - Number of points to sample (default: 1000)
+ * @returns Object containing min and max values of the superposition's real part
+ */
+export function calculateEckartPotentialSuperpositionMinMax(
+  potentialDepth: number,
+  barrierHeight: number,
+  wellWidth: number,
+  mass: number,
+  coefficients: Array<[number, number]>,
+  energies: number[],
+  time: number,
+  xMin: number,
+  xMax: number,
+  numPoints: number = 1000,
+): { min: number; max: number } {
+  const { HBAR } = QuantumConstants;
+  const V0 = potentialDepth;
+  const V1 = barrierHeight;
+  const a = wellWidth;
+
+  const alpha_param = (a * Math.sqrt(2 * mass * V0)) / HBAR;
+  const beta_param =
+    (V1 * a * Math.sqrt(2 * mass)) / (2 * HBAR * Math.sqrt(V0));
+
+  const s1 = -0.5 + Math.sqrt(0.25 + alpha_param);
+  const s2 = -0.5 + Math.sqrt(0.25 + alpha_param - beta_param);
+
+  let min = Infinity;
+  let max = -Infinity;
+
+  const dx = (xMax - xMin) / (numPoints - 1);
+
+  for (let i = 0; i < numPoints; i++) {
+    const x = xMin + i * dx;
+    let realPart = 0;
+
+    for (let n = 0; n < coefficients.length; n++) {
+      const [cReal, cImag] = coefficients[n];
+      const energy = energies[n];
+
+      const alpha_jac = 2 * (s2 - n) - 1;
+      const beta_jac = 2 * (s1 - s2 + n);
+
+      const normalization = Math.sqrt(
+        (1 / a) *
+          factorial(n) *
+          Math.exp(
+            logGamma(2 * s2 - n) +
+              logGamma(alpha_jac + beta_jac + n + 1) -
+              logGamma(n + alpha_jac + 1) -
+              logGamma(n + beta_jac + 1),
+          ),
+      );
+
+      const xi = Math.exp(x / a);
+      const xiPlus1 = 1 + xi;
+      const jacobiArg = 1 - (2 * xi) / xiPlus1;
+      const jacobiPoly = jacobiPolynomial(n, alpha_jac, beta_jac, jacobiArg);
+      const psi =
+        normalization *
+        Math.pow(xi, s2 - n) *
+        Math.pow(xiPlus1, -s1 - s2 + n) *
+        jacobiPoly;
+
+      // Time evolution: exp(-iEt/ℏ) = cos(Et/ℏ) - i*sin(Et/ℏ)
+      const phase = (-energy * time) / HBAR;
+      const cosPhase = Math.cos(phase);
+      const sinPhase = Math.sin(phase);
+
+      // Complex multiplication: real part
+      realPart += cReal * psi * cosPhase + cImag * psi * sinPhase;
+    }
+
+    if (realPart < min) min = realPart;
+    if (realPart > max) max = realPart;
+  }
+
+  return { min, max };
 }

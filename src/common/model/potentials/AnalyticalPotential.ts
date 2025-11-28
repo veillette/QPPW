@@ -116,6 +116,60 @@ export abstract class AnalyticalPotential extends BasePotential {
   }
 
   /**
+   * Calculate the minimum and maximum values of the wavefunction in a given region.
+   * Delegates to the wrapped AnalyticalSolution instance.
+   *
+   * @param stateIndex - Index of the eigenstate (0 for ground state, 1 for first excited, etc.)
+   * @param xMin - Left boundary of the region in meters
+   * @param xMax - Right boundary of the region in meters
+   * @param numPoints - Number of points to sample (default: 1000)
+   * @returns Object containing min and max values of the wavefunction
+   */
+  public calculateWavefunctionMinMax(
+    stateIndex: number,
+    xMin: number,
+    xMax: number,
+    numPoints?: number,
+  ): { min: number; max: number } {
+    return this.solution.calculateWavefunctionMinMax(
+      stateIndex,
+      xMin,
+      xMax,
+      numPoints,
+    );
+  }
+
+  /**
+   * Calculate the minimum and maximum values of a superposition of wavefunctions.
+   * Delegates to the wrapped AnalyticalSolution instance.
+   *
+   * @param coefficients - Complex coefficients for each eigenstate (as [real, imag] pairs)
+   * @param energies - Energy eigenvalues in Joules
+   * @param time - Time in seconds
+   * @param xMin - Left boundary of the region in meters
+   * @param xMax - Right boundary of the region in meters
+   * @param numPoints - Number of points to sample (default: 1000)
+   * @returns Object containing min and max values of the superposition
+   */
+  public calculateSuperpositionMinMax(
+    coefficients: Array<[number, number]>,
+    energies: number[],
+    time: number,
+    xMin: number,
+    xMax: number,
+    numPoints?: number,
+  ): { min: number; max: number } {
+    return this.solution.calculateSuperpositionMinMax(
+      coefficients,
+      energies,
+      time,
+      xMin,
+      xMax,
+      numPoints,
+    );
+  }
+
+  /**
    * Always returns true for analytical potentials.
    */
   public hasAnalyticalSolution(): boolean {

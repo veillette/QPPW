@@ -22,7 +22,8 @@
       "Bash(npx eslint:*)",
       "Bash(rm:*)",
       "WebFetch(domain:pages.physics.wisc.edu)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
