@@ -7,6 +7,7 @@ import { Node, Text, VBox, HBox, HSeparator } from "scenerystack/scenery";
 import { Panel, Checkbox, ComboBox, HSlider } from "scenerystack/sun";
 import { Dimension2 } from "scenerystack/dot";
 import { IntroModel } from "../model/IntroModel.js";
+import { IntroViewState } from "./IntroViewState.js";
 import { PotentialType } from "../../common/model/PotentialFunction.js";
 import QPPWColors from "../../QPPWColors.js";
 import { PhetFont } from "scenerystack/scenery-phet";
@@ -19,11 +20,13 @@ interface ComboBoxItem<T> {
 
 export class IntroControlPanelNode extends Node {
   private readonly model: IntroModel;
+  private readonly viewState: IntroViewState;
   private readonly probabilityChartNode?: import("../../common/view/WaveFunctionChartNode.js").WaveFunctionChartNode;
   private readonly waveFunctionChartNode?: import("../../common/view/WaveFunctionChartNode.js").WaveFunctionChartNode;
 
   public constructor(
     model: IntroModel,
+    viewState: IntroViewState,
     listBoxParent: Node,
     probabilityChartNode?: import("../../common/view/WaveFunctionChartNode.js").WaveFunctionChartNode,
     waveFunctionChartNode?: import("../../common/view/WaveFunctionChartNode.js").WaveFunctionChartNode,
@@ -31,6 +34,7 @@ export class IntroControlPanelNode extends Node {
     super();
 
     this.model = model;
+    this.viewState = viewState;
     this.probabilityChartNode = probabilityChartNode;
     this.waveFunctionChartNode = waveFunctionChartNode;
 
@@ -215,7 +219,7 @@ export class IntroControlPanelNode extends Node {
   private createBottomChartGroup(): Node {
     // Classical probability checkbox
     const classicalProbabilityCheckboxContent = new Checkbox(
-      this.model.showClassicalProbabilityProperty,
+      this.viewState.showClassicalProbabilityProperty,
       new Text(stringManager.classicalProbabilityDensityStringProperty, {
         font: new PhetFont(12),
         fill: QPPWColors.textFillProperty,
@@ -230,7 +234,7 @@ export class IntroControlPanelNode extends Node {
 
     // Show Zeros checkbox
     const showZerosCheckboxContent = new Checkbox(
-      this.model.showZerosProperty,
+      this.viewState.showZerosProperty,
       new Text(stringManager.showZerosStringProperty, {
         font: new PhetFont(12),
         fill: QPPWColors.textFillProperty,

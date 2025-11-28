@@ -3,7 +3,7 @@
  * It extends BaseModel and provides a simplified interface for introductory exploration.
  */
 
-import { NumberProperty, Property } from "scenerystack/axon";
+import { NumberProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { BaseModel } from "../../common/model/BaseModel.js";
 import {

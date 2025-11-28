@@ -89,6 +89,7 @@ export class IntroScreenView extends BaseScreenView {
     // Create control panel (simplified for intro)
     this.introControlPanel = new IntroControlPanelNode(
       model,
+      this.viewState,
       this.listBoxParent,
       this.probabilityChart,
       this.waveFunctionChart,
