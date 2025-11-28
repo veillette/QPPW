@@ -118,6 +118,13 @@ export { solveMultiCoulomb1D } from "./multi-coulomb-1d.js";
 // Export utility functions that may be useful externally
 export * from "./math-utilities.js";
 
+// Export Fourier transform helper functions
+export {
+  computeNumericalFourierTransform,
+  convertToWavenumber,
+  convertToMomentum,
+} from "./fourier-transform-helper.js";
+
 // Import all functions for registration
 import { solveInfiniteWell } from "./infinite-square-well.js";
 import { solveFiniteSquareWell } from "./finite-square-well.js";

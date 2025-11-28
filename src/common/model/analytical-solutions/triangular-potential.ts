@@ -53,6 +53,7 @@ import {
   BoundStateResult,
   GridConfig,
   PotentialFunction,
+  FourierTransformResult,
 } from "../PotentialFunction.js";
 import { airyAi, airyBi, airyAiPrime, airyBiPrime } from "./math-utilities.js";
 import {
@@ -63,6 +64,7 @@ import {
   refineBisection,
 } from "./airy-utilities.js";
 import { AnalyticalSolution } from "./AnalyticalSolution.js";
+import { computeNumericalFourierTransform } from "./fourier-transform-helper.js";
 
 /**
  * Class-based implementation of triangular potential analytical solution.
@@ -224,6 +226,21 @@ export class TriangularPotentialSolution extends AnalyticalSolution {
       numPoints,
     );
   }
+  calculateFourierTransform(
+    boundStateResult: BoundStateResult,
+    mass: number,
+    numMomentumPoints?: number,
+    pMax?: number,
+  ): FourierTransformResult {
+    return computeNumericalFourierTransform(
+      boundStateResult,
+      mass,
+      this.height,
+      numMomentumPoints,
+      pMax,
+    );
+  }
+
 }
 
 /**

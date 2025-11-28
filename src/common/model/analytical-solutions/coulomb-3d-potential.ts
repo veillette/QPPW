@@ -32,9 +32,11 @@ import {
   BoundStateResult,
   GridConfig,
   PotentialFunction,
+  FourierTransformResult,
 } from "../PotentialFunction.js";
 import { associatedLaguerre, factorial } from "./math-utilities.js";
 import { AnalyticalSolution } from "./AnalyticalSolution.js";
+import { computeNumericalFourierTransform } from "./fourier-transform-helper.js";
 
 /**
  * Class-based implementation of 3D Coulomb potential analytical solution.
@@ -151,6 +153,21 @@ export class Coulomb3DPotentialSolution extends AnalyticalSolution {
       numPoints,
     );
   }
+  calculateFourierTransform(
+    boundStateResult: BoundStateResult,
+    mass: number,
+    numMomentumPoints?: number,
+    pMax?: number,
+  ): FourierTransformResult {
+    return computeNumericalFourierTransform(
+      boundStateResult,
+      mass,
+      Math.abs(boundStateResult.energies[0]),
+      numMomentumPoints,
+      pMax,
+    );
+  }
+
 }
 
 /**

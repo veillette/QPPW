@@ -44,9 +44,11 @@ import {
   BoundStateResult,
   GridConfig,
   PotentialFunction,
+  FourierTransformResult,
 } from "../PotentialFunction.js";
 import { jacobiPolynomial, factorial, logGamma } from "./math-utilities.js";
 import { AnalyticalSolution } from "./AnalyticalSolution.js";
+import { computeNumericalFourierTransform } from "./fourier-transform-helper.js";
 
 /**
  * Class-based implementation of Eckart potential analytical solution.
@@ -185,6 +187,21 @@ export class EckartPotentialSolution extends AnalyticalSolution {
       numPoints,
     );
   }
+  calculateFourierTransform(
+    boundStateResult: BoundStateResult,
+    mass: number,
+    numMomentumPoints?: number,
+    pMax?: number,
+  ): FourierTransformResult {
+    return computeNumericalFourierTransform(
+      boundStateResult,
+      mass,
+      this.potentialDepth,
+      numMomentumPoints,
+      pMax,
+    );
+  }
+
 }
 
 /**
