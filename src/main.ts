@@ -47,7 +47,7 @@ onReadyToLaunch(() => {
           {
             createContent: (_tandem: Tandem) => {
               // Auto-pause preference
-              const autoPauseSection = new VBox({
+              const autoPauseSectionVBox = new VBox({
                 align: "left",
                 spacing: 8,
                 children: [
@@ -231,7 +231,7 @@ onReadyToLaunch(() => {
                   },
                 );
 
-              const numericalMethodSection = new VBox({
+              const numericalMethodSectionVBox = new VBox({
                 align: "left",
                 spacing: 12,
                 children: [
@@ -343,7 +343,7 @@ onReadyToLaunch(() => {
                 gridPointsValueText.string = `${value} points`;
               });
 
-              const gridPointsSection = new VBox({
+              const gridPointsSectionVBox = new VBox({
                 align: "left",
                 spacing: 12,
                 children: [
@@ -368,10 +368,10 @@ onReadyToLaunch(() => {
                 align: "left",
                 spacing: 20,
                 children: [
-                  autoPauseSection,
+                  autoPauseSectionVBox,
                   new HStrut(650), // Set minimum width
-                  numericalMethodSection,
-                  gridPointsSection,
+                  numericalMethodSectionVBox,
+                  gridPointsSectionVBox,
                 ],
               });
             },

@@ -146,12 +146,12 @@ export class SuperpositionDialog {
         thumbSize: new Dimension2(15, 30),
       });
 
-      const sliderRow = new HBox({
+      const sliderRowHBox = new HBox({
         spacing: 10,
         children: [stateLabel, slider, valueText],
       });
 
-      sliderNodes.push(sliderRow);
+      sliderNodes.push(sliderRowHBox);
     }
 
     // Update config when amplitudes change
@@ -230,7 +230,7 @@ export class SuperpositionDialog {
       baseColor: QPPWColors.controlPanelBackgroundColorProperty,
     });
 
-    const normalizationRow = new HBox({
+    const normalizationRowHBox = new HBox({
       spacing: 10,
       children: [normalizationText, normalizeButton],
     });
@@ -260,7 +260,7 @@ export class SuperpositionDialog {
       minWidth: 80,
     });
 
-    const buttonRow = new HBox({
+    const buttonRowHBox = new HBox({
       spacing: 15,
       children: [okButton, cancelButton],
       align: "center",
@@ -273,8 +273,8 @@ export class SuperpositionDialog {
         titleText,
         descriptionText,
         slidersVBox,
-        normalizationRow,
-        buttonRow,
+        normalizationRowHBox,
+        buttonRowHBox,
       ],
     });
   }

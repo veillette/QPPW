@@ -105,13 +105,13 @@ export class ControlPanelNode extends Node {
     children.push(new HSeparator({ stroke: QPPWColors.gridLineProperty }));
 
     // Arrange groups vertically
-    const content = new VBox({
+    const contentVBox = new VBox({
       spacing: 15,
       align: "left",
       children: children,
     });
 
-    const controlPanel = new Panel(content, {
+    const controlPanel = new Panel(contentVBox, {
       fill: QPPWColors.panelFillProperty,
       stroke: QPPWColors.panelStrokeProperty,
       xMargin: 15,
@@ -365,7 +365,7 @@ export class ControlPanelNode extends Node {
     });
 
     // Coherent state displacement slider (OneWellModel only)
-    let displacementRow: Node | null = null;
+    let displacementRowVBox: Node | null = null;
     if (isOneWellModel(this.model)) {
 
       const displacementValueText = new Text("", {
@@ -386,7 +386,7 @@ export class ControlPanelNode extends Node {
         },
       );
 
-      displacementRow = new VBox({
+      displacementRowVBox = new VBox({
         spacing: 4,
         align: "left",
         children: [
@@ -404,7 +404,7 @@ export class ControlPanelNode extends Node {
 
       // Show/hide displacement slider based on superposition type
       this.model.superpositionTypeProperty.link((type: SuperpositionType) => {
-        displacementRow!.visible = type === SuperpositionType.COHERENT;
+        displacementRowVBox!.visible = type === SuperpositionType.COHERENT;
       });
     }
 
@@ -451,8 +451,8 @@ export class ControlPanelNode extends Node {
       superpositionRowNode,
     ];
 
-    if (displacementRow) {
-      children.push(displacementRow);
+    if (displacementRowVBox) {
+      children.push(displacementRowVBox);
     }
 
     return new VBox({
@@ -689,7 +689,7 @@ export class ControlPanelNode extends Node {
       },
     );
 
-    const widthRow = new VBox({
+    const widthRowVBox = new VBox({
       spacing: 4,
       align: "left",
       children: [
@@ -723,7 +723,7 @@ export class ControlPanelNode extends Node {
       },
     );
 
-    const depthRow = new VBox({
+    const depthRowVBox = new VBox({
       spacing: 4,
       align: "left",
       children: [
@@ -744,7 +744,7 @@ export class ControlPanelNode extends Node {
       fill: QPPWColors.textFillProperty,
     });
 
-    let barrierHeightRow: Node | null = null;
+    let barrierHeightRowVBox: Node | null = null;
     if (hasBarrierHeight(this.model)) {
       this.model.barrierHeightProperty.link((height: number) => {
         barrierHeightValueText.string = `${height.toFixed(2)} eV`;
@@ -759,7 +759,7 @@ export class ControlPanelNode extends Node {
         },
       );
 
-      barrierHeightRow = new VBox({
+      barrierHeightRowVBox = new VBox({
         spacing: 4,
         align: "left",
         children: [
@@ -781,7 +781,7 @@ export class ControlPanelNode extends Node {
       fill: QPPWColors.textFillProperty,
     });
 
-    let offsetRow: Node | null = null;
+    let offsetRowVBox: Node | null = null;
     if (hasPotentialOffset(this.model)) {
       this.model.potentialOffsetProperty.link((offset: number) => {
         offsetValueText.string = `${offset.toFixed(2)} eV`;
@@ -796,7 +796,7 @@ export class ControlPanelNode extends Node {
         },
       );
 
-      offsetRow = new VBox({
+      offsetRowVBox = new VBox({
         spacing: 4,
         align: "left",
         children: [
@@ -819,7 +819,7 @@ export class ControlPanelNode extends Node {
     });
 
     // Check if the model has wellSeparationProperty (TwoWellsModel or ManyWellsModel)
-    let separationRow: Node | null = null;
+    let separationRowVBox: Node | null = null;
     if (hasWellSeparation(this.model)) {
       this.model.wellSeparationProperty.link((separation: number) => {
         separationValueText.string = `${separation.toFixed(2)} nm`;
@@ -834,7 +834,7 @@ export class ControlPanelNode extends Node {
         },
       );
 
-      separationRow = new VBox({
+      separationRowVBox = new VBox({
         spacing: 4,
         align: "left",
         children: [
@@ -857,7 +857,7 @@ export class ControlPanelNode extends Node {
     });
 
     // Check if the model has numberOfWellsProperty (ManyWellsModel)
-    let numberOfWellsRow: Node | null = null;
+    let numberOfWellsRowVBox: Node | null = null;
     if (isManyWellsModel(this.model)) {
       this.model.numberOfWellsProperty.link((numberOfWells: number) => {
         numberOfWellsValueText.string = `${numberOfWells}`;
@@ -873,7 +873,7 @@ export class ControlPanelNode extends Node {
         },
       );
 
-      numberOfWellsRow = new VBox({
+      numberOfWellsRowVBox = new VBox({
         spacing: 4,
         align: "left",
         children: [
@@ -894,7 +894,7 @@ export class ControlPanelNode extends Node {
     this.model.potentialTypeProperty.link((type: PotentialType) => {
       const needsWidth =
         type !== PotentialType.COULOMB_1D && type !== PotentialType.COULOMB_3D;
-      widthRow.visible = needsWidth;
+      widthRowVBox.visible = needsWidth;
     });
 
     // Enable/disable depth slider based on potential type
@@ -910,44 +910,44 @@ export class ControlPanelNode extends Node {
         type === PotentialType.TRIANGULAR ||
         type === PotentialType.DOUBLE_SQUARE_WELL ||
         type === PotentialType.MULTI_SQUARE_WELL;
-      depthRow.visible = needsDepth;
+      depthRowVBox.visible = needsDepth;
     });
 
     // Enable/disable barrier height slider based on potential type (only for Rosen-Morse and Eckart)
-    if (barrierHeightRow) {
+    if (barrierHeightRowVBox) {
       this.model.potentialTypeProperty.link((type: PotentialType) => {
         const needsBarrierHeight =
           type === PotentialType.ROSEN_MORSE || type === PotentialType.ECKART;
-        barrierHeightRow!.visible = needsBarrierHeight;
+        barrierHeightRowVBox!.visible = needsBarrierHeight;
       });
     }
 
     // Enable/disable offset slider based on potential type (only for triangular potential)
-    if (offsetRow) {
+    if (offsetRowVBox) {
       this.model.potentialTypeProperty.link((type: PotentialType) => {
         const needsOffset = type === PotentialType.TRIANGULAR;
-        offsetRow!.visible = needsOffset;
+        offsetRowVBox!.visible = needsOffset;
       });
     }
 
     // Enable/disable separation slider based on potential type
-    if (separationRow) {
+    if (separationRowVBox) {
       this.model.potentialTypeProperty.link((type: PotentialType) => {
         const needsSeparation =
           type === PotentialType.DOUBLE_SQUARE_WELL ||
           type === PotentialType.MULTI_SQUARE_WELL ||
           type === PotentialType.MULTI_COULOMB_1D;
-        separationRow!.visible = needsSeparation;
+        separationRowVBox!.visible = needsSeparation;
       });
     }
 
     // Enable/disable number of wells slider based on potential type
-    if (numberOfWellsRow) {
+    if (numberOfWellsRowVBox) {
       this.model.potentialTypeProperty.link((type: PotentialType) => {
         const needsNumberOfWells =
           type === PotentialType.MULTI_SQUARE_WELL ||
           type === PotentialType.MULTI_COULOMB_1D;
-        numberOfWellsRow!.visible = needsNumberOfWells;
+        numberOfWellsRowVBox!.visible = needsNumberOfWells;
       });
     }
 
@@ -957,7 +957,7 @@ export class ControlPanelNode extends Node {
       fill: QPPWColors.textFillProperty,
     });
 
-    let electricFieldRow: Node | null = null;
+    let electricFieldRowVBox: Node | null = null;
     if (hasElectricField(this.model)) {
       this.model.electricFieldProperty.link((field: number) => {
         electricFieldValueText.string = `${field.toFixed(3)} eV/nm`;
@@ -972,7 +972,7 @@ export class ControlPanelNode extends Node {
         },
       );
 
-      electricFieldRow = new VBox({
+      electricFieldRowVBox = new VBox({
         spacing: 4,
         align: "left",
         children: [
@@ -989,30 +989,30 @@ export class ControlPanelNode extends Node {
     }
 
     // Enable/disable electric field slider based on potential type
-    if (electricFieldRow) {
+    if (electricFieldRowVBox) {
       this.model.potentialTypeProperty.link((type: PotentialType) => {
         const needsElectricField =
           type === PotentialType.MULTI_SQUARE_WELL ||
           type === PotentialType.MULTI_COULOMB_1D;
-        electricFieldRow!.visible = needsElectricField;
+        electricFieldRowVBox!.visible = needsElectricField;
       });
     }
 
-    const children: Node[] = [titleText, widthRow, depthRow];
-    if (barrierHeightRow) {
-      children.push(barrierHeightRow);
+    const children: Node[] = [titleText, widthRowVBox, depthRowVBox];
+    if (barrierHeightRowVBox) {
+      children.push(barrierHeightRowVBox);
     }
-    if (offsetRow) {
-      children.push(offsetRow);
+    if (offsetRowVBox) {
+      children.push(offsetRowVBox);
     }
-    if (numberOfWellsRow) {
-      children.push(numberOfWellsRow);
+    if (numberOfWellsRowVBox) {
+      children.push(numberOfWellsRowVBox);
     }
-    if (separationRow) {
-      children.push(separationRow);
+    if (separationRowVBox) {
+      children.push(separationRowVBox);
     }
-    if (electricFieldRow) {
-      children.push(electricFieldRow);
+    if (electricFieldRowVBox) {
+      children.push(electricFieldRowVBox);
     }
 
     return new VBox({
