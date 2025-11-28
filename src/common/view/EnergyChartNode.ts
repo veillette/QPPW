@@ -430,7 +430,7 @@ export class EnergyChartNode extends Node {
    * Creates the legend for toggling visibility of elements.
    */
   private createLegend(): Node {
-    const legendContentNode = new VBox({
+    const legendContentVBox = new VBox({
       spacing: 5,
       align: "left",
       children: [
@@ -457,11 +457,11 @@ export class EnergyChartNode extends Node {
       ],
     });
 
-    const legendPanelNode = new Rectangle(
+    const legendPanelRectangle = new Rectangle(
       0,
       0,
-      legendContentNode.width + 20,
-      legendContentNode.height + 15,
+      legendContentVBox.width + 20,
+      legendContentVBox.height + 15,
       5,
       5,
       {
@@ -472,13 +472,13 @@ export class EnergyChartNode extends Node {
     );
 
     const legendNode = new Node({
-      children: [legendPanelNode, legendContentNode],
+      children: [legendPanelRectangle, legendContentVBox],
       left: this.chartMargins.left + 10,
       top: this.chartMargins.top + 10,
     });
 
-    legendContentNode.left = 10;
-    legendContentNode.top = 8;
+    legendContentVBox.left = 10;
+    legendContentVBox.top = 8;
 
     return legendNode;
   }

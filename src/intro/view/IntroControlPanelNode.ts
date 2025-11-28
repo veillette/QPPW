@@ -50,13 +50,13 @@ export class IntroControlPanelNode extends Node {
     ];
 
     // Arrange groups vertically
-    const content = new VBox({
+    const contentVBox = new VBox({
       spacing: 15,
       align: "left",
       children: children,
     });
 
-    const controlPanel = new Panel(content, {
+    const controlPanel = new Panel(contentVBox, {
       fill: QPPWColors.panelFillProperty,
       stroke: QPPWColors.panelStrokeProperty,
       xMargin: 15,
@@ -223,7 +223,7 @@ export class IntroControlPanelNode extends Node {
       { boxWidth: 16 },
     );
 
-    const classicalProbabilityCheckbox = new Node({
+    const classicalProbabilityCheckboxNode = new Node({
       children: [classicalProbabilityCheckboxContent],
       x: 20,
     });
@@ -238,7 +238,7 @@ export class IntroControlPanelNode extends Node {
       { boxWidth: 16 },
     );
 
-    const showZerosCheckbox = new Node({
+    const showZerosCheckboxNode = new Node({
       children: [showZerosCheckboxContent],
       x: 20,
     });
@@ -255,7 +255,7 @@ export class IntroControlPanelNode extends Node {
         )
       : null;
 
-    const areaToolCheckbox = areaToolCheckboxContent
+    const areaToolCheckboxNode = areaToolCheckboxContent
       ? new Node({
           children: [areaToolCheckboxContent],
           x: 20,
@@ -274,7 +274,7 @@ export class IntroControlPanelNode extends Node {
         )
       : null;
 
-    const curvatureToolCheckbox = curvatureToolCheckboxContent
+    const curvatureToolCheckboxNode = curvatureToolCheckboxContent
       ? new Node({
           children: [curvatureToolCheckboxContent],
           x: 20,
@@ -293,7 +293,7 @@ export class IntroControlPanelNode extends Node {
         )
       : null;
 
-    const derivativeToolCheckbox = derivativeToolCheckboxContent
+    const derivativeToolCheckboxNode = derivativeToolCheckboxContent
       ? new Node({
           children: [derivativeToolCheckboxContent],
           x: 20,
@@ -302,23 +302,23 @@ export class IntroControlPanelNode extends Node {
 
     // Build children array (no display mode controls since intro screen shows separate charts)
     const children: Node[] = [
-      classicalProbabilityCheckbox,
-      showZerosCheckbox,
+      classicalProbabilityCheckboxNode,
+      showZerosCheckboxNode,
     ];
 
     // Add area tool checkbox if it exists
-    if (areaToolCheckbox) {
-      children.push(areaToolCheckbox);
+    if (areaToolCheckboxNode) {
+      children.push(areaToolCheckboxNode);
     }
 
     // Add curvature tool checkbox if it exists
-    if (curvatureToolCheckbox) {
-      children.push(curvatureToolCheckbox);
+    if (curvatureToolCheckboxNode) {
+      children.push(curvatureToolCheckboxNode);
     }
 
     // Add derivative tool checkbox if it exists
-    if (derivativeToolCheckbox) {
-      children.push(derivativeToolCheckbox);
+    if (derivativeToolCheckboxNode) {
+      children.push(derivativeToolCheckboxNode);
     }
 
     return new VBox({
@@ -356,7 +356,7 @@ export class IntroControlPanelNode extends Node {
       },
     );
 
-    const widthRow = new VBox({
+    const widthRowVBox = new VBox({
       spacing: 4,
       align: "left",
       children: [
@@ -390,7 +390,7 @@ export class IntroControlPanelNode extends Node {
       },
     );
 
-    const depthRow = new VBox({
+    const depthRowVBox = new VBox({
       spacing: 4,
       align: "left",
       children: [
@@ -424,7 +424,7 @@ export class IntroControlPanelNode extends Node {
       },
     );
 
-    const barrierHeightRow = new VBox({
+    const barrierHeightRowVBox = new VBox({
       spacing: 4,
       align: "left",
       children: [
@@ -458,7 +458,7 @@ export class IntroControlPanelNode extends Node {
       },
     );
 
-    const offsetRow = new VBox({
+    const offsetRowVBox = new VBox({
       spacing: 4,
       align: "left",
       children: [
@@ -487,22 +487,22 @@ export class IntroControlPanelNode extends Node {
         type === PotentialType.TRIANGULAR ||
         type === PotentialType.COULOMB_1D ||
         type === PotentialType.COULOMB_3D;
-      depthRow.visible = showDepth;
+      depthRowVBox.visible = showDepth;
 
       // Barrier height slider visibility (only for Rosen-Morse and Eckart)
       const showBarrierHeight =
         type === PotentialType.ROSEN_MORSE || type === PotentialType.ECKART;
-      barrierHeightRow.visible = showBarrierHeight;
+      barrierHeightRowVBox.visible = showBarrierHeight;
 
       // Offset slider visibility (only for triangular potential)
       const showOffset = type === PotentialType.TRIANGULAR;
-      offsetRow.visible = showOffset;
+      offsetRowVBox.visible = showOffset;
     });
 
     return new VBox({
       spacing: 8,
       align: "left",
-      children: [titleText, widthRow, depthRow, barrierHeightRow, offsetRow],
+      children: [titleText, widthRowVBox, depthRowVBox, barrierHeightRowVBox, offsetRowVBox],
     });
   }
 }

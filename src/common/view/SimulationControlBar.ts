@@ -23,12 +23,12 @@ export class SimulationControlBar extends Node {
     this.barWidth = options?.width ?? 800;
 
     // Create background bar
-    const background = new Rectangle(0, 0, this.barWidth, 80, {
+    const backgroundRectangle = new Rectangle(0, 0, this.barWidth, 80, {
       fill: QPPWColors.panelFillProperty,
       stroke: null, // Remove border to avoid line appearing below chart
       lineWidth: 0,
     });
-    this.addChild(background);
+    this.addChild(backgroundRectangle);
 
     // Time display
     const timeLabel = new Text(stringManager.timeStringProperty, {
@@ -52,7 +52,7 @@ export class SimulationControlBar extends Node {
         );
     });
 
-    const timeDisplay = new VBox({
+    const timeDisplayVBox = new VBox({
       spacing: 5,
       align: "center",
       children: [timeLabel, this.timeText],
@@ -89,26 +89,26 @@ export class SimulationControlBar extends Node {
       },
     });
 
-    const playbackButtons = new HBox({
+    const playbackButtonsHBox = new HBox({
       spacing: 10,
       children: [timeControlNode],
     });
 
-    const playbackSection = new VBox({
+    const playbackSectionVBox = new VBox({
       spacing: 8,
       align: "center",
-      children: [playbackButtons],
+      children: [playbackButtonsHBox],
     });
 
     // Arrange all sections horizontally
-    const content = new HBox({
+    const contentHBox = new HBox({
       spacing: 40,
       align: "center",
-      children: [timeDisplay, playbackSection],
+      children: [timeDisplayVBox, playbackSectionVBox],
       centerX: this.barWidth / 2,
       centerY: 40,
     });
 
-    this.addChild(content);
+    this.addChild(contentHBox);
   }
 }
