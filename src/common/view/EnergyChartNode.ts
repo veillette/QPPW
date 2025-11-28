@@ -3,19 +3,17 @@
  * This is the top chart in the One Well screen.
  */
 
-import { Node, Rectangle, Line, Path, Text, VBox } from "scenerystack/scenery";
+import { Rectangle, Line, Path, Text, VBox } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
-import { NumberProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
 import { Checkbox } from "scenerystack/sun";
 import {
-  ChartTransform,
-  ChartRectangle,
   AxisLine,
   TickMarkSet,
   TickLabelSet,
 } from "scenerystack/bamboo";
+import { BaseChartNode, ChartOptions } from "./BaseChartNode.js";
 import type { ScreenModel } from "../model/ScreenModels.js";
 import {
   isTwoWellsModel,
@@ -32,6 +30,7 @@ import QPPWColors from "../../QPPWColors.js";
 import { PhetFont } from "scenerystack/scenery-phet";
 import stringManager from "../../i18n/StringManager.js";
 import type { ScreenViewState } from "./ScreenViewStates.js";
+import { Node } from "scenerystack/scenery";
 
 // Chart axis range constants
 const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
@@ -85,35 +84,12 @@ function getEnergyAxisRange(potentialType: PotentialType): {
   }
 }
 
-export class EnergyChartNode extends Node {
-  private readonly model: ScreenModel;
-  private readonly viewState: ScreenViewState;
-  private readonly chartWidth: number;
-  private readonly chartHeight: number;
-  private readonly chartMargins = { left: 60, right: 20, top: 40, bottom: 50 };
-
-  // Chart bounds in view coordinates
-  private readonly plotWidth: number;
-  private readonly plotHeight: number;
-
-  // ChartTransform for model-to-view coordinate conversion
-  private readonly chartTransform: ChartTransform;
-
-  // View range properties (can be dynamic for zooming)
-  private readonly xMinProperty: NumberProperty;
-  private readonly xMaxProperty: NumberProperty;
-  private readonly yMinProperty: NumberProperty;
-  private readonly yMaxProperty: NumberProperty;
-
-  // Visual elements
-  private readonly backgroundRect: ChartRectangle;
-  private readonly plotContentNode: Node; // Clipped container for plot content
+export class EnergyChartNode extends BaseChartNode {
+  // Visual elements specific to energy chart
   private readonly potentialPath: Path;
   private readonly energyLevelNodes: Map<number, Line>;
   private readonly energyLabelNodes: Map<number, Text>;
   private readonly totalEnergyLine: Line;
-  private readonly zeroLine: Line;
-  private axesNode: Node;
   private readonly legendNode: Node;
 
   // Classical turning point lines
@@ -128,67 +104,31 @@ export class EnergyChartNode extends Node {
     viewState: ScreenViewState,
     options?: { width?: number; height?: number },
   ) {
-    super();
-
-    this.model = model;
-    this.viewState = viewState;
-    this.chartWidth = options?.width ?? 600;
-    this.chartHeight = options?.height ?? 300;
-
-    this.plotWidth =
-      this.chartWidth - this.chartMargins.left - this.chartMargins.right;
-    this.plotHeight =
-      this.chartHeight - this.chartMargins.top - this.chartMargins.bottom;
-
     // Initialize view range with values based on initial potential type
     const initialEnergyRange = getEnergyAxisRange(
       model.potentialTypeProperty.value,
     );
-    this.xMinProperty = new NumberProperty(-X_AXIS_RANGE_NM);
-    this.xMaxProperty = new NumberProperty(X_AXIS_RANGE_NM);
-    this.yMinProperty = new NumberProperty(initialEnergyRange.min);
-    this.yMaxProperty = new NumberProperty(initialEnergyRange.max);
 
-    // Create ChartTransform for model-to-view coordinate conversion
-    this.chartTransform = new ChartTransform({
-      viewWidth: this.plotWidth,
-      viewHeight: this.plotHeight,
-      modelXRange: new Range(this.xMinProperty.value, this.xMaxProperty.value),
-      modelYRange: new Range(this.yMinProperty.value, this.yMaxProperty.value),
-    });
+    // Call super constructor with chart options
+    const chartOptions: ChartOptions = {
+      width: options?.width ?? 600,
+      height: options?.height ?? 300,
+      margins: { left: 60, right: 20, top: 40, bottom: 50 },
+      xRange: { min: -X_AXIS_RANGE_NM, max: X_AXIS_RANGE_NM },
+      yRange: { min: initialEnergyRange.min, max: initialEnergyRange.max },
+      showZeroLine: true,
+    };
 
-    // Create background using ChartRectangle
-    this.backgroundRect = new ChartRectangle(this.chartTransform, {
-      fill: QPPWColors.backgroundColorProperty,
-      stroke: null, // Remove border to avoid visual clutter
-      lineWidth: 1,
-    });
-    this.backgroundRect.x = this.chartMargins.left;
-    this.backgroundRect.y = this.chartMargins.top;
-    this.addChild(this.backgroundRect);
+    super(model, viewState, chartOptions);
+
+    // Reconfigure zero line with energy chart specific styling
+    this.zeroLine.stroke = QPPWColors.potentialBarrierProperty;
+    this.zeroLine.lineWidth = 1;
+    this.zeroLine.lineDash = [5, 5];
 
     // Create axes
     this.axesNode = this.createAxes();
     this.addChild(this.axesNode);
-
-    // Create a clipped content node for all plot elements
-    this.plotContentNode = new Node({
-      clipArea: Shape.rectangle(
-        this.chartMargins.left,
-        this.chartMargins.top,
-        this.plotWidth,
-        this.plotHeight,
-      ),
-    });
-    this.addChild(this.plotContentNode);
-
-    // Create zero line
-    this.zeroLine = new Line(0, 0, 0, 0, {
-      stroke: QPPWColors.potentialBarrierProperty,
-      lineWidth: 1,
-      lineDash: [5, 5],
-    });
-    this.plotContentNode.addChild(this.zeroLine);
 
     // Create potential energy path
     this.potentialPath = new Path(null, {
@@ -241,7 +181,7 @@ export class EnergyChartNode extends Node {
    * Creates the axes (X and Y) with labels - using bamboo components where possible.
    * Note: GridLineSet from bamboo causes infinite loops, so we use manual grid lines.
    */
-  private createAxes(): Node {
+  protected createAxes(): Node {
     const axesNode = new Node();
 
     // Manual Y-axis grid lines (GridLineSet causes hang)
@@ -486,7 +426,7 @@ export class EnergyChartNode extends Node {
   /**
    * Links chart updates to model property changes.
    */
-  private linkToModel(): void {
+  protected linkToModel(): void {
     // Update when any parameter changes
     this.model.potentialTypeProperty.link(() => {
       this.updateEnergyAxisRange();
@@ -530,7 +470,7 @@ export class EnergyChartNode extends Node {
     }
 
     // Update classical probability visualization when property changes
-    this.model.showClassicalProbabilityProperty.link(() => this.update());
+    this.viewState.showClassicalProbabilityProperty.link(() => this.update());
   }
 
   /**
@@ -583,7 +523,7 @@ export class EnergyChartNode extends Node {
 
     // Early return if conditions aren't met
     if (
-      !this.model.showClassicalProbabilityProperty.value ||
+      !this.viewState.showClassicalProbabilityProperty.value ||
       !hasClassicalTurningPoints(this.model) ||
       selectedIndex < 0 ||
       selectedIndex >= boundStates.energies.length
@@ -1279,7 +1219,7 @@ export class EnergyChartNode extends Node {
   /**
    * Updates the zero-line reference.
    */
-  private updateZeroLine(): void {
+  protected updateZeroLine(): void {
     const y = this.dataToViewY(0);
     this.zeroLine.x1 = this.chartMargins.left;
     this.zeroLine.y1 = y;
@@ -1322,20 +1262,5 @@ export class EnergyChartNode extends Node {
       this.updateTotalEnergyLine(boundStates);
       this.updateClassicalTurningPoints(boundStates);
     }
-  }
-
-  /**
-   * Converts data X coordinate to view X coordinate using ChartTransform.
-   */
-  private dataToViewX(x: number): number {
-    return this.chartMargins.left + this.chartTransform.modelToViewX(x);
-  }
-
-  /**
-   * Converts data Y coordinate to view Y coordinate using ChartTransform.
-   * ChartTransform handles the Y-axis inversion (higher model Y = lower view Y).
-   */
-  private dataToViewY(y: number): number {
-    return this.chartMargins.top + this.chartTransform.modelToViewY(y);
   }
 }
