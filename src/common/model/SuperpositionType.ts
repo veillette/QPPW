@@ -19,7 +19,7 @@ export enum SuperpositionType {
 /**
  * Configuration for a superposition state
  */
-export interface SuperpositionConfig {
+export type SuperpositionConfig = {
   /** Type of superposition */
   type: SuperpositionType;
   /** Amplitudes for each eigenstate (must sum to 1 when squared) */
@@ -28,7 +28,7 @@ export interface SuperpositionConfig {
   phases: number[];
   /** Displacement from equilibrium in nm (for coherent states) */
   displacement?: number;
-}
+};
 
 qppw.register("SuperpositionType", { SuperpositionType });
 

@@ -27,13 +27,13 @@ import type { ManyWellsViewState } from "../../many-wells/view/ManyWellsViewStat
 /**
  * Screen-specific string properties for info dialog and screen summary.
  */
-export interface ScreenStringProperties {
+export type ScreenStringProperties = {
   titleStringProperty: TReadOnlyProperty<string>;
   descriptionStringProperty: TReadOnlyProperty<string>;
   keyConceptsStringProperty: TReadOnlyProperty<string>;
   interactionsStringProperty: TReadOnlyProperty<string>;
   educationalContentStringProperty: TReadOnlyProperty<string>;
-}
+};
 
 export abstract class BaseScreenView extends ScreenView {
   protected readonly resetButton: ResetAllButton;

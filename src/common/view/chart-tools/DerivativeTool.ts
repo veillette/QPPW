@@ -10,7 +10,7 @@ import { PhetFont } from "scenerystack/scenery-phet";
 import type { ScreenModel } from "../../model/ScreenModels.js";
 import QPPWColors from "../../../QPPWColors.js";
 
-export interface DerivativeToolOptions {
+export type DerivativeToolOptions = {
   chartMargins: { left: number; right: number; top: number; bottom: number };
   plotHeight: number;
   xMinProperty: NumberProperty;
@@ -19,7 +19,7 @@ export interface DerivativeToolOptions {
   dataToViewY: (y: number) => number;
   viewToDataX: (x: number) => number;
   parentNode: Node; // Reference to parent chart node for coordinate conversions
-}
+};
 
 export class DerivativeTool extends Node {
   private readonly model: ScreenModel;

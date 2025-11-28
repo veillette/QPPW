@@ -35,14 +35,14 @@ export type PotentialFunction = (x: number) => number;
 /**
  * Configuration for the spatial grid used in numerical calculations
  */
-export interface GridConfig {
+export type GridConfig = {
   /** Minimum x value in meters */
   xMin: number;
   /** Maximum x value in meters */
   xMax: number;
   /** Number of grid points */
   numPoints: number;
-}
+};
 
 /**
  * Valid solver method identifiers
@@ -59,7 +59,7 @@ export type SolverMethod =
 /**
  * Result from solving the Schrödinger equation
  */
-export interface BoundStateResult {
+export type BoundStateResult = {
   /** Energy eigenvalues in Joules */
   energies: number[];
   /** Wavefunctions (each row is one eigenstate) */
@@ -68,17 +68,17 @@ export interface BoundStateResult {
   xGrid: number[];
   /** Whether analytical or numerical solution was used */
   method: SolverMethod;
-}
+};
 
 /**
  * Result from solving only for energies (no wavefunctions)
  */
-export interface EnergyOnlyResult {
+export type EnergyOnlyResult = {
   /** Energy eigenvalues in Joules */
   energies: number[];
   /** Method used to find energies */
   method: SolverMethod;
-}
+};
 
 /**
  * Result from computing the Fourier transform of a wavefunction.
@@ -87,28 +87,28 @@ export interface EnergyOnlyResult {
  *
  * where p is momentum in kg·m/s.
  */
-export interface FourierTransformResult {
+export type FourierTransformResult = {
   /** Momentum values in kg·m/s */
   pGrid: number[];
   /** Fourier-transformed wavefunctions in momentum space (each row is one eigenstate) */
   momentumWavefunctions: number[][];
   /** Method used to compute the transform ('analytical' or 'numerical') */
   method: 'analytical' | 'numerical';
-}
+};
 
 /**
  * Result from computing the Fourier transform in wavenumber representation.
  * This is the same as FourierTransformResult but with wavenumber k = p/ℏ instead of momentum p.
  * The wavenumber representation is often more convenient for visualization and analysis.
  */
-export interface WavenumberTransformResult {
+export type WavenumberTransformResult = {
   /** Wavenumber values in rad/m (or 1/m) */
   kGrid: number[];
   /** Fourier-transformed wavefunctions in wavenumber space (each row is one eigenstate) */
   wavenumberWavefunctions: number[][];
   /** Method used to compute the transform ('analytical' or 'numerical') */
   method: 'analytical' | 'numerical';
-}
+};
 
 qppw.register("PotentialFunction", { PotentialType });
 

@@ -13,10 +13,10 @@ import QPPWColors from "../../QPPWColors.js";
 import { PhetFont } from "scenerystack/scenery-phet";
 import stringManager from "../../i18n/StringManager.js";
 
-interface ComboBoxItem<T> {
+type ComboBoxItem<T> = {
   value: T;
   createNode: () => Node;
-}
+};
 
 export class IntroControlPanelNode extends Node {
   private readonly model: IntroModel;

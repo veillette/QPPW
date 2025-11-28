@@ -23,12 +23,12 @@ import qppw from "../../QPPWNamespace.js";
 /**
  * Result from computing wavefunctions using Numerov
  */
-export interface WavefunctionResult {
+export type WavefunctionResult = {
   /** Computed wavefunctions (each row is one eigenstate) */
   wavefunctions: number[][];
   /** Grid x-positions in meters */
   xGrid: number[];
-}
+};
 
 /**
  * Compute wavefunctions for given energies using Numerov integration.

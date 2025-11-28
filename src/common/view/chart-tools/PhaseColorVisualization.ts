@@ -7,10 +7,10 @@ import { Node, Rectangle } from "scenerystack/scenery";
 import QuantumConstants from "../../model/QuantumConstants.js";
 import QPPWColors from "../../../QPPWColors.js";
 
-export interface PhaseColorVisualizationOptions {
+export type PhaseColorVisualizationOptions = {
   dataToViewX: (x: number) => number;
   dataToViewY: (y: number) => number;
-}
+};
 
 export class PhaseColorVisualization extends Node {
   private readonly options: PhaseColorVisualizationOptions;

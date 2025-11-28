@@ -13,7 +13,7 @@ import { SuperpositionType } from "../../model/SuperpositionType.js";
 import QuantumConstants from "../../model/QuantumConstants.js";
 import QPPWColors from "../../../QPPWColors.js";
 
-export interface AreaMeasurementToolOptions {
+export type AreaMeasurementToolOptions = {
   chartMargins: { left: number; right: number; top: number; bottom: number };
   plotWidth: number;
   plotHeight: number;
@@ -25,7 +25,7 @@ export interface AreaMeasurementToolOptions {
   dataToViewY: (y: number) => number;
   viewToDataX: (x: number) => number;
   parentNode: Node; // Reference to parent chart node for coordinate conversions
-}
+};
 
 export class AreaMeasurementTool extends Node {
   private readonly model: ScreenModel;

@@ -8,10 +8,10 @@ import { BooleanProperty } from "scenerystack/axon";
 import QuantumConstants from "../../model/QuantumConstants.js";
 import QPPWColors from "../../../QPPWColors.js";
 
-export interface ZerosVisualizationOptions {
+export type ZerosVisualizationOptions = {
   dataToViewX: (x: number) => number;
   dataToViewY: (y: number) => number;
-}
+};
 
 export class ZerosVisualization extends Node {
   private readonly options: ZerosVisualizationOptions;
