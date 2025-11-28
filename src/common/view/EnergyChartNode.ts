@@ -1216,7 +1216,7 @@ export class EnergyChartNode extends Node {
       });
 
       // Create a wider invisible hit area to make the line easier to grab
-      const hitAreaHeight = 10; // pixels above and below the line
+      const hitAreaHeight = 5; // pixels above and below the line
       const hitArea = new Rectangle(
         x1,
         y - hitAreaHeight,
