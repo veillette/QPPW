@@ -49,10 +49,37 @@ export class IntroModel extends BaseModel {
   private static readonly POTENTIAL_OFFSET_MAX = 15.0;
 
   /**
-   * Number of bound states to calculate.
-   * Sufficient for most single-well potentials in the intro screen.
+   * Default number of bound states to calculate.
    */
-  private static readonly NUM_BOUND_STATES = 10;
+  private static readonly DEFAULT_NUM_STATES = 10;
+
+  /**
+   * Number of states for asymmetric triangle potential.
+   * Larger value needed due to dense energy spectrum.
+   */
+  private static readonly NUM_STATES_ASYMMETRIC_TRIANGLE = 80;
+
+  /**
+   * Number of states for triangular potential.
+   */
+  private static readonly NUM_STATES_TRIANGULAR = 50;
+
+  /**
+   * Number of states for other complex potentials.
+   */
+  private static readonly NUM_STATES_COMPLEX = 80;
+
+  /**
+   * Maximum energy in electron volts for state calculations.
+   * Limits the energy range for harmonic oscillator and infinite well.
+   */
+  private static readonly MAX_ENERGY_EV = 15;
+
+  /**
+   * Maximum number of states (safety cap).
+   * Prevents excessive computation time.
+   */
+  private static readonly MAX_NUM_STATES = 100;
 
   /**
    * Chart display range in nanometers (extends from -RANGE to +RANGE).
@@ -166,7 +193,70 @@ export class IntroModel extends BaseModel {
     const mass =
       this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
 
-    const numStates = IntroModel.NUM_BOUND_STATES;
+    // Calculate number of states based on potential type and energy range
+    let numStates = IntroModel.DEFAULT_NUM_STATES; // Default for most potentials
+
+    // For harmonic oscillator, calculate states up to MAX_ENERGY_EV
+    if (
+      this.potentialTypeProperty.value === PotentialType.HARMONIC_OSCILLATOR
+    ) {
+      const springConstant =
+        (IntroModel.SPRING_CONSTANT_MULTIPLIER * wellDepth) /
+        (wellWidth * wellWidth);
+      const omega = Math.sqrt(springConstant / mass);
+      const maxEnergy =
+        IntroModel.MAX_ENERGY_EV * QuantumConstants.EV_TO_JOULES;
+      // E_n = ℏω(n + 1/2), solve for n: n = E/(ℏω) - 1/2
+      const maxN = Math.floor(
+        maxEnergy / (QuantumConstants.HBAR * omega) - 0.5,
+      );
+      numStates = Math.max(
+        1,
+        Math.min(maxN + 1, IntroModel.MAX_NUM_STATES),
+      ); // Cap at MAX_NUM_STATES for safety
+    }
+    // For infinite well, calculate states up to MAX_ENERGY_EV
+    else if (this.potentialTypeProperty.value === PotentialType.INFINITE_WELL) {
+      const maxEnergy =
+        IntroModel.MAX_ENERGY_EV * QuantumConstants.EV_TO_JOULES;
+      // E_n = (ℏ²π²n²)/(2mL²), solve for n
+      const maxN = Math.floor(
+        Math.sqrt(
+          (2 * mass * wellWidth * wellWidth * maxEnergy) /
+            (QuantumConstants.HBAR * QuantumConstants.HBAR * Math.PI * Math.PI),
+        ),
+      );
+      numStates = Math.max(1, Math.min(maxN, IntroModel.MAX_NUM_STATES)); // Cap at MAX_NUM_STATES for safety
+    }
+    // For finite well, estimate maximum number of bound states
+    else if (this.potentialTypeProperty.value === PotentialType.FINITE_WELL) {
+      // Approximate number of bound states: n_max ≈ (1/π) * sqrt(2mV₀L²/ℏ²)
+      // Use generous estimate to ensure we get all states
+      const estimatedMax = Math.ceil(
+        (1 / Math.PI) *
+          Math.sqrt(
+            (2 * mass * wellDepth * wellWidth * wellWidth) /
+              (QuantumConstants.HBAR * QuantumConstants.HBAR),
+          ),
+      );
+      // Request more states than estimated to ensure we capture all bound states
+      numStates = Math.max(
+        IntroModel.DEFAULT_NUM_STATES,
+        Math.min(estimatedMax * 2, IntroModel.MAX_NUM_STATES),
+      ); // At least DEFAULT_NUM_STATES, cap at MAX_NUM_STATES
+    }
+    // For asymmetric triangle, calculate states that fit in the energy range
+    else if (
+      this.potentialTypeProperty.value === PotentialType.ASYMMETRIC_TRIANGLE
+    ) {
+      numStates = IntroModel.NUM_STATES_ASYMMETRIC_TRIANGLE; // Asymmetric triangle may have many states
+    }
+    // For triangular potential, calculate states based on well depth
+    else if (this.potentialTypeProperty.value === PotentialType.TRIANGULAR) {
+      numStates = IntroModel.NUM_STATES_TRIANGULAR; // Triangular well typically has fewer states than asymmetric
+    } else {
+      numStates = IntroModel.NUM_STATES_COMPLEX; // Use more states for other potentials
+    }
 
     const gridConfig = {
       xMin: -IntroModel.CHART_DISPLAY_RANGE_NM * QuantumConstants.NM_TO_M,
