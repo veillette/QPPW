@@ -28,6 +28,7 @@ import {
   PotentialFunction,
 } from "./PotentialFunction.js";
 import qppw from "../../QPPWNamespace.js";
+import PerformanceMonitor from "../utils/PerformanceMonitor.js";
 
 // ============================================================================
 // Constants
@@ -323,58 +324,60 @@ export class QuantumBoundStateSolver {
    * Finds the nth eigenstate (energy and wavefunction)
    */
   public findEigenstate(n: number): QuantumState {
-    const desiredNodes = n - 1; // nth state has n-1 nodes
+    return PerformanceMonitor.measure(`find-eigenstate-${n}`, () => {
+      const desiredNodes = n - 1; // nth state has n-1 nodes
 
-    // Check cache first
-    const cacheKey = `eigenstate_${n}`;
-    if (this.enableCaching) {
-      const cached = this.getFromCache<QuantumState>(cacheKey);
-      if (cached) return cached;
-    }
+      // Check cache first
+      const cacheKey = `eigenstate_${n}`;
+      if (this.enableCaching) {
+        const cached = this.getFromCache<QuantumState>(cacheKey);
+        if (cached) return cached;
+      }
 
-    // Find energy
-    const energy = this.findEnergyEigenvalue(desiredNodes);
+      // Find energy
+      const energy = this.findEnergyEigenvalue(desiredNodes);
 
-    // Validate that this is a true bound state (energy must be below maximum potential)
-    if (energy >= this.maxPotential) {
-      throw new InvalidBoundStateException(
-        `State ${n} with energy ${energy} is not a bound state: energy exceeds maximum potential ${this.maxPotential}`,
-        n,
+      // Validate that this is a true bound state (energy must be below maximum potential)
+      if (energy >= this.maxPotential) {
+        throw new InvalidBoundStateException(
+          `State ${n} with energy ${energy} is not a bound state: energy exceeds maximum potential ${this.maxPotential}`,
+          n,
+          energy,
+          this.maxPotential,
+        );
+      }
+
+      // Calculate wavefunction
+      const waveFunction = this.calculateNormalizedWaveFunction(energy);
+
+      // Determine optimal matching point
+      const matchingPoint = this.adaptiveMatching
+        ? this.findOptimalMatchingPoint(energy)
+        : Math.floor(this.gridPoints * MATCHING_POINT_FRACTION);
+
+      // Calculate normalization constant
+      const normalizationConstant =
+        this.calculateNormalizationConstant(waveFunction);
+
+      // Verify solution quality
+      const convergenceMetric = this.calculateConvergenceMetric(energy);
+
+      const state: QuantumState = {
         energy,
-        this.maxPotential,
-      );
-    }
+        waveFunction,
+        nodes: desiredNodes,
+        normalizationConstant,
+        matchingPoint,
+        convergenceMetric,
+      };
 
-    // Calculate wavefunction
-    const waveFunction = this.calculateNormalizedWaveFunction(energy);
+      // Cache the result
+      if (this.enableCaching) {
+        this.addToCache(cacheKey, state);
+      }
 
-    // Determine optimal matching point
-    const matchingPoint = this.adaptiveMatching
-      ? this.findOptimalMatchingPoint(energy)
-      : Math.floor(this.gridPoints * MATCHING_POINT_FRACTION);
-
-    // Calculate normalization constant
-    const normalizationConstant =
-      this.calculateNormalizationConstant(waveFunction);
-
-    // Verify solution quality
-    const convergenceMetric = this.calculateConvergenceMetric(energy);
-
-    const state: QuantumState = {
-      energy,
-      waveFunction,
-      nodes: desiredNodes,
-      normalizationConstant,
-      matchingPoint,
-      convergenceMetric,
-    };
-
-    // Cache the result
-    if (this.enableCaching) {
-      this.addToCache(cacheKey, state);
-    }
-
-    return state;
+      return state;
+    });
   }
 
   /**
@@ -382,42 +385,47 @@ export class QuantumBoundStateSolver {
    * Stops when bound states are exhausted (energy exceeds maximum potential).
    */
   public findMultipleEigenstates(nStates: number): QuantumState[] {
-    const states: QuantumState[] = [];
+    return PerformanceMonitor.measure(
+      `find-multiple-eigenstates-${nStates}`,
+      () => {
+        const states: QuantumState[] = [];
 
-    for (let n = 1; n <= nStates; n++) {
-      try {
-        states.push(this.findEigenstate(n));
-      } catch (error) {
-        // Stop when we've exhausted all bound states
-        if (error instanceof InvalidBoundStateException) {
-          break;
+        for (let n = 1; n <= nStates; n++) {
+          try {
+            states.push(this.findEigenstate(n));
+          } catch (error) {
+            // Stop when we've exhausted all bound states
+            if (error instanceof InvalidBoundStateException) {
+              break;
+            }
+            throw error;
+          }
         }
-        throw error;
-      }
-    }
 
-    // Sort states by energy to ensure correct ordering
-    states.sort((a, b) => a.energy - b.energy);
+        // Sort states by energy to ensure correct ordering
+        states.sort((a, b) => a.energy - b.energy);
 
-    // Remove duplicate energies (keep only unique states)
-    // Use relative tolerance based on energy scale
-    const uniqueStates: QuantumState[] = [];
-    for (const state of states) {
-      if (uniqueStates.length === 0) {
-        uniqueStates.push(state);
-      } else {
-        const prevEnergy = uniqueStates[uniqueStates.length - 1].energy;
-        const relDiff =
-          Math.abs(state.energy - prevEnergy) /
-          Math.max(Math.abs(prevEnergy), 1e-20);
-        if (relDiff > 1e-6) {
-          // 0.0001% relative difference
-          uniqueStates.push(state);
+        // Remove duplicate energies (keep only unique states)
+        // Use relative tolerance based on energy scale
+        const uniqueStates: QuantumState[] = [];
+        for (const state of states) {
+          if (uniqueStates.length === 0) {
+            uniqueStates.push(state);
+          } else {
+            const prevEnergy = uniqueStates[uniqueStates.length - 1].energy;
+            const relDiff =
+              Math.abs(state.energy - prevEnergy) /
+              Math.max(Math.abs(prevEnergy), 1e-20);
+            if (relDiff > 1e-6) {
+              // 0.0001% relative difference
+              uniqueStates.push(state);
+            }
+          }
         }
-      }
-    }
 
-    return uniqueStates;
+        return uniqueStates;
+      },
+    );
   }
 
   /**
@@ -1193,59 +1201,61 @@ export class QuantumBoundStateSolver {
    * Enhanced wavefunction calculation with proper normalization
    */
   private calculateNormalizedWaveFunction(energy: number): number[] {
-    const waveFunction = new Array<number>(this.gridPoints);
-    const matchPoint = this.adaptiveMatching
-      ? this.findOptimalMatchingPoint(energy)
-      : Math.floor(this.gridPoints * MATCHING_POINT_FRACTION);
+    return PerformanceMonitor.measure("calculate-wavefunction", () => {
+      const waveFunction = new Array<number>(this.gridPoints);
+      const matchPoint = this.adaptiveMatching
+        ? this.findOptimalMatchingPoint(energy)
+        : Math.floor(this.gridPoints * MATCHING_POINT_FRACTION);
 
-    const numerovFactor = this.getNumerovFactor();
-    const inverseHbar2Over2m = 1.0 / this.hbarSquaredOver2m;
+      const numerovFactor = this.getNumerovFactor();
+      const inverseHbar2Over2m = 1.0 / this.hbarSquaredOver2m;
 
-    // Calculate effective potential
-    const effectivePotential = this.potentialEnergies.map(
-      (V) => inverseHbar2Over2m * (V - energy),
-    );
-
-    // Forward integration
-    waveFunction[0] = BOUNDARY_PSI_INITIAL;
-    waveFunction[1] = BOUNDARY_PSI_DERIVATIVE;
-
-    for (let i = 2; i <= matchPoint; i++) {
-      waveFunction[i] = this.numerovStep(
-        waveFunction[i - 1],
-        waveFunction[i - 2],
-        effectivePotential[i - 2],
-        effectivePotential[i - 1],
-        effectivePotential[i],
-        numerovFactor,
+      // Calculate effective potential
+      const effectivePotential = this.potentialEnergies.map(
+        (V) => inverseHbar2Over2m * (V - energy),
       );
-    }
 
-    const psi_leftAtMatch = waveFunction[matchPoint];
+      // Forward integration
+      waveFunction[0] = BOUNDARY_PSI_INITIAL;
+      waveFunction[1] = BOUNDARY_PSI_DERIVATIVE;
 
-    // Backward integration
-    waveFunction[this.gridPoints - 1] = BOUNDARY_PSI_INITIAL;
-    waveFunction[this.gridPoints - 2] = BOUNDARY_PSI_DERIVATIVE;
+      for (let i = 2; i <= matchPoint; i++) {
+        waveFunction[i] = this.numerovStep(
+          waveFunction[i - 1],
+          waveFunction[i - 2],
+          effectivePotential[i - 2],
+          effectivePotential[i - 1],
+          effectivePotential[i],
+          numerovFactor,
+        );
+      }
 
-    for (let i = this.gridPoints - 3; i >= matchPoint; i--) {
-      waveFunction[i] = this.numerovStep(
-        waveFunction[i + 1],
-        waveFunction[i + 2],
-        effectivePotential[i + 2],
-        effectivePotential[i + 1],
-        effectivePotential[i],
-        numerovFactor,
-      );
-    }
+      const psi_leftAtMatch = waveFunction[matchPoint];
 
-    // Scale to match at matching point
-    const scaleFactor = psi_leftAtMatch / waveFunction[matchPoint];
-    for (let i = matchPoint; i < this.gridPoints; i++) {
-      waveFunction[i] *= scaleFactor;
-    }
+      // Backward integration
+      waveFunction[this.gridPoints - 1] = BOUNDARY_PSI_INITIAL;
+      waveFunction[this.gridPoints - 2] = BOUNDARY_PSI_DERIVATIVE;
 
-    // Normalize
-    return this.normalizeWaveFunction(waveFunction);
+      for (let i = this.gridPoints - 3; i >= matchPoint; i--) {
+        waveFunction[i] = this.numerovStep(
+          waveFunction[i + 1],
+          waveFunction[i + 2],
+          effectivePotential[i + 2],
+          effectivePotential[i + 1],
+          effectivePotential[i],
+          numerovFactor,
+        );
+      }
+
+      // Scale to match at matching point
+      const scaleFactor = psi_leftAtMatch / waveFunction[matchPoint];
+      for (let i = matchPoint; i < this.gridPoints; i++) {
+        waveFunction[i] *= scaleFactor;
+      }
+
+      // Normalize
+      return this.normalizeWaveFunction(waveFunction);
+    });
   }
 
   /**
@@ -1485,40 +1495,42 @@ export function solveQuantumBound(
   energyMax?: number,
   config?: SolverConfig,
 ): BoundStateResult {
-  const { xMin, xMax, numPoints } = gridConfig;
+  return PerformanceMonitor.measure("solve-quantum-bound", () => {
+    const { xMin, xMax, numPoints } = gridConfig;
 
-  // Create solver
-  const solver = new QuantumBoundStateSolver(
-    mass,
-    xMin,
-    xMax,
-    numPoints,
-    potential,
-    config,
-  );
+    // Create solver
+    const solver = new QuantumBoundStateSolver(
+      mass,
+      xMin,
+      xMax,
+      numPoints,
+      potential,
+      config,
+    );
 
-  // Find all eigenstates
-  const states = solver.findMultipleEigenstates(numStates);
+    // Find all eigenstates
+    const states = solver.findMultipleEigenstates(numStates);
 
-  // Convert to BoundStateResult format
-  const energies: number[] = [];
-  const wavefunctions: number[][] = [];
+    // Convert to BoundStateResult format
+    const energies: number[] = [];
+    const wavefunctions: number[][] = [];
 
-  for (const state of states) {
-    // Filter by energy range if provided
-    if (energyMin !== undefined && state.energy < energyMin) continue;
-    if (energyMax !== undefined && state.energy > energyMax) continue;
+    for (const state of states) {
+      // Filter by energy range if provided
+      if (energyMin !== undefined && state.energy < energyMin) continue;
+      if (energyMax !== undefined && state.energy > energyMax) continue;
 
-    energies.push(state.energy);
-    wavefunctions.push(state.waveFunction);
-  }
+      energies.push(state.energy);
+      wavefunctions.push(state.waveFunction);
+    }
 
-  return {
-    energies,
-    wavefunctions,
-    xGrid: solver.getGridPositions(),
-    method: "numerov", // Compatible with existing method types
-  };
+    return {
+      energies,
+      wavefunctions,
+      xGrid: solver.getGridPositions(),
+      method: "numerov", // Compatible with existing method types
+    };
+  });
 }
 
 // ============================================================================
