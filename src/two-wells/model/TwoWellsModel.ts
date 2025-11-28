@@ -3,7 +3,7 @@
  * It handles quantum tunneling and double-well dynamics.
  */
 
-import { NumberProperty, Property } from "scenerystack/axon";
+import { NumberProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { BaseModel } from "../../common/model/BaseModel.js";
 import {
@@ -14,8 +14,6 @@ import { PotentialType } from "../../common/model/PotentialFunction.js";
 import QuantumConstants from "../../common/model/QuantumConstants.js";
 import { SuperpositionType } from "../../common/model/SuperpositionType.js";
 import QPPWPreferences from "../../QPPWPreferences.js";
-
-export type DisplayMode = "probabilityDensity" | "waveFunction" | "phaseColor";
 
 export class TwoWellsModel extends BaseModel {
   // ==================== CONSTANTS ====================
@@ -154,10 +152,6 @@ export class TwoWellsModel extends BaseModel {
   // Tunneling visualization
   public readonly tunnelingProbabilityProperty: NumberProperty;
 
-  // Model-specific display settings
-  public readonly displayModeProperty: Property<DisplayMode>; // Extends base with "phaseColor" mode
-  public readonly energyLevelProperty: NumberProperty; // Deprecated, kept for compatibility
-
   public constructor() {
     super();
 
@@ -203,10 +197,6 @@ export class TwoWellsModel extends BaseModel {
 
     // Initialize tunneling probability
     this.tunnelingProbabilityProperty = new NumberProperty(0);
-
-    // Initialize model-specific display settings
-    this.displayModeProperty = new Property<DisplayMode>("probabilityDensity");
-    this.energyLevelProperty = new NumberProperty(0); // Deprecated
 
     // Override superposition config default
     this.superpositionConfigProperty.value = {
@@ -255,8 +245,6 @@ export class TwoWellsModel extends BaseModel {
     this.barrierHeightProperty.reset();
     this.barrierWidthProperty.reset();
     this.tunnelingProbabilityProperty.reset();
-    this.energyLevelProperty.reset();
-    this.displayModeProperty.reset();
   }
 
   /**
@@ -277,7 +265,16 @@ export class TwoWellsModel extends BaseModel {
    * Uses WKB approximation for quantum tunneling.
    */
   private updateTunnelingProbability(): void {
-    const energy = this.energyLevelProperty.value;
+    // Get energy from selected energy level
+    const boundStates = this.getBoundStates();
+    if (!boundStates || boundStates.energies.length === 0) {
+      this.tunnelingProbabilityProperty.value = 0;
+      return;
+    }
+
+    const selectedIndex = this.selectedEnergyLevelIndexProperty.value;
+    const energyJoules = boundStates.energies[selectedIndex];
+    const energy = energyJoules * 6.241509074e18; // Convert from Joules to eV
     const barrierHeight = this.barrierHeightProperty.value;
     const barrierWidth = this.barrierWidthProperty.value * 1e-9; // Convert to meters
 

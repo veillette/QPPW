@@ -3,7 +3,7 @@
  * It handles the quantum mechanical calculations for a particle in a single well.
  */
 
-import { NumberProperty, Property } from "scenerystack/axon";
+import { NumberProperty } from "scenerystack/axon";
 import { Range, clamp } from "scenerystack/dot";
 import { BaseModel } from "../../common/model/BaseModel.js";
 import {
@@ -26,8 +26,6 @@ import {
   createFiniteWellPotential,
   calculateFiniteWellClassicalProbability,
 } from "../../common/model/analytical-solutions/finite-square-well.js";
-
-export type DisplayMode = "probabilityDensity" | "waveFunction" | "phaseColor";
 
 export class OneWellModel extends BaseModel {
   // ==================== CONSTANTS ====================
@@ -200,10 +198,6 @@ export class OneWellModel extends BaseModel {
   public readonly barrierHeightProperty: NumberProperty; // For Rosen-Morse and Eckart potentials
   public readonly potentialOffsetProperty: NumberProperty; // For triangular potential
 
-  // Model-specific display settings
-  public readonly displayModeProperty: Property<DisplayMode>; // Extends base with "phaseColor" mode
-  public readonly energyLevelProperty: NumberProperty; // Deprecated, kept for compatibility
-
   // Coherent state parameter
   public readonly coherentDisplacementProperty: NumberProperty; // Displacement in nm
 
@@ -229,10 +223,6 @@ export class OneWellModel extends BaseModel {
         ),
       },
     ); // in eV (for triangular potential)
-
-    // Initialize model-specific display settings
-    this.displayModeProperty = new Property<DisplayMode>("probabilityDensity");
-    this.energyLevelProperty = new NumberProperty(0); // Deprecated
 
     // Initialize coherent state displacement
     this.coherentDisplacementProperty = new NumberProperty(
@@ -296,8 +286,6 @@ export class OneWellModel extends BaseModel {
     super.reset();
     this.barrierHeightProperty.reset();
     this.potentialOffsetProperty.reset();
-    this.energyLevelProperty.reset();
-    this.displayModeProperty.reset();
     this.coherentDisplacementProperty.reset();
   }
 

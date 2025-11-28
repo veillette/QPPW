@@ -16,14 +16,19 @@ import { WaveFunctionChartNode } from "../../common/view/WaveFunctionChartNode.j
 import { WavenumberChartNode } from "../../common/view/WavenumberChartNode.js";
 import { IntroControlPanelNode } from "./IntroControlPanelNode.js";
 import stringManager from "../../i18n/StringManager.js";
+import { IntroViewState } from "./IntroViewState.js";
 
 export class IntroScreenView extends BaseScreenView {
+  private readonly viewState: IntroViewState;
   private introControlPanel: IntroControlPanelNode;
   private probabilityChart: WaveFunctionChartNode;
   private wavenumberChart: WavenumberChartNode;
 
   public constructor(model: IntroModel, options?: ScreenViewOptions) {
     super(model, options);
+
+    // Create the view state for display properties
+    this.viewState = new IntroViewState();
 
     // Calculate layout dimensions
     const margin = 10;
@@ -37,20 +42,20 @@ export class IntroScreenView extends BaseScreenView {
     const wavenumberChartHeight = 140;
 
     // Create the energy chart (top plot)
-    this.energyChart = new EnergyChartNode(model, {
+    this.energyChart = new EnergyChartNode(model, this.viewState, {
       width: chartsWidth,
       height: energyChartHeight,
     });
 
     // Create the probability density chart (middle plot) - always shows probability density
-    this.probabilityChart = new WaveFunctionChartNode(model, {
+    this.probabilityChart = new WaveFunctionChartNode(model, this.viewState, {
       width: chartsWidth,
       height: probabilityChartHeight,
       fixedDisplayMode: "probabilityDensity",
     });
 
     // Create the wave function chart - always shows wavefunction
-    this.waveFunctionChart = new WaveFunctionChartNode(model, {
+    this.waveFunctionChart = new WaveFunctionChartNode(model, this.viewState, {
       width: chartsWidth,
       height: waveFunctionChartHeight,
       fixedDisplayMode: "waveFunction",
@@ -126,6 +131,14 @@ export class IntroScreenView extends BaseScreenView {
    */
   protected getInteractionsTitleStringProperty(): TReadOnlyProperty<string> {
     return stringManager.interactionsTitleStringProperty;
+  }
+
+  /**
+   * Resets the screen view to its initial state.
+   */
+  public override reset(): void {
+    super.reset();
+    this.viewState.reset();
   }
 
   /**

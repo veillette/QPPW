@@ -4,7 +4,7 @@
  * Supports multi-square wells and multi-Coulomb 1D potentials.
  */
 
-import { NumberProperty, Property } from "scenerystack/axon";
+import { NumberProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { BaseModel } from "../../common/model/BaseModel.js";
 import {
@@ -15,8 +15,6 @@ import { PotentialType } from "../../common/model/PotentialFunction.js";
 import QuantumConstants from "../../common/model/QuantumConstants.js";
 import { SuperpositionType } from "../../common/model/SuperpositionType.js";
 import QPPWPreferences from "../../QPPWPreferences.js";
-
-export type DisplayMode = "probabilityDensity" | "waveFunction" | "phaseColor";
 
 export class ManyWellsModel extends BaseModel {
   // ==================== CONSTANTS ====================
@@ -131,10 +129,6 @@ export class ManyWellsModel extends BaseModel {
   // Electric field (eV/nm) - creates a linear tilt in the potential
   public readonly electricFieldProperty: NumberProperty;
 
-  // Model-specific display settings
-  public readonly displayModeProperty: Property<DisplayMode>; // Extends base with "phaseColor" mode
-  public readonly energyLevelProperty: NumberProperty; // Deprecated, kept for compatibility
-
   public constructor() {
     super();
 
@@ -179,10 +173,6 @@ export class ManyWellsModel extends BaseModel {
         ),
       },
     ); // in eV/nm
-
-    // Initialize model-specific display settings
-    this.displayModeProperty = new Property<DisplayMode>("probabilityDensity");
-    this.energyLevelProperty = new NumberProperty(0); // Deprecated
 
     // Override superposition config default
     this.superpositionConfigProperty.value = {
@@ -232,8 +222,6 @@ export class ManyWellsModel extends BaseModel {
     this.numberOfWellsProperty.reset();
     this.wellSeparationProperty.reset();
     this.electricFieldProperty.reset();
-    this.energyLevelProperty.reset();
-    this.displayModeProperty.reset();
   }
 
   /**

@@ -13,8 +13,6 @@ import {
 import { PotentialType } from "../../common/model/PotentialFunction.js";
 import QuantumConstants from "../../common/model/QuantumConstants.js";
 
-export type DisplayMode = "probabilityDensity" | "waveFunction";
-
 export class IntroModel extends BaseModel {
   // ==================== CONSTANTS ====================
 
@@ -98,9 +96,6 @@ export class IntroModel extends BaseModel {
   public readonly barrierHeightProperty: NumberProperty;
   public readonly potentialOffsetProperty: NumberProperty;
 
-  // Model-specific display settings (simplified, no "phaseColor" mode)
-  public readonly displayModeProperty: Property<DisplayMode>;
-
   public constructor() {
     super();
 
@@ -123,9 +118,6 @@ export class IntroModel extends BaseModel {
         ),
       },
     );
-
-    // Initialize model-specific display settings (simplified)
-    this.displayModeProperty = new Property<DisplayMode>("probabilityDensity");
 
     // Setup cache invalidation after all properties are initialized
     this.setupCacheInvalidation();
@@ -161,7 +153,6 @@ export class IntroModel extends BaseModel {
     super.reset();
     this.barrierHeightProperty.reset();
     this.potentialOffsetProperty.reset();
-    this.displayModeProperty.reset();
   }
 
   /**

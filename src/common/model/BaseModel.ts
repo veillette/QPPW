@@ -126,18 +126,6 @@ export abstract class BaseModel {
   // Energy level selection
   public readonly selectedEnergyLevelIndexProperty: NumberProperty; // 0-indexed
 
-  // Display settings
-  public readonly showRealPartProperty: Property<boolean>;
-  public readonly showImaginaryPartProperty: Property<boolean>;
-  public readonly showMagnitudeProperty: Property<boolean>;
-  public readonly showPhaseProperty: Property<boolean>;
-  public readonly showClassicalProbabilityProperty: Property<boolean>;
-  public readonly showZerosProperty: Property<boolean>;
-
-  // Chart visibility
-  public readonly showTotalEnergyProperty: Property<boolean>;
-  public readonly showPotentialEnergyProperty: Property<boolean>;
-
   // Superposition state
   public readonly superpositionTypeProperty: Property<SuperpositionType>;
   public readonly superpositionConfigProperty: Property<SuperpositionConfig>;
@@ -188,18 +176,6 @@ export abstract class BaseModel {
         BaseModel.ENERGY_LEVEL_INDEX_MAX,
       ),
     });
-
-    // Initialize display settings
-    this.showRealPartProperty = new Property<boolean>(true);
-    this.showImaginaryPartProperty = new Property<boolean>(false);
-    this.showMagnitudeProperty = new Property<boolean>(false);
-    this.showPhaseProperty = new Property<boolean>(false);
-    this.showClassicalProbabilityProperty = new Property<boolean>(false);
-    this.showZerosProperty = new Property<boolean>(false);
-
-    // Initialize chart visibility
-    this.showTotalEnergyProperty = new Property<boolean>(true);
-    this.showPotentialEnergyProperty = new Property<boolean>(true);
 
     // Initialize superposition state
     this.superpositionTypeProperty = new Property<SuperpositionType>(
@@ -267,14 +243,6 @@ export abstract class BaseModel {
     this.wellOffsetProperty.reset();
     this.particleMassProperty.reset();
     this.selectedEnergyLevelIndexProperty.reset();
-    this.showRealPartProperty.reset();
-    this.showImaginaryPartProperty.reset();
-    this.showMagnitudeProperty.reset();
-    this.showPhaseProperty.reset();
-    this.showClassicalProbabilityProperty.reset();
-    this.showZerosProperty.reset();
-    this.showTotalEnergyProperty.reset();
-    this.showPotentialEnergyProperty.reset();
     this.superpositionTypeProperty.reset();
     this.superpositionConfigProperty.reset();
   }

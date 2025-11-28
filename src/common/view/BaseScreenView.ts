@@ -20,6 +20,9 @@ import {
 } from "./ControlPanelNode.js";
 import { SimulationControlBar } from "./SimulationControlBar.js";
 import { BaseModel } from "../model/BaseModel.js";
+import type { OneWellViewState } from "../../one-well/view/OneWellViewState.js";
+import type { TwoWellsViewState } from "../../two-wells/view/TwoWellsViewState.js";
+import type { ManyWellsViewState } from "../../many-wells/view/ManyWellsViewState.js";
 
 /**
  * Screen-specific string properties for info dialog and screen summary.
@@ -72,10 +75,12 @@ export abstract class BaseScreenView extends ScreenView {
    * Creates the standard quantum well layout with charts, control panel, and simulation controls.
    * This should be called by subclasses that use the standard layout.
    * @param model - The OneWellModel, TwoWellsModel, or ManyWellsModel instance
+   * @param viewState - The view state for display properties
    * @param controlPanelOptions - Optional configuration for the control panel (e.g., hiding mass slider, filtering potential types)
    */
   protected createStandardLayout(
     model: OneWellModel | TwoWellsModel | ManyWellsModel,
+    viewState: OneWellViewState | TwoWellsViewState | ManyWellsViewState,
     controlPanelOptions?: ControlPanelNodeOptions,
   ): void {
     // Calculate layout dimensions
@@ -89,13 +94,13 @@ export abstract class BaseScreenView extends ScreenView {
     const waveFunctionChartHeight = 180; // Fixed height for wavefunction chart (reduced by 40%)
 
     // Create the energy chart (top plot)
-    this.energyChart = new EnergyChartNode(model, {
+    this.energyChart = new EnergyChartNode(model, viewState, {
       width: chartsWidth,
       height: energyChartHeight,
     });
 
     // Create the wave function chart (bottom plot)
-    this.waveFunctionChart = new WaveFunctionChartNode(model, {
+    this.waveFunctionChart = new WaveFunctionChartNode(model, viewState, {
       width: chartsWidth,
       height: waveFunctionChartHeight,
     });
@@ -120,6 +125,7 @@ export abstract class BaseScreenView extends ScreenView {
     // Create control panel with optional configuration
     this.controlPanel = new ControlPanelNode(
       model,
+      viewState,
       this.listBoxParent,
       controlPanelOptions,
     );

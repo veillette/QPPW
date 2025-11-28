@@ -30,12 +30,14 @@ import { PhetFont } from "scenerystack/scenery-phet";
 import { SuperpositionType } from "../model/SuperpositionType.js";
 import stringManager from "../../i18n/StringManager.js";
 import QPPWPreferences from "../../QPPWPreferences.js";
+import type { ScreenViewState } from "./ScreenViewStates.js";
 
 // Chart axis range constant (shared with EnergyChartNode)
 const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
 
 export class WaveFunctionChartNode extends Node {
   private readonly model: ScreenModel;
+  private readonly viewState: ScreenViewState;
   private readonly chartWidth: number;
   private readonly chartHeight: number;
   private readonly chartMargins = { left: 60, right: 20, top: 10, bottom: 40 };
@@ -124,6 +126,7 @@ export class WaveFunctionChartNode extends Node {
 
   public constructor(
     model: ScreenModel,
+    viewState: ScreenViewState,
     options?: {
       width?: number;
       height?: number;
@@ -133,6 +136,7 @@ export class WaveFunctionChartNode extends Node {
     super();
 
     this.model = model;
+    this.viewState = viewState;
     this.chartWidth = options?.width ?? 600;
     this.chartHeight = options?.height ?? 140;
     this.fixedDisplayMode = options?.fixedDisplayMode;
@@ -732,7 +736,7 @@ export class WaveFunctionChartNode extends Node {
       this.updateStateLabel();
       this.update();
     });
-    this.model.displayModeProperty.link(() => {
+    this.viewState.displayModeProperty.link(() => {
       this.updateYAxisLabel();
       this.updateStateLabel();
       this.update();
@@ -749,33 +753,33 @@ export class WaveFunctionChartNode extends Node {
     });
 
     // Update visibility of wave function components
-    this.model.showRealPartProperty.link((show: boolean) => {
+    this.viewState.showRealPartProperty.link((show: boolean) => {
       this.realPartPath.visible =
         show && this.getEffectiveDisplayMode() === "waveFunction";
     });
-    this.model.showImaginaryPartProperty.link((show: boolean) => {
+    this.viewState.showImaginaryPartProperty.link((show: boolean) => {
       this.imaginaryPartPath.visible =
         show && this.getEffectiveDisplayMode() === "waveFunction";
     });
-    this.model.showMagnitudeProperty.link((show: boolean) => {
+    this.viewState.showMagnitudeProperty.link((show: boolean) => {
       this.magnitudePath.visible =
         show && this.getEffectiveDisplayMode() === "waveFunction";
     });
 
     // Update visibility of classical probability (only for OneWellModel)
     if ("showClassicalProbabilityProperty" in this.model) {
-      this.model.showClassicalProbabilityProperty.link(() => {
+      this.viewState.showClassicalProbabilityProperty.link(() => {
         this.update();
       });
     }
 
     // Update visibility of zeros
-    this.model.showZerosProperty.link(() => {
+    this.viewState.showZerosProperty.link(() => {
       this.update();
     });
 
     // Update area tool when display mode changes or when data updates
-    this.model.displayModeProperty.link(() => {
+    this.viewState.displayModeProperty.link(() => {
       if (this.showAreaToolProperty.value) {
         this.updateAreaTool();
       }
@@ -929,7 +933,7 @@ export class WaveFunctionChartNode extends Node {
    * otherwise falling back to the model's display mode.
    */
   private getEffectiveDisplayMode(): string {
-    return this.fixedDisplayMode || this.model.displayModeProperty.value;
+    return this.fixedDisplayMode || this.viewState.displayModeProperty.value;
   }
 
   /**
@@ -1106,7 +1110,7 @@ export class WaveFunctionChartNode extends Node {
   ): void {
     // Early return if conditions aren't met
     if (
-      !this.model.showClassicalProbabilityProperty.value ||
+      !this.viewState.showClassicalProbabilityProperty.value ||
       !hasClassicalTurningPoints(this.model) ||
       selectedIndex < 0 ||
       selectedIndex >= boundStates.energies.length
@@ -1300,10 +1304,10 @@ export class WaveFunctionChartNode extends Node {
       );
       this.probabilityDensityPath.visible = false;
       this.classicalProbabilityPath.visible = false;
-      this.realPartPath.visible = this.model.showRealPartProperty.value;
+      this.realPartPath.visible = this.viewState.showRealPartProperty.value;
       this.imaginaryPartPath.visible =
-        this.model.showImaginaryPartProperty.value;
-      this.magnitudePath.visible = this.model.showMagnitudeProperty.value;
+        this.viewState.showImaginaryPartProperty.value;
+      this.magnitudePath.visible = this.viewState.showMagnitudeProperty.value;
       this.phaseColorNode.visible = false;
     }
 
@@ -1350,7 +1354,7 @@ export class WaveFunctionChartNode extends Node {
       // Plot classical probability if enabled
       if (
         "showClassicalProbabilityProperty" in this.model &&
-        this.model.showClassicalProbabilityProperty.value
+        this.viewState.showClassicalProbabilityProperty.value
       ) {
         const classicalProbability =
           this.model.getClassicalProbabilityDensity(selectedIndex);
@@ -1377,10 +1381,10 @@ export class WaveFunctionChartNode extends Node {
       this.plotWaveFunctionComponents(xGrid, wavefunction, phase);
       this.probabilityDensityPath.visible = false;
       this.classicalProbabilityPath.visible = false;
-      this.realPartPath.visible = this.model.showRealPartProperty.value;
+      this.realPartPath.visible = this.viewState.showRealPartProperty.value;
       this.imaginaryPartPath.visible =
-        this.model.showImaginaryPartProperty.value;
-      this.magnitudePath.visible = this.model.showMagnitudeProperty.value;
+        this.viewState.showImaginaryPartProperty.value;
+      this.magnitudePath.visible = this.viewState.showMagnitudeProperty.value;
       this.phaseColorNode.visible = false;
     }
 
@@ -1850,7 +1854,7 @@ export class WaveFunctionChartNode extends Node {
     this.zerosNode.removeAllChildren();
 
     // Only show if enabled
-    if (!this.model.showZerosProperty.value) {
+    if (!this.viewState.showZerosProperty.value) {
       this.zerosNode.visible = false;
       return;
     }
