@@ -567,7 +567,7 @@ export class ControlPanelNode extends Node {
     );
 
     const phaseCheckbox = new Checkbox(
-      this.model.showPhaseProperty,
+      this.viewState.showPhaseProperty,
       new Text(stringManager.phaseStringProperty, {
         font: new PhetFont(12),
         fill: QPPWColors.textFillProperty,
