@@ -31,6 +31,7 @@ import QuantumConstants from "../model/QuantumConstants.js";
 import QPPWColors from "../../QPPWColors.js";
 import { PhetFont } from "scenerystack/scenery-phet";
 import stringManager from "../../i18n/StringManager.js";
+import type { ScreenViewState } from "./ScreenViewStates.js";
 
 // Chart axis range constants
 const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
@@ -86,6 +87,7 @@ function getEnergyAxisRange(potentialType: PotentialType): {
 
 export class EnergyChartNode extends Node {
   private readonly model: ScreenModel;
+  private readonly viewState: ScreenViewState;
   private readonly chartWidth: number;
   private readonly chartHeight: number;
   private readonly chartMargins = { left: 60, right: 20, top: 40, bottom: 50 };
@@ -123,11 +125,13 @@ export class EnergyChartNode extends Node {
 
   public constructor(
     model: ScreenModel,
+    viewState: ScreenViewState,
     options?: { width?: number; height?: number },
   ) {
     super();
 
     this.model = model;
+    this.viewState = viewState;
     this.chartWidth = options?.width ?? 600;
     this.chartHeight = options?.height ?? 300;
 
@@ -431,7 +435,7 @@ export class EnergyChartNode extends Node {
       align: "left",
       children: [
         new Checkbox(
-          this.model.showTotalEnergyProperty,
+          this.viewState.showTotalEnergyProperty,
           new Text(stringManager.totalEnergyStringProperty, {
             font: "12px sans-serif",
             fill: QPPWColors.textFillProperty,
@@ -441,7 +445,7 @@ export class EnergyChartNode extends Node {
           },
         ),
         new Checkbox(
-          this.model.showPotentialEnergyProperty,
+          this.viewState.showPotentialEnergyProperty,
           new Text(stringManager.potentialEnergyStringProperty, {
             font: "12px sans-serif",
             fill: QPPWColors.textFillProperty,
@@ -497,10 +501,10 @@ export class EnergyChartNode extends Node {
     this.model.selectedEnergyLevelIndexProperty.link(() =>
       this.updateSelection(),
     );
-    this.model.showTotalEnergyProperty.link((show: boolean) => {
+    this.viewState.showTotalEnergyProperty.link((show: boolean) => {
       this.totalEnergyLine.visible = show;
     });
-    this.model.showPotentialEnergyProperty.link((show: boolean) => {
+    this.viewState.showPotentialEnergyProperty.link((show: boolean) => {
       this.potentialPath.visible = show;
     });
 
@@ -1302,7 +1306,7 @@ export class EnergyChartNode extends Node {
       this.totalEnergyLine.y1 = y;
       this.totalEnergyLine.x2 = this.chartWidth - this.chartMargins.right;
       this.totalEnergyLine.y2 = y;
-      this.totalEnergyLine.visible = this.model.showTotalEnergyProperty.value;
+      this.totalEnergyLine.visible = this.viewState.showTotalEnergyProperty.value;
     } else {
       this.totalEnergyLine.visible = false;
     }

@@ -12,10 +12,16 @@ import { ScreenViewOptions } from "scenerystack/sim";
 import { TReadOnlyProperty } from "scenerystack/axon";
 import stringManager from "../../i18n/StringManager.js";
 import { PotentialType } from "../../common/model/PotentialFunction.js";
+import { OneWellViewState } from "./OneWellViewState.js";
 
 export class OneWellScreenView extends BaseScreenView {
+  private readonly viewState: OneWellViewState;
+
   public constructor(model: OneWellModel, options?: ScreenViewOptions) {
     super(model, options);
+
+    // Create the view state for display properties
+    this.viewState = new OneWellViewState();
 
     // Create the standard quantum well layout, excluding Double Square Well
     // which is meant for the Two Wells screen
@@ -33,7 +39,7 @@ export class OneWellScreenView extends BaseScreenView {
       PotentialType.COULOMB_3D,
     ];
 
-    this.createStandardLayout(model, {
+    this.createStandardLayout(model, this.viewState, {
       allowedPotentialTypes: allowedPotentials,
     });
   }
@@ -72,7 +78,7 @@ export class OneWellScreenView extends BaseScreenView {
    */
   public override reset(): void {
     super.reset();
-    // Add screen-specific reset logic here
+    this.viewState.reset();
   }
 
   /**

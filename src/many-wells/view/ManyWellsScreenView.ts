@@ -14,16 +14,22 @@ import { PotentialType } from "../../common/model/PotentialFunction.js";
 import { ScreenViewOptions } from "scenerystack/sim";
 import { TReadOnlyProperty } from "scenerystack/axon";
 import stringManager from "../../i18n/StringManager.js";
+import { ManyWellsViewState } from "./ManyWellsViewState.js";
 
 export class ManyWellsScreenView extends BaseScreenView {
+  private readonly viewState: ManyWellsViewState;
+
   public constructor(model: ManyWellsModel, options?: ScreenViewOptions) {
     super(model, options);
+
+    // Create the view state for display properties
+    this.viewState = new ManyWellsViewState();
 
     // Create the standard quantum well layout with custom control panel options
     // - Hide particle mass slider (use electron mass for simplicity)
     // - Allow Multi-Square Well and Multi-Coulomb 1D potential types
     // - Show number of wells slider (1-10)
-    this.createStandardLayout(model, {
+    this.createStandardLayout(model, this.viewState, {
       showParticleMass: false,
       allowedPotentialTypes: [
         PotentialType.MULTI_SQUARE_WELL,
@@ -68,7 +74,7 @@ export class ManyWellsScreenView extends BaseScreenView {
    */
   public override reset(): void {
     super.reset();
-    // Add screen-specific reset logic here
+    this.viewState.reset();
   }
 
   /**

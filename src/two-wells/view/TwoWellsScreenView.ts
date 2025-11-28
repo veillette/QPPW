@@ -12,15 +12,21 @@ import { PotentialType } from "../../common/model/PotentialFunction.js";
 import { ScreenViewOptions } from "scenerystack/sim";
 import { TReadOnlyProperty } from "scenerystack/axon";
 import stringManager from "../../i18n/StringManager.js";
+import { TwoWellsViewState } from "./TwoWellsViewState.js";
 
 export class TwoWellsScreenView extends BaseScreenView {
+  private readonly viewState: TwoWellsViewState;
+
   public constructor(model: TwoWellsModel, options?: ScreenViewOptions) {
     super(model, options);
+
+    // Create the view state for display properties
+    this.viewState = new TwoWellsViewState();
 
     // Create the standard quantum well layout with custom control panel options
     // - Hide particle mass slider
     // - Allow Coulomb 1D and Double Square Well potential types
-    this.createStandardLayout(model, {
+    this.createStandardLayout(model, this.viewState, {
       showParticleMass: false,
       allowedPotentialTypes: [
         PotentialType.COULOMB_1D,
@@ -65,7 +71,7 @@ export class TwoWellsScreenView extends BaseScreenView {
    */
   public override reset(): void {
     super.reset();
-    // Add screen-specific reset logic here
+    this.viewState.reset();
   }
 
   /**

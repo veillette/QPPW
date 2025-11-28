@@ -36,6 +36,9 @@ import { SuperpositionDialog } from "./SuperpositionDialog.js";
 import QPPWColors from "../../QPPWColors.js";
 import { PhetFont } from "scenerystack/scenery-phet";
 import stringManager from "../../i18n/StringManager.js";
+import type { OneWellViewState } from "../../one-well/view/OneWellViewState.js";
+import type { TwoWellsViewState } from "../../two-wells/view/TwoWellsViewState.js";
+import type { ManyWellsViewState } from "../../many-wells/view/ManyWellsViewState.js";
 
 interface ComboBoxItem<T> {
   value: T;
@@ -56,16 +59,19 @@ interface ResolvedControlPanelNodeOptions {
 
 export class ControlPanelNode extends Node {
   private readonly model: OneWellModel | TwoWellsModel | ManyWellsModel;
+  private readonly viewState: OneWellViewState | TwoWellsViewState | ManyWellsViewState;
   private readonly options: ResolvedControlPanelNodeOptions;
 
   public constructor(
     model: OneWellModel | TwoWellsModel | ManyWellsModel,
+    viewState: OneWellViewState | TwoWellsViewState | ManyWellsViewState,
     listBoxParent: Node,
     providedOptions?: ControlPanelNodeOptions,
   ) {
     super();
 
     this.model = model;
+    this.viewState = viewState;
 
     // Default options
     this.options = {
@@ -489,7 +495,7 @@ export class ControlPanelNode extends Node {
     ];
 
     const displayModeRadioButtonGroup = new VerticalAquaRadioButtonGroup(
-      this.model.displayModeProperty,
+      this.viewState.displayModeProperty,
       displayModeItems,
       {
         spacing: 8,
@@ -508,7 +514,7 @@ export class ControlPanelNode extends Node {
     const classicalProbabilityCheckboxContent =
       "showClassicalProbabilityProperty" in this.model
         ? new Checkbox(
-            this.model.showClassicalProbabilityProperty,
+            this.viewState.showClassicalProbabilityProperty,
             new Text(stringManager.classicalProbabilityDensityStringProperty, {
               font: new PhetFont(12),
               fill: QPPWColors.textFillProperty,
@@ -534,7 +540,7 @@ export class ControlPanelNode extends Node {
     );
 
     const realPartCheckbox = new Checkbox(
-      this.model.showRealPartProperty,
+      this.viewState.showRealPartProperty,
       new Text(stringManager.realPartStringProperty, {
         font: new PhetFont(12),
         fill: QPPWColors.textFillProperty,
@@ -543,7 +549,7 @@ export class ControlPanelNode extends Node {
     );
 
     const imaginaryPartCheckbox = new Checkbox(
-      this.model.showImaginaryPartProperty,
+      this.viewState.showImaginaryPartProperty,
       new Text(stringManager.imaginaryPartStringProperty, {
         font: new PhetFont(12),
         fill: QPPWColors.textFillProperty,
@@ -552,7 +558,7 @@ export class ControlPanelNode extends Node {
     );
 
     const magnitudeCheckbox = new Checkbox(
-      this.model.showMagnitudeProperty,
+      this.viewState.showMagnitudeProperty,
       new Text(stringManager.magnitudeStringProperty, {
         font: new PhetFont(12),
         fill: QPPWColors.textFillProperty,
@@ -582,7 +588,7 @@ export class ControlPanelNode extends Node {
     });
 
     // Enable/disable wave function views based on display mode
-    this.model.displayModeProperty.link((mode: string) => {
+    this.viewState.displayModeProperty.link((mode: string) => {
       const enabled = mode === "waveFunction";
       realPartCheckbox.enabled = enabled;
       imaginaryPartCheckbox.enabled = enabled;
