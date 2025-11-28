@@ -223,7 +223,7 @@ export class IntroControlPanelNode extends Node {
       { boxWidth: 16 },
     );
 
-    const classicalProbabilityCheckboxNode = new Node({
+    const classicalProbabilityCheckbox = new Node({
       children: [classicalProbabilityCheckboxContent],
       x: 20,
     });
@@ -238,7 +238,7 @@ export class IntroControlPanelNode extends Node {
       { boxWidth: 16 },
     );
 
-    const showZerosCheckboxNode = new Node({
+    const showZerosCheckbox = new Node({
       children: [showZerosCheckboxContent],
       x: 20,
     });
@@ -255,7 +255,7 @@ export class IntroControlPanelNode extends Node {
         )
       : null;
 
-    const areaToolCheckboxNode = areaToolCheckboxContent
+    const areaToolCheckbox = areaToolCheckboxContent
       ? new Node({
           children: [areaToolCheckboxContent],
           x: 20,
@@ -274,7 +274,7 @@ export class IntroControlPanelNode extends Node {
         )
       : null;
 
-    const curvatureToolCheckboxNode = curvatureToolCheckboxContent
+    const curvatureToolCheckbox = curvatureToolCheckboxContent
       ? new Node({
           children: [curvatureToolCheckboxContent],
           x: 20,
@@ -293,7 +293,7 @@ export class IntroControlPanelNode extends Node {
         )
       : null;
 
-    const derivativeToolCheckboxNode = derivativeToolCheckboxContent
+    const derivativeToolCheckbox = derivativeToolCheckboxContent
       ? new Node({
           children: [derivativeToolCheckboxContent],
           x: 20,
@@ -302,23 +302,23 @@ export class IntroControlPanelNode extends Node {
 
     // Build children array (no display mode controls since intro screen shows separate charts)
     const children: Node[] = [
-      classicalProbabilityCheckboxNode,
-      showZerosCheckboxNode,
+      classicalProbabilityCheckbox,
+      showZerosCheckbox,
     ];
 
     // Add area tool checkbox if it exists
-    if (areaToolCheckboxNode) {
-      children.push(areaToolCheckboxNode);
+    if (areaToolCheckbox) {
+      children.push(areaToolCheckbox);
     }
 
     // Add curvature tool checkbox if it exists
-    if (curvatureToolCheckboxNode) {
-      children.push(curvatureToolCheckboxNode);
+    if (curvatureToolCheckbox) {
+      children.push(curvatureToolCheckbox);
     }
 
     // Add derivative tool checkbox if it exists
-    if (derivativeToolCheckboxNode) {
-      children.push(derivativeToolCheckboxNode);
+    if (derivativeToolCheckbox) {
+      children.push(derivativeToolCheckbox);
     }
 
     return new VBox({
