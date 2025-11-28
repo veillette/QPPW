@@ -40,22 +40,22 @@ import type { OneWellViewState } from "../../one-well/view/OneWellViewState.js";
 import type { TwoWellsViewState } from "../../two-wells/view/TwoWellsViewState.js";
 import type { ManyWellsViewState } from "../../many-wells/view/ManyWellsViewState.js";
 
-interface ComboBoxItem<T> {
+type ComboBoxItem<T> = {
   value: T;
   createNode: () => Node;
-}
+};
 
-export interface ControlPanelNodeOptions {
+export type ControlPanelNodeOptions = {
   // Whether to show the particle mass control group
   showParticleMass?: boolean;
   // Filter which potential types to show (if undefined, shows all)
   allowedPotentialTypes?: PotentialType[];
-}
+};
 
-interface ResolvedControlPanelNodeOptions {
+type ResolvedControlPanelNodeOptions = {
   showParticleMass: boolean;
   allowedPotentialTypes: PotentialType[] | undefined;
-}
+};
 
 export class ControlPanelNode extends Node {
   private readonly model: OneWellModel | TwoWellsModel | ManyWellsModel;

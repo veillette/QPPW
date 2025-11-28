@@ -298,18 +298,18 @@ export { CustomDotMatrix as DotMatrix };
  * We use a lightweight interface rather than the full dot Complex class
  * for better test environment compatibility and reduced overhead for FFT operations.
  */
-export interface Complex {
+export type Complex = {
   real: number;
   imaginary: number;
-}
+};
 
 /**
  * Result of eigenvalue decomposition
  */
-export interface EigenDecompositionResult {
+export type EigenDecompositionResult = {
   eigenvalues: number[];
   eigenvectors: number[][];
-}
+};
 
 /**
  * Convert a dot Matrix to a 2D number array.

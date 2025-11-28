@@ -70,7 +70,7 @@ export { NumericalMethod };
 /**
  * Configuration for potential well parameters (for analytical solutions)
  */
-export interface WellParameters {
+export type WellParameters = {
   /** Type of potential well */
   type: PotentialType;
   /** Well width for infinite/finite well (meters) */
@@ -97,12 +97,12 @@ export interface WellParameters {
   energyOffset?: number;
   /** Number of wells for multi-square well and multi-Coulomb 1D (1-10) */
   numberOfWells?: number;
-}
+};
 
 /**
  * Configuration for creating analytical solutions and potentials using factory pattern.
  */
-interface PotentialConfig {
+type PotentialConfig = {
   /** Class constructor for analytical solution */
   solutionClass: new (...args: any[]) => AnalyticalSolution;
   /** Class constructor for potential */
@@ -111,7 +111,7 @@ interface PotentialConfig {
   paramExtractor: (params: WellParameters) => any[];
   /** List of required parameter keys */
   requiredParams: (keyof WellParameters)[];
-}
+};
 
 /**
  * Main class for solving the 1D time-independent Schrödinger equation.

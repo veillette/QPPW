@@ -12,14 +12,14 @@ import type { BoundStateResult } from "../../model/PotentialFunction.js";
 import QuantumConstants from "../../model/QuantumConstants.js";
 import QPPWColors from "../../../QPPWColors.js";
 
-export interface ClassicalProbabilityOverlayOptions {
+export type ClassicalProbabilityOverlayOptions = {
   chartMargins: { left: number; right: number; top: number; bottom: number };
   plotWidth: number;
   plotHeight: number;
   chartWidth: number;
   dataToViewX: (x: number) => number;
   dataToViewY: (y: number) => number;
-}
+};
 
 export class ClassicalProbabilityOverlay extends Node {
   private readonly model: ScreenModel;

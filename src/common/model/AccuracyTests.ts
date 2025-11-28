@@ -33,14 +33,14 @@ import qppw from "../../QPPWNamespace.js";
 /**
  * Test result structure
  */
-interface TestResult {
+type TestResult = {
   testName: string;
   method: string;
   passed: boolean;
   maxError: number;
   executionTime: number; // in milliseconds
   details: string[];
-}
+};
 
 /**
  * Test configuration for different grid sizes (all powers of 2)

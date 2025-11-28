@@ -15,21 +15,21 @@ import type { ScreenModel } from "../model/ScreenModels.js";
 import type { ScreenViewState } from "./ScreenViewStates.js";
 import QPPWColors from "../../QPPWColors.js";
 
-export interface ChartMargins {
+export type ChartMargins = {
   left: number;
   right: number;
   top: number;
   bottom: number;
-}
+};
 
-export interface ChartOptions {
+export type ChartOptions = {
   width?: number;
   height?: number;
   margins?: ChartMargins;
   xRange?: { min: number; max: number };
   yRange?: { min: number; max: number };
   showZeroLine?: boolean;
-}
+};
 
 export abstract class BaseChartNode extends Node {
   protected readonly model: ScreenModel;
