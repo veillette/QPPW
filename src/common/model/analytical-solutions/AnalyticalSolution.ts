@@ -127,4 +127,50 @@ export abstract class AnalyticalSolution {
     stateIndex: number,
     xGrid: number[],
   ): number[];
+
+  /**
+   * Calculate the minimum and maximum values of a wavefunction in a given region.
+   *
+   * This method evaluates the wavefunction at multiple points within the specified
+   * region and returns the minimum and maximum values encountered. The wavefunction
+   * is sampled at a sufficient density to accurately capture the extrema.
+   *
+   * @param stateIndex - Index of the eigenstate (0 for ground state, 1 for first excited, etc.)
+   * @param xMin - Left boundary of the region in meters
+   * @param xMax - Right boundary of the region in meters
+   * @param numPoints - Number of points to sample (default: 1000)
+   * @returns Object containing min and max values of the wavefunction
+   */
+  abstract calculateWavefunctionMinMax(
+    stateIndex: number,
+    xMin: number,
+    xMax: number,
+    numPoints?: number,
+  ): { min: number; max: number };
+
+  /**
+   * Calculate the minimum and maximum values of a superposition of wavefunctions.
+   *
+   * A quantum superposition is a linear combination of eigenstates:
+   * Ψ(x,t) = Σ cₙ ψₙ(x) exp(-iEₙt/ℏ)
+   *
+   * This method evaluates the superposition at a given time within the specified
+   * region and returns the minimum and maximum values encountered.
+   *
+   * @param coefficients - Complex coefficients for each eigenstate (as [real, imag] pairs)
+   * @param energies - Energy eigenvalues in Joules
+   * @param time - Time in seconds
+   * @param xMin - Left boundary of the region in meters
+   * @param xMax - Right boundary of the region in meters
+   * @param numPoints - Number of points to sample (default: 1000)
+   * @returns Object containing min and max values of the superposition
+   */
+  abstract calculateSuperpositionMinMax(
+    coefficients: Array<[number, number]>,
+    energies: number[],
+    time: number,
+    xMin: number,
+    xMax: number,
+    numPoints?: number,
+  ): { min: number; max: number };
 }

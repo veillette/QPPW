@@ -143,6 +143,46 @@ export class RosenMorsePotentialSolution extends AnalyticalSolution {
       xGrid,
     );
   }
+
+  calculateWavefunctionMinMax(
+    stateIndex: number,
+    xMin: number,
+    xMax: number,
+    numPoints?: number,
+  ): { min: number; max: number } {
+    return calculateRosenMorsePotentialWavefunctionMinMax(
+      this.potentialDepth,
+      this.barrierHeight,
+      this.wellWidth,
+      this.mass,
+      stateIndex,
+      xMin,
+      xMax,
+      numPoints,
+    );
+  }
+
+  calculateSuperpositionMinMax(
+    coefficients: Array<[number, number]>,
+    energies: number[],
+    time: number,
+    xMin: number,
+    xMax: number,
+    numPoints?: number,
+  ): { min: number; max: number } {
+    return calculateRosenMorsePotentialSuperpositionMinMax(
+      this.potentialDepth,
+      this.barrierHeight,
+      this.wellWidth,
+      this.mass,
+      coefficients,
+      energies,
+      time,
+      xMin,
+      xMax,
+      numPoints,
+    );
+  }
 }
 
 /**
@@ -711,4 +751,167 @@ export function calculateRosenMorsePotentialWavefunctionSecondDerivative(
   }
 
   return secondDerivative;
+}
+
+/**
+ * Calculate the minimum and maximum values of the wavefunction for a Rosen-Morse potential.
+ *
+ * @param potentialDepth - Potential depth V_0 in Joules (positive value)
+ * @param barrierHeight - Barrier height V_1 in Joules
+ * @param wellWidth - Width parameter a in meters
+ * @param mass - Particle mass in kg
+ * @param stateIndex - Index of the eigenstate (0 for ground state, etc.)
+ * @param xMin - Left boundary of the region in meters
+ * @param xMax - Right boundary of the region in meters
+ * @param numPoints - Number of points to sample (default: 1000)
+ * @returns Object containing min and max values of the wavefunction
+ */
+export function calculateRosenMorsePotentialWavefunctionMinMax(
+  potentialDepth: number,
+  barrierHeight: number,
+  wellWidth: number,
+  mass: number,
+  stateIndex: number,
+  xMin: number,
+  xMax: number,
+  numPoints: number = 1000,
+): { min: number; max: number } {
+  const { HBAR } = QuantumConstants;
+  const V0 = potentialDepth;
+  const V1 = barrierHeight;
+  const a = wellWidth;
+  const n = stateIndex;
+
+  const lambda = (a * Math.sqrt(2 * mass * V0)) / HBAR;
+  const mu = (a * Math.sqrt(2 * mass) * V1) / (2 * HBAR * Math.sqrt(V0));
+  const lambdaEff = Math.sqrt(lambda * lambda - mu * mu);
+
+  const s = lambdaEff - n - 0.5;
+  const alpha_jac = s - mu;
+  const beta_jac = s + mu;
+
+  const normalization = Math.sqrt(
+    ((1 / a) * (2 * s)) /
+      (factorial(n) *
+        Math.exp(
+          logGamma(n + alpha_jac + 1) +
+            logGamma(n + beta_jac + 1) -
+            logGamma(n + alpha_jac + beta_jac + 1),
+        )),
+  );
+
+  let min = Infinity;
+  let max = -Infinity;
+
+  const dx = (xMax - xMin) / (numPoints - 1);
+
+  for (let i = 0; i < numPoints; i++) {
+    const x = xMin + i * dx;
+
+    const tanhVal = Math.tanh(x / a);
+    const sechVal = 1.0 / Math.cosh(x / a);
+    const jacobiPoly = jacobiPolynomial(n, alpha_jac, beta_jac, tanhVal);
+    const psi =
+      normalization *
+      Math.pow(sechVal, s) *
+      Math.exp(mu * tanhVal) *
+      jacobiPoly;
+
+    if (psi < min) min = psi;
+    if (psi > max) max = psi;
+  }
+
+  return { min, max };
+}
+
+/**
+ * Calculate the minimum and maximum values of a superposition of wavefunctions
+ * for a Rosen-Morse potential.
+ *
+ * The superposition is: Ψ(x,t) = Σ cₙ ψₙ(x) exp(-iEₙt/ℏ)
+ * We return the min/max of the real part of this complex-valued function.
+ *
+ * @param potentialDepth - Potential depth V_0 in Joules (positive value)
+ * @param barrierHeight - Barrier height V_1 in Joules
+ * @param wellWidth - Width parameter a in meters
+ * @param mass - Particle mass in kg
+ * @param coefficients - Complex coefficients for each eigenstate (as [real, imag] pairs)
+ * @param energies - Energy eigenvalues in Joules
+ * @param time - Time in seconds
+ * @param xMin - Left boundary of the region in meters
+ * @param xMax - Right boundary of the region in meters
+ * @param numPoints - Number of points to sample (default: 1000)
+ * @returns Object containing min and max values of the superposition's real part
+ */
+export function calculateRosenMorsePotentialSuperpositionMinMax(
+  potentialDepth: number,
+  barrierHeight: number,
+  wellWidth: number,
+  mass: number,
+  coefficients: Array<[number, number]>,
+  energies: number[],
+  time: number,
+  xMin: number,
+  xMax: number,
+  numPoints: number = 1000,
+): { min: number; max: number } {
+  const { HBAR } = QuantumConstants;
+  const V0 = potentialDepth;
+  const V1 = barrierHeight;
+  const a = wellWidth;
+
+  const lambda = (a * Math.sqrt(2 * mass * V0)) / HBAR;
+  const mu = (a * Math.sqrt(2 * mass) * V1) / (2 * HBAR * Math.sqrt(V0));
+  const lambdaEff = Math.sqrt(lambda * lambda - mu * mu);
+
+  let min = Infinity;
+  let max = -Infinity;
+
+  const dx = (xMax - xMin) / (numPoints - 1);
+
+  for (let i = 0; i < numPoints; i++) {
+    const x = xMin + i * dx;
+    let realPart = 0;
+
+    for (let n = 0; n < coefficients.length; n++) {
+      const [cReal, cImag] = coefficients[n];
+      const energy = energies[n];
+
+      const s = lambdaEff - n - 0.5;
+      const alpha_jac = s - mu;
+      const beta_jac = s + mu;
+
+      const normalization = Math.sqrt(
+        ((1 / a) * (2 * s)) /
+          (factorial(n) *
+            Math.exp(
+              logGamma(n + alpha_jac + 1) +
+                logGamma(n + beta_jac + 1) -
+                logGamma(n + alpha_jac + beta_jac + 1),
+            )),
+      );
+
+      const tanhVal = Math.tanh(x / a);
+      const sechVal = 1.0 / Math.cosh(x / a);
+      const jacobiPoly = jacobiPolynomial(n, alpha_jac, beta_jac, tanhVal);
+      const psi =
+        normalization *
+        Math.pow(sechVal, s) *
+        Math.exp(mu * tanhVal) *
+        jacobiPoly;
+
+      // Time evolution: exp(-iEt/ℏ) = cos(Et/ℏ) - i*sin(Et/ℏ)
+      const phase = (-energy * time) / HBAR;
+      const cosPhase = Math.cos(phase);
+      const sinPhase = Math.sin(phase);
+
+      // Complex multiplication: real part
+      realPart += cReal * psi * cosPhase + cImag * psi * sinPhase;
+    }
+
+    if (realPart < min) min = realPart;
+    if (realPart > max) max = realPart;
+  }
+
+  return { min, max };
 }

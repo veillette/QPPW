@@ -229,6 +229,130 @@ export function calculateInfiniteWellWavefunctionSecondDerivative(
 }
 
 /**
+ * Calculate the minimum and maximum values of the wavefunction for an infinite square well.
+ *
+ * For ψ_n(x) = √(2/L) sin(nπ(x + L/2)/L), the function is sampled at multiple points
+ * in the range [xMin, xMax] to find the extrema.
+ *
+ * @param wellWidth - Width of the well (L) in meters
+ * @param stateIndex - Index of the eigenstate (0 for ground state, 1 for first excited, etc.)
+ * @param xMin - Left boundary of the region in meters
+ * @param xMax - Right boundary of the region in meters
+ * @param numPoints - Number of points to sample (default: 1000)
+ * @returns Object containing min and max values of the wavefunction
+ */
+export function calculateInfiniteWellWavefunctionMinMax(
+  wellWidth: number,
+  stateIndex: number,
+  xMin: number,
+  xMax: number,
+  numPoints: number = 1000,
+): { min: number; max: number } {
+  const n = stateIndex + 1; // Quantum number (1, 2, 3, ...)
+  const L = wellWidth;
+  const halfWidth = L / 2;
+  const normalization = Math.sqrt(2 / L);
+  const waveFactor = (n * Math.PI) / L;
+
+  let min = Infinity;
+  let max = -Infinity;
+
+  const dx = (xMax - xMin) / (numPoints - 1);
+
+  for (let i = 0; i < numPoints; i++) {
+    const x = xMin + i * dx;
+
+    let psi: number;
+    // Check if x is inside the well [-L/2, L/2]
+    if (x >= -halfWidth && x <= halfWidth) {
+      // Shift coordinate to [0, L] range for standard formula
+      const xShifted = x + halfWidth;
+      psi = normalization * Math.sin(waveFactor * xShifted);
+    } else {
+      // Outside the well, wavefunction is zero
+      psi = 0;
+    }
+
+    if (psi < min) min = psi;
+    if (psi > max) max = psi;
+  }
+
+  return { min, max };
+}
+
+/**
+ * Calculate the minimum and maximum values of a superposition of wavefunctions
+ * for an infinite square well.
+ *
+ * The superposition is: Ψ(x,t) = Σ cₙ ψₙ(x) exp(-iEₙt/ℏ)
+ * We return the min/max of the real part of this complex-valued function.
+ *
+ * @param wellWidth - Width of the well (L) in meters
+ * @param coefficients - Complex coefficients for each eigenstate (as [real, imag] pairs)
+ * @param energies - Energy eigenvalues in Joules
+ * @param time - Time in seconds
+ * @param xMin - Left boundary of the region in meters
+ * @param xMax - Right boundary of the region in meters
+ * @param numPoints - Number of points to sample (default: 1000)
+ * @returns Object containing min and max values of the superposition's real part
+ */
+export function calculateInfiniteWellSuperpositionMinMax(
+  wellWidth: number,
+  coefficients: Array<[number, number]>,
+  energies: number[],
+  time: number,
+  xMin: number,
+  xMax: number,
+  numPoints: number = 1000,
+): { min: number; max: number } {
+  const { HBAR } = QuantumConstants;
+  const L = wellWidth;
+  const halfWidth = L / 2;
+  const normalization = Math.sqrt(2 / L);
+
+  let min = Infinity;
+  let max = -Infinity;
+
+  const dx = (xMax - xMin) / (numPoints - 1);
+
+  for (let i = 0; i < numPoints; i++) {
+    const x = xMin + i * dx;
+
+    // Calculate superposition at this position
+    let realPart = 0;
+
+    for (let n = 0; n < coefficients.length; n++) {
+      const [cReal, cImag] = coefficients[n];
+      const energy = energies[n];
+
+      // Calculate wavefunction value
+      let psi: number;
+      if (x >= -halfWidth && x <= halfWidth) {
+        const xShifted = x + halfWidth;
+        const waveFactor = ((n + 1) * Math.PI) / L;
+        psi = normalization * Math.sin(waveFactor * xShifted);
+      } else {
+        psi = 0;
+      }
+
+      // Time evolution: exp(-iEt/ℏ) = cos(Et/ℏ) - i*sin(Et/ℏ)
+      const phase = (-energy * time) / HBAR;
+      const cosPhase = Math.cos(phase);
+      const sinPhase = Math.sin(phase);
+
+      // Complex multiplication: (cReal + i*cImag) * psi * (cosPhase - i*sinPhase)
+      // Real part: cReal * psi * cosPhase + cImag * psi * sinPhase
+      realPart += cReal * psi * cosPhase + cImag * psi * sinPhase;
+    }
+
+    if (realPart < min) min = realPart;
+    if (realPart > max) max = realPart;
+  }
+
+  return { min, max };
+}
+
+/**
  * Class-based implementation of infinite square well analytical solution.
  * Extends the AnalyticalSolution abstract base class.
  */
@@ -291,6 +415,40 @@ export class InfiniteSquareWellSolution extends AnalyticalSolution {
       this.wellWidth,
       stateIndex,
       xGrid,
+    );
+  }
+
+  calculateWavefunctionMinMax(
+    stateIndex: number,
+    xMin: number,
+    xMax: number,
+    numPoints?: number,
+  ): { min: number; max: number } {
+    return calculateInfiniteWellWavefunctionMinMax(
+      this.wellWidth,
+      stateIndex,
+      xMin,
+      xMax,
+      numPoints,
+    );
+  }
+
+  calculateSuperpositionMinMax(
+    coefficients: Array<[number, number]>,
+    energies: number[],
+    time: number,
+    xMin: number,
+    xMax: number,
+    numPoints?: number,
+  ): { min: number; max: number } {
+    return calculateInfiniteWellSuperpositionMinMax(
+      this.wellWidth,
+      coefficients,
+      energies,
+      time,
+      xMin,
+      xMax,
+      numPoints,
     );
   }
 }

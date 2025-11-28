@@ -128,6 +128,42 @@ export class Coulomb1DPotentialSolution extends AnalyticalSolution {
       xGrid,
     );
   }
+
+  calculateWavefunctionMinMax(
+    stateIndex: number,
+    xMin: number,
+    xMax: number,
+    numPoints?: number,
+  ): { min: number; max: number } {
+    return calculateCoulomb1DWavefunctionMinMax(
+      this.coulombStrength,
+      this.mass,
+      stateIndex,
+      xMin,
+      xMax,
+      numPoints,
+    );
+  }
+
+  calculateSuperpositionMinMax(
+    coefficients: Array<[number, number]>,
+    energies: number[],
+    time: number,
+    xMin: number,
+    xMax: number,
+    numPoints?: number,
+  ): { min: number; max: number } {
+    return calculateCoulomb1DSuperpositionMinMax(
+      this.coulombStrength,
+      this.mass,
+      coefficients,
+      energies,
+      time,
+      xMin,
+      xMax,
+      numPoints,
+    );
+  }
 }
 
 /**
@@ -528,4 +564,122 @@ export function calculateCoulomb1DWavefunctionSecondDerivative(
   }
 
   return secondDerivative;
+}
+
+/**
+ * Calculate the minimum and maximum values of the wavefunction for a 1D Coulomb potential.
+ *
+ * @param coulombStrength - Coulomb strength parameter α in J·m
+ * @param mass - Particle mass in kg
+ * @param stateIndex - Index of the eigenstate (0 for ground state, etc.)
+ * @param xMin - Left boundary of the region in meters
+ * @param xMax - Right boundary of the region in meters
+ * @param numPoints - Number of points to sample (default: 1000)
+ * @returns Object containing min and max values of the wavefunction
+ */
+export function calculateCoulomb1DWavefunctionMinMax(
+  coulombStrength: number,
+  mass: number,
+  stateIndex: number,
+  xMin: number,
+  xMax: number,
+  numPoints: number = 1000,
+): { min: number; max: number } {
+  const { HBAR } = QuantumConstants;
+  const alpha = coulombStrength;
+  const n = stateIndex;
+  const nEff = n + 0.5;
+  const a0 = (HBAR * HBAR) / (mass * alpha);
+  const a_n = nEff * a0;
+  const normalization = Math.sqrt(1.0 / (2 * a_n * (n + 1) * (n + 1)));
+
+  let min = Infinity;
+  let max = -Infinity;
+
+  const dx = (xMax - xMin) / (numPoints - 1);
+
+  for (let i = 0; i < numPoints; i++) {
+    const x = xMin + i * dx;
+    const absX = Math.abs(x);
+    const rho = (2 * absX) / a_n;
+    const laguerre = associatedLaguerre(n, 1, rho);
+    const radialPart = normalization * rho * Math.exp(-rho / 2) * laguerre;
+    const psi = Math.sign(x) * radialPart;
+
+    if (psi < min) min = psi;
+    if (psi > max) max = psi;
+  }
+
+  return { min, max };
+}
+
+/**
+ * Calculate the minimum and maximum values of a superposition of wavefunctions
+ * for a 1D Coulomb potential.
+ *
+ * The superposition is: Ψ(x,t) = Σ cₙ ψₙ(x) exp(-iEₙt/ℏ)
+ * We return the min/max of the real part of this complex-valued function.
+ *
+ * @param coulombStrength - Coulomb strength parameter α in J·m
+ * @param mass - Particle mass in kg
+ * @param coefficients - Complex coefficients for each eigenstate (as [real, imag] pairs)
+ * @param energies - Energy eigenvalues in Joules
+ * @param time - Time in seconds
+ * @param xMin - Left boundary of the region in meters
+ * @param xMax - Right boundary of the region in meters
+ * @param numPoints - Number of points to sample (default: 1000)
+ * @returns Object containing min and max values of the superposition's real part
+ */
+export function calculateCoulomb1DSuperpositionMinMax(
+  coulombStrength: number,
+  mass: number,
+  coefficients: Array<[number, number]>,
+  energies: number[],
+  time: number,
+  xMin: number,
+  xMax: number,
+  numPoints: number = 1000,
+): { min: number; max: number } {
+  const { HBAR } = QuantumConstants;
+  const alpha = coulombStrength;
+  const a0 = (HBAR * HBAR) / (mass * alpha);
+
+  let min = Infinity;
+  let max = -Infinity;
+
+  const dx = (xMax - xMin) / (numPoints - 1);
+
+  for (let i = 0; i < numPoints; i++) {
+    const x = xMin + i * dx;
+    let realPart = 0;
+
+    for (let n = 0; n < coefficients.length; n++) {
+      const [cReal, cImag] = coefficients[n];
+      const energy = energies[n];
+
+      const nEff = n + 0.5;
+      const a_n = nEff * a0;
+      const normalization = Math.sqrt(1.0 / (2 * a_n * (n + 1) * (n + 1)));
+
+      // Calculate wavefunction value
+      const absX = Math.abs(x);
+      const rho = (2 * absX) / a_n;
+      const laguerre = associatedLaguerre(n, 1, rho);
+      const radialPart = normalization * rho * Math.exp(-rho / 2) * laguerre;
+      const psi = Math.sign(x) * radialPart;
+
+      // Time evolution: exp(-iEt/ℏ) = cos(Et/ℏ) - i*sin(Et/ℏ)
+      const phase = (-energy * time) / HBAR;
+      const cosPhase = Math.cos(phase);
+      const sinPhase = Math.sin(phase);
+
+      // Complex multiplication: real part
+      realPart += cReal * psi * cosPhase + cImag * psi * sinPhase;
+    }
+
+    if (realPart < min) min = realPart;
+    if (realPart > max) max = realPart;
+  }
+
+  return { min, max };
 }

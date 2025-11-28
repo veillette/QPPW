@@ -321,6 +321,128 @@ export function calculateHarmonicOscillatorWavefunctionSecondDerivative(
 }
 
 /**
+ * Calculate the minimum and maximum values of the wavefunction for a harmonic oscillator.
+ *
+ * For ψ_n(x) = N_n · exp(-αx²/2) · H_n(√α x), the function is sampled at multiple points
+ * in the range [xMin, xMax] to find the extrema.
+ *
+ * @param springConstant - Spring constant k in N/m
+ * @param mass - Particle mass in kg
+ * @param stateIndex - Index of the eigenstate (0 for ground state, 1 for first excited, etc.)
+ * @param xMin - Left boundary of the region in meters
+ * @param xMax - Right boundary of the region in meters
+ * @param numPoints - Number of points to sample (default: 1000)
+ * @returns Object containing min and max values of the wavefunction
+ */
+export function calculateHarmonicOscillatorWavefunctionMinMax(
+  springConstant: number,
+  mass: number,
+  stateIndex: number,
+  xMin: number,
+  xMax: number,
+  numPoints: number = 1000,
+): { min: number; max: number } {
+  const { HBAR } = QuantumConstants;
+  const n = stateIndex; // Quantum number (0, 1, 2, ...)
+  const omega = Math.sqrt(springConstant / mass);
+  const alpha = Math.sqrt((mass * omega) / HBAR);
+  const normalization =
+    (1 / Math.sqrt(Math.pow(2, n) * factorial(n))) *
+    Math.pow(alpha / Math.PI, 0.25);
+
+  let min = Infinity;
+  let max = -Infinity;
+
+  const dx = (xMax - xMin) / (numPoints - 1);
+
+  for (let i = 0; i < numPoints; i++) {
+    const x = xMin + i * dx;
+
+    const xi = alpha * x;
+    const gaussianFactor = Math.exp((-xi * xi) / 2);
+    const hermite = hermitePolynomial(n, xi);
+    const psi = normalization * gaussianFactor * hermite;
+
+    if (psi < min) min = psi;
+    if (psi > max) max = psi;
+  }
+
+  return { min, max };
+}
+
+/**
+ * Calculate the minimum and maximum values of a superposition of wavefunctions
+ * for a harmonic oscillator.
+ *
+ * The superposition is: Ψ(x,t) = Σ cₙ ψₙ(x) exp(-iEₙt/ℏ)
+ * We return the min/max of the real part of this complex-valued function.
+ *
+ * @param springConstant - Spring constant k in N/m
+ * @param mass - Particle mass in kg
+ * @param coefficients - Complex coefficients for each eigenstate (as [real, imag] pairs)
+ * @param energies - Energy eigenvalues in Joules
+ * @param time - Time in seconds
+ * @param xMin - Left boundary of the region in meters
+ * @param xMax - Right boundary of the region in meters
+ * @param numPoints - Number of points to sample (default: 1000)
+ * @returns Object containing min and max values of the superposition's real part
+ */
+export function calculateHarmonicOscillatorSuperpositionMinMax(
+  springConstant: number,
+  mass: number,
+  coefficients: Array<[number, number]>,
+  energies: number[],
+  time: number,
+  xMin: number,
+  xMax: number,
+  numPoints: number = 1000,
+): { min: number; max: number } {
+  const { HBAR } = QuantumConstants;
+  const omega = Math.sqrt(springConstant / mass);
+  const alpha = Math.sqrt((mass * omega) / HBAR);
+
+  let min = Infinity;
+  let max = -Infinity;
+
+  const dx = (xMax - xMin) / (numPoints - 1);
+
+  for (let i = 0; i < numPoints; i++) {
+    const x = xMin + i * dx;
+
+    // Calculate superposition at this position
+    let realPart = 0;
+
+    for (let n = 0; n < coefficients.length; n++) {
+      const [cReal, cImag] = coefficients[n];
+      const energy = energies[n];
+
+      // Calculate wavefunction value
+      const normalization =
+        (1 / Math.sqrt(Math.pow(2, n) * factorial(n))) *
+        Math.pow(alpha / Math.PI, 0.25);
+      const xi = alpha * x;
+      const gaussianFactor = Math.exp((-xi * xi) / 2);
+      const hermite = hermitePolynomial(n, xi);
+      const psi = normalization * gaussianFactor * hermite;
+
+      // Time evolution: exp(-iEt/ℏ) = cos(Et/ℏ) - i*sin(Et/ℏ)
+      const phase = (-energy * time) / HBAR;
+      const cosPhase = Math.cos(phase);
+      const sinPhase = Math.sin(phase);
+
+      // Complex multiplication: (cReal + i*cImag) * psi * (cosPhase - i*sinPhase)
+      // Real part: cReal * psi * cosPhase + cImag * psi * sinPhase
+      realPart += cReal * psi * cosPhase + cImag * psi * sinPhase;
+    }
+
+    if (realPart < min) min = realPart;
+    if (realPart > max) max = realPart;
+  }
+
+  return { min, max };
+}
+
+/**
  * Class-based implementation of harmonic oscillator analytical solution.
  * Extends the AnalyticalSolution abstract base class.
  */
@@ -397,6 +519,42 @@ export class HarmonicOscillatorSolution extends AnalyticalSolution {
       this.mass,
       stateIndex,
       xGrid,
+    );
+  }
+
+  calculateWavefunctionMinMax(
+    stateIndex: number,
+    xMin: number,
+    xMax: number,
+    numPoints?: number,
+  ): { min: number; max: number } {
+    return calculateHarmonicOscillatorWavefunctionMinMax(
+      this.springConstant,
+      this.mass,
+      stateIndex,
+      xMin,
+      xMax,
+      numPoints,
+    );
+  }
+
+  calculateSuperpositionMinMax(
+    coefficients: Array<[number, number]>,
+    energies: number[],
+    time: number,
+    xMin: number,
+    xMax: number,
+    numPoints?: number,
+  ): { min: number; max: number } {
+    return calculateHarmonicOscillatorSuperpositionMinMax(
+      this.springConstant,
+      this.mass,
+      coefficients,
+      energies,
+      time,
+      xMin,
+      xMax,
+      numPoints,
     );
   }
 }

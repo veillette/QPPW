@@ -378,6 +378,196 @@ export function calculateFiniteWellWavefunctionSecondDerivative(
 }
 
 /**
+ * Calculate the minimum and maximum values of the wavefunction for a finite square well.
+ *
+ * @param wellWidth - Width of the well (L) in meters
+ * @param wellDepth - Depth of the well (V₀) in Joules (positive value)
+ * @param mass - Particle mass in kg
+ * @param energy - Energy of the eigenstate in Joules
+ * @param parity - Parity of the state ("even" or "odd")
+ * @param xMin - Left boundary of the region in meters
+ * @param xMax - Right boundary of the region in meters
+ * @param numPoints - Number of points to sample (default: 1000)
+ * @returns Object containing min and max values of the wavefunction
+ */
+export function calculateFiniteWellWavefunctionMinMax(
+  wellWidth: number,
+  wellDepth: number,
+  mass: number,
+  energy: number,
+  parity: "even" | "odd",
+  xMin: number,
+  xMax: number,
+  numPoints: number = 1000,
+): { min: number; max: number } {
+  const { HBAR } = QuantumConstants;
+  const halfWidth = wellWidth / 2;
+  const k = Math.sqrt(2 * mass * (energy + wellDepth)) / HBAR;
+  const kappa = Math.sqrt(-2 * mass * energy) / HBAR;
+
+  // Determine normalization constant
+  let normalization: number;
+  if (parity === "even") {
+    const cosVal = Math.cos(k * halfWidth);
+    const B = cosVal * Math.exp(kappa * halfWidth);
+    const integral =
+      2 * (halfWidth + Math.sin(2 * k * halfWidth) / (4 * k)) +
+      (2 * B * B) / (2 * kappa);
+    normalization = 1 / Math.sqrt(integral);
+  } else {
+    const sinVal = Math.sin(k * halfWidth);
+    const B = sinVal * Math.exp(kappa * halfWidth);
+    const integral =
+      2 * (halfWidth - Math.sin(2 * k * halfWidth) / (4 * k)) +
+      (2 * B * B) / (2 * kappa);
+    normalization = 1 / Math.sqrt(integral);
+  }
+
+  let min = Infinity;
+  let max = -Infinity;
+
+  const dx = (xMax - xMin) / (numPoints - 1);
+
+  for (let i = 0; i < numPoints; i++) {
+    const x = xMin + i * dx;
+    let psi: number;
+
+    if (Math.abs(x) <= halfWidth) {
+      // Inside the well
+      if (parity === "even") {
+        psi = normalization * Math.cos(k * x);
+      } else {
+        psi = normalization * Math.sin(k * x);
+      }
+    } else {
+      // Outside the well
+      const absX = Math.abs(x);
+      const signX = x >= 0 ? 1 : -1;
+
+      if (parity === "even") {
+        const cosVal = Math.cos(k * halfWidth);
+        const B = normalization * cosVal * Math.exp(kappa * halfWidth);
+        psi = B * Math.exp(-kappa * absX);
+      } else {
+        const sinVal = Math.sin(k * halfWidth);
+        const B = normalization * sinVal * Math.exp(kappa * halfWidth);
+        psi = B * signX * Math.exp(-kappa * absX);
+      }
+    }
+
+    if (psi < min) min = psi;
+    if (psi > max) max = psi;
+  }
+
+  return { min, max };
+}
+
+/**
+ * Calculate the minimum and maximum values of a superposition of wavefunctions
+ * for a finite square well.
+ *
+ * @param wellWidth - Width of the well (L) in meters
+ * @param wellDepth - Depth of the well (V₀) in Joules (positive value)
+ * @param mass - Particle mass in kg
+ * @param energies - Energy eigenvalues in Joules
+ * @param parities - Parities for each eigenstate
+ * @param coefficients - Complex coefficients for each eigenstate (as [real, imag] pairs)
+ * @param time - Time in seconds
+ * @param xMin - Left boundary of the region in meters
+ * @param xMax - Right boundary of the region in meters
+ * @param numPoints - Number of points to sample (default: 1000)
+ * @returns Object containing min and max values of the superposition's real part
+ */
+export function calculateFiniteWellSuperpositionMinMax(
+  wellWidth: number,
+  wellDepth: number,
+  mass: number,
+  energies: number[],
+  parities: ("even" | "odd")[],
+  coefficients: Array<[number, number]>,
+  time: number,
+  xMin: number,
+  xMax: number,
+  numPoints: number = 1000,
+): { min: number; max: number } {
+  const { HBAR } = QuantumConstants;
+  const halfWidth = wellWidth / 2;
+
+  let min = Infinity;
+  let max = -Infinity;
+
+  const dx = (xMax - xMin) / (numPoints - 1);
+
+  for (let i = 0; i < numPoints; i++) {
+    const x = xMin + i * dx;
+    let realPart = 0;
+
+    for (let n = 0; n < coefficients.length; n++) {
+      const [cReal, cImag] = coefficients[n];
+      const energy = energies[n];
+      const parity = parities[n];
+
+      const k = Math.sqrt(2 * mass * (energy + wellDepth)) / HBAR;
+      const kappa = Math.sqrt(-2 * mass * energy) / HBAR;
+
+      // Determine normalization
+      let normalization: number;
+      if (parity === "even") {
+        const cosVal = Math.cos(k * halfWidth);
+        const B = cosVal * Math.exp(kappa * halfWidth);
+        const integral =
+          2 * (halfWidth + Math.sin(2 * k * halfWidth) / (4 * k)) +
+          (2 * B * B) / (2 * kappa);
+        normalization = 1 / Math.sqrt(integral);
+      } else {
+        const sinVal = Math.sin(k * halfWidth);
+        const B = sinVal * Math.exp(kappa * halfWidth);
+        const integral =
+          2 * (halfWidth - Math.sin(2 * k * halfWidth) / (4 * k)) +
+          (2 * B * B) / (2 * kappa);
+        normalization = 1 / Math.sqrt(integral);
+      }
+
+      // Calculate wavefunction value
+      let psi: number;
+      if (Math.abs(x) <= halfWidth) {
+        if (parity === "even") {
+          psi = normalization * Math.cos(k * x);
+        } else {
+          psi = normalization * Math.sin(k * x);
+        }
+      } else {
+        const absX = Math.abs(x);
+        const signX = x >= 0 ? 1 : -1;
+
+        if (parity === "even") {
+          const cosVal = Math.cos(k * halfWidth);
+          const B = normalization * cosVal * Math.exp(kappa * halfWidth);
+          psi = B * Math.exp(-kappa * absX);
+        } else {
+          const sinVal = Math.sin(k * halfWidth);
+          const B = normalization * sinVal * Math.exp(kappa * halfWidth);
+          psi = B * signX * Math.exp(-kappa * absX);
+        }
+      }
+
+      // Time evolution
+      const phase = (-energy * time) / HBAR;
+      const cosPhase = Math.cos(phase);
+      const sinPhase = Math.sin(phase);
+
+      // Complex multiplication: real part
+      realPart += cReal * psi * cosPhase + cImag * psi * sinPhase;
+    }
+
+    if (realPart < min) min = realPart;
+    if (realPart > max) max = realPart;
+  }
+
+  return { min, max };
+}
+
+/**
  * Class-based implementation of finite square well analytical solution.
  * Extends the AnalyticalSolution abstract base class.
  */
@@ -533,6 +723,69 @@ export class FiniteSquareWellSolution extends AnalyticalSolution {
       energy,
       parity,
       xGrid,
+    );
+  }
+
+  calculateWavefunctionMinMax(
+    stateIndex: number,
+    xMin: number,
+    xMax: number,
+    numPoints?: number,
+  ): { min: number; max: number } {
+    const parity =
+      this.parities[stateIndex] || (stateIndex % 2 === 0 ? "even" : "odd");
+
+    const { HBAR } = QuantumConstants;
+    const xi0 =
+      ((this.wellWidth / 2) * Math.sqrt(2 * this.mass * this.wellDepth)) / HBAR;
+
+    let xi: number | null = null;
+    if (parity === "even") {
+      xi = findEvenParityState(xi0, Math.floor(stateIndex / 2));
+    } else {
+      xi = findOddParityState(xi0, Math.floor(stateIndex / 2));
+    }
+
+    if (xi === null) {
+      return { min: 0, max: 0 };
+    }
+
+    const energy =
+      (HBAR * HBAR * xi * xi) /
+        (2 * this.mass * (this.wellWidth / 2) * (this.wellWidth / 2)) -
+      this.wellDepth;
+
+    return calculateFiniteWellWavefunctionMinMax(
+      this.wellWidth,
+      this.wellDepth,
+      this.mass,
+      energy,
+      parity,
+      xMin,
+      xMax,
+      numPoints,
+    );
+  }
+
+  calculateSuperpositionMinMax(
+    coefficients: Array<[number, number]>,
+    energies: number[],
+    time: number,
+    xMin: number,
+    xMax: number,
+    numPoints?: number,
+  ): { min: number; max: number } {
+    return calculateFiniteWellSuperpositionMinMax(
+      this.wellWidth,
+      this.wellDepth,
+      this.mass,
+      energies,
+      this.parities,
+      coefficients,
+      time,
+      xMin,
+      xMax,
+      numPoints,
     );
   }
 }

@@ -555,6 +555,102 @@ export abstract class BaseModel {
   }
 
   /**
+   * Calculate the minimum and maximum values of a wavefunction in a given region.
+   *
+   * This method finds the extrema of an eigenstate wavefunction within the specified
+   * spatial range. The wavefunction is sampled at multiple points to accurately
+   * capture the minimum and maximum values.
+   *
+   * @param n - The quantum number (1, 2, 3, ...)
+   * @param xMinNm - Left boundary of the region in nanometers
+   * @param xMaxNm - Right boundary of the region in nanometers
+   * @param numPoints - Number of points to sample (default: 1000)
+   * @returns Object containing min and max values, or null if unavailable
+   */
+  public getWavefunctionMinMax(
+    n: number,
+    xMinNm: number,
+    xMaxNm: number,
+    numPoints?: number,
+  ): { min: number; max: number } | null {
+    if (!this.boundStateResult) {
+      this.calculateBoundStates();
+    }
+
+    // Get analytical solution from solver
+    const analyticalSolution = this.solver.getAnalyticalSolution();
+
+    if (analyticalSolution && n > 0) {
+      // Convert from nanometers to meters
+      const xMinM = xMinNm * QuantumConstants.NM_TO_M;
+      const xMaxM = xMaxNm * QuantumConstants.NM_TO_M;
+
+      // Calculate using analytical solution (stateIndex is 0-indexed)
+      return analyticalSolution.calculateWavefunctionMinMax(
+        n - 1,
+        xMinM,
+        xMaxM,
+        numPoints,
+      );
+    }
+
+    return null;
+  }
+
+  /**
+   * Calculate the minimum and maximum values of a time-evolved superposition.
+   *
+   * A quantum superposition is a linear combination of energy eigenstates:
+   * Ψ(x,t) = Σ cₙ ψₙ(x) exp(-iEₙt/ℏ)
+   *
+   * This method evaluates the superposition at the given time within the specified
+   * spatial region and returns the minimum and maximum values of the real part.
+   *
+   * @param coefficients - Complex coefficients for each eigenstate (as [real, imag] pairs)
+   * @param timeFs - Time in femtoseconds
+   * @param xMinNm - Left boundary of the region in nanometers
+   * @param xMaxNm - Right boundary of the region in nanometers
+   * @param numPoints - Number of points to sample (default: 1000)
+   * @returns Object containing min and max values, or null if unavailable
+   */
+  public getSuperpositionMinMax(
+    coefficients: Array<[number, number]>,
+    timeFs: number,
+    xMinNm: number,
+    xMaxNm: number,
+    numPoints?: number,
+  ): { min: number; max: number } | null {
+    if (!this.boundStateResult) {
+      this.calculateBoundStates();
+    }
+
+    // Get analytical solution from solver
+    const analyticalSolution = this.solver.getAnalyticalSolution();
+
+    if (analyticalSolution && this.boundStateResult) {
+      // Convert from nanometers to meters and femtoseconds to seconds
+      const xMinM = xMinNm * QuantumConstants.NM_TO_M;
+      const xMaxM = xMaxNm * QuantumConstants.NM_TO_M;
+      const timeS = timeFs * 1e-15; // Convert femtoseconds to seconds
+
+      // Use energies from bound state results
+      const energies = this.boundStateResult.energies;
+
+      // Calculate using analytical solution
+      return analyticalSolution.calculateSuperpositionMinMax(
+        coefficients,
+        energies,
+        timeS,
+        xMinM,
+        xMaxM,
+        numPoints,
+      );
+    }
+
+    return null;
+  }
+
+  /**
    * Calculate the classical probability density for a given energy level.
    * This method provides a default implementation that can be overridden by subclasses.
    * @param energyIndex - Index of the energy level (0-indexed)
