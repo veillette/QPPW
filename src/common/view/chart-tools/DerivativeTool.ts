@@ -39,6 +39,7 @@ export class DerivativeTool extends Node {
   private readonly container: Node;
   private readonly marker: Line;
   private readonly markerHandle: Circle;
+  private readonly positionCircle: Circle; // Circle tracking wavefunction position
   private readonly tangentLine: Path;
   private readonly label: Text;
 
@@ -78,6 +79,14 @@ export class DerivativeTool extends Node {
       cursor: "ew-resize",
     });
     this.container.addChild(this.markerHandle);
+
+    // Create position tracking circle (shows position on wavefunction)
+    this.positionCircle = new Circle(5, {
+      fill: QPPWColors.derivativeToolFillDarkProperty,
+      stroke: QPPWColors.backgroundColorProperty,
+      lineWidth: 2,
+    });
+    this.container.addChild(this.positionCircle);
 
     // Create tangent line path
     this.tangentLine = new Path(null, {
@@ -180,6 +189,11 @@ export class DerivativeTool extends Node {
         derivativeData.wavefunctionValue,
       );
       this.tangentLine.shape = tangentLineShape;
+
+      // Update position tracking circle
+      const { dataToViewY } = this.options;
+      this.positionCircle.centerX = viewX;
+      this.positionCircle.centerY = dataToViewY(derivativeData.wavefunctionValue);
 
       // Update label with proper units (m^-1/2 per nm)
       this.label.string =
