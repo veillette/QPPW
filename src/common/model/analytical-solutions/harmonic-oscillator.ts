@@ -306,11 +306,14 @@ export function calculateHarmonicOscillatorWavefunctionSecondDerivative(
       hermite_second_derivative = 4 * n * (n - 1) * hermite_n_minus_2;
     }
 
-    // ψ'' = N * [α²x²*exp(-αx²/2)*H_n - α*exp(-αx²/2)*H_n
-    //            - 2αx*exp(-αx²/2)*H'_n + α²*exp(-αx²/2)*H''_n]
+    // ψ'' = N * exp(-ξ²/2) * α² * [ξ²H_n(ξ) - H_n(ξ) - 2ξH'_n(ξ) + H''_n(ξ)]
+    // where ξ = αx
+    // The α² factor comes from the chain rule: d²/dx² = α² * d²/dξ²
     const secondDeriv =
       normalization *
       gaussianFactor *
+      alpha *
+      alpha *
       (xi * xi * hermite_n -
         hermite_n -
         2 * xi * hermite_derivative +
