@@ -231,17 +231,21 @@ export function calculateFiniteWellWavefunctionFirstDerivative(
   let normalization: number;
   if (parity === "even") {
     const cosVal = Math.cos(k * halfWidth);
-    const B = cosVal * Math.exp(kappa * halfWidth);
+    // Inside: ∫_{-L/2}^{L/2} cos²(kx) dx = L/2 + sin(kL)/(2k)
+    // Outside: ∫_{-∞}^{-L/2} + ∫_{L/2}^∞ = cos²(kL/2) / κ
     const integral =
-      2 * (halfWidth + Math.sin(2 * k * halfWidth) / (4 * k)) +
-      (2 * B * B) / (2 * kappa);
+      halfWidth +
+      Math.sin(2 * k * halfWidth) / (2 * k) +
+      (cosVal * cosVal) / kappa;
     normalization = 1 / Math.sqrt(integral);
   } else {
     const sinVal = Math.sin(k * halfWidth);
-    const B = sinVal * Math.exp(kappa * halfWidth);
+    // Inside: ∫_{-L/2}^{L/2} sin²(kx) dx = L/2 - sin(kL)/(2k)
+    // Outside: ∫_{-∞}^{-L/2} + ∫_{L/2}^∞ = sin²(kL/2) / κ
     const integral =
-      2 * (halfWidth - Math.sin(2 * k * halfWidth) / (4 * k)) +
-      (2 * B * B) / (2 * kappa);
+      halfWidth -
+      Math.sin(2 * k * halfWidth) / (2 * k) +
+      (sinVal * sinVal) / kappa;
     normalization = 1 / Math.sqrt(integral);
   }
 
@@ -323,17 +327,21 @@ export function calculateFiniteWellWavefunctionSecondDerivative(
   let normalization: number;
   if (parity === "even") {
     const cosVal = Math.cos(k * halfWidth);
-    const B = cosVal * Math.exp(kappa * halfWidth);
+    // Inside: ∫_{-L/2}^{L/2} cos²(kx) dx = L/2 + sin(kL)/(2k)
+    // Outside: ∫_{-∞}^{-L/2} + ∫_{L/2}^∞ = cos²(kL/2) / κ
     const integral =
-      2 * (halfWidth + Math.sin(2 * k * halfWidth) / (4 * k)) +
-      (2 * B * B) / (2 * kappa);
+      halfWidth +
+      Math.sin(2 * k * halfWidth) / (2 * k) +
+      (cosVal * cosVal) / kappa;
     normalization = 1 / Math.sqrt(integral);
   } else {
     const sinVal = Math.sin(k * halfWidth);
-    const B = sinVal * Math.exp(kappa * halfWidth);
+    // Inside: ∫_{-L/2}^{L/2} sin²(kx) dx = L/2 - sin(kL)/(2k)
+    // Outside: ∫_{-∞}^{-L/2} + ∫_{L/2}^∞ = sin²(kL/2) / κ
     const integral =
-      2 * (halfWidth - Math.sin(2 * k * halfWidth) / (4 * k)) +
-      (2 * B * B) / (2 * kappa);
+      halfWidth -
+      Math.sin(2 * k * halfWidth) / (2 * k) +
+      (sinVal * sinVal) / kappa;
     normalization = 1 / Math.sqrt(integral);
   }
 
@@ -411,17 +419,21 @@ export function calculateFiniteWellWavefunctionMinMax(
   let normalization: number;
   if (parity === "even") {
     const cosVal = Math.cos(k * halfWidth);
-    const B = cosVal * Math.exp(kappa * halfWidth);
+    // Inside: ∫_{-L/2}^{L/2} cos²(kx) dx = L/2 + sin(kL)/(2k)
+    // Outside: ∫_{-∞}^{-L/2} + ∫_{L/2}^∞ = cos²(kL/2) / κ
     const integral =
-      2 * (halfWidth + Math.sin(2 * k * halfWidth) / (4 * k)) +
-      (2 * B * B) / (2 * kappa);
+      halfWidth +
+      Math.sin(2 * k * halfWidth) / (2 * k) +
+      (cosVal * cosVal) / kappa;
     normalization = 1 / Math.sqrt(integral);
   } else {
     const sinVal = Math.sin(k * halfWidth);
-    const B = sinVal * Math.exp(kappa * halfWidth);
+    // Inside: ∫_{-L/2}^{L/2} sin²(kx) dx = L/2 - sin(kL)/(2k)
+    // Outside: ∫_{-∞}^{-L/2} + ∫_{L/2}^∞ = sin²(kL/2) / κ
     const integral =
-      2 * (halfWidth - Math.sin(2 * k * halfWidth) / (4 * k)) +
-      (2 * B * B) / (2 * kappa);
+      halfWidth -
+      Math.sin(2 * k * halfWidth) / (2 * k) +
+      (sinVal * sinVal) / kappa;
     normalization = 1 / Math.sqrt(integral);
   }
 
@@ -925,22 +937,30 @@ export function solveFiniteSquareWell(
     if (parity === "even") {
       // Match boundary conditions at x = L/2
       const cosVal = Math.cos(k * halfL);
+      // B with exp factor is used for wavefunction evaluation
       const B = cosVal * Math.exp(kappa * halfL);
 
-      // Normalization integral
+      // Normalization integral (calculated with A = 1)
+      // Inside: ∫_{-L/2}^{L/2} cos²(kx) dx = L/2 + sin(kL)/(2k)
+      // Outside: ∫_{-∞}^{-L/2} + ∫_{L/2}^∞ = cos²(kL/2) / κ
       const integral =
-        2 * (halfL + Math.sin(2 * k * halfL) / (4 * k)) +
-        (2 * B * B) / (2 * kappa);
+        halfL +
+        Math.sin(2 * k * halfL) / (2 * k) +
+        (cosVal * cosVal) / kappa;
       normalization = 1 / Math.sqrt(integral);
     } else {
       // Match boundary conditions at x = L/2
       const sinVal = Math.sin(k * halfL);
+      // B with exp factor is used for wavefunction evaluation
       const B = sinVal * Math.exp(kappa * halfL);
 
-      // Normalization integral
+      // Normalization integral (calculated with A = 1)
+      // Inside: ∫_{-L/2}^{L/2} sin²(kx) dx = L/2 - sin(kL)/(2k)
+      // Outside: ∫_{-∞}^{-L/2} + ∫_{L/2}^∞ = sin²(kL/2) / κ
       const integral =
-        2 * (halfL - Math.sin(2 * k * halfL) / (4 * k)) +
-        (2 * B * B) / (2 * kappa);
+        halfL -
+        Math.sin(2 * k * halfL) / (2 * k) +
+        (sinVal * sinVal) / kappa;
       normalization = 1 / Math.sqrt(integral);
     }
 
