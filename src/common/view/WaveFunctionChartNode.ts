@@ -71,6 +71,7 @@ export class WaveFunctionChartNode extends Node {
   private readonly magnitudePath: Path;
   private readonly probabilityDensityPath: Path;
   private readonly zeroLine: Line;
+  private readonly avgPositionIndicator: Line; // Vertical line indicator for average position
   private readonly rmsPositionIndicator: Path; // Double arrow indicator for RMS position
   private readonly axesNode: Node;
   private yAxisLabel!: Text;
@@ -207,6 +208,14 @@ export class WaveFunctionChartNode extends Node {
       fill: QPPWColors.wavefunctionProbabilityFillProperty, // Semi-transparent fill
     });
     this.plotContentNode.addChild(this.probabilityDensityPath);
+
+    // Create average position indicator (vertical line)
+    this.avgPositionIndicator = new Line(0, 0, 0, 0, {
+      stroke: QPPWColors.energyLevelSelectedProperty,
+      lineWidth: 2,
+      lineDash: [8, 4],
+    });
+    this.plotContentNode.addChild(this.avgPositionIndicator);
 
     // Create RMS position indicator (double arrow)
     this.rmsPositionIndicator = new Path(null, {
@@ -940,6 +949,12 @@ export class WaveFunctionChartNode extends Node {
           rms.toFixed(2),
         );
 
+      // Update average position indicator: vertical line at ⟨x⟩
+      const avgX = this.dataToViewX(avg);
+      const yTop = this.dataToViewY(this.yMaxProperty.value);
+      const yBottom = this.dataToViewY(this.yMinProperty.value);
+      this.avgPositionIndicator.setLine(avgX, yTop, avgX, yBottom);
+
       // Update RMS indicator: horizontal double arrow from (avg - rms) to (avg + rms)
       const leftX = avg - rms;
       const rightX = avg + rms;
@@ -979,6 +994,7 @@ export class WaveFunctionChartNode extends Node {
       this.magnitudePath.visible = false;
 
       // Hide RMS position indicator and labels
+      this.avgPositionIndicator.setLine(0, 0, 0, 0);
       this.rmsPositionIndicator.shape = null;
       this.avgPositionLabel.string = "";
       this.rmsPositionLabel.string = "";
@@ -994,6 +1010,7 @@ export class WaveFunctionChartNode extends Node {
       this.phaseColorVisualization.hide();
 
       // Hide RMS position indicator and labels
+      this.avgPositionIndicator.setLine(0, 0, 0, 0);
       this.rmsPositionIndicator.shape = null;
       this.avgPositionLabel.string = "";
       this.rmsPositionLabel.string = "";
@@ -1066,6 +1083,12 @@ export class WaveFunctionChartNode extends Node {
           rms.toFixed(2),
         );
 
+      // Update average position indicator: vertical line at ⟨x⟩
+      const avgX = this.dataToViewX(avg);
+      const yTop = this.dataToViewY(this.yMaxProperty.value);
+      const yBottom = this.dataToViewY(this.yMinProperty.value);
+      this.avgPositionIndicator.setLine(avgX, yTop, avgX, yBottom);
+
       // Update RMS indicator: horizontal double arrow from (avg - rms) to (avg + rms)
       const leftX = avg - rms;
       const rightX = avg + rms;
@@ -1109,6 +1132,7 @@ export class WaveFunctionChartNode extends Node {
       this.magnitudePath.visible = false;
 
       // Hide RMS position indicator and labels
+      this.avgPositionIndicator.setLine(0, 0, 0, 0);
       this.rmsPositionIndicator.shape = null;
       this.avgPositionLabel.string = "";
       this.rmsPositionLabel.string = "";
@@ -1124,6 +1148,7 @@ export class WaveFunctionChartNode extends Node {
       this.phaseColorVisualization.hide();
 
       // Hide RMS position indicator and labels
+      this.avgPositionIndicator.setLine(0, 0, 0, 0);
       this.rmsPositionIndicator.shape = null;
       this.avgPositionLabel.string = "";
       this.rmsPositionLabel.string = "";
