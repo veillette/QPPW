@@ -9,6 +9,7 @@ import { NumberProperty, BooleanProperty } from "scenerystack/axon";
 import { PhetFont } from "scenerystack/scenery-phet";
 import type { ScreenModel } from "../../model/ScreenModels.js";
 import QPPWColors from "../../../QPPWColors.js";
+import stringManager from "../../../i18n/StringManager.js";
 
 export type CurvatureToolOptions = {
   chartMargins: { left: number; right: number; top: number; bottom: number };
@@ -165,12 +166,16 @@ export class CurvatureTool extends Node {
       this.parabola.shape = parabolaShape;
 
       // Update label with proper units (nm^-5/2)
-      this.label.string = `d²ψ/dx² = ${derivatives.secondDerivative.toExponential(2)} nm⁻⁵ᐟ²`;
+      this.label.string =
+        stringManager.secondDerivativeLabelStringProperty.value.replace(
+          "{{value}}",
+          derivatives.secondDerivative.toExponential(2),
+        );
       this.label.centerX = viewX;
       this.label.bottom = yTop - 5;
     } else {
       this.parabola.shape = null;
-      this.label.string = "N/A";
+      this.label.string = stringManager.notAvailableStringProperty.value;
     }
   }
 

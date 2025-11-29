@@ -626,6 +626,62 @@ export class StringManager {
     return this.stringProperties.timeFormatStringProperty;
   }
 
+  get classicallyForbiddenLabelStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.classicallyForbiddenLabelStringProperty;
+  }
+
+  get secondDerivativeLabelStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.secondDerivativeLabelStringProperty;
+  }
+
+  get firstDerivativeLabelStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.firstDerivativeLabelStringProperty;
+  }
+
+  get notAvailableStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.notAvailableStringProperty;
+  }
+
+  get averageWavenumberLabelStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.averageWavenumberLabelStringProperty;
+  }
+
+  get rmsWavenumberLabelStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.rmsWavenumberLabelStringProperty;
+  }
+
+  get stateLabelProbabilityStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.stateLabelProbabilityStringProperty;
+  }
+
+  get stateLabelWavefunctionStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.stateLabelWavefunctionStringProperty;
+  }
+
+  get valueWithPointsStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.valueWithPointsStringProperty;
+  }
+
+  get valueWithNanometersStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.valueWithNanometersStringProperty;
+  }
+
+  get valueWithElectronVoltsStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.valueWithElectronVoltsStringProperty;
+  }
+
+  get valueWithElectronMassStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.valueWithElectronMassStringProperty;
+  }
+
+  get valueWithElectronVoltsPerNanometerStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.valueWithElectronVoltsPerNanometerStringProperty;
+  }
+
+  get percentageValueStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.percentageValueStringProperty;
+  }
+
   /**
    * Get all raw string properties
    * This can be used if direct access is needed to a specific string property

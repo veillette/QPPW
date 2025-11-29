@@ -152,5 +152,19 @@
   "introDescription": "Get started with quantum mechanics in a potential well.\nExplore basic quantum concepts with a simplified interface.",
   "introKeyConcepts": "• Quantum confinement basics\n• Energy levels in potential wells\n• Wave function and probability density\n• Exploring different potential types",
   "introInteractions": "• Select different potential well types\n• Adjust well width and depth\n• View energy levels and wave functions\n• Switch between probability density and wave function displays",
-  "introEducationalContent": "Screen Overview:\nThis introductory screen provides a simplified interface to explore quantum mechanics in potential wells. Focus on understanding the basics without the complexity of time evolution or superposition states.\n\nAvailable Controls:\n• Potential Well Type: Select different quantum potential configurations\n• Well Parameters: Adjust width and depth to see how energy levels change\n• Display Mode: Switch between probability density and wave function views\n\nLearning Objectives:\n• Understand quantum confinement in potential wells\n• Explore how well parameters affect energy levels\n• Visualize wave functions and probability densities"
+  "introEducationalContent": "Screen Overview:\nThis introductory screen provides a simplified interface to explore quantum mechanics in potential wells. Focus on understanding the basics without the complexity of time evolution or superposition states.\n\nAvailable Controls:\n• Potential Well Type: Select different quantum potential configurations\n• Well Parameters: Adjust width and depth to see how energy levels change\n• Display Mode: Switch between probability density and wave function views\n\nLearning Objectives:\n• Understand quantum confinement in potential wells\n• Explore how well parameters affect energy levels\n• Visualize wave functions and probability densities",
+  "classicallyForbiddenLabel": "Classically Forbidden: {{percentage}}%",
+  "secondDerivativeLabel": "d²ψ/dx² = {{value}} nm⁻⁵ᐟ²",
+  "firstDerivativeLabel": "dψ/dx = {{value}} nm⁻³ᐟ²",
+  "notAvailable": "N/A",
+  "averageWavenumberLabel": "⟨k⟩ = {{value}} nm⁻¹",
+  "rmsWavenumberLabel": "k_rms = {{value}} nm⁻¹",
+  "stateLabelProbability": "|{{label}}|²",
+  "stateLabelWavefunction": "|{{label}}|",
+  "valueWithPoints": "{{value}} points",
+  "valueWithNanometers": "{{value}} nm",
+  "valueWithElectronVolts": "{{value}} eV",
+  "valueWithElectronMass": "{{value}} mₑ",
+  "valueWithElectronVoltsPerNanometer": "{{value}} eV/nm",
+  "percentageValue": "{{value}}%"
 }

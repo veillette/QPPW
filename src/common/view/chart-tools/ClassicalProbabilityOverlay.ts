@@ -11,6 +11,7 @@ import { hasClassicalTurningPoints, hasClassicallyForbiddenProbability } from ".
 import type { BoundStateResult } from "../../model/PotentialFunction.js";
 import QuantumConstants from "../../model/QuantumConstants.js";
 import QPPWColors from "../../../QPPWColors.js";
+import stringManager from "../../../i18n/StringManager.js";
 
 export type ClassicalProbabilityOverlayOptions = {
   chartMargins: { left: number; right: number; top: number; bottom: number };
@@ -115,7 +116,11 @@ export class ClassicalProbabilityOverlay extends Node {
       ) {
         const percentage =
           this.model.getClassicallyForbiddenProbability(selectedIndex);
-        this.forbiddenProbabilityLabel.string = `Classically Forbidden: ${percentage.toFixed(1)}%`;
+        this.forbiddenProbabilityLabel.string =
+          stringManager.classicallyForbiddenLabelStringProperty.value.replace(
+            "{{percentage}}",
+            percentage.toFixed(1),
+          );
         this.forbiddenProbabilityLabel.visible = true;
       }
     };

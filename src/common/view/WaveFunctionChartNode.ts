@@ -34,6 +34,7 @@ import { DerivativeTool } from "./chart-tools/DerivativeTool.js";
 import { ZerosVisualization } from "./chart-tools/ZerosVisualization.js";
 import { PhaseColorVisualization } from "./chart-tools/PhaseColorVisualization.js";
 import { ClassicalProbabilityOverlay } from "./chart-tools/ClassicalProbabilityOverlay.js";
+import stringManager from "../../i18n/StringManager.js";
 
 // Chart axis range constant (shared with EnergyChartNode)
 const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
@@ -553,9 +554,17 @@ export class WaveFunctionChartNode extends Node {
       }
 
       if (displayMode === "probabilityDensity") {
-        this.stateLabelNode.string = `|${label}|²`;
+        this.stateLabelNode.string =
+          stringManager.stateLabelProbabilityStringProperty.value.replace(
+            "{{label}}",
+            label,
+          );
       } else if (displayMode === "phaseColor") {
-        this.stateLabelNode.string = `|${label}|`;
+        this.stateLabelNode.string =
+          stringManager.stateLabelWavefunctionStringProperty.value.replace(
+            "{{label}}",
+            label,
+          );
       } else {
         this.stateLabelNode.string = label;
       }
@@ -579,9 +588,17 @@ export class WaveFunctionChartNode extends Node {
       const stateLabel = `ψ${this.toSubscript(stateNumber)}`;
 
       if (displayMode === "probabilityDensity") {
-        this.stateLabelNode.string = `|${stateLabel}|²`;
+        this.stateLabelNode.string =
+          stringManager.stateLabelProbabilityStringProperty.value.replace(
+            "{{label}}",
+            stateLabel,
+          );
       } else if (displayMode === "phaseColor") {
-        this.stateLabelNode.string = `|${stateLabel}|`;
+        this.stateLabelNode.string =
+          stringManager.stateLabelWavefunctionStringProperty.value.replace(
+            "{{label}}",
+            stateLabel,
+          );
       } else {
         this.stateLabelNode.string = stateLabel;
       }

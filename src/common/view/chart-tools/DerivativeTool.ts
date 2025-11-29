@@ -9,6 +9,7 @@ import { NumberProperty, BooleanProperty } from "scenerystack/axon";
 import { PhetFont } from "scenerystack/scenery-phet";
 import type { ScreenModel } from "../../model/ScreenModels.js";
 import QPPWColors from "../../../QPPWColors.js";
+import stringManager from "../../../i18n/StringManager.js";
 
 export type DerivativeToolOptions = {
   chartMargins: { left: number; right: number; top: number; bottom: number };
@@ -164,12 +165,16 @@ export class DerivativeTool extends Node {
       this.tangentLine.shape = tangentLineShape;
 
       // Update label with proper units (nm^-3/2)
-      this.label.string = `dψ/dx = ${derivativeData.firstDerivative.toExponential(2)} nm⁻³ᐟ²`;
+      this.label.string =
+        stringManager.firstDerivativeLabelStringProperty.value.replace(
+          "{{value}}",
+          derivativeData.firstDerivative.toExponential(2),
+        );
       this.label.centerX = viewX;
       this.label.bottom = yTop - 5;
     } else {
       this.tangentLine.shape = null;
-      this.label.string = "N/A";
+      this.label.string = stringManager.notAvailableStringProperty.value;
     }
   }
 
