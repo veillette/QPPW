@@ -35,11 +35,11 @@ import { PotentialType, WellParameters } from "./PotentialFunction.js";
  */
 interface PotentialConfig {
   /** Constructor for analytical solution class */
-  solutionClass: new (...args: any[]) => AnalyticalSolution;
+  solutionClass: new (...args: number[]) => AnalyticalSolution;
   /** Constructor for potential class */
-  potentialClass: new (...args: any[]) => BasePotential;
+  potentialClass: new (...args: number[]) => BasePotential;
   /** Extract constructor arguments from well parameters */
-  extractArgs: (params: WellParameters, mass: number) => any[];
+  extractArgs: (params: WellParameters, mass: number) => number[];
   /** Required parameter names */
   requiredParams: (keyof WellParameters)[];
 }

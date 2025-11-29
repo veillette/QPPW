@@ -109,7 +109,7 @@ export class MemoizationCache<T> {
  *   (n, width, depth) => `${n}-${width}-${depth}`
  * );
  */
-export function memoize<T, Args extends any[]>(
+export function memoize<T, Args extends readonly unknown[]>(
   fn: (...args: Args) => T,
   keyGenerator?: (...args: Args) => string,
   maxSize: number = 100,
