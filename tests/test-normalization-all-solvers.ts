@@ -65,7 +65,10 @@ function testNormalization(
       const norm = calculateNormalization(wavefunctions[n], xGrid);
       const error = Math.abs(norm - 1.0);
 
-      if (error > tolerance) {
+      if (isNaN(norm)) {
+        allPassed = false;
+        errors.push(`  State ${n}: ∫|ψ|² dx = NaN (wavefunction contains NaN values)`);
+      } else if (error > tolerance) {
         allPassed = false;
         errors.push(
           `  State ${n}: ∫|ψ|² dx = ${norm.toFixed(6)} (error: ${error.toExponential(3)})`,
@@ -179,11 +182,13 @@ testNormalization("Eckart Potential", () =>
 );
 
 // Test 8: Asymmetric Triangle Potential
+// V(x) = ∞ for x < 0, V(x) = Fx for x ≥ 0
+// Use weak slope so wavefunctions fit in nanoscale grid
+// With F = 1e-10 J/m, turning points are ~0.2 nm (well within ±10 nm grid)
 testNormalization("Asymmetric Triangle Potential", () =>
   solveAsymmetricTrianglePotential(
-    1e-19, // potential height
-    1e-9, // left width
-    1e-9, // right width
+    1e-10, // slope F in J/m (weak field for nanoscale)
+    0, // wellWidth (unused parameter)
     ELECTRON_MASS,
     5, // num states
     highResGrid,
