@@ -47,7 +47,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@typescript/native-preview": "^7.0.0-dev.20251105.1",
+    "@typescript/native-preview": "^7.0.0-dev.20251128.1",
     "katex": "^0.16.25",
     "scenerystack": "^3.0.0"
   },
