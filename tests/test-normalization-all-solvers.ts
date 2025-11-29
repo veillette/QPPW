@@ -120,13 +120,13 @@ testNormalization("Finite Square Well", () =>
 );
 
 // Test 3: Harmonic Oscillator
-// Use a moderate spring constant so the characteristic length x_0 = √(ℏ/(mω)) fits in grid
-// With k = 1e10 N/m, ω = √(k/m) ~ 1.05e20 rad/s
-// x_0 = √(ℏ/(mω)) ~ √(1.05e-34/(9.1e-31*1.05e20)) ~ 1e-11 m = 0.01 nm
+// Use a weak spring constant so the characteristic length x_0 = √(ℏ/(mω)) fits in grid
+// With k = 1 N/m, ω = √(k/m) ~ 1.05e15 rad/s
+// x_0 = √(ℏ/(mω)) ~ 3.3e-10 m = 0.33 nm
 // This should fit well within the ±10 nm grid
 testNormalization("Harmonic Oscillator", () =>
   solveHarmonicOscillator(
-    1e10, // spring constant (moderate)
+    1.0, // spring constant (weak, suitable for nanoscale)
     ELECTRON_MASS,
     5, // num states
     highResGrid,

@@ -716,9 +716,10 @@ export function solveHarmonicOscillator(
 
   for (let n = 0; n < numStates; n++) {
     const wavefunction: number[] = [];
+    // Normalization: (mω/(πℏ))^(1/4) / √(2^n n!) = (α²/π)^(1/4) / √(2^n n!)
     const normalization =
       (1 / Math.sqrt(Math.pow(2, n) * factorial(n))) *
-      Math.pow(alpha / Math.PI, 0.25);
+      Math.pow((alpha * alpha) / Math.PI, 0.25);
 
     for (const x of xGrid) {
       const xi = alpha * x;
