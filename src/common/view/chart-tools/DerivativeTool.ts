@@ -164,7 +164,7 @@ export class DerivativeTool extends Node {
       );
       this.tangentLine.shape = tangentLineShape;
 
-      // Update label with proper units (nm^-3/2)
+      // Update label with proper units (m^-1/2 per nm)
       this.label.string =
         stringManager.firstDerivativeLabelStringProperty.value.replace(
           "{{value}}",
