@@ -66,6 +66,7 @@ export class IntroScreenView extends BaseScreenView {
     this.wavenumberChart = new WavenumberChartNode(model, {
       width: wavenumberChartWidth,
       height: wavenumberChartHeight,
+      viewState: this.viewState,
     });
 
     // Position charts stacked vertically

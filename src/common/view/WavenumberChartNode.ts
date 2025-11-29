@@ -19,6 +19,7 @@ import {
   TickLabelSet,
 } from "scenerystack/bamboo";
 import type { ScreenModel } from "../model/ScreenModels.js";
+import type { ScreenViewState } from "./ScreenViewStates.js";
 import QPPWColors from "../../QPPWColors.js";
 import { PhetFont } from "scenerystack/scenery-phet";
 import stringManager from "../../i18n/StringManager.js";
@@ -29,6 +30,7 @@ import {
 
 export class WavenumberChartNode extends Node {
   private readonly model: ScreenModel;
+  private readonly viewState?: ScreenViewState;
   private readonly chartWidth: number;
   private readonly chartHeight: number;
   private readonly chartMargins = { left: 60, right: 20, top: 40, bottom: 40 };
@@ -65,11 +67,13 @@ export class WavenumberChartNode extends Node {
     options?: {
       width?: number;
       height?: number;
+      viewState?: ScreenViewState;
     },
   ) {
     super();
 
     this.model = model;
+    this.viewState = options?.viewState;
     this.chartWidth = options?.width ?? 600;
     this.chartHeight = options?.height ?? 140;
 
@@ -288,6 +292,24 @@ export class WavenumberChartNode extends Node {
     this.model.wellDepthProperty.link(() => this.update());
     this.model.particleMassProperty.link(() => this.update());
     this.model.selectedEnergyLevelIndexProperty.link(() => this.update());
+
+    // Update visibility of RMS indicators if the property exists (IntroViewState only)
+    if (this.viewState && "showRMSIndicatorProperty" in this.viewState) {
+      this.viewState.showRMSIndicatorProperty.link(() => {
+        this.update();
+      });
+    }
+  }
+
+  /**
+   * Checks if RMS indicators should be shown based on viewState property.
+   * Returns true if the property doesn't exist (for backwards compatibility with other screens).
+   */
+  private shouldShowRMSIndicators(): boolean {
+    if (this.viewState && "showRMSIndicatorProperty" in this.viewState) {
+      return this.viewState.showRMSIndicatorProperty.value;
+    }
+    return true; // Show by default if property doesn't exist
   }
 
   /**
@@ -343,25 +365,34 @@ export class WavenumberChartNode extends Node {
 
       // Calculate and display average and RMS wavenumber
       const { avg, rms } = calculateRMSStatistics(kGridNm, phiKSquared);
-      this.avgWavenumberLabel.string =
-        stringManager.averageWavenumberLabelStringProperty.value.replace(
-          "{{value}}",
-          avg.toFixed(2),
-        );
-      this.rmsWavenumberLabel.string =
-        stringManager.rmsWavenumberLabelStringProperty.value.replace(
-          "{{value}}",
-          rms.toFixed(2),
-        );
 
-      // Update RMS indicator: horizontal double arrow from (avg - rms) to (avg + rms)
-      const leftK = avg - rms;
-      const rightK = avg + rms;
-      const x1 = this.dataToViewX(leftK);
-      const x2 = this.dataToViewX(rightK);
-      // Position the indicator at 20% from the top of the visible range
-      const indicatorY = this.dataToViewY(this.yMaxProperty.value * 0.8);
-      this.rmsIndicator.shape = createDoubleArrowShape(x1, x2, indicatorY);
+      // Only show indicators if showRMSIndicatorProperty is true
+      if (this.shouldShowRMSIndicators()) {
+        this.avgWavenumberLabel.string =
+          stringManager.averageWavenumberLabelStringProperty.value.replace(
+            "{{value}}",
+            avg.toFixed(2),
+          );
+        this.rmsWavenumberLabel.string =
+          stringManager.rmsWavenumberLabelStringProperty.value.replace(
+            "{{value}}",
+            rms.toFixed(2),
+          );
+
+        // Update RMS indicator: horizontal double arrow from (avg - rms) to (avg + rms)
+        const leftK = avg - rms;
+        const rightK = avg + rms;
+        const x1 = this.dataToViewX(leftK);
+        const x2 = this.dataToViewX(rightK);
+        // Position the indicator at 20% from the top of the visible range
+        const indicatorY = this.dataToViewY(this.yMaxProperty.value * 0.8);
+        this.rmsIndicator.shape = createDoubleArrowShape(x1, x2, indicatorY);
+      } else {
+        // Hide indicators when checkbox is unchecked
+        this.avgWavenumberLabel.string = "";
+        this.rmsWavenumberLabel.string = "";
+        this.rmsIndicator.shape = null;
+      }
     } finally {
       this.isUpdating = false;
     }

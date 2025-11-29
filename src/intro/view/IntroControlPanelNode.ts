@@ -304,8 +304,23 @@ export class IntroControlPanelNode extends Node {
         })
       : null;
 
+    // RMS indicator checkbox (controls visibility of average and RMS indicators on charts)
+    const rmsIndicatorCheckboxContent = new Checkbox(
+      this.viewState.showRMSIndicatorProperty,
+      new Text("Show Average & RMS", {
+        font: new PhetFont(12),
+        fill: QPPWColors.textFillProperty,
+      }),
+      { boxWidth: 16 },
+    );
+
+    const rmsIndicatorCheckbox = new Node({
+      children: [rmsIndicatorCheckboxContent],
+      x: 20,
+    });
+
     // Build children array (no display mode controls since intro screen shows separate charts)
-    const children: Node[] = [classicalProbabilityCheckbox, showZerosCheckbox];
+    const children: Node[] = [classicalProbabilityCheckbox, showZerosCheckbox, rmsIndicatorCheckbox];
 
     // Add area tool checkbox if it exists
     if (areaToolCheckbox) {

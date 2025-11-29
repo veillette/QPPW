@@ -523,6 +523,13 @@ export class WaveFunctionChartNode extends Node {
       this.update();
     });
 
+    // Update visibility of RMS indicators if the property exists (IntroViewState only)
+    if ("showRMSIndicatorProperty" in this.viewState) {
+      this.viewState.showRMSIndicatorProperty.link(() => {
+        this.update();
+      });
+    }
+
     // Link tool updates to model changes
     const updateTools = () => {
       const displayMode = this.getEffectiveDisplayMode();
@@ -588,6 +595,17 @@ export class WaveFunctionChartNode extends Node {
    */
   private getEffectiveDisplayMode(): string {
     return this.fixedDisplayMode || this.viewState.displayModeProperty.value;
+  }
+
+  /**
+   * Checks if RMS indicators should be shown based on viewState property.
+   * Returns true if the property doesn't exist (for backwards compatibility with other screens).
+   */
+  private shouldShowRMSIndicators(): boolean {
+    if ("showRMSIndicatorProperty" in this.viewState) {
+      return this.viewState.showRMSIndicatorProperty.value;
+    }
+    return true; // Show by default if property doesn't exist
   }
 
   /**
@@ -941,35 +959,45 @@ export class WaveFunctionChartNode extends Node {
         xGridNm,
         probabilityDensityNm,
       );
-      this.avgPositionLabel.string =
-        stringManager.averagePositionLabelStringProperty.value.replace(
-          "{{value}}",
-          avg.toFixed(2),
-        );
-      this.rmsPositionLabel.string =
-        stringManager.rmsPositionLabelStringProperty.value.replace(
-          "{{value}}",
-          rms.toFixed(2),
-        );
 
-      // Update average position indicator: vertical line at ⟨x⟩
-      const avgX = this.dataToViewX(avg);
-      const yTop = this.dataToViewY(this.yMaxProperty.value);
-      const yBottom = this.dataToViewY(this.yMinProperty.value);
-      this.avgPositionIndicator.setLine(avgX, yTop, avgX, yBottom);
+      // Only show indicators if showRMSIndicatorProperty is true
+      if (this.shouldShowRMSIndicators()) {
+        this.avgPositionLabel.string =
+          stringManager.averagePositionLabelStringProperty.value.replace(
+            "{{value}}",
+            avg.toFixed(2),
+          );
+        this.rmsPositionLabel.string =
+          stringManager.rmsPositionLabelStringProperty.value.replace(
+            "{{value}}",
+            rms.toFixed(2),
+          );
 
-      // Update RMS indicator: horizontal double arrow from (avg - rms) to (avg + rms)
-      const leftX = avg - rms;
-      const rightX = avg + rms;
-      const x1 = this.dataToViewX(leftX);
-      const x2 = this.dataToViewX(rightX);
-      // Position the indicator at 80% of the visible range
-      const indicatorY = this.dataToViewY(this.yMaxProperty.value * 0.8);
-      this.rmsPositionIndicator.shape = createDoubleArrowShape(
-        x1,
-        x2,
-        indicatorY,
-      );
+        // Update average position indicator: vertical line at ⟨x⟩
+        const avgX = this.dataToViewX(avg);
+        const yTop = this.dataToViewY(this.yMaxProperty.value);
+        const yBottom = this.dataToViewY(this.yMinProperty.value);
+        this.avgPositionIndicator.setLine(avgX, yTop, avgX, yBottom);
+
+        // Update RMS indicator: horizontal double arrow from (avg - rms) to (avg + rms)
+        const leftX = avg - rms;
+        const rightX = avg + rms;
+        const x1 = this.dataToViewX(leftX);
+        const x2 = this.dataToViewX(rightX);
+        // Position the indicator at 80% of the visible range
+        const indicatorY = this.dataToViewY(this.yMaxProperty.value * 0.8);
+        this.rmsPositionIndicator.shape = createDoubleArrowShape(
+          x1,
+          x2,
+          indicatorY,
+        );
+      } else {
+        // Hide indicators when checkbox is unchecked
+        this.avgPositionLabel.string = "";
+        this.rmsPositionLabel.string = "";
+        this.avgPositionIndicator.setLine(0, 0, 0, 0);
+        this.rmsPositionIndicator.shape = null;
+      }
 
       // Hide wavefunction components and phase color
       this.realPartPath.visible = false;
@@ -1082,35 +1110,45 @@ export class WaveFunctionChartNode extends Node {
         xGridNm,
         probabilityDensityNm,
       );
-      this.avgPositionLabel.string =
-        stringManager.averagePositionLabelStringProperty.value.replace(
-          "{{value}}",
-          avg.toFixed(2),
-        );
-      this.rmsPositionLabel.string =
-        stringManager.rmsPositionLabelStringProperty.value.replace(
-          "{{value}}",
-          rms.toFixed(2),
-        );
 
-      // Update average position indicator: vertical line at ⟨x⟩
-      const avgX = this.dataToViewX(avg);
-      const yTop = this.dataToViewY(this.yMaxProperty.value);
-      const yBottom = this.dataToViewY(this.yMinProperty.value);
-      this.avgPositionIndicator.setLine(avgX, yTop, avgX, yBottom);
+      // Only show indicators if showRMSIndicatorProperty is true
+      if (this.shouldShowRMSIndicators()) {
+        this.avgPositionLabel.string =
+          stringManager.averagePositionLabelStringProperty.value.replace(
+            "{{value}}",
+            avg.toFixed(2),
+          );
+        this.rmsPositionLabel.string =
+          stringManager.rmsPositionLabelStringProperty.value.replace(
+            "{{value}}",
+            rms.toFixed(2),
+          );
 
-      // Update RMS indicator: horizontal double arrow from (avg - rms) to (avg + rms)
-      const leftX = avg - rms;
-      const rightX = avg + rms;
-      const x1 = this.dataToViewX(leftX);
-      const x2 = this.dataToViewX(rightX);
-      // Position the indicator at 80% of the visible range
-      const indicatorY = this.dataToViewY(this.yMaxProperty.value * 0.8);
-      this.rmsPositionIndicator.shape = createDoubleArrowShape(
-        x1,
-        x2,
-        indicatorY,
-      );
+        // Update average position indicator: vertical line at ⟨x⟩
+        const avgX = this.dataToViewX(avg);
+        const yTop = this.dataToViewY(this.yMaxProperty.value);
+        const yBottom = this.dataToViewY(this.yMinProperty.value);
+        this.avgPositionIndicator.setLine(avgX, yTop, avgX, yBottom);
+
+        // Update RMS indicator: horizontal double arrow from (avg - rms) to (avg + rms)
+        const leftX = avg - rms;
+        const rightX = avg + rms;
+        const x1 = this.dataToViewX(leftX);
+        const x2 = this.dataToViewX(rightX);
+        // Position the indicator at 80% of the visible range
+        const indicatorY = this.dataToViewY(this.yMaxProperty.value * 0.8);
+        this.rmsPositionIndicator.shape = createDoubleArrowShape(
+          x1,
+          x2,
+          indicatorY,
+        );
+      } else {
+        // Hide indicators when checkbox is unchecked
+        this.avgPositionLabel.string = "";
+        this.rmsPositionLabel.string = "";
+        this.avgPositionIndicator.setLine(0, 0, 0, 0);
+        this.rmsPositionIndicator.shape = null;
+      }
 
       // Hide wavefunction component paths and phase color
       this.realPartPath.visible = false;
