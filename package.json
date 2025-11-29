@@ -61,7 +61,7 @@
     "tsx": "^4.20.6",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.46.4",
-    "vite": "^5.4.10",
+    "vite": "^7.2.4",
     "vite-plugin-singlefile": "^2.2.0"
   },
   "engines": {
