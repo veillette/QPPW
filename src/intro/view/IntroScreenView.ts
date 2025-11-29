@@ -39,7 +39,8 @@ export class IntroScreenView extends BaseScreenView {
     const energyChartHeight = 200;
     const probabilityChartHeight = 150;
     const waveFunctionChartHeight = 150;
-    const wavenumberChartHeight = 140;
+    const wavenumberChartHeight = 200;
+    const wavenumberChartWidth = 350;
 
     // Create the energy chart (top plot)
     this.energyChart = new EnergyChartNode(model, this.viewState, {
@@ -63,7 +64,7 @@ export class IntroScreenView extends BaseScreenView {
 
     // Create the wavenumber chart (bottom plot) - shows |φ(k)|²
     this.wavenumberChart = new WavenumberChartNode(model, {
-      width: chartsWidth,
+      width: wavenumberChartWidth,
       height: wavenumberChartHeight,
     });
 
@@ -79,9 +80,8 @@ export class IntroScreenView extends BaseScreenView {
     this.waveFunctionChart.top =
       this.probabilityChart.top + probabilityChartHeight + chartSpacing;
 
-    this.wavenumberChart.left = margin;
-    this.wavenumberChart.top =
-      this.waveFunctionChart.top + waveFunctionChartHeight + chartSpacing;
+    this.wavenumberChart.left = 600;
+    this.wavenumberChart.top = 400
 
     // Create listbox parent node for ComboBox popups
     this.listBoxParent = new Node();
@@ -149,8 +149,6 @@ export class IntroScreenView extends BaseScreenView {
    */
   public override step(dt: number): void {
     super.step(dt);
-    if (this.model) {
-      this.model.step(dt);
-    }
+    this.model.step(dt);
   }
 }
