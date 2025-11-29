@@ -40,7 +40,7 @@ import {
   PotentialFunction,
   FourierTransformResult,
 } from "../PotentialFunction.js";
-import { jacobiPolynomial, factorial } from "./math-utilities.js";
+import { jacobiPolynomial, factorial, gamma } from "./math-utilities.js";
 import { AnalyticalSolution } from "./AnalyticalSolution.js";
 import { computeNumericalFourierTransform } from "./fourier-transform-helper.js";
 
@@ -248,10 +248,13 @@ export function solvePoschlTellerPotential(
     const wavefunction: number[] = [];
     const alpha = lambda - n - 0.5;
 
-    // Normalization (with 1/a factor from the variable change)
-    const normalization =
-      Math.sqrt(((1 / a) * (2 * alpha)) / factorial(n)) *
-      Math.sqrt(factorial(n));
+    // Normalization for Pöschl-Teller wavefunctions
+    // N_n = √[(2n + 2α + 1) * Γ(n+1) * Γ(α+1) / (2a * Γ(n+α+1))]
+    // For symmetric Jacobi polynomials P_n^(α,α)
+    const normalization = Math.sqrt(
+      ((2 * n + 2 * alpha + 1) * factorial(n) * gamma(alpha + 1)) /
+        (2 * a * gamma(n + alpha + 1)),
+    );
 
     for (const x of xGrid) {
       const tanhVal = Math.tanh(x / a);
