@@ -469,6 +469,45 @@ export abstract class BaseModel {
   }
 
   /**
+   * Get the wavefunction and probability density in nanometer units.
+   * Converts from SI units (m^-1/2 and m^-1) to nm units (nm^-1/2 and nm^-1).
+   *
+   * @param n - The quantum number (1, 2, 3, ...)
+   * @returns Object containing:
+   *   - wavefunction: Array of wavefunction values in nm^-1/2
+   *   - probabilityDensity: Array of probability density values in nm^-1
+   *   - null if unavailable
+   */
+  public getWavefunctionInNmUnits(n: number): {
+    wavefunction: number[];
+    probabilityDensity: number[];
+  } | null {
+    const wavefunctionSI = this.getWavefunction(n);
+    if (!wavefunctionSI) {
+      return null;
+    }
+
+    // Convert wavefunction from m^-1/2 to nm^-1/2
+    // ψ(nm^-1/2) = ψ(m^-1/2) * sqrt(M_TO_NM)
+    const conversionFactorWavefunction = Math.sqrt(QuantumConstants.M_TO_NM);
+    const wavefunction = wavefunctionSI.map(
+      (psi) => psi * conversionFactorWavefunction,
+    );
+
+    // Convert probability density from m^-1 to nm^-1
+    // P(nm^-1) = |ψ(m^-1/2)|^2 * M_TO_NM
+    const conversionFactorProbability = QuantumConstants.M_TO_NM;
+    const probabilityDensity = wavefunctionSI.map(
+      (psi) => psi * psi * conversionFactorProbability,
+    );
+
+    return {
+      wavefunction,
+      probabilityDensity,
+    };
+  }
+
+  /**
    * Get the spatial grid points for wavefunctions.
    * @returns Array of x positions in nanometers
    */
@@ -673,6 +712,27 @@ export abstract class BaseModel {
   }
 
   /**
+   * Get the classical probability density in nanometer units.
+   * Converts from SI units (m^-1) to nm units (nm^-1).
+   *
+   * @param energyIndex - Index of the energy level (0-indexed)
+   * @returns Array of classical probability density values in nm^-1, or null if unavailable
+   */
+  public getClassicalProbabilityDensityInNmUnits(
+    energyIndex: number,
+  ): number[] | null {
+    const classicalProbabilitySI = this.getClassicalProbabilityDensity(energyIndex);
+    if (!classicalProbabilitySI) {
+      return null;
+    }
+
+    // Convert classical probability density from m^-1 to nm^-1
+    // P(nm^-1) = P(m^-1) * M_TO_NM
+    const conversionFactor = QuantumConstants.M_TO_NM;
+    return classicalProbabilitySI.map((p) => p * conversionFactor);
+  }
+
+  /**
    * Calculate the time-evolved superposition wavefunction.
    * Computes ψ(x,t) = Σ c_n * e^(iφ_n) * ψ_n(x) * e^(-iE_n*t/ℏ)
    *
@@ -740,6 +800,55 @@ export abstract class BaseModel {
         realPart[i] * realPart[i] + imagPart[i] * imagPart[i];
       maxMagnitude = Math.max(maxMagnitude, magnitude[i]);
     }
+
+    return {
+      realPart,
+      imagPart,
+      magnitude,
+      probabilityDensity,
+      maxMagnitude,
+    };
+  }
+
+  /**
+   * Calculate the time-evolved superposition wavefunction in nanometer units.
+   * Converts from SI units (m^-1/2 and m^-1) to nm units (nm^-1/2 and nm^-1).
+   *
+   * @param timeInSeconds - Current time in seconds
+   * @returns Object containing:
+   *   - realPart: Real part in nm^-1/2
+   *   - imagPart: Imaginary part in nm^-1/2
+   *   - magnitude: Magnitude in nm^-1/2
+   *   - probabilityDensity: Probability density in nm^-1
+   *   - maxMagnitude: Maximum magnitude value in nm^-1/2
+   *   - null if bound states are not available
+   */
+  public getTimeEvolvedSuperpositionInNmUnits(timeInSeconds: number): {
+    realPart: number[];
+    imagPart: number[];
+    magnitude: number[];
+    probabilityDensity: number[];
+    maxMagnitude: number;
+  } | null {
+    const result = this.getTimeEvolvedSuperposition(timeInSeconds);
+    if (!result) {
+      return null;
+    }
+
+    // Convert wavefunction components from m^-1/2 to nm^-1/2
+    // ψ(nm^-1/2) = ψ(m^-1/2) * sqrt(M_TO_NM)
+    const conversionFactorWavefunction = Math.sqrt(QuantumConstants.M_TO_NM);
+    const realPart = result.realPart.map((val) => val * conversionFactorWavefunction);
+    const imagPart = result.imagPart.map((val) => val * conversionFactorWavefunction);
+    const magnitude = result.magnitude.map((val) => val * conversionFactorWavefunction);
+    const maxMagnitude = result.maxMagnitude * conversionFactorWavefunction;
+
+    // Convert probability density from m^-1 to nm^-1
+    // P(nm^-1) = P(m^-1) * M_TO_NM
+    const conversionFactorProbability = QuantumConstants.M_TO_NM;
+    const probabilityDensity = result.probabilityDensity.map(
+      (val) => val * conversionFactorProbability,
+    );
 
     return {
       realPart,

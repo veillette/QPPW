@@ -295,58 +295,22 @@ export class AreaMeasurementTool extends Node {
       return shape; // Return empty shape
     }
 
-    // Get probability density data
+    // Get probability density data (in nm^-1 units)
     const superpositionType = this.model.superpositionTypeProperty.value;
     const isSuperposition = superpositionType !== SuperpositionType.SINGLE;
 
     let probabilityDensity: number[];
 
     if (isSuperposition && hasSuperpositionConfig(this.model)) {
-      // Calculate superposition probability density
-      const config = this.model.superpositionConfigProperty.value;
+      // Get superposition probability density in nm units
       const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
-      const numPoints = boundStates.xGrid.length;
-
-      // Compute time-evolved superposition
-      const realPart = new Array(numPoints).fill(0);
-      const imagPart = new Array(numPoints).fill(0);
-
-      for (let n = 0; n < config.amplitudes.length; n++) {
-        const amplitude = config.amplitudes[n];
-        const initialPhase = config.phases[n];
-
-        if (amplitude === 0 || n >= boundStates.wavefunctions.length) {
-          continue;
-        }
-
-        const eigenfunction = boundStates.wavefunctions[n];
-        const energy = boundStates.energies[n];
-
-        // Time evolution phase for this eigenstate: -E_n*t/ℏ
-        const timePhase = -(energy * time) / QuantumConstants.HBAR;
-
-        // Total phase: initial phase + time evolution phase
-        const totalPhase = initialPhase + timePhase;
-
-        // Complex coefficient
-        const realCoeff = amplitude * Math.cos(totalPhase);
-        const imagCoeff = amplitude * Math.sin(totalPhase);
-
-        // Add contribution to superposition
-        for (let i = 0; i < numPoints; i++) {
-          realPart[i] += realCoeff * eigenfunction[i];
-          imagPart[i] += imagCoeff * eigenfunction[i];
-        }
+      const nmData = this.model.getTimeEvolvedSuperpositionInNmUnits(time);
+      if (!nmData) {
+        return shape; // Return empty shape
       }
-
-      // Calculate |ψ|²
-      probabilityDensity = new Array(numPoints);
-      for (let i = 0; i < numPoints; i++) {
-        probabilityDensity[i] =
-          realPart[i] * realPart[i] + imagPart[i] * imagPart[i];
-      }
+      probabilityDensity = nmData.probabilityDensity;
     } else {
-      // Single eigenstate
+      // Single eigenstate - get probability density in nm units
       const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
       if (
         selectedIndex < 0 ||
@@ -355,8 +319,11 @@ export class AreaMeasurementTool extends Node {
         return shape; // Return empty shape
       }
 
-      const wavefunction = boundStates.wavefunctions[selectedIndex];
-      probabilityDensity = wavefunction.map((psi) => psi * psi);
+      const nmData = this.model.getWavefunctionInNmUnits(selectedIndex + 1);
+      if (!nmData) {
+        return shape; // Return empty shape
+      }
+      probabilityDensity = nmData.probabilityDensity;
     }
 
     // Build points array for the region

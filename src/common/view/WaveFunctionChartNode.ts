@@ -354,6 +354,41 @@ export class WaveFunctionChartNode extends Node {
     yAxis.y = this.chartMargins.top;
     axesNode.addChild(yAxis);
 
+    // Y-axis tick marks using bamboo TickMarkSet
+    // Use fixed spacing of 0.5 (works well for typical nm^-1 and nm^-1/2 values)
+    const yTickMarkSet = new TickMarkSet(
+      this.chartTransform,
+      Orientation.VERTICAL,
+      0.5, // spacing in nm^-1 or nm^-1/2 units
+      {
+        edge: "min",
+        extent: 8,
+        stroke: QPPWColors.labelFillProperty,
+        lineWidth: 1,
+      },
+    );
+    yTickMarkSet.x = this.chartMargins.left;
+    yTickMarkSet.y = this.chartMargins.top;
+    axesNode.addChild(yTickMarkSet);
+
+    // Y-axis tick labels using bamboo TickLabelSet
+    const yTickLabelSet = new TickLabelSet(
+      this.chartTransform,
+      Orientation.VERTICAL,
+      0.5, // spacing in nm^-1 or nm^-1/2 units
+      {
+        edge: "min",
+        createLabel: (value: number) =>
+          new Text(this.formatYTickLabel(value), {
+            font: new PhetFont(12),
+            fill: QPPWColors.labelFillProperty,
+          }),
+      },
+    );
+    yTickLabelSet.x = this.chartMargins.left;
+    yTickLabelSet.y = this.chartMargins.top;
+    axesNode.addChild(yTickLabelSet);
+
     // Y-axis label
     this.yAxisLabel = new Text("", {
       font: new PhetFont(14),
@@ -623,6 +658,33 @@ export class WaveFunctionChartNode extends Node {
       .join("");
   }
 
+  /**
+   * Formats a y-axis tick label value for display.
+   * Uses appropriate precision based on the magnitude of the value.
+   */
+  private formatYTickLabel(value: number): string {
+    // For values close to zero, show as 0
+    if (Math.abs(value) < 1e-10) {
+      return "0";
+    }
+
+    // Determine appropriate decimal places based on magnitude
+    const absValue = Math.abs(value);
+    let decimalPlaces;
+
+    if (absValue >= 10) {
+      decimalPlaces = 0;
+    } else if (absValue >= 1) {
+      decimalPlaces = 1;
+    } else if (absValue >= 0.1) {
+      decimalPlaces = 2;
+    } else {
+      decimalPlaces = 3;
+    }
+
+    return value.toFixed(decimalPlaces);
+  }
+
   public update(): void {
     // Prevent reentry - if an update is in progress, mark that another update is pending
     if (this.isUpdating) {
@@ -686,6 +748,7 @@ export class WaveFunctionChartNode extends Node {
   /**
    * Updates the view range based on the data and updates the ChartTransform.
    * Note: X-axis range is fixed, only Y-axis is updated dynamically.
+   * Uses nm units (nm^-1/2 for wavefunction, nm^-1 for probability density).
    */
   private updateViewRange(
     boundStates: BoundStateResult,
@@ -699,20 +762,24 @@ export class WaveFunctionChartNode extends Node {
       return;
     }
 
-    const wavefunction = boundStates.wavefunctions[selectedIndex];
+    // Get wavefunction and probability density in nm units
+    const nmData = this.model.getWavefunctionInNmUnits(selectedIndex + 1);
+    if (!nmData) {
+      return;
+    }
+
     const displayMode = this.getEffectiveDisplayMode();
 
     let yMin = 0;
     let yMax = 0;
 
     if (displayMode === "probabilityDensity" || displayMode === "phaseColor") {
-      // For probability density, always start at 0 and find the max
-      const probabilityDensity = wavefunction.map((psi) => psi * psi);
-      yMax = Math.max(...probabilityDensity);
+      // For probability density, always start at 0 and find the max (in nm^-1)
+      yMax = Math.max(...nmData.probabilityDensity);
       yMin = 0;
     } else {
-      // For wave function, use symmetric range around zero
-      const maxAbs = Math.max(...wavefunction.map(Math.abs));
+      // For wave function, use symmetric range around zero (in nm^-1/2)
+      const maxAbs = Math.max(...nmData.wavefunction.map(Math.abs));
       yMin = -maxAbs;
       yMax = maxAbs;
     }
@@ -738,6 +805,7 @@ export class WaveFunctionChartNode extends Node {
 
   /**
    * Updates the view range for superposition wavefunctions.
+   * Uses nm units (nm^-1/2 for wavefunction, nm^-1 for probability density).
    */
   private updateViewRangeForSuperpositionFromModel(): void {
     const boundStates = this.model.getBoundStates();
@@ -745,40 +813,12 @@ export class WaveFunctionChartNode extends Node {
       return;
     }
 
-    const config = this.model.superpositionConfigProperty.value;
     const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
-    const numPoints = boundStates.xGrid.length;
 
-    // Compute time-evolved superposition
-    const realPart = new Array(numPoints).fill(0);
-    const imagPart = new Array(numPoints).fill(0);
-
-    for (let n = 0; n < config.amplitudes.length; n++) {
-      const amplitude = config.amplitudes[n];
-      const initialPhase = config.phases[n];
-
-      if (amplitude === 0 || n >= boundStates.wavefunctions.length) {
-        continue;
-      }
-
-      const eigenfunction = boundStates.wavefunctions[n];
-      const energy = boundStates.energies[n];
-
-      // Time evolution phase for this eigenstate: -E_n*t/ℏ
-      const timePhase = -(energy * time) / QuantumConstants.HBAR;
-
-      // Total phase: initial phase + time evolution phase
-      const totalPhase = initialPhase + timePhase;
-
-      // Complex coefficient
-      const realCoeff = amplitude * Math.cos(totalPhase);
-      const imagCoeff = amplitude * Math.sin(totalPhase);
-
-      // Add contribution to superposition
-      for (let i = 0; i < numPoints; i++) {
-        realPart[i] += realCoeff * eigenfunction[i];
-        imagPart[i] += imagCoeff * eigenfunction[i];
-      }
+    // Get time-evolved superposition in nm units
+    const nmData = this.model.getTimeEvolvedSuperpositionInNmUnits(time);
+    if (!nmData) {
+      return;
     }
 
     // Calculate Y range based on display mode
@@ -787,21 +827,14 @@ export class WaveFunctionChartNode extends Node {
     let yMax = 0;
 
     if (displayMode === "probabilityDensity" || displayMode === "phaseColor") {
-      // For probability density or phase color, find max of |ψ|²
-      const probabilityDensity = realPart.map(
-        (re, i) => re * re + imagPart[i] * imagPart[i],
-      );
-      yMax = Math.max(...probabilityDensity);
+      // For probability density or phase color, find max of probability density (in nm^-1)
+      yMax = Math.max(...nmData.probabilityDensity);
       yMin = 0;
     } else {
-      // For wave function components, use symmetric range
-      const maxReal = Math.max(...realPart.map(Math.abs));
-      const maxImag = Math.max(...imagPart.map(Math.abs));
-      const maxMagnitude = Math.max(
-        ...realPart.map((re, i) =>
-          Math.sqrt(re * re + imagPart[i] * imagPart[i]),
-        ),
-      );
+      // For wave function components, use symmetric range (in nm^-1/2)
+      const maxReal = Math.max(...nmData.realPart.map(Math.abs));
+      const maxImag = Math.max(...nmData.imagPart.map(Math.abs));
+      const maxMagnitude = nmData.maxMagnitude;
       const maxAbs = Math.max(maxReal, maxImag, maxMagnitude);
       yMin = -maxAbs;
       yMax = maxAbs;
@@ -828,6 +861,7 @@ export class WaveFunctionChartNode extends Node {
 
   /**
    * Updates the superposition wavefunction visualization.
+   * Uses nm units (nm^-1/2 for wavefunction, nm^-1 for probability density).
    */
   private updateSuperpositionWavefunction(): void {
     const boundStates = this.model.getBoundStates();
@@ -835,57 +869,29 @@ export class WaveFunctionChartNode extends Node {
       return;
     }
 
-    const config = this.model.superpositionConfigProperty.value;
     const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
-    const numPoints = boundStates.xGrid.length;
 
-    // Compute time-evolved superposition
-    const realPart = new Array(numPoints).fill(0);
-    const imagPart = new Array(numPoints).fill(0);
-
-    for (let n = 0; n < config.amplitudes.length; n++) {
-      const amplitude = config.amplitudes[n];
-      const initialPhase = config.phases[n];
-
-      if (amplitude === 0 || n >= boundStates.wavefunctions.length) {
-        continue;
-      }
-
-      const eigenfunction = boundStates.wavefunctions[n];
-      const energy = boundStates.energies[n];
-
-      // Time evolution phase for this eigenstate: -E_n*t/ℏ
-      const timePhase = -(energy * time) / QuantumConstants.HBAR;
-
-      // Total phase: initial phase + time evolution phase
-      const totalPhase = initialPhase + timePhase;
-
-      // Complex coefficient
-      const realCoeff = amplitude * Math.cos(totalPhase);
-      const imagCoeff = amplitude * Math.sin(totalPhase);
-
-      // Add contribution to superposition
-      for (let i = 0; i < numPoints; i++) {
-        realPart[i] += realCoeff * eigenfunction[i];
-        imagPart[i] += imagCoeff * eigenfunction[i];
-      }
+    // Get time-evolved superposition in nm units
+    const nmData = this.model.getTimeEvolvedSuperpositionInNmUnits(time);
+    if (!nmData) {
+      return;
     }
+
+    const xGrid = boundStates.xGrid;
+    const realPartNm = nmData.realPart;
+    const imagPartNm = nmData.imagPart;
+    const probabilityDensityNm = nmData.probabilityDensity;
+
+    // Get SI units for zeros visualization (which still uses SI)
+    const siData = this.model.getTimeEvolvedSuperposition(time);
+    const realPartSI = siData ? siData.realPart : realPartNm;
 
     // Display based on mode
     const displayMode = this.getEffectiveDisplayMode();
 
     if (displayMode === "probabilityDensity") {
-      // Calculate |ψ|²
-      const probabilityDensity = new Array(numPoints);
-      for (let i = 0; i < numPoints; i++) {
-        probabilityDensity[i] =
-          realPart[i] * realPart[i] + imagPart[i] * imagPart[i];
-      }
-
-      this.plotProbabilityDensityFromArray(
-        boundStates.xGrid,
-        probabilityDensity,
-      );
+      // Plot probability density in nm^-1 units
+      this.plotProbabilityDensityFromArray(xGrid, probabilityDensityNm);
 
       // Hide wavefunction components and phase color
       this.realPartPath.visible = false;
@@ -893,21 +899,21 @@ export class WaveFunctionChartNode extends Node {
       this.magnitudePath.visible = false;
       this.phaseColorVisualization.hide();
 
-      // Update zeros visualization if enabled
+      // Update zeros visualization if enabled (uses SI units)
       if (this.viewState.showZerosProperty.value) {
         // For superposition, show zeros of the real part
         this.zerosVisualization.showProperty.value = true;
-        this.zerosVisualization.update(boundStates.xGrid, realPart);
+        this.zerosVisualization.update(xGrid, realPartSI);
       } else {
         this.zerosVisualization.showProperty.value = false;
       }
     } else if (displayMode === "phaseColor") {
-      // Plot phase-colored superposition
+      // Plot phase-colored superposition (uses nm units)
       this.phaseColorVisualization.show();
       this.phaseColorVisualization.plotSuperposition(
-        boundStates.xGrid,
-        realPart,
-        imagPart,
+        xGrid,
+        realPartNm,
+        imagPartNm,
       );
 
       // Hide other paths
@@ -919,17 +925,17 @@ export class WaveFunctionChartNode extends Node {
       // Hide zeros for phase color mode
       this.zerosVisualization.showProperty.value = false;
     } else {
-      // waveFunction mode - show real, imaginary, and magnitude
-      this.plotSuperpositionComponents(boundStates.xGrid, realPart, imagPart);
+      // waveFunction mode - show real, imaginary, and magnitude (in nm units)
+      this.plotSuperpositionComponents(xGrid, realPartNm, imagPartNm);
 
       // Hide probability density and phase color
       this.probabilityDensityPath.shape = null;
       this.phaseColorVisualization.hide();
 
-      // Update zeros visualization if enabled
+      // Update zeros visualization if enabled (uses SI units)
       if (this.viewState.showZerosProperty.value) {
         this.zerosVisualization.showProperty.value = true;
-        this.zerosVisualization.update(boundStates.xGrid, realPart);
+        this.zerosVisualization.update(xGrid, realPartSI);
       } else {
         this.zerosVisualization.showProperty.value = false;
       }
@@ -963,13 +969,21 @@ export class WaveFunctionChartNode extends Node {
       return;
     }
 
+    // Get wavefunction and probability density in nm units
+    const nmData = this.model.getWavefunctionInNmUnits(selectedIndex + 1);
+    if (!nmData) {
+      return;
+    }
+
     const xGrid = boundStates.xGrid;
-    const wavefunction = boundStates.wavefunctions[selectedIndex];
+    const wavefunctionNm = nmData.wavefunction;
+    const probabilityDensityNm = nmData.probabilityDensity;
+    const wavefunctionSI = boundStates.wavefunctions[selectedIndex];
     const displayMode = this.getEffectiveDisplayMode();
 
     if (displayMode === "probabilityDensity") {
-      // Plot probability density (|ψ|²)
-      this.plotProbabilityDensity(xGrid, wavefunction);
+      // Plot probability density in nm^-1 units
+      this.plotProbabilityDensityFromArray(xGrid, probabilityDensityNm);
 
       // Hide wavefunction component paths and phase color
       this.realPartPath.visible = false;
@@ -977,10 +991,10 @@ export class WaveFunctionChartNode extends Node {
       this.magnitudePath.visible = false;
       this.phaseColorVisualization.hide();
 
-      // Update zeros visualization if enabled
+      // Update zeros visualization if enabled (uses SI units)
       if (this.viewState.showZerosProperty.value) {
         this.zerosVisualization.showProperty.value = true;
-        this.zerosVisualization.update(xGrid, wavefunction);
+        this.zerosVisualization.update(xGrid, wavefunctionSI);
       } else {
         this.zerosVisualization.showProperty.value = false;
       }
@@ -990,11 +1004,11 @@ export class WaveFunctionChartNode extends Node {
       const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
       const globalPhase = -(energy * time) / QuantumConstants.HBAR;
 
-      // Plot phase-colored wavefunction
+      // Plot phase-colored wavefunction (uses nm units)
       this.phaseColorVisualization.show();
       this.phaseColorVisualization.plotWavefunction(
         xGrid,
-        wavefunction,
+        wavefunctionNm,
         globalPhase,
       );
 
@@ -1007,65 +1021,21 @@ export class WaveFunctionChartNode extends Node {
       // Hide zeros for phase color mode
       this.zerosVisualization.showProperty.value = false;
     } else {
-      // waveFunction mode - show real part, imaginary part, and magnitude
-      this.plotWaveFunctionComponents(xGrid, wavefunction);
+      // waveFunction mode - show real part, imaginary part, and magnitude (in nm units)
+      this.plotWaveFunctionComponents(xGrid, wavefunctionNm);
 
       // Hide probability density and phase color
       this.probabilityDensityPath.shape = null;
       this.phaseColorVisualization.hide();
 
-      // Update zeros visualization if enabled
+      // Update zeros visualization if enabled (uses SI units)
       if (this.viewState.showZerosProperty.value) {
         this.zerosVisualization.showProperty.value = true;
-        this.zerosVisualization.update(xGrid, wavefunction);
+        this.zerosVisualization.update(xGrid, wavefunctionSI);
       } else {
         this.zerosVisualization.showProperty.value = false;
       }
     }
-  }
-
-  /**
-   * Plots the probability density (|ψ|²) for a single eigenstate.
-   */
-  private plotProbabilityDensity(
-    xGrid: number[],
-    wavefunction: number[],
-  ): void {
-    const shape = new Shape();
-
-    // Build points array
-    const points: { x: number; y: number }[] = [];
-    for (let i = 0; i < xGrid.length; i++) {
-      const x = this.dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
-      const psi = wavefunction[i];
-      const probabilityDensity = psi * psi;
-      const y = this.dataToViewY(probabilityDensity);
-      points.push({ x, y });
-    }
-
-    if (points.length === 0) {
-      this.probabilityDensityPath.shape = null;
-      return;
-    }
-
-    // Create filled area under the curve
-    const y0 = this.dataToViewY(0); // baseline
-
-    // Start at bottom-left
-    shape.moveTo(points[0].x, y0);
-    shape.lineTo(points[0].x, points[0].y);
-
-    // Trace the curve
-    for (let i = 0; i < points.length - 1; i++) {
-      shape.lineTo(points[i].x, points[i].y);
-    }
-
-    // Close the shape back to baseline
-    shape.lineTo(points[points.length - 1].x, points[points.length - 1].y);
-    shape.lineTo(points[points.length - 1].x, y0);
-    shape.close();
-
-    this.probabilityDensityPath.shape = shape;
   }
 
   /**
