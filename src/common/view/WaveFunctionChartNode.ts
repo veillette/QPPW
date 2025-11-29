@@ -937,7 +937,10 @@ export class WaveFunctionChartNode extends Node {
       // Calculate and display average and RMS position
       // Convert xGrid from meters to nanometers for calculations
       const xGridNm = xGrid.map((x) => x * 1e9);
-      const { avg, rms } = calculateRMSStatistics(xGridNm, probabilityDensityNm);
+      const { avg, rms } = calculateRMSStatistics(
+        xGridNm,
+        probabilityDensityNm,
+      );
       this.avgPositionLabel.string =
         stringManager.averagePositionLabelStringProperty.value.replace(
           "{{value}}",
@@ -962,7 +965,11 @@ export class WaveFunctionChartNode extends Node {
       const x2 = this.dataToViewX(rightX);
       // Position the indicator at 80% of the visible range
       const indicatorY = this.dataToViewY(this.yMaxProperty.value * 0.8);
-      this.rmsPositionIndicator.shape = createDoubleArrowShape(x1, x2, indicatorY);
+      this.rmsPositionIndicator.shape = createDoubleArrowShape(
+        x1,
+        x2,
+        indicatorY,
+      );
 
       // Hide wavefunction components and phase color
       this.realPartPath.visible = false;
@@ -1071,7 +1078,10 @@ export class WaveFunctionChartNode extends Node {
       // Calculate and display average and RMS position
       // Convert xGrid from meters to nanometers for calculations
       const xGridNm = xGrid.map((x) => x * 1e9);
-      const { avg, rms } = calculateRMSStatistics(xGridNm, probabilityDensityNm);
+      const { avg, rms } = calculateRMSStatistics(
+        xGridNm,
+        probabilityDensityNm,
+      );
       this.avgPositionLabel.string =
         stringManager.averagePositionLabelStringProperty.value.replace(
           "{{value}}",
@@ -1096,7 +1106,11 @@ export class WaveFunctionChartNode extends Node {
       const x2 = this.dataToViewX(rightX);
       // Position the indicator at 80% of the visible range
       const indicatorY = this.dataToViewY(this.yMaxProperty.value * 0.8);
-      this.rmsPositionIndicator.shape = createDoubleArrowShape(x1, x2, indicatorY);
+      this.rmsPositionIndicator.shape = createDoubleArrowShape(
+        x1,
+        x2,
+        indicatorY,
+      );
 
       // Hide wavefunction component paths and phase color
       this.realPartPath.visible = false;

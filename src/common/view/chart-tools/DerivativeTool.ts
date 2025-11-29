@@ -193,7 +193,9 @@ export class DerivativeTool extends Node {
       // Update position tracking circle
       const { dataToViewY } = this.options;
       this.positionCircle.centerX = viewX;
-      this.positionCircle.centerY = dataToViewY(derivativeData.wavefunctionValue);
+      this.positionCircle.centerY = dataToViewY(
+        derivativeData.wavefunctionValue,
+      );
 
       // Update label with proper units (m^-1/2 per nm)
       this.label.string =

@@ -721,7 +721,8 @@ export abstract class BaseModel {
   public getClassicalProbabilityDensityInNmUnits(
     energyIndex: number,
   ): number[] | null {
-    const classicalProbabilitySI = this.getClassicalProbabilityDensity(energyIndex);
+    const classicalProbabilitySI =
+      this.getClassicalProbabilityDensity(energyIndex);
     if (!classicalProbabilitySI) {
       return null;
     }
@@ -838,9 +839,15 @@ export abstract class BaseModel {
     // Convert wavefunction components from m^-1/2 to nm^-1/2
     // ψ(nm^-1/2) = ψ(m^-1/2) * sqrt(M_TO_NM)
     const conversionFactorWavefunction = Math.sqrt(QuantumConstants.M_TO_NM);
-    const realPart = result.realPart.map((val) => val * conversionFactorWavefunction);
-    const imagPart = result.imagPart.map((val) => val * conversionFactorWavefunction);
-    const magnitude = result.magnitude.map((val) => val * conversionFactorWavefunction);
+    const realPart = result.realPart.map(
+      (val) => val * conversionFactorWavefunction,
+    );
+    const imagPart = result.imagPart.map(
+      (val) => val * conversionFactorWavefunction,
+    );
+    const magnitude = result.magnitude.map(
+      (val) => val * conversionFactorWavefunction,
+    );
     const maxMagnitude = result.maxMagnitude * conversionFactorWavefunction;
 
     // Convert probability density from m^-1 to nm^-1

@@ -49,7 +49,11 @@ function calculateNormalization(
  */
 function testNormalization(
   solverName: string,
-  solver: () => { energies: number[]; wavefunctions: number[][]; xGrid: number[] },
+  solver: () => {
+    energies: number[];
+    wavefunctions: number[][];
+    xGrid: number[];
+  },
   tolerance: number = 1e-3,
 ): void {
   console.log(`\nTesting ${solverName}...`);
@@ -67,16 +71,16 @@ function testNormalization(
 
       if (isNaN(norm)) {
         allPassed = false;
-        errors.push(`  State ${n}: ∫|ψ|² dx = NaN (wavefunction contains NaN values)`);
+        errors.push(
+          `  State ${n}: ∫|ψ|² dx = NaN (wavefunction contains NaN values)`,
+        );
       } else if (error > tolerance) {
         allPassed = false;
         errors.push(
           `  State ${n}: ∫|ψ|² dx = ${norm.toFixed(6)} (error: ${error.toExponential(3)})`,
         );
       } else {
-        console.log(
-          `  State ${n}: ∫|ψ|² dx = ${norm.toFixed(6)} ✓`,
-        );
+        console.log(`  State ${n}: ∫|ψ|² dx = ${norm.toFixed(6)} ✓`);
       }
     }
 
@@ -92,7 +96,9 @@ function testNormalization(
 }
 
 // Run tests for all analytical solvers
-console.log("=== TESTING WAVE FUNCTION NORMALIZATION FOR ALL ANALYTICAL SOLVERS ===\n");
+console.log(
+  "=== TESTING WAVE FUNCTION NORMALIZATION FOR ALL ANALYTICAL SOLVERS ===\n",
+);
 
 // Common grid configuration with high resolution
 const highResGrid: GridConfig = {

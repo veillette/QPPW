@@ -495,7 +495,7 @@ export function calculateHarmonicOscillatorFourierTransform(
     // Normalization in momentum space: (ℏ/(π mω))^(1/4) / √(2^n n!) = (1/(α²π))^(1/4) / √(2^n n!)
     const normalization =
       (1 / Math.sqrt(Math.pow(2, n) * factorial(n))) *
-      Math.pow(1 / ((alpha * alpha) * Math.PI), 0.25);
+      Math.pow(1 / (alpha * alpha * Math.PI), 0.25);
 
     for (const p of pGrid) {
       // Argument for Hermite polynomial in momentum space

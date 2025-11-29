@@ -942,9 +942,7 @@ export function solveFiniteSquareWell(
       // Inside: ∫_{-L/2}^{L/2} cos²(kx) dx = L/2 + sin(kL)/(2k)
       // Outside: ∫_{-∞}^{-L/2} + ∫_{L/2}^∞ = cos²(kL/2) / κ
       const integral =
-        halfL +
-        Math.sin(2 * k * halfL) / (2 * k) +
-        (cosVal * cosVal) / kappa;
+        halfL + Math.sin(2 * k * halfL) / (2 * k) + (cosVal * cosVal) / kappa;
       normalization = 1 / Math.sqrt(integral);
     } else {
       // Match boundary conditions at x = L/2
@@ -954,9 +952,7 @@ export function solveFiniteSquareWell(
       // Inside: ∫_{-L/2}^{L/2} sin²(kx) dx = L/2 - sin(kL)/(2k)
       // Outside: ∫_{-∞}^{-L/2} + ∫_{L/2}^∞ = sin²(kL/2) / κ
       const integral =
-        halfL -
-        Math.sin(2 * k * halfL) / (2 * k) +
-        (sinVal * sinVal) / kappa;
+        halfL - Math.sin(2 * k * halfL) / (2 * k) + (sinVal * sinVal) / kappa;
       normalization = 1 / Math.sqrt(integral);
     }
 
