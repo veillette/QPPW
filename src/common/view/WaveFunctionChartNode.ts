@@ -320,6 +320,8 @@ export class WaveFunctionChartNode extends Node {
       Orientation.HORIZONTAL,
       2, // spacing
       {
+        edge: "max",
+        extent: 8,
         stroke: QPPWColors.labelFillProperty,
         lineWidth: 1,
       },
@@ -334,6 +336,7 @@ export class WaveFunctionChartNode extends Node {
       Orientation.HORIZONTAL,
       2, // spacing
       {
+        edge: "max",
         createLabel: (value: number) =>
           new Text(value.toString(), {
             font: new PhetFont(14),
@@ -342,7 +345,7 @@ export class WaveFunctionChartNode extends Node {
       },
     );
     xTickLabelSet.x = this.chartMargins.left;
-    xTickLabelSet.y = this.chartMargins.top + this.plotHeight + 4;
+    xTickLabelSet.y = this.chartMargins.top + this.plotHeight;
     axesNode.addChild(xTickLabelSet);
 
     // Y-axis line on the left
