@@ -338,6 +338,40 @@ export class IntroControlPanelNode extends Node {
       fill: QPPWColors.textFillProperty,
     });
 
+    // Particle Mass slider
+    const massValueText = new Text("", {
+      font: new PhetFont(12),
+      fill: QPPWColors.textFillProperty,
+    });
+
+    this.model.particleMassProperty.link((mass: number) => {
+      massValueText.string = `${mass.toFixed(2)} mₑ`;
+    });
+
+    const massSlider = new HSlider(
+      this.model.particleMassProperty,
+      this.model.particleMassProperty.range!,
+      {
+        trackSize: new Dimension2(150, 4),
+        thumbSize: new Dimension2(15, 30),
+      },
+    );
+
+    const massRowVBox = new VBox({
+      spacing: 4,
+      align: "left",
+      children: [
+        new Text(stringManager.particleMassStringProperty, {
+          font: new PhetFont(12),
+          fill: QPPWColors.textFillProperty,
+        }),
+        new HBox({
+          spacing: 10,
+          children: [massSlider, massValueText],
+        }),
+      ],
+    });
+
     // Well Width slider
     const widthValueText = new Text("", {
       font: new PhetFont(12),
@@ -505,6 +539,7 @@ export class IntroControlPanelNode extends Node {
       align: "left",
       children: [
         titleText,
+        massRowVBox,
         widthRowVBox,
         depthRowVBox,
         barrierHeightRowVBox,
