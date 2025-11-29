@@ -47,6 +47,7 @@ export class WavenumberChartNode extends Node {
   private readonly plotContentNode: Node; // Clipped container for plot content
   private readonly wavenumberPath: Path;
   private readonly zeroLine: Line;
+  private readonly rmsIndicator: Path; // Double arrow indicator for RMS wavenumber
   private readonly axesNode: Node;
   private readonly titleLabel: Text;
   private readonly avgWavenumberLabel: Text;
@@ -136,6 +137,14 @@ export class WavenumberChartNode extends Node {
       fill: QPPWColors.wavefunctionProbabilityFillProperty,
     });
     this.plotContentNode.addChild(this.wavenumberPath);
+
+    // Create RMS wavenumber indicator (double arrow)
+    this.rmsIndicator = new Path(null, {
+      stroke: QPPWColors.energyLevelSelectedProperty,
+      lineWidth: 2,
+      fill: QPPWColors.energyLevelSelectedProperty,
+    });
+    this.plotContentNode.addChild(this.rmsIndicator);
 
     // Create labels for average and RMS wavenumber
     this.avgWavenumberLabel = new Text("", {
@@ -292,6 +301,7 @@ export class WavenumberChartNode extends Node {
       if (!wavenumberResult) {
         // Clear the chart if no data available
         this.wavenumberPath.shape = null;
+        this.rmsIndicator.shape = null;
         this.avgWavenumberLabel.string = "";
         this.rmsWavenumberLabel.string = "";
         return;
@@ -339,6 +349,15 @@ export class WavenumberChartNode extends Node {
           "{{value}}",
           rms.toFixed(2),
         );
+
+      // Update RMS indicator: horizontal double arrow from (avg - rms) to (avg + rms)
+      const leftK = avg - rms;
+      const rightK = avg + rms;
+      const x1 = this.dataToViewX(leftK);
+      const x2 = this.dataToViewX(rightK);
+      // Position the indicator at 20% from the top of the visible range
+      const indicatorY = this.dataToViewY(this.yMaxProperty.value * 0.8);
+      this.rmsIndicator.shape = this.createDoubleArrowShape(x1, x2, indicatorY);
     } finally {
       this.isUpdating = false;
     }
@@ -499,6 +518,40 @@ export class WavenumberChartNode extends Node {
    */
   private dataToViewY(y: number): number {
     return this.chartMargins.top + this.chartTransform.modelToViewY(y);
+  }
+
+  /**
+   * Creates a double-headed horizontal arrow shape for the RMS indicator.
+   * The arrow spans from x1 to x2 at height y.
+   */
+  private createDoubleArrowShape(
+    x1: number,
+    x2: number,
+    y: number,
+  ): Shape {
+    const shape = new Shape();
+    const arrowHeadLength = 8;
+    const arrowHeadWidth = 6;
+
+    // Main horizontal line
+    shape.moveTo(x1, y);
+    shape.lineTo(x2, y);
+
+    // Left arrow head
+    shape.moveTo(x1, y);
+    shape.lineTo(x1 + arrowHeadLength, y - arrowHeadWidth / 2);
+    shape.lineTo(x1 + arrowHeadLength, y + arrowHeadWidth / 2);
+    shape.lineTo(x1, y);
+    shape.close();
+
+    // Right arrow head
+    shape.moveTo(x2, y);
+    shape.lineTo(x2 - arrowHeadLength, y - arrowHeadWidth / 2);
+    shape.lineTo(x2 - arrowHeadLength, y + arrowHeadWidth / 2);
+    shape.lineTo(x2, y);
+    shape.close();
+
+    return shape;
   }
 
   /**
