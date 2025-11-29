@@ -125,7 +125,7 @@ export type FourierTransformResult = {
   /** Fourier-transformed wavefunctions in momentum space (each row is one eigenstate) */
   momentumWavefunctions: number[][];
   /** Method used to compute the transform ('analytical' or 'numerical') */
-  method: 'analytical' | 'numerical';
+  method: "analytical" | "numerical";
 };
 
 /**
@@ -139,7 +139,7 @@ export type WavenumberTransformResult = {
   /** Fourier-transformed wavefunctions in wavenumber space (each row is one eigenstate) */
   wavenumberWavefunctions: number[][];
   /** Method used to compute the transform ('analytical' or 'numerical') */
-  method: 'analytical' | 'numerical';
+  method: "analytical" | "numerical";
 };
 
 qppw.register("PotentialFunction", { PotentialType });

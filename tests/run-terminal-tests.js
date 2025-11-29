@@ -18,9 +18,8 @@ console.log("║     Running in Terminal Mode                               ║"
 console.log("╚════════════════════════════════════════════════════════════╝\n");
 
 // Import and run tests
-const { runAccuracyTests } = await import(
-  "../src/common/model/AccuracyTests.js"
-);
+const { runAccuracyTests } =
+  await import("../src/common/model/AccuracyTests.js");
 
 // Run the full test suite
 runAccuracyTests();

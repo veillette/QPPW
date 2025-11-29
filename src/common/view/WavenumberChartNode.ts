@@ -309,7 +309,7 @@ export class WavenumberChartNode extends Node {
       const phiK = wavenumberResult.wavenumberWavefunctions[selectedIndex];
 
       // Convert k from rad/m to nm^-1: k_nm = k_m / (2π * 10^9)
-      const kGridNm = kGrid.map(k => k / (2 * Math.PI * 1e9));
+      const kGridNm = kGrid.map((k) => k / (2 * Math.PI * 1e9));
 
       // Calculate |φ(k)|²
       const phiKSquared = phiK.map((value) => {
@@ -382,10 +382,10 @@ export class WavenumberChartNode extends Node {
 
     // Update ChartTransform
     this.chartTransform.setModelXRange(
-      new Range(this.kMinProperty.value, this.kMaxProperty.value)
+      new Range(this.kMinProperty.value, this.kMaxProperty.value),
     );
     this.chartTransform.setModelYRange(
-      new Range(this.yMinProperty.value, this.yMaxProperty.value)
+      new Range(this.yMinProperty.value, this.yMaxProperty.value),
     );
   }
 

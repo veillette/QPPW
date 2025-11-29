@@ -8,11 +8,7 @@ import { Shape } from "scenerystack/kite";
 import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
 import { Checkbox } from "scenerystack/sun";
-import {
-  AxisLine,
-  TickMarkSet,
-  TickLabelSet,
-} from "scenerystack/bamboo";
+import { AxisLine, TickMarkSet, TickLabelSet } from "scenerystack/bamboo";
 import { BaseChartNode, ChartOptions } from "./BaseChartNode.js";
 import type { ScreenModel } from "../model/ScreenModels.js";
 import {
@@ -1246,7 +1242,8 @@ export class EnergyChartNode extends BaseChartNode {
       this.totalEnergyLine.y1 = y;
       this.totalEnergyLine.x2 = this.chartWidth - this.chartMargins.right;
       this.totalEnergyLine.y2 = y;
-      this.totalEnergyLine.visible = this.viewState.showTotalEnergyProperty.value;
+      this.totalEnergyLine.visible =
+        this.viewState.showTotalEnergyProperty.value;
     } else {
       this.totalEnergyLine.visible = false;
     }

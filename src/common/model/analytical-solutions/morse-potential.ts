@@ -196,7 +196,6 @@ export class MorsePotentialSolution extends AnalyticalSolution {
       pMax,
     );
   }
-
 }
 
 /**

@@ -30,6 +30,7 @@ Logger.error("Error message");
 ```
 
 **Log Levels:**
+
 - `DEBUG` - Detailed debugging information
 - `INFO` - General informational messages
 - `WARN` - Warning messages
@@ -73,6 +74,7 @@ PerformanceMonitor.setEnabled(true); // Enable
 ```
 
 **Features:**
+
 - Automatically warns when operations exceed 16.67ms (1 frame at 60fps)
 - Collects statistics: count, mean, min, max, total time
 - Can be enabled/disabled globally
@@ -98,22 +100,28 @@ class AnalyticalSolution {
     });
   }
 
-  private calculateWavefunction(n: number, width: number, depth: number): number[] {
+  private calculateWavefunction(
+    n: number,
+    width: number,
+    depth: number,
+  ): number[] {
     // ... expensive calculation ...
   }
 }
 
 // Using the memoize function
 const memoizedCalculation = memoize(
-  (n: number, width: number, depth: number) => expensiveCalculation(n, width, depth),
+  (n: number, width: number, depth: number) =>
+    expensiveCalculation(n, width, depth),
   (n, width, depth) => `${n}-${width}-${depth}`, // Custom key generator
-  100 // Max cache size
+  100, // Max cache size
 );
 
 const result = memoizedCalculation(1, 2.0, 3.0);
 ```
 
 **Features:**
+
 - Automatic cache key generation
 - Configurable maximum cache size (FIFO eviction)
 - Generic type support
@@ -138,6 +146,7 @@ PerformanceMonitor.logSummary();
 ```
 
 **Monitored Operations:**
+
 - `solve-quantum-bound` - Top-level solve function
 - `find-eigenstate-{n}` - Finding individual eigenstates
 - `find-multiple-eigenstates-{nStates}` - Finding multiple eigenstates
@@ -152,11 +161,7 @@ class FiniteWellSolution extends AnalyticalSolution {
   private memoizedWavefunctions = new MemoizationCache<number[]>();
 
   public getWavefunction(n: number): number[] | null {
-    const key = MemoizationCache.generateKey(
-      n,
-      this.wellWidth,
-      this.wellDepth
-    );
+    const key = MemoizationCache.generateKey(n, this.wellWidth, this.wellDepth);
 
     if (this.memoizedWavefunctions.has(key)) {
       return this.memoizedWavefunctions.get(key)!;

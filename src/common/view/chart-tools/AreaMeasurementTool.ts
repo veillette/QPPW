@@ -3,7 +3,15 @@
  * Displays two draggable markers and calculates the probability between them.
  */
 
-import { Node, Line, Path, Text, Rectangle, Circle, DragListener } from "scenerystack/scenery";
+import {
+  Node,
+  Line,
+  Path,
+  Text,
+  Rectangle,
+  Circle,
+  DragListener,
+} from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
 import { NumberProperty, BooleanProperty } from "scenerystack/axon";
 import { PhetFont } from "scenerystack/scenery-phet";
@@ -45,7 +53,11 @@ export class AreaMeasurementTool extends Node {
   private readonly rightMarkerHandle: Circle;
   private readonly areaLabel: Text;
 
-  constructor(model: ScreenModel, getEffectiveDisplayMode: () => string, options: AreaMeasurementToolOptions) {
+  constructor(
+    model: ScreenModel,
+    getEffectiveDisplayMode: () => string,
+    options: AreaMeasurementToolOptions,
+  ) {
     super();
 
     this.model = model;
@@ -151,13 +163,16 @@ export class AreaMeasurementTool extends Node {
    * Setup drag listeners for marker handles
    */
   private setupDragListeners(): void {
-    const { parentNode, viewToDataX, xMinProperty, xMaxProperty } = this.options;
+    const { parentNode, viewToDataX, xMinProperty, xMaxProperty } =
+      this.options;
 
     // Left marker drag listener
     this.leftMarkerHandle.addInputListener(
       new DragListener({
         drag: (event) => {
-          const parentPoint = parentNode.globalToLocalPoint(event.pointer.point);
+          const parentPoint = parentNode.globalToLocalPoint(
+            event.pointer.point,
+          );
           let newX = viewToDataX(parentPoint.x);
 
           // Constrain to chart bounds and ensure left marker stays left of right marker
@@ -173,7 +188,9 @@ export class AreaMeasurementTool extends Node {
     this.rightMarkerHandle.addInputListener(
       new DragListener({
         drag: (event) => {
-          const parentPoint = parentNode.globalToLocalPoint(event.pointer.point);
+          const parentPoint = parentNode.globalToLocalPoint(
+            event.pointer.point,
+          );
           let newX = viewToDataX(parentPoint.x);
 
           // Constrain to chart bounds and ensure right marker stays right of left marker
@@ -224,11 +241,21 @@ export class AreaMeasurementTool extends Node {
     );
 
     // Create shape that follows the probability density curve
-    const shape = this.createAreaShape(leftX, rightX, displayMode, dataToViewX, dataToViewY);
+    const shape = this.createAreaShape(
+      leftX,
+      rightX,
+      displayMode,
+      dataToViewX,
+      dataToViewY,
+    );
     this.areaRegion.shape = shape;
 
     // Calculate probability in the selected region
-    const probability = this.calculateProbabilityInRegion(leftX, rightX, displayMode);
+    const probability = this.calculateProbabilityInRegion(
+      leftX,
+      rightX,
+      displayMode,
+    );
 
     // Update label
     if (probability !== null) {

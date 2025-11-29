@@ -1049,10 +1049,7 @@ export class OneWellModel extends BaseModel {
         // Wide localized state: superposition of more states
         amplitudes = new Array(numStates).fill(0);
         phases = new Array(numStates).fill(0);
-        const numStatesWide = Math.min(
-          OneWellModel.NUM_STATES_WIDE,
-          numStates,
-        );
+        const numStatesWide = Math.min(OneWellModel.NUM_STATES_WIDE, numStates);
         for (let i = 0; i < numStatesWide; i++) {
           amplitudes[i] = 1;
         }

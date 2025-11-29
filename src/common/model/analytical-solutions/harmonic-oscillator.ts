@@ -652,18 +652,19 @@ export class HarmonicOscillatorSolution extends AnalyticalSolution {
     const actualPMax = pMax || defaultPMax;
 
     // Use analytical Fourier transform
-    const { pGrid, momentumWavefunctions } = calculateHarmonicOscillatorFourierTransform(
-      this.springConstant,
-      mass,
-      numStates,
-      nMomentum,
-      actualPMax,
-    );
+    const { pGrid, momentumWavefunctions } =
+      calculateHarmonicOscillatorFourierTransform(
+        this.springConstant,
+        mass,
+        numStates,
+        nMomentum,
+        actualPMax,
+      );
 
     return {
       pGrid,
       momentumWavefunctions,
-      method: 'analytical',
+      method: "analytical",
     };
   }
 }

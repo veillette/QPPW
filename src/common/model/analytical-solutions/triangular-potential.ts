@@ -240,7 +240,6 @@ export class TriangularPotentialSolution extends AnalyticalSolution {
       pMax,
     );
   }
-
 }
 
 /**

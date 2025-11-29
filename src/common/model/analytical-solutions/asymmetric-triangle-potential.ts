@@ -190,7 +190,6 @@ export class AsymmetricTrianglePotentialSolution extends AnalyticalSolution {
       pMax,
     );
   }
-
 }
 
 /**

@@ -412,7 +412,7 @@ export function calculateInfiniteWellFourierTransform(
           magnitude = 0;
         } else {
           // ∫_{-L/2}^{L/2} sin(nπ(x + L/2)/L) dx
-          magnitude = normX * normFT * (2 * L) / (n * Math.PI);
+          magnitude = (normX * normFT * (2 * L)) / (n * Math.PI);
         }
       } else {
         // General case: p ≠ 0
@@ -475,7 +475,10 @@ export function calculateInfiniteWellFourierTransform(
         const final_imag =
           (cos_phase * integral_real - sin_phase * integral_imag) / 2;
 
-        magnitude = normX * normFT * Math.sqrt(final_real * final_real + final_imag * final_imag);
+        magnitude =
+          normX *
+          normFT *
+          Math.sqrt(final_real * final_real + final_imag * final_imag);
       }
 
       phiP.push(magnitude);
@@ -606,12 +609,13 @@ export class InfiniteSquareWellSolution extends AnalyticalSolution {
     const actualPMax = pMax || defaultPMax;
 
     // Use analytical Fourier transform
-    const { pGrid, momentumWavefunctions } = calculateInfiniteWellFourierTransform(
-      this.wellWidth,
-      numStates,
-      nMomentum,
-      actualPMax,
-    );
+    const { pGrid, momentumWavefunctions } =
+      calculateInfiniteWellFourierTransform(
+        this.wellWidth,
+        numStates,
+        nMomentum,
+        actualPMax,
+      );
 
     return {
       pGrid,

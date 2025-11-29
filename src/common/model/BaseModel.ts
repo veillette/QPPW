@@ -12,7 +12,11 @@ import { Range } from "scenerystack/dot";
 import { TimeSpeed } from "scenerystack";
 import Schrodinger1DSolver, { NumericalMethod } from "./Schrodinger1DSolver.js";
 import QPPWPreferences from "../../QPPWPreferences.js";
-import { PotentialType, BoundStateResult, WavenumberTransformResult } from "./PotentialFunction.js";
+import {
+  PotentialType,
+  BoundStateResult,
+  WavenumberTransformResult,
+} from "./PotentialFunction.js";
 import QuantumConstants from "./QuantumConstants.js";
 import { SuperpositionType, SuperpositionConfig } from "./SuperpositionType.js";
 import { convertToWavenumber } from "./analytical-solutions/fourier-transform-helper.js";
@@ -377,7 +381,7 @@ export abstract class BaseModel {
    */
   public getWavenumberTransform(
     numWavenumberPoints?: number,
-    kMax?: number
+    kMax?: number,
   ): WavenumberTransformResult | null {
     // Ensure bound states are calculated
     const boundStates = this.getBoundStates();
@@ -392,7 +396,8 @@ export abstract class BaseModel {
     }
 
     // Calculate Fourier transform in momentum space
-    const mass = this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
+    const mass =
+      this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
 
     // Convert kMax to pMax if provided: p = ℏk
     const pMax = kMax ? kMax * QuantumConstants.HBAR : undefined;
@@ -401,7 +406,7 @@ export abstract class BaseModel {
       boundStates,
       mass,
       numWavenumberPoints,
-      pMax
+      pMax,
     );
 
     // Convert to wavenumber space using the helper function
@@ -505,9 +510,7 @@ export abstract class BaseModel {
       // Use xGrid parameter or default grid from bound states (converted to meters)
       const gridInMeters =
         xGrid ||
-        (this.boundStateResult?.xGrid
-          ? this.boundStateResult.xGrid
-          : null);
+        (this.boundStateResult?.xGrid ? this.boundStateResult.xGrid : null);
 
       if (!gridInMeters) {
         return null;
@@ -546,9 +549,7 @@ export abstract class BaseModel {
       // Use xGrid parameter or default grid from bound states (converted to meters)
       const gridInMeters =
         xGrid ||
-        (this.boundStateResult?.xGrid
-          ? this.boundStateResult.xGrid
-          : null);
+        (this.boundStateResult?.xGrid ? this.boundStateResult.xGrid : null);
 
       if (!gridInMeters) {
         return null;
@@ -679,9 +680,7 @@ export abstract class BaseModel {
    * @returns Object containing real part, imaginary part, magnitude, probability density arrays,
    *          or null if bound states are not available
    */
-  public getTimeEvolvedSuperposition(
-    timeInSeconds: number,
-  ): {
+  public getTimeEvolvedSuperposition(timeInSeconds: number): {
     realPart: number[];
     imagPart: number[];
     magnitude: number[];
@@ -788,10 +787,7 @@ export abstract class BaseModel {
       probabilityDensity = superposition.probabilityDensity;
     } else {
       // Single eigenstate
-      if (
-        energyIndex < 0 ||
-        energyIndex >= boundStates.wavefunctions.length
-      ) {
+      if (energyIndex < 0 || energyIndex >= boundStates.wavefunctions.length) {
         return null;
       }
 
@@ -819,11 +815,9 @@ export abstract class BaseModel {
           const t2 = (segmentEnd - x1) / (x2 - x1);
 
           const p1 =
-            probabilityDensity[i] * (1 - t1) +
-            probabilityDensity[i + 1] * t1;
+            probabilityDensity[i] * (1 - t1) + probabilityDensity[i + 1] * t1;
           const p2 =
-            probabilityDensity[i] * (1 - t2) +
-            probabilityDensity[i + 1] * t2;
+            probabilityDensity[i] * (1 - t2) + probabilityDensity[i + 1] * t2;
 
           // Trapezoidal rule
           const dx = segmentEnd - segmentStart;
@@ -857,10 +851,7 @@ export abstract class BaseModel {
       return null;
     }
 
-    if (
-      energyIndex < 0 ||
-      energyIndex >= boundStates.wavefunctions.length
-    ) {
+    if (energyIndex < 0 || energyIndex >= boundStates.wavefunctions.length) {
       return null;
     }
 

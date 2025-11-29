@@ -167,7 +167,6 @@ export class Coulomb3DPotentialSolution extends AnalyticalSolution {
       pMax,
     );
   }
-
 }
 
 /**
@@ -669,7 +668,9 @@ export function calculateCoulomb3DSuperpositionMinMax(
       const a_n = nPrincipal * a0;
       const normalization =
         (2.0 / (a_n * Math.sqrt(a_n))) *
-        Math.sqrt(factorial(nPrincipal - 1) / (nPrincipal * factorial(nPrincipal)));
+        Math.sqrt(
+          factorial(nPrincipal - 1) / (nPrincipal * factorial(nPrincipal)),
+        );
 
       // Calculate wavefunction value
       let psi: number;

@@ -52,9 +52,8 @@ globalThis.cancelAnimationFrame = (id) => clearTimeout(id);
 async function debug() {
   console.log("=== Debug: MatrixNumerov Eigenvalue Check ===\n");
 
-  const { DotMatrix, diagonalize, matrixToArray } = await import(
-    "../src/common/model/LinearAlgebraUtils.js"
-  );
+  const { DotMatrix, diagonalize, matrixToArray } =
+    await import("../src/common/model/LinearAlgebraUtils.js");
   const QuantumConstants = (
     await import("../src/common/model/QuantumConstants.js")
   ).default;

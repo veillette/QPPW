@@ -218,7 +218,10 @@ export class WaveFunctionChartNode extends Node {
     };
 
     // Create classical probability overlay
-    this.classicalProbabilityOverlay = new ClassicalProbabilityOverlay(model, toolOptions);
+    this.classicalProbabilityOverlay = new ClassicalProbabilityOverlay(
+      model,
+      toolOptions,
+    );
     this.plotContentNode.addChild(this.classicalProbabilityOverlay);
 
     // Create phase color visualization
@@ -1268,18 +1271,14 @@ export class WaveFunctionChartNode extends Node {
    * Coordinate transformation: data (nm) to view (pixels).
    */
   private dataToViewX(x: number): number {
-    return (
-      this.chartMargins.left + this.chartTransform.modelToViewX(x)
-    );
+    return this.chartMargins.left + this.chartTransform.modelToViewX(x);
   }
 
   /**
    * Coordinate transformation: data value to view (pixels).
    */
   private dataToViewY(y: number): number {
-    return (
-      this.chartMargins.top + this.chartTransform.modelToViewY(y)
-    );
+    return this.chartMargins.top + this.chartTransform.modelToViewY(y);
   }
 
   /**

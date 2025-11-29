@@ -3,7 +3,14 @@
  * of the wavefunction at a specific point. Shows a parabola based on Taylor expansion.
  */
 
-import { Node, Line, Path, Text, Circle, DragListener } from "scenerystack/scenery";
+import {
+  Node,
+  Line,
+  Path,
+  Text,
+  Circle,
+  DragListener,
+} from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
 import { NumberProperty, BooleanProperty } from "scenerystack/axon";
 import { PhetFont } from "scenerystack/scenery-phet";
@@ -35,7 +42,11 @@ export class CurvatureTool extends Node {
   private readonly parabola: Path;
   private readonly label: Text;
 
-  constructor(model: ScreenModel, getEffectiveDisplayMode: () => string, options: CurvatureToolOptions) {
+  constructor(
+    model: ScreenModel,
+    getEffectiveDisplayMode: () => string,
+    options: CurvatureToolOptions,
+  ) {
     super();
 
     this.model = model;
@@ -111,7 +122,13 @@ export class CurvatureTool extends Node {
    * Setup drag listener for marker handle
    */
   private setupDragListener(): void {
-    const { parentNode, chartMargins, viewToDataX, xMinProperty, xMaxProperty } = this.options;
+    const {
+      parentNode,
+      chartMargins,
+      viewToDataX,
+      xMinProperty,
+      xMaxProperty,
+    } = this.options;
 
     const dragListener = new DragListener({
       drag: (event) => {

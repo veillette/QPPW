@@ -5,6 +5,7 @@
 QPPW (Quantum Particle in a Periodic Well) is a TypeScript-based physics simulation built using the PhET framework. This document outlines the architectural principles and conventions for AI assistants working on this codebase.
 
 ### Technology Stack
+
 - **Language**: TypeScript
 - **Build Tool**: Vite
 - **UI Framework**: Custom SceneryStack (scenery, sun, scenery-phet)
@@ -80,11 +81,13 @@ In commit `3f30d06`, a significant refactoring established clear separation betw
 ### What Changed
 
 **Before**: `WaveFunctionChartNode` (view) contained ~200 lines of physics calculations:
+
 - Time evolution of quantum superpositions
 - Probability density integration
 - Wavefunction interpolation and derivatives
 
 **After**: These calculations moved to `BaseModel`, and `WaveFunctionChartNode` now:
+
 - Calls `model.getTimeEvolvedSuperposition()` for quantum state evolution
 - Calls `model.getProbabilityInRegion()` for probability calculations
 - Calls `model.getWavefunctionAtPosition()` for interpolated values
@@ -123,8 +126,8 @@ In commit `3f30d06`, a significant refactoring established clear separation betw
 class MyChartNode extends Node {
   private updateWavefunction() {
     // DON'T: Calculate physics in the view
-    const evolved = this.coefficients.map((c, i) =>
-      c * Math.exp(-I * this.energies[i] * time)
+    const evolved = this.coefficients.map(
+      (c, i) => c * Math.exp(-I * this.energies[i] * time),
     );
   }
 }
@@ -151,46 +154,57 @@ The model layer exposes these methods for view consumption (see `BaseModel.ts`):
 ## Essential Commands
 
 ### Building
+
 ```bash
 npm run build
 ```
+
 - Runs TypeScript type checking (`tsc --noEmit`)
 - Builds production bundle with Vite
 - **Always run this before committing** to ensure no type errors
 
 ### Linting & Formatting
+
 ```bash
 npm run lint
 ```
+
 - Runs ESLint on the entire codebase
 - **Must pass before committing**
 - ESLint automatically applies formatting rules (similar to Prettier)
 - No separate format command needed - linting handles formatting
 
 ### Development
+
 ```bash
 npm start
 ```
+
 - Starts Vite dev server
 - Hot module replacement enabled
 - Available at http://localhost:5173 (typically)
 
 ### Type Checking
+
 ```bash
 npx tsc --noEmit
 ```
+
 - Type-checks without emitting files
 - Useful for quick type validation
 
 ## Code Architecture & Patterns
 
 ### Screen Structure
+
 Each screen follows this pattern:
+
 1. **Model**: Extends base model, manages state and physics
 2. **ScreenView**: Renders charts and UI
 3. **ControlPanelNode**: Control panel with settings
 
 ### Two Control Panel Types
+
 - **ControlPanelNode** (`src/common/view/ControlPanelNode.ts`)
   - Used by: OneWellScreenView, TwoWellsScreenView, ManyWellsScreenView
   - Features: Full controls including superposition, phase color, wave function views
@@ -201,6 +215,7 @@ Each screen follows this pattern:
   - **Has measure area tool** (other screens do not)
 
 ### Screen View Patterns
+
 - **BaseScreenView**: Base class with `createStandardLayout()` method
   - Creates `WaveFunctionChartNode` and `EnergyChartNode`
   - Creates `ControlPanelNode` (without area tool)
@@ -212,6 +227,7 @@ Each screen follows this pattern:
   - Simpler interface for educational introduction
 
 ### Key Components
+
 - **WaveFunctionChartNode**: Displays wave function/probability density
   - Has `showAreaToolProperty` for area measurement feature
   - Area tool only visible on intro screen
@@ -224,12 +240,14 @@ Each screen follows this pattern:
 ## Important Conventions
 
 ### File Naming
+
 - TypeScript files use PascalCase: `WaveFunctionChartNode.ts`
 - Test files: `*.test.ts`
 - Import with `.js` extension: `import { Foo } from "./Foo.js"`
   - TypeScript requires .js even though source files are .ts
 
 ### Code Style
+
 - **Indentation**: 2 spaces
 - **Quotes**: Double quotes for strings
 - **Semicolons**: Required
@@ -237,15 +255,18 @@ Each screen follows this pattern:
 - **Comments**: JSDoc style for public methods
 
 ### TypeScript
+
 - Strict mode enabled
 - Explicit types preferred
 - Use type imports when importing only types:
   ```typescript
-  import type { SomeType } from "./module.js"
+  import type { SomeType } from "./module.js";
   ```
 
 ### Property Pattern (Axon)
+
 The codebase uses Axon properties extensively:
+
 ```typescript
 // Create property
 public readonly someProperty: Property<number>;
@@ -260,7 +281,9 @@ this.someProperty.link((value) => {
 ```
 
 ### Conditional UI Elements
+
 When adding optional UI elements (checkboxes, controls):
+
 ```typescript
 // 1. Create content conditionally
 const checkboxContent = condition
@@ -300,11 +323,13 @@ Example: Area tool is only on intro screen
 ### Modifying Display Modes
 
 Display modes are managed in model:
+
 - `probabilityDensity`: Shows probability density
 - `waveFunction`: Shows real/imaginary parts
 - `phaseColor`: Color-coded phase (not in intro screen)
 
 Enable/disable controls based on mode:
+
 ```typescript
 this.model.displayModeProperty.link((mode: string) => {
   checkbox.enabled = mode === "probabilityDensity";
@@ -314,6 +339,7 @@ this.model.displayModeProperty.link((mode: string) => {
 ### Working with Potential Wells
 
 Potential types defined in `src/common/model/PotentialFunction.ts`:
+
 - INFINITE_WELL
 - FINITE_WELL
 - HARMONIC_OSCILLATOR
@@ -331,15 +357,18 @@ Each potential has specific parameters (width, depth, barrier height, offset).
 ## Git Workflow
 
 ### Branches
+
 - **main**: Primary development branch
 - Use descriptive branch names for features
 
 ### Before Committing
+
 1. Run `npm run build` - ensure no type errors
 2. Run `npm run lint` - ensure code style compliance
 3. Test functionality manually if UI changes
 
 ### Commit Messages
+
 - Use conventional commits style
 - Be descriptive but concise
 - Example: "Add area measurement tool to intro screen only"
@@ -347,6 +376,7 @@ Each potential has specific parameters (width, depth, barrier height, offset).
 ## Special Features
 
 ### Area Measurement Tool
+
 - **Location**: Intro screen only
 - **File**: `src/common/view/WaveFunctionChartNode.ts`
 - **Control**: `src/intro/view/IntroControlPanelNode.ts`
@@ -358,6 +388,7 @@ Each potential has specific parameters (width, depth, barrier height, offset).
   - Only enabled in probability density mode
 
 ### Chart Constants
+
 - Defined in `src/common/view/ChartConstants.ts`
 - Shared margins and ranges across charts
 - Use these constants for consistency
@@ -365,16 +396,19 @@ Each potential has specific parameters (width, depth, barrier height, offset).
 ## Debugging Tips
 
 ### Type Errors
+
 - Run `npx tsc --noEmit` for detailed type information
 - Check import paths use `.js` extension
 - Verify property types match Axon patterns
 
 ### Build Errors
+
 - Clear dist folder: `rm -rf dist`
 - Reinstall dependencies: `npm install`
 - Check Vite config if module resolution issues
 
 ### Runtime Errors
+
 - Use browser DevTools
 - Check property links for memory leaks
 - Verify dispose methods called for dynamic components
@@ -382,11 +416,12 @@ Each potential has specific parameters (width, depth, barrier height, offset).
 ## String Management
 
 Strings are managed through `StringManager` in `src/i18n/StringManager.ts`:
+
 ```typescript
 import stringManager from "../../i18n/StringManager.js";
 
 // Use string properties
-new Text(stringManager.someStringProperty, options)
+new Text(stringManager.someStringProperty, options);
 ```
 
 This supports internationalization (i18n).
@@ -394,6 +429,7 @@ This supports internationalization (i18n).
 ## Colors
 
 All colors defined in `src/QPPWColors.ts` as properties:
+
 ```typescript
 import QPPWColors from "../../QPPWColors.js";
 
@@ -409,6 +445,7 @@ Use properties (not raw values) for theme support.
 
 Currently no automated test suite configured.
 Manual testing workflow:
+
 1. Run `npm start`
 2. Navigate to each screen
 3. Test features in different modes

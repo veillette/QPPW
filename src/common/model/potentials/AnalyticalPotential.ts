@@ -66,7 +66,11 @@ export abstract class AnalyticalPotential extends BasePotential {
     energy: number,
     xGrid: number[],
   ): number[] {
-    return this.solution.calculateClassicalProbability(energy, this.mass, xGrid);
+    return this.solution.calculateClassicalProbability(
+      energy,
+      this.mass,
+      xGrid,
+    );
   }
 
   /**

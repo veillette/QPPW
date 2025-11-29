@@ -32,10 +32,7 @@ import QuantumConstants from "./QuantumConstants.js";
 import QPPWPreferences from "../../QPPWPreferences.js";
 import qppw from "../../QPPWNamespace.js";
 import { NumericalMethod } from "./NumericalMethod.js";
-import {
-  BasePotential,
-  AnalyticalPotential,
-} from "./potentials/index.js";
+import { BasePotential, AnalyticalPotential } from "./potentials/index.js";
 
 // Re-export potential classes for external use
 export {

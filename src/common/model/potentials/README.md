@@ -43,9 +43,9 @@ The following potentials have exact analytical solutions:
 ### Using the Solver with Potential Classes
 
 ```typescript
-import { Schrodinger1DSolver, WellParameters } from '../Schrodinger1DSolver.js';
-import { PotentialType } from '../PotentialFunction.js';
-import { NumericalPotential } from './index.js';
+import { Schrodinger1DSolver, WellParameters } from "../Schrodinger1DSolver.js";
+import { PotentialType } from "../PotentialFunction.js";
+import { NumericalPotential } from "./index.js";
 
 const solver = new Schrodinger1DSolver();
 const mass = 9.10938e-31; // electron mass
@@ -53,7 +53,7 @@ const mass = 9.10938e-31; // electron mass
 // Example 1: Create and solve an analytical potential
 const wellParams: WellParameters = {
   type: PotentialType.HARMONIC_OSCILLATOR,
-  springConstant: 1.0
+  springConstant: 1.0,
 };
 
 const potential = solver.createPotential(wellParams, mass);
@@ -70,7 +70,10 @@ const result2 = solver.solvePotential(numericalPot, 5, gridConfig);
 if (potential.hasAnalyticalSolution()) {
   const analyticalPot = potential as AnalyticalPotential;
   const turningPoints = analyticalPot.calculateTurningPoints(energy);
-  const classicalProb = analyticalPot.calculateClassicalProbability(energy, xGrid);
+  const classicalProb = analyticalPot.calculateClassicalProbability(
+    energy,
+    xGrid,
+  );
 }
 ```
 
@@ -80,8 +83,8 @@ if (potential.hasAnalyticalSolution()) {
 import {
   InfiniteSquareWellPotential,
   HarmonicOscillatorPotential,
-  NumericalPotential
-} from './index.js';
+  NumericalPotential,
+} from "./index.js";
 
 // Create potentials directly
 const infiniteWell = new InfiniteSquareWellPotential(1e-9, mass);

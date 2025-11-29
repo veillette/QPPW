@@ -161,7 +161,10 @@ export class TwoWellsModel extends BaseModel {
     // Override well width range for double square well
     this.wellWidthProperty.setValueAndRange(
       TwoWellsModel.DEFAULT_WELL_WIDTH,
-      new Range(TwoWellsModel.TWO_WELL_WIDTH_MIN, TwoWellsModel.TWO_WELL_WIDTH_MAX),
+      new Range(
+        TwoWellsModel.TWO_WELL_WIDTH_MIN,
+        TwoWellsModel.TWO_WELL_WIDTH_MAX,
+      ),
     );
 
     // Initialize model-specific well parameters

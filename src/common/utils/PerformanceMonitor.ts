@@ -88,10 +88,7 @@ export class PerformanceMonitor {
    *   return await fetch('/api/data').then(r => r.json());
    * });
    */
-  static async measureAsync<T>(
-    name: string,
-    fn: () => Promise<T>,
-  ): Promise<T> {
+  static async measureAsync<T>(name: string, fn: () => Promise<T>): Promise<T> {
     if (!PerformanceMonitor.enabled) {
       return fn();
     }

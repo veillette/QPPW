@@ -740,11 +740,11 @@ export function numericalFourierTransform(
   } else {
     // Auto-determine from FFT frequency grid
     const waveNumbers = fftFreq(N, dx);
-    momentumValues = waveNumbers.map(k => HBAR * k);
+    momentumValues = waveNumbers.map((k) => HBAR * k);
   }
 
   // Prepare complex wavefunction for FFT
-  const psiComplex: Complex[] = psi.map(val => ({ real: val, imaginary: 0 }));
+  const psiComplex: Complex[] = psi.map((val) => ({ real: val, imaginary: 0 }));
 
   // Pad or truncate if needed
   if (psiComplex.length < N) {
@@ -763,7 +763,7 @@ export function numericalFourierTransform(
   // Extract magnitudes and apply normalization
   // FFT normalization factor: dx / √(2πℏ)
   const normalization = dx / Math.sqrt(2 * Math.PI * HBAR);
-  const phiP = phiComplex.map(c => {
+  const phiP = phiComplex.map((c) => {
     // For real-valued wavefunctions, we take the magnitude
     const magnitude = Math.sqrt(c.real * c.real + c.imaginary * c.imaginary);
     return magnitude * normalization;

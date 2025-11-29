@@ -305,10 +305,7 @@ export class IntroControlPanelNode extends Node {
       : null;
 
     // Build children array (no display mode controls since intro screen shows separate charts)
-    const children: Node[] = [
-      classicalProbabilityCheckbox,
-      showZerosCheckbox,
-    ];
+    const children: Node[] = [classicalProbabilityCheckbox, showZerosCheckbox];
 
     // Add area tool checkbox if it exists
     if (areaToolCheckbox) {
@@ -506,7 +503,13 @@ export class IntroControlPanelNode extends Node {
     return new VBox({
       spacing: 8,
       align: "left",
-      children: [titleText, widthRowVBox, depthRowVBox, barrierHeightRowVBox, offsetRowVBox],
+      children: [
+        titleText,
+        widthRowVBox,
+        depthRowVBox,
+        barrierHeightRowVBox,
+        offsetRowVBox,
+      ],
     });
   }
 }

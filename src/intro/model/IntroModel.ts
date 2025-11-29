@@ -210,10 +210,7 @@ export class IntroModel extends BaseModel {
       const maxN = Math.floor(
         maxEnergy / (QuantumConstants.HBAR * omega) - 0.5,
       );
-      numStates = Math.max(
-        1,
-        Math.min(maxN + 1, IntroModel.MAX_NUM_STATES),
-      ); // Cap at MAX_NUM_STATES for safety
+      numStates = Math.max(1, Math.min(maxN + 1, IntroModel.MAX_NUM_STATES)); // Cap at MAX_NUM_STATES for safety
     }
     // For infinite well, calculate states up to MAX_ENERGY_EV
     else if (this.potentialTypeProperty.value === PotentialType.INFINITE_WELL) {

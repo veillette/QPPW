@@ -138,7 +138,10 @@ export class ManyWellsModel extends BaseModel {
     // Override well width range for multi-square well
     this.wellWidthProperty.setValueAndRange(
       ManyWellsModel.DEFAULT_WELL_WIDTH,
-      new Range(ManyWellsModel.MANY_WELL_WIDTH_MIN, ManyWellsModel.MANY_WELL_WIDTH_MAX),
+      new Range(
+        ManyWellsModel.MANY_WELL_WIDTH_MIN,
+        ManyWellsModel.MANY_WELL_WIDTH_MAX,
+      ),
     );
 
     // Initialize number of wells
@@ -393,7 +396,9 @@ export class ManyWellsModel extends BaseModel {
           // Check if x is inside any of the wells
           for (let wellIndex = 0; wellIndex < numberOfWells; wellIndex++) {
             const wellCenter =
-              arrayStart + wellIndex * period + wellWidth / ManyWellsModel.HALF_DIVISOR;
+              arrayStart +
+              wellIndex * period +
+              wellWidth / ManyWellsModel.HALF_DIVISOR;
             const wellStart = wellCenter - halfWellWidth;
             const wellEnd = wellCenter + halfWellWidth;
 

@@ -273,14 +273,10 @@ const QPPWColors = {
     projector: new Color(100, 100, 150), // Darker for projector
   }),
 
-  iconWaveFunctionProperty: new ProfileColorProperty(
-    qppw,
-    "iconWaveFunction",
-    {
-      default: new Color(0, 200, 255), // Bright cyan
-      projector: new Color(0, 150, 200), // Darker cyan for projector
-    },
-  ),
+  iconWaveFunctionProperty: new ProfileColorProperty(qppw, "iconWaveFunction", {
+    default: new Color(0, 200, 255), // Bright cyan
+    projector: new Color(0, 150, 200), // Darker cyan for projector
+  }),
 
   iconProbabilityFillProperty: new ProfileColorProperty(
     qppw,
@@ -305,23 +301,15 @@ const QPPWColors = {
     },
   ),
 
-  iconTunnelEffectProperty: new ProfileColorProperty(
-    qppw,
-    "iconTunnelEffect",
-    {
-      default: new Color(160, 32, 240), // Purple
-      projector: new Color(128, 0, 192), // Darker purple for projector
-    },
-  ),
+  iconTunnelEffectProperty: new ProfileColorProperty(qppw, "iconTunnelEffect", {
+    default: new Color(160, 32, 240), // Purple
+    projector: new Color(128, 0, 192), // Darker purple for projector
+  }),
 
-  iconEnergyLevelProperty: new ProfileColorProperty(
-    qppw,
-    "iconEnergyLevel",
-    {
-      default: new Color(0, 255, 150), // Bright green
-      projector: new Color(0, 180, 100), // Darker green for projector
-    },
-  ),
+  iconEnergyLevelProperty: new ProfileColorProperty(qppw, "iconEnergyLevel", {
+    default: new Color(0, 255, 150), // Bright green
+    projector: new Color(0, 180, 100), // Darker green for projector
+  }),
 
   // Band colors for many-wells periodic structures
   band1Property: new ProfileColorProperty(qppw, "band1", {

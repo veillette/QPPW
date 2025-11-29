@@ -7,10 +7,7 @@ import { Node, Line } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
 import { NumberProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
-import {
-  ChartTransform,
-  ChartRectangle,
-} from "scenerystack/bamboo";
+import { ChartTransform, ChartRectangle } from "scenerystack/bamboo";
 import type { ScreenModel } from "../model/ScreenModels.js";
 import type { ScreenViewState } from "./ScreenViewStates.js";
 import QPPWColors from "../../QPPWColors.js";

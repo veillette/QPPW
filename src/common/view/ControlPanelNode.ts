@@ -59,7 +59,10 @@ type ResolvedControlPanelNodeOptions = {
 
 export class ControlPanelNode extends Node {
   private readonly model: OneWellModel | TwoWellsModel | ManyWellsModel;
-  private readonly viewState: OneWellViewState | TwoWellsViewState | ManyWellsViewState;
+  private readonly viewState:
+    | OneWellViewState
+    | TwoWellsViewState
+    | ManyWellsViewState;
   private readonly options: ResolvedControlPanelNodeOptions;
 
   public constructor(
@@ -367,7 +370,6 @@ export class ControlPanelNode extends Node {
     // Coherent state displacement slider (OneWellModel only)
     let displacementRowVBox: Node | null = null;
     if (isOneWellModel(this.model)) {
-
       const displacementValueText = new Text("", {
         font: new PhetFont(12),
         fill: QPPWColors.textFillProperty,

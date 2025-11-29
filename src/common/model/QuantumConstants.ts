@@ -42,7 +42,7 @@ const QuantumConstants = {
    * Meters to nanometer conversion
    */
   M_TO_NM: 1e9,
-}
+};
 
 qppw.register("QuantumConstants", QuantumConstants);
 

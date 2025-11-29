@@ -55,7 +55,7 @@ export class ZerosVisualization extends Node {
     const zeros = this.findZeros(xGrid, wavefunction);
 
     // Create circles at each zero position
-    zeros.forEach(zeroX => {
+    zeros.forEach((zeroX) => {
       const x = this.options.dataToViewX(zeroX);
       const y = this.options.dataToViewY(0); // Zeros are at y=0
 
@@ -89,7 +89,7 @@ export class ZerosVisualization extends Node {
         // Linear interpolation to find more accurate zero position
         const x1 = xGrid[i];
         const x2 = xGrid[i + 1];
-        const zeroX = x1 - y1 * (x2 - x1) / (y2 - y1);
+        const zeroX = x1 - (y1 * (x2 - x1)) / (y2 - y1);
         zeros.push(zeroX * QuantumConstants.M_TO_NM); // Convert to nm
       }
     }

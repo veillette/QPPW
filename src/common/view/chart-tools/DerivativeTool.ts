@@ -3,7 +3,14 @@
  * of the wavefunction at a specific point. Shows a tangent line.
  */
 
-import { Node, Line, Path, Text, Circle, DragListener } from "scenerystack/scenery";
+import {
+  Node,
+  Line,
+  Path,
+  Text,
+  Circle,
+  DragListener,
+} from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
 import { NumberProperty, BooleanProperty } from "scenerystack/axon";
 import { PhetFont } from "scenerystack/scenery-phet";
@@ -35,7 +42,11 @@ export class DerivativeTool extends Node {
   private readonly tangentLine: Path;
   private readonly label: Text;
 
-  constructor(model: ScreenModel, getEffectiveDisplayMode: () => string, options: DerivativeToolOptions) {
+  constructor(
+    model: ScreenModel,
+    getEffectiveDisplayMode: () => string,
+    options: DerivativeToolOptions,
+  ) {
     super();
 
     this.model = model;
@@ -111,7 +122,13 @@ export class DerivativeTool extends Node {
    * Setup drag listener for marker handle
    */
   private setupDragListener(): void {
-    const { parentNode, chartMargins, viewToDataX, xMinProperty, xMaxProperty } = this.options;
+    const {
+      parentNode,
+      chartMargins,
+      viewToDataX,
+      xMinProperty,
+      xMaxProperty,
+    } = this.options;
 
     const dragListener = new DragListener({
       drag: (event) => {
@@ -228,7 +245,7 @@ export class DerivativeTool extends Node {
 
     // Calculate endpoints of the tangent line
     const x1 = centerX - tangentHalfWidth;
-    const y1 = centerY + firstDerivative * (-tangentHalfWidth);
+    const y1 = centerY + firstDerivative * -tangentHalfWidth;
     const x2 = centerX + tangentHalfWidth;
     const y2 = centerY + firstDerivative * tangentHalfWidth;
 

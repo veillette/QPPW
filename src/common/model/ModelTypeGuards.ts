@@ -23,7 +23,10 @@ export function isIntroModel(model: ScreenModel): model is IntroModel {
  * OneWellModel has coherent displacement and superposition features.
  */
 export function isOneWellModel(model: ScreenModel): model is OneWellModel {
-  return "coherentDisplacementProperty" in model && "superpositionTypeProperty" in model;
+  return (
+    "coherentDisplacementProperty" in model &&
+    "superpositionTypeProperty" in model
+  );
 }
 
 /**
@@ -31,7 +34,9 @@ export function isOneWellModel(model: ScreenModel): model is OneWellModel {
  * TwoWellsModel has well separation but not multiple wells.
  */
 export function isTwoWellsModel(model: ScreenModel): model is TwoWellsModel {
-  return "wellSeparationProperty" in model && !("numberOfWellsProperty" in model);
+  return (
+    "wellSeparationProperty" in model && !("numberOfWellsProperty" in model)
+  );
 }
 
 /**
@@ -46,7 +51,9 @@ export function isManyWellsModel(model: ScreenModel): model is ManyWellsModel {
  * Type guard to check if a model has barrier height property.
  * This is specific to certain potentials in OneWellModel and IntroModel.
  */
-export function hasBarrierHeight(model: ScreenModel): model is OneWellModel | IntroModel {
+export function hasBarrierHeight(
+  model: ScreenModel,
+): model is OneWellModel | IntroModel {
   return "barrierHeightProperty" in model;
 }
 
@@ -54,7 +61,9 @@ export function hasBarrierHeight(model: ScreenModel): model is OneWellModel | In
  * Type guard to check if a model has potential offset property.
  * This is specific to certain potentials in OneWellModel and IntroModel.
  */
-export function hasPotentialOffset(model: ScreenModel): model is OneWellModel | IntroModel {
+export function hasPotentialOffset(
+  model: ScreenModel,
+): model is OneWellModel | IntroModel {
   return "potentialOffsetProperty" in model;
 }
 

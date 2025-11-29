@@ -1135,4 +1135,3 @@ function solveSecant(
 
   return null;
 }
-

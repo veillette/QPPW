@@ -201,7 +201,6 @@ export class EckartPotentialSolution extends AnalyticalSolution {
       pMax,
     );
   }
-
 }
 
 /**

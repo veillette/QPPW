@@ -7,7 +7,10 @@ import { Node, Line, Path, Text, Rectangle } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
 import { PhetFont } from "scenerystack/scenery-phet";
 import type { ScreenModel } from "../../model/ScreenModels.js";
-import { hasClassicalTurningPoints, hasClassicallyForbiddenProbability } from "../../model/ModelTypeGuards.js";
+import {
+  hasClassicalTurningPoints,
+  hasClassicallyForbiddenProbability,
+} from "../../model/ModelTypeGuards.js";
 import type { BoundStateResult } from "../../model/PotentialFunction.js";
 import QuantumConstants from "../../model/QuantumConstants.js";
 import QPPWColors from "../../../QPPWColors.js";
@@ -173,7 +176,8 @@ export class ClassicalProbabilityOverlay extends Node {
     selectedIndex: number,
     showClassicalProbability: boolean,
   ): void {
-    const { chartMargins, plotWidth, plotHeight, dataToViewX, dataToViewY } = this.options;
+    const { chartMargins, plotWidth, plotHeight, dataToViewX, dataToViewY } =
+      this.options;
 
     // Early return if conditions aren't met
     if (
@@ -242,9 +246,15 @@ export class ClassicalProbabilityOverlay extends Node {
     this.rightForbiddenRegion.visible = true;
 
     // Update classical probability path
-    const classicalProbability = this.model.getClassicalProbabilityDensity(selectedIndex);
+    const classicalProbability =
+      this.model.getClassicalProbabilityDensity(selectedIndex);
     if (classicalProbability) {
-      this.plotClassicalProbabilityDensity(boundStates.xGrid, classicalProbability, dataToViewX, dataToViewY);
+      this.plotClassicalProbabilityDensity(
+        boundStates.xGrid,
+        classicalProbability,
+        dataToViewX,
+        dataToViewY,
+      );
       this.classicalProbabilityPath.visible = true;
     }
   }

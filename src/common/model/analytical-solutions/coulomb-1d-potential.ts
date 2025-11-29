@@ -180,7 +180,6 @@ export class Coulomb1DPotentialSolution extends AnalyticalSolution {
       pMax,
     );
   }
-
 }
 
 /**

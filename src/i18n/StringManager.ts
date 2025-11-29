@@ -675,7 +675,8 @@ export class StringManager {
   }
 
   get valueWithElectronVoltsPerNanometerStringProperty(): ReadOnlyProperty<string> {
-    return this.stringProperties.valueWithElectronVoltsPerNanometerStringProperty;
+    return this.stringProperties
+      .valueWithElectronVoltsPerNanometerStringProperty;
   }
 
   get percentageValueStringProperty(): ReadOnlyProperty<string> {

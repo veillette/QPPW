@@ -182,7 +182,6 @@ export class PoschlTellerPotentialSolution extends AnalyticalSolution {
       pMax,
     );
   }
-
 }
 
 /**
