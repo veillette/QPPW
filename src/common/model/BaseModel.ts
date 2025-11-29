@@ -911,11 +911,11 @@ export abstract class BaseModel {
         firstDerivativeInM / Math.pow(QuantumConstants.M_TO_NM, 1.5);
     } else {
       // Fall back to finite difference for first derivative
-      // f'(x) ≈ (f(x+h) - f(x-h)) / (2h)
+      // Using forward difference: f'(x) ≈ (f(x+h) - f(x)) / h
       const h = xGrid[1] - xGrid[0];
       const psi_left = wavefunction[i1];
       const psi_right = wavefunction[i1 + 1];
-      const firstDerivativeInM = (psi_right - psi_left) / (2 * h);
+      const firstDerivativeInM = (psi_right - psi_left) / h;
 
       // Convert first derivative from m^(-3/2) to nm^(-3/2)
       // Since 1 m^(-3/2) = (10^9 nm)^(-3/2) = 10^(-13.5) nm^(-3/2)
