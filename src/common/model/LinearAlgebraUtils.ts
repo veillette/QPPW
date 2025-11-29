@@ -609,6 +609,9 @@ function complexMultiply(a: Complex, b: Complex): Complex {
  * Fast Fourier Transform (FFT)
  * Cooley-Tukey radix-2 decimation-in-time algorithm
  *
+ * NOTE: This implementation requires input length to be a power of 2.
+ * 
+ *
  * @param x - Input array of complex numbers
  * @returns FFT of input
  */
@@ -620,6 +623,7 @@ export function fft(x: Complex[]): Complex[] {
     return x;
   }
 
+  // TODO : Add check for power of 2 length
   // Divide
   const even: Complex[] = [];
   const odd: Complex[] = [];

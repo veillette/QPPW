@@ -91,7 +91,7 @@ export class IntroModel extends BaseModel {
    * Number of grid points for analytical solution evaluation.
    * High resolution ensures smooth wavefunction plots.
    */
-  private static readonly ANALYTICAL_GRID_POINTS = 1000;
+  private static readonly ANALYTICAL_GRID_POINTS = 1024;
 
   /**
    * Spring constant multiplier for harmonic oscillator.
