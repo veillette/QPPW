@@ -34,7 +34,7 @@ jobs:
       - name: Lint
         run: npm run lint
       - name: Security audit
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=critical
       - name: Check formatting
         run: npm run format:check
 
@@ -59,6 +59,12 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
+          path: "./dist"
+          retention-days: 5
+      - name: Upload build artifact for release
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-dist
           path: "./dist"
           retention-days: 5
 

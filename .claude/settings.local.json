@@ -23,7 +23,8 @@
       "Bash(rm:*)",
       "WebFetch(domain:pages.physics.wisc.edu)",
       "Bash(git checkout:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(gh run list:*)"
     ],
     "deny": [],
     "ask": []
