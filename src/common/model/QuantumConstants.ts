@@ -5,6 +5,8 @@
 
 import qppw from "../../QPPWNamespace.js";
 
+const ELEMENTARY_CHARGE = 1.602176634e-19; // Coulombs
+
 const QuantumConstants = {
   /**
    * Reduced Planck constant (ℏ) in J·s
@@ -19,17 +21,17 @@ const QuantumConstants = {
   /**
    * Elementary charge in Coulombs
    */
-  ELEMENTARY_CHARGE: 1.602176634e-19,
+  ELEMENTARY_CHARGE: ELEMENTARY_CHARGE,
 
   /**
    * Electron volt in Joules (for unit conversions)
    */
-  EV_TO_JOULES: 1.602176634e-19,
+  EV_TO_JOULES: ELEMENTARY_CHARGE,
 
   /**
    * Joules to electron volt (for unit conversions)
    */
-  JOULES_TO_EV: 1.0 / 1.602176634e-19,
+  JOULES_TO_EV: 1.0 / ELEMENTARY_CHARGE,
 
   /**
    * Nanometer to meters conversion
@@ -40,22 +42,7 @@ const QuantumConstants = {
    * Meters to nanometer conversion
    */
   M_TO_NM: 1e9,
-
-  /**
-   * Bohr radius in meters (atomic unit of length)
-   */
-  BOHR_RADIUS: 5.29177210903e-11,
-
-  /**
-   * Hartree energy in Joules (atomic unit of energy)
-   */
-  HARTREE_TO_JOULES: 4.3597447222071e-18,
-
-  /**
-   * Joules to Hartree conversion
-   */
-  JOULES_TO_HARTREE: 1.0 / 4.3597447222071e-18,
-} as const;
+}
 
 qppw.register("QuantumConstants", QuantumConstants);
 
