@@ -937,8 +937,6 @@ export function solveFiniteSquareWell(
     if (parity === "even") {
       // Match boundary conditions at x = L/2
       const cosVal = Math.cos(k * halfL);
-      // B with exp factor is used for wavefunction evaluation
-      const B = cosVal * Math.exp(kappa * halfL);
 
       // Normalization integral (calculated with A = 1)
       // Inside: ∫_{-L/2}^{L/2} cos²(kx) dx = L/2 + sin(kL)/(2k)
@@ -951,8 +949,6 @@ export function solveFiniteSquareWell(
     } else {
       // Match boundary conditions at x = L/2
       const sinVal = Math.sin(k * halfL);
-      // B with exp factor is used for wavefunction evaluation
-      const B = sinVal * Math.exp(kappa * halfL);
 
       // Normalization integral (calculated with A = 1)
       // Inside: ∫_{-L/2}^{L/2} sin²(kx) dx = L/2 - sin(kL)/(2k)

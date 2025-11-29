@@ -158,7 +158,7 @@
   "firstDerivativeLabel": "dψ/dx = {{value}} m⁻¹ᐟ²/nm",
   "notAvailable": "N/A",
   "averageWavenumberLabel": "⟨k⟩ = {{value}} nm⁻¹",
-  "rmsWavenumberLabel": "k_rms = {{value}} nm⁻¹",
+  "rmsWavenumberLabel": "Δk_RMS = {{value}} nm⁻¹",
   "stateLabelProbability": "|{{label}}|²",
   "stateLabelWavefunction": "|{{label}}|",
   "valueWithPoints": "{{value}} points",
