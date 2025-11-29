@@ -39,6 +39,7 @@ export class CurvatureTool extends Node {
   private readonly container: Node;
   private readonly marker: Line;
   private readonly markerHandle: Circle;
+  private readonly positionCircle: Circle; // Circle tracking wavefunction position
   private readonly parabola: Path;
   private readonly label: Text;
 
@@ -78,6 +79,14 @@ export class CurvatureTool extends Node {
       cursor: "ew-resize",
     });
     this.container.addChild(this.markerHandle);
+
+    // Create position tracking circle (shows position on wavefunction)
+    this.positionCircle = new Circle(5, {
+      fill: QPPWColors.curvatureToolFillDarkProperty,
+      stroke: QPPWColors.backgroundColorProperty,
+      lineWidth: 2,
+    });
+    this.container.addChild(this.positionCircle);
 
     // Create parabola path
     this.parabola = new Path(null, {
@@ -181,6 +190,11 @@ export class CurvatureTool extends Node {
         derivatives.wavefunctionValue,
       );
       this.parabola.shape = parabolaShape;
+
+      // Update position tracking circle
+      const { dataToViewY } = this.options;
+      this.positionCircle.centerX = viewX;
+      this.positionCircle.centerY = dataToViewY(derivatives.wavefunctionValue);
 
       // Update label with proper units (nm^-5/2)
       this.label.string =
