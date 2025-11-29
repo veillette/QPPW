@@ -19,7 +19,7 @@ import {
 } from "../src/common/model/analytical-solutions/index.js";
 import { GridConfig } from "../src/common/model/PotentialFunction.js";
 
-const { HBAR, ELECTRON_MASS } = QuantumConstants;
+const { ELECTRON_MASS } = QuantumConstants;
 
 /**
  * Calculate the normalization integral ∫|ψ|² dx using the trapezoidal rule.
