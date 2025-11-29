@@ -1,0 +1,38 @@
+version: 2
+updates:
+  # Maintain npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "veillette"
+    labels:
+      - "dependencies"
+      - "automated"
+    # Group minor and patch updates together
+    groups:
+      development-dependencies:
+        patterns:
+          - "@typescript/*"
+          - "eslint*"
+          - "prettier"
+          - "typescript"
+          - "vite*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Maintain GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    reviewers:
+      - "veillette"
+    labels:
+      - "dependencies"
+      - "github-actions"
