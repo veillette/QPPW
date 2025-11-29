@@ -227,9 +227,10 @@ export function calculateHarmonicOscillatorWavefunctionFirstDerivative(
   const n = stateIndex; // Quantum number (0, 1, 2, ...)
   const omega = Math.sqrt(springConstant / mass);
   const alpha = Math.sqrt((mass * omega) / HBAR);
+  // Normalization: (mω/(πℏ))^(1/4) / √(2^n n!) = (α²/π)^(1/4) / √(2^n n!)
   const normalization =
     (1 / Math.sqrt(Math.pow(2, n) * factorial(n))) *
-    Math.pow(alpha / Math.PI, 0.25);
+    Math.pow((alpha * alpha) / Math.PI, 0.25);
 
   const firstDerivative: number[] = [];
 
@@ -281,9 +282,10 @@ export function calculateHarmonicOscillatorWavefunctionSecondDerivative(
   const n = stateIndex; // Quantum number (0, 1, 2, ...)
   const omega = Math.sqrt(springConstant / mass);
   const alpha = Math.sqrt((mass * omega) / HBAR);
+  // Normalization: (mω/(πℏ))^(1/4) / √(2^n n!) = (α²/π)^(1/4) / √(2^n n!)
   const normalization =
     (1 / Math.sqrt(Math.pow(2, n) * factorial(n))) *
-    Math.pow(alpha / Math.PI, 0.25);
+    Math.pow((alpha * alpha) / Math.PI, 0.25);
 
   const secondDerivative: number[] = [];
 
@@ -350,9 +352,10 @@ export function calculateHarmonicOscillatorWavefunctionMinMax(
   const n = stateIndex; // Quantum number (0, 1, 2, ...)
   const omega = Math.sqrt(springConstant / mass);
   const alpha = Math.sqrt((mass * omega) / HBAR);
+  // Normalization: (mω/(πℏ))^(1/4) / √(2^n n!) = (α²/π)^(1/4) / √(2^n n!)
   const normalization =
     (1 / Math.sqrt(Math.pow(2, n) * factorial(n))) *
-    Math.pow(alpha / Math.PI, 0.25);
+    Math.pow((alpha * alpha) / Math.PI, 0.25);
 
   let min = Infinity;
   let max = -Infinity;
@@ -489,10 +492,10 @@ export function calculateHarmonicOscillatorFourierTransform(
   for (let n = 0; n < numStates; n++) {
     const phiP: number[] = [];
 
-    // Normalization in momentum space (same as position space but with 1/α → α)
+    // Normalization in momentum space: (ℏ/(π mω))^(1/4) / √(2^n n!) = (1/(α²π))^(1/4) / √(2^n n!)
     const normalization =
       (1 / Math.sqrt(Math.pow(2, n) * factorial(n))) *
-      Math.pow(1 / (alpha * Math.PI), 0.25);
+      Math.pow(1 / ((alpha * alpha) * Math.PI), 0.25);
 
     for (const p of pGrid) {
       // Argument for Hermite polynomial in momentum space
