@@ -35,6 +35,10 @@ import { ZerosVisualization } from "./chart-tools/ZerosVisualization.js";
 import { PhaseColorVisualization } from "./chart-tools/PhaseColorVisualization.js";
 import { ClassicalProbabilityOverlay } from "./chart-tools/ClassicalProbabilityOverlay.js";
 import stringManager from "../../i18n/StringManager.js";
+import {
+  createDoubleArrowShape,
+  calculateRMSStatistics,
+} from "./RMSIndicatorUtils.js";
 
 // Chart axis range constant (shared with EnergyChartNode)
 const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
@@ -67,9 +71,13 @@ export class WaveFunctionChartNode extends Node {
   private readonly magnitudePath: Path;
   private readonly probabilityDensityPath: Path;
   private readonly zeroLine: Line;
+  private readonly avgPositionIndicator: Line; // Vertical line indicator for average position
+  private readonly rmsPositionIndicator: Path; // Double arrow indicator for RMS position
   private readonly axesNode: Node;
   private yAxisLabel!: Text;
   private readonly stateLabelNode: Text; // Label showing which wavefunction is displayed
+  private readonly avgPositionLabel: Text;
+  private readonly rmsPositionLabel: Text;
 
   // Tool components
   private readonly areaMeasurementTool: AreaMeasurementTool;
@@ -201,6 +209,22 @@ export class WaveFunctionChartNode extends Node {
     });
     this.plotContentNode.addChild(this.probabilityDensityPath);
 
+    // Create average position indicator (vertical line)
+    this.avgPositionIndicator = new Line(0, 0, 0, 0, {
+      stroke: QPPWColors.energyLevelSelectedProperty,
+      lineWidth: 2,
+      lineDash: [8, 4],
+    });
+    this.plotContentNode.addChild(this.avgPositionIndicator);
+
+    // Create RMS position indicator (double arrow)
+    this.rmsPositionIndicator = new Path(null, {
+      stroke: QPPWColors.energyLevelSelectedProperty,
+      lineWidth: 2,
+      fill: QPPWColors.energyLevelSelectedProperty,
+    });
+    this.plotContentNode.addChild(this.rmsPositionIndicator);
+
     // Initialize tool components
     const toolOptions = {
       chartMargins: this.chartMargins,
@@ -270,6 +294,23 @@ export class WaveFunctionChartNode extends Node {
       top: this.chartMargins.top + 5,
     });
     this.addChild(this.stateLabelNode);
+
+    // Create labels for average and RMS position
+    this.avgPositionLabel = new Text("", {
+      font: new PhetFont(12),
+      fill: QPPWColors.labelFillProperty,
+      left: this.chartMargins.left + 10,
+      top: this.chartMargins.top + 5,
+    });
+    this.addChild(this.avgPositionLabel);
+
+    this.rmsPositionLabel = new Text("", {
+      font: new PhetFont(12),
+      fill: QPPWColors.labelFillProperty,
+      left: this.chartMargins.left + 10,
+      top: this.chartMargins.top + 25,
+    });
+    this.addChild(this.rmsPositionLabel);
 
     // Ensure axes are on top of the clipped plot content
     this.axesNode.moveToFront();
@@ -893,6 +934,36 @@ export class WaveFunctionChartNode extends Node {
       // Plot probability density in nm^-1 units
       this.plotProbabilityDensityFromArray(xGrid, probabilityDensityNm);
 
+      // Calculate and display average and RMS position
+      // Convert xGrid from meters to nanometers for calculations
+      const xGridNm = xGrid.map((x) => x * 1e9);
+      const { avg, rms } = calculateRMSStatistics(xGridNm, probabilityDensityNm);
+      this.avgPositionLabel.string =
+        stringManager.averagePositionLabelStringProperty.value.replace(
+          "{{value}}",
+          avg.toFixed(2),
+        );
+      this.rmsPositionLabel.string =
+        stringManager.rmsPositionLabelStringProperty.value.replace(
+          "{{value}}",
+          rms.toFixed(2),
+        );
+
+      // Update average position indicator: vertical line at ⟨x⟩
+      const avgX = this.dataToViewX(avg);
+      const yTop = this.dataToViewY(this.yMaxProperty.value);
+      const yBottom = this.dataToViewY(this.yMinProperty.value);
+      this.avgPositionIndicator.setLine(avgX, yTop, avgX, yBottom);
+
+      // Update RMS indicator: horizontal double arrow from (avg - rms) to (avg + rms)
+      const leftX = avg - rms;
+      const rightX = avg + rms;
+      const x1 = this.dataToViewX(leftX);
+      const x2 = this.dataToViewX(rightX);
+      // Position the indicator at 80% of the visible range
+      const indicatorY = this.dataToViewY(this.yMaxProperty.value * 0.8);
+      this.rmsPositionIndicator.shape = createDoubleArrowShape(x1, x2, indicatorY);
+
       // Hide wavefunction components and phase color
       this.realPartPath.visible = false;
       this.imaginaryPartPath.visible = false;
@@ -922,6 +993,12 @@ export class WaveFunctionChartNode extends Node {
       this.imaginaryPartPath.visible = false;
       this.magnitudePath.visible = false;
 
+      // Hide RMS position indicator and labels
+      this.avgPositionIndicator.setLine(0, 0, 0, 0);
+      this.rmsPositionIndicator.shape = null;
+      this.avgPositionLabel.string = "";
+      this.rmsPositionLabel.string = "";
+
       // Hide zeros for phase color mode
       this.zerosVisualization.showProperty.value = false;
     } else {
@@ -931,6 +1008,12 @@ export class WaveFunctionChartNode extends Node {
       // Hide probability density and phase color
       this.probabilityDensityPath.shape = null;
       this.phaseColorVisualization.hide();
+
+      // Hide RMS position indicator and labels
+      this.avgPositionIndicator.setLine(0, 0, 0, 0);
+      this.rmsPositionIndicator.shape = null;
+      this.avgPositionLabel.string = "";
+      this.rmsPositionLabel.string = "";
 
       // Update zeros visualization if enabled (uses SI units)
       if (this.viewState.showZerosProperty.value) {
@@ -985,6 +1068,36 @@ export class WaveFunctionChartNode extends Node {
       // Plot probability density in nm^-1 units
       this.plotProbabilityDensityFromArray(xGrid, probabilityDensityNm);
 
+      // Calculate and display average and RMS position
+      // Convert xGrid from meters to nanometers for calculations
+      const xGridNm = xGrid.map((x) => x * 1e9);
+      const { avg, rms } = calculateRMSStatistics(xGridNm, probabilityDensityNm);
+      this.avgPositionLabel.string =
+        stringManager.averagePositionLabelStringProperty.value.replace(
+          "{{value}}",
+          avg.toFixed(2),
+        );
+      this.rmsPositionLabel.string =
+        stringManager.rmsPositionLabelStringProperty.value.replace(
+          "{{value}}",
+          rms.toFixed(2),
+        );
+
+      // Update average position indicator: vertical line at ⟨x⟩
+      const avgX = this.dataToViewX(avg);
+      const yTop = this.dataToViewY(this.yMaxProperty.value);
+      const yBottom = this.dataToViewY(this.yMinProperty.value);
+      this.avgPositionIndicator.setLine(avgX, yTop, avgX, yBottom);
+
+      // Update RMS indicator: horizontal double arrow from (avg - rms) to (avg + rms)
+      const leftX = avg - rms;
+      const rightX = avg + rms;
+      const x1 = this.dataToViewX(leftX);
+      const x2 = this.dataToViewX(rightX);
+      // Position the indicator at 80% of the visible range
+      const indicatorY = this.dataToViewY(this.yMaxProperty.value * 0.8);
+      this.rmsPositionIndicator.shape = createDoubleArrowShape(x1, x2, indicatorY);
+
       // Hide wavefunction component paths and phase color
       this.realPartPath.visible = false;
       this.imaginaryPartPath.visible = false;
@@ -1018,6 +1131,12 @@ export class WaveFunctionChartNode extends Node {
       this.imaginaryPartPath.visible = false;
       this.magnitudePath.visible = false;
 
+      // Hide RMS position indicator and labels
+      this.avgPositionIndicator.setLine(0, 0, 0, 0);
+      this.rmsPositionIndicator.shape = null;
+      this.avgPositionLabel.string = "";
+      this.rmsPositionLabel.string = "";
+
       // Hide zeros for phase color mode
       this.zerosVisualization.showProperty.value = false;
     } else {
@@ -1027,6 +1146,12 @@ export class WaveFunctionChartNode extends Node {
       // Hide probability density and phase color
       this.probabilityDensityPath.shape = null;
       this.phaseColorVisualization.hide();
+
+      // Hide RMS position indicator and labels
+      this.avgPositionIndicator.setLine(0, 0, 0, 0);
+      this.rmsPositionIndicator.shape = null;
+      this.avgPositionLabel.string = "";
+      this.rmsPositionLabel.string = "";
 
       // Update zeros visualization if enabled (uses SI units)
       if (this.viewState.showZerosProperty.value) {

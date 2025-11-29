@@ -22,6 +22,10 @@ import type { ScreenModel } from "../model/ScreenModels.js";
 import QPPWColors from "../../QPPWColors.js";
 import { PhetFont } from "scenerystack/scenery-phet";
 import stringManager from "../../i18n/StringManager.js";
+import {
+  createDoubleArrowShape,
+  calculateRMSStatistics,
+} from "./RMSIndicatorUtils.js";
 
 export class WavenumberChartNode extends Node {
   private readonly model: ScreenModel;
@@ -338,7 +342,7 @@ export class WavenumberChartNode extends Node {
       this.plotWavenumberDistribution(kGridNm, phiKSquared);
 
       // Calculate and display average and RMS wavenumber
-      const { avg, rms } = this.calculateStatistics(kGridNm, phiKSquared);
+      const { avg, rms } = calculateRMSStatistics(kGridNm, phiKSquared);
       this.avgWavenumberLabel.string =
         stringManager.averageWavenumberLabelStringProperty.value.replace(
           "{{value}}",
@@ -357,7 +361,7 @@ export class WavenumberChartNode extends Node {
       const x2 = this.dataToViewX(rightK);
       // Position the indicator at 20% from the top of the visible range
       const indicatorY = this.dataToViewY(this.yMaxProperty.value * 0.8);
-      this.rmsIndicator.shape = this.createDoubleArrowShape(x1, x2, indicatorY);
+      this.rmsIndicator.shape = createDoubleArrowShape(x1, x2, indicatorY);
     } finally {
       this.isUpdating = false;
     }
@@ -466,47 +470,6 @@ export class WavenumberChartNode extends Node {
   }
 
   /**
-   * Calculates average and RMS wavenumber.
-   * <k> = ∫ k|φ(k)|² dk
-   * k_rms = sqrt(∫ k²|φ(k)|² dk)
-   */
-  private calculateStatistics(
-    kGrid: number[],
-    phiKSquared: number[],
-  ): { avg: number; rms: number } {
-    // Normalize the distribution first
-    let totalProbability = 0;
-    for (let i = 0; i < kGrid.length - 1; i++) {
-      const dk = kGrid[i + 1] - kGrid[i];
-      const avgDensity = (phiKSquared[i] + phiKSquared[i + 1]) / 2;
-      totalProbability += avgDensity * dk;
-    }
-
-    // Calculate average wavenumber <k>
-    let avgK = 0;
-    for (let i = 0; i < kGrid.length - 1; i++) {
-      const dk = kGrid[i + 1] - kGrid[i];
-      const avgDensity = (phiKSquared[i] + phiKSquared[i + 1]) / 2;
-      const avgKLocal = (kGrid[i] + kGrid[i + 1]) / 2;
-      avgK += avgKLocal * avgDensity * dk;
-    }
-    avgK /= totalProbability;
-
-    // Calculate RMS wavenumber sqrt(<k²>)
-    let avgKSquared = 0;
-    for (let i = 0; i < kGrid.length - 1; i++) {
-      const dk = kGrid[i + 1] - kGrid[i];
-      const avgDensity = (phiKSquared[i] + phiKSquared[i + 1]) / 2;
-      const avgKLocal = (kGrid[i] + kGrid[i + 1]) / 2;
-      avgKSquared += avgKLocal * avgKLocal * avgDensity * dk;
-    }
-    avgKSquared /= totalProbability;
-    const rmsK = Math.sqrt(avgKSquared);
-
-    return { avg: avgK, rms: rmsK };
-  }
-
-  /**
    * Converts data X coordinate to view X coordinate using ChartTransform.
    */
   private dataToViewX(x: number): number {
@@ -518,40 +481,6 @@ export class WavenumberChartNode extends Node {
    */
   private dataToViewY(y: number): number {
     return this.chartMargins.top + this.chartTransform.modelToViewY(y);
-  }
-
-  /**
-   * Creates a double-headed horizontal arrow shape for the RMS indicator.
-   * The arrow spans from x1 to x2 at height y.
-   */
-  private createDoubleArrowShape(
-    x1: number,
-    x2: number,
-    y: number,
-  ): Shape {
-    const shape = new Shape();
-    const arrowHeadLength = 8;
-    const arrowHeadWidth = 6;
-
-    // Main horizontal line
-    shape.moveTo(x1, y);
-    shape.lineTo(x2, y);
-
-    // Left arrow head
-    shape.moveTo(x1, y);
-    shape.lineTo(x1 + arrowHeadLength, y - arrowHeadWidth / 2);
-    shape.lineTo(x1 + arrowHeadLength, y + arrowHeadWidth / 2);
-    shape.lineTo(x1, y);
-    shape.close();
-
-    // Right arrow head
-    shape.moveTo(x2, y);
-    shape.lineTo(x2 - arrowHeadLength, y - arrowHeadWidth / 2);
-    shape.lineTo(x2 - arrowHeadLength, y + arrowHeadWidth / 2);
-    shape.lineTo(x2, y);
-    shape.close();
-
-    return shape;
   }
 
   /**
