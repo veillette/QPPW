@@ -215,35 +215,40 @@ export function solveCoulomb3DPotential(
   const wavefunctions: number[][] = [];
 
   for (let n = 1; n <= numStates; n++) {
-    const wavefunction: number[] = [];
+    const psiRaw: number[] = [];
 
     const a_n = n * a0;
 
-    // Normalization constant for L=0
-    // N_n0 = sqrt{(2/(na₀))³ * (n-1)!/[2n(n!)³]}
-    // Simplified form that ensures ∫|R_nl|²r²dr = 1
-    const normalization =
-      (2.0 / (a_n * Math.sqrt(a_n))) *
-      Math.sqrt(factorial(n - 1) / (n * factorial(n)));
-
+    // First, calculate unnormalized wavefunction
     for (const r of xGrid) {
       // For visualization on a symmetric x-axis, use |r| so the wavefunction appears on both sides
       const r_abs = Math.abs(r);
 
       if (r_abs === 0) {
         // At r=0, use a small offset to avoid singularity
-        wavefunction.push(0);
+        psiRaw.push(0);
         continue;
       }
 
       const rho = (2 * r_abs) / a_n;
 
-      // Radial wavefunction: R_n0(r) = N * exp(-ρ/2) * L^1_(n-1)(ρ)
+      // Radial wavefunction: R_n0(r) = exp(-ρ/2) * L^1_(n-1)(ρ)
       const laguerre = associatedLaguerre(n - 1, 1, rho);
-      const value = normalization * Math.exp(-rho / 2) * laguerre;
+      const value = Math.exp(-rho / 2) * laguerre;
 
-      wavefunction.push(value);
+      psiRaw.push(value);
     }
+
+    // Normalize wavefunction numerically for 1D integration (∫|ψ|² dx = 1)
+    // Note: This is different from the standard 3D radial normalization (∫|R|²r²dr = 1)
+    // because we're displaying on a linear 1D grid
+    let normSq = 0;
+    for (let i = 0; i < psiRaw.length; i++) {
+      normSq += psiRaw[i] * psiRaw[i] * dx;
+    }
+    const norm = 1 / Math.sqrt(normSq);
+    const wavefunction = psiRaw.map((psi) => norm * psi);
+
     wavefunctions.push(wavefunction);
   }
 
