@@ -81,7 +81,7 @@ export class IntroScreenView extends BaseScreenView {
       this.probabilityChart.top + probabilityChartHeight + chartSpacing;
 
     this.wavenumberChart.left = 600;
-    this.wavenumberChart.top = 400
+    this.wavenumberChart.top = 400;
 
     // Create listbox parent node for ComboBox popups
     this.listBoxParent = new Node();

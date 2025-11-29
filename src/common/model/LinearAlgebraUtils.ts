@@ -610,7 +610,7 @@ function complexMultiply(a: Complex, b: Complex): Complex {
  * Cooley-Tukey radix-2 decimation-in-time algorithm
  *
  * NOTE: This implementation requires input length to be a power of 2.
- * 
+ *
  *
  * @param x - Input array of complex numbers
  * @returns FFT of input
