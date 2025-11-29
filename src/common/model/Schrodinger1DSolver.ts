@@ -12,24 +12,15 @@ import {
   GridConfig,
   PotentialFunction,
   PotentialType,
+  WellParameters,
 } from "./PotentialFunction.js";
 import {
   AnalyticalSolution,
-  InfiniteSquareWellSolution,
-  FiniteSquareWellSolution,
-  HarmonicOscillatorSolution,
-  MorsePotentialSolution,
-  PoschlTellerPotentialSolution,
-  RosenMorsePotentialSolution,
-  EckartPotentialSolution,
-  AsymmetricTrianglePotentialSolution,
-  Coulomb1DPotentialSolution,
-  Coulomb3DPotentialSolution,
-  TriangularPotentialSolution,
   solveDoubleSquareWellAnalytical,
 } from "./analytical-solutions";
 import { solveMultiSquareWell } from "./analytical-solutions/multi-square-well.js";
 import { solveMultiCoulomb1D } from "./analytical-solutions/multi-coulomb-1d.js";
+import { PotentialFactory } from "./PotentialFactory.js";
 import { solveNumerov } from "./NumerovSolver.js";
 import { solveMatrixNumerov } from "./MatrixNumerovSolver.js";
 import { solveDVR } from "./DVRSolver.js";
@@ -44,17 +35,6 @@ import { NumericalMethod } from "./NumericalMethod.js";
 import {
   BasePotential,
   AnalyticalPotential,
-  InfiniteSquareWellPotential,
-  FiniteSquareWellPotential,
-  HarmonicOscillatorPotential,
-  MorsePotential,
-  PoschlTellerPotential,
-  RosenMorsePotential,
-  EckartPotential,
-  AsymmetricTrianglePotential,
-  Coulomb1DPotential,
-  Coulomb3DPotential,
-  TriangularPotential,
 } from "./potentials/index.js";
 
 // Re-export potential classes for external use
@@ -67,51 +47,8 @@ export {
 // Re-export NumericalMethod for backward compatibility
 export { NumericalMethod };
 
-/**
- * Configuration for potential well parameters (for analytical solutions)
- */
-export type WellParameters = {
-  /** Type of potential well */
-  type: PotentialType;
-  /** Well width for infinite/finite well (meters) */
-  wellWidth?: number;
-  /** Well depth for finite square well (Joules, positive value) */
-  wellDepth?: number;
-  /** Spring constant for harmonic oscillator (N/m) */
-  springConstant?: number;
-  /** Dissociation energy for Morse potential (Joules) */
-  dissociationEnergy?: number;
-  /** Equilibrium position for Morse potential (meters) */
-  equilibriumPosition?: number;
-  /** Potential depth for Pöschl-Teller, Rosen-Morse, and Eckart potentials (Joules) */
-  potentialDepth?: number;
-  /** Barrier height for Rosen-Morse and Eckart potentials (Joules) */
-  barrierHeight?: number;
-  /** Slope parameter for asymmetric triangle potential (Joules/meter) */
-  slope?: number;
-  /** Coulomb strength parameter α for Coulomb potentials (J·m) */
-  coulombStrength?: number;
-  /** Well separation for double square well (meters) */
-  wellSeparation?: number;
-  /** Energy offset for triangular potential (Joules) */
-  energyOffset?: number;
-  /** Number of wells for multi-square well and multi-Coulomb 1D (1-10) */
-  numberOfWells?: number;
-};
-
-/**
- * Configuration for creating analytical solutions and potentials using factory pattern.
- */
-type PotentialConfig = {
-  /** Class constructor for analytical solution */
-  solutionClass: new (...args: any[]) => AnalyticalSolution;
-  /** Class constructor for potential */
-  potentialClass: new (...args: any[]) => BasePotential;
-  /** Function to extract constructor parameters from WellParameters */
-  paramExtractor: (params: WellParameters) => any[];
-  /** List of required parameter keys */
-  requiredParams: (keyof WellParameters)[];
-};
+// Re-export WellParameters for backward compatibility
+export type { WellParameters };
 
 /**
  * Main class for solving the 1D time-independent Schrödinger equation.
@@ -119,79 +56,6 @@ type PotentialConfig = {
 export class Schrodinger1DSolver {
   private numericalMethod: NumericalMethod;
   private analyticalSolution: AnalyticalSolution | null = null;
-
-  /**
-   * Factory configurations for all potential types.
-   * Single source of truth for potential creation logic.
-   */
-  private static readonly POTENTIAL_CONFIGS: Partial<Record<PotentialType, PotentialConfig>> = {
-    [PotentialType.INFINITE_WELL]: {
-      solutionClass: InfiniteSquareWellSolution,
-      potentialClass: InfiniteSquareWellPotential,
-      paramExtractor: (p) => [p.wellWidth],
-      requiredParams: ['wellWidth'],
-    },
-    [PotentialType.FINITE_WELL]: {
-      solutionClass: FiniteSquareWellSolution,
-      potentialClass: FiniteSquareWellPotential,
-      paramExtractor: (p) => [p.wellWidth, p.wellDepth],
-      requiredParams: ['wellWidth', 'wellDepth'],
-    },
-    [PotentialType.HARMONIC_OSCILLATOR]: {
-      solutionClass: HarmonicOscillatorSolution,
-      potentialClass: HarmonicOscillatorPotential,
-      paramExtractor: (p) => [p.springConstant],
-      requiredParams: ['springConstant'],
-    },
-    [PotentialType.MORSE]: {
-      solutionClass: MorsePotentialSolution,
-      potentialClass: MorsePotential,
-      paramExtractor: (p) => [p.dissociationEnergy, p.wellWidth, p.equilibriumPosition],
-      requiredParams: ['dissociationEnergy', 'wellWidth', 'equilibriumPosition'],
-    },
-    [PotentialType.POSCHL_TELLER]: {
-      solutionClass: PoschlTellerPotentialSolution,
-      potentialClass: PoschlTellerPotential,
-      paramExtractor: (p) => [p.potentialDepth, p.wellWidth],
-      requiredParams: ['potentialDepth', 'wellWidth'],
-    },
-    [PotentialType.ROSEN_MORSE]: {
-      solutionClass: RosenMorsePotentialSolution,
-      potentialClass: RosenMorsePotential,
-      paramExtractor: (p) => [p.potentialDepth, p.barrierHeight, p.wellWidth],
-      requiredParams: ['potentialDepth', 'barrierHeight', 'wellWidth'],
-    },
-    [PotentialType.ECKART]: {
-      solutionClass: EckartPotentialSolution,
-      potentialClass: EckartPotential,
-      paramExtractor: (p) => [p.potentialDepth, p.barrierHeight, p.wellWidth],
-      requiredParams: ['potentialDepth', 'barrierHeight', 'wellWidth'],
-    },
-    [PotentialType.ASYMMETRIC_TRIANGLE]: {
-      solutionClass: AsymmetricTrianglePotentialSolution,
-      potentialClass: AsymmetricTrianglePotential,
-      paramExtractor: (p) => [p.slope, p.wellWidth],
-      requiredParams: ['slope', 'wellWidth'],
-    },
-    [PotentialType.COULOMB_1D]: {
-      solutionClass: Coulomb1DPotentialSolution,
-      potentialClass: Coulomb1DPotential,
-      paramExtractor: (p) => [p.coulombStrength],
-      requiredParams: ['coulombStrength'],
-    },
-    [PotentialType.COULOMB_3D]: {
-      solutionClass: Coulomb3DPotentialSolution,
-      potentialClass: Coulomb3DPotential,
-      paramExtractor: (p) => [p.coulombStrength],
-      requiredParams: ['coulombStrength'],
-    },
-    [PotentialType.TRIANGULAR]: {
-      solutionClass: TriangularPotentialSolution,
-      potentialClass: TriangularPotential,
-      paramExtractor: (p) => [p.wellDepth, p.wellWidth, p.energyOffset],
-      requiredParams: ['wellWidth', 'wellDepth', 'energyOffset'],
-    },
-  };
 
   /**
    * Create a new solver instance.
@@ -266,19 +130,6 @@ export class Schrodinger1DSolver {
   }
 
   /**
-   * Check if all required parameters are present and defined in WellParameters.
-   * @param params - Well parameters to validate
-   * @param requiredParams - List of required parameter keys
-   * @returns true if all required parameters are defined
-   */
-  private static hasRequiredParams(
-    params: WellParameters,
-    requiredParams: (keyof WellParameters)[],
-  ): boolean {
-    return requiredParams.every((key) => params[key] !== undefined);
-  }
-
-  /**
    * Create an analytical solution instance based on well parameters.
    * Returns null if the potential type doesn't have an analytical solution
    * or if required parameters are missing.
@@ -291,16 +142,7 @@ export class Schrodinger1DSolver {
     wellParams: WellParameters,
     mass: number,
   ): AnalyticalSolution | null {
-    // Use factory pattern for configured potential types
-    const config = Schrodinger1DSolver.POTENTIAL_CONFIGS[wellParams.type];
-    if (config && Schrodinger1DSolver.hasRequiredParams(wellParams, config.requiredParams)) {
-      const args = [...config.paramExtractor(wellParams), mass];
-      return new config.solutionClass(...args);
-    }
-
-    // Handle special cases that don't have classes yet (multi-well potentials)
-    // These will be handled in handleSpecialCases() method
-    return null;
+    return PotentialFactory.createAnalyticalSolution(wellParams, mass);
   }
 
   /**
@@ -525,15 +367,7 @@ export class Schrodinger1DSolver {
     wellParams: WellParameters,
     mass: number,
   ): BasePotential | null {
-    // Use factory pattern for configured potential types
-    const config = Schrodinger1DSolver.POTENTIAL_CONFIGS[wellParams.type];
-    if (config && Schrodinger1DSolver.hasRequiredParams(wellParams, config.requiredParams)) {
-      const args = [...config.paramExtractor(wellParams), mass];
-      return new config.potentialClass(...args);
-    }
-
-    // For types not yet converted to classes (multi-well types, custom)
-    return null;
+    return PotentialFactory.createPotential(wellParams, mass);
   }
 
   /**

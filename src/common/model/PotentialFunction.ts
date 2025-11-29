@@ -26,6 +26,38 @@ export enum PotentialType {
 }
 
 /**
+ * Configuration for potential well parameters (for analytical solutions)
+ */
+export type WellParameters = {
+  /** Type of potential well */
+  type: PotentialType;
+  /** Well width for infinite/finite well (meters) */
+  wellWidth?: number;
+  /** Well depth for finite square well (Joules, positive value) */
+  wellDepth?: number;
+  /** Spring constant for harmonic oscillator (N/m) */
+  springConstant?: number;
+  /** Dissociation energy for Morse potential (Joules) */
+  dissociationEnergy?: number;
+  /** Equilibrium position for Morse potential (meters) */
+  equilibriumPosition?: number;
+  /** Potential depth for Pöschl-Teller, Rosen-Morse, and Eckart potentials (Joules) */
+  potentialDepth?: number;
+  /** Barrier height for Rosen-Morse and Eckart potentials (Joules) */
+  barrierHeight?: number;
+  /** Slope parameter for asymmetric triangle potential (Joules/meter) */
+  slope?: number;
+  /** Coulomb strength parameter α for Coulomb potentials (J·m) */
+  coulombStrength?: number;
+  /** Well separation for double square well (meters) */
+  wellSeparation?: number;
+  /** Energy offset for triangular potential (Joules) */
+  energyOffset?: number;
+  /** Number of wells for multi-square well and multi-Coulomb 1D (1-10) */
+  numberOfWells?: number;
+};
+
+/**
  * A function that returns the potential energy at a given position.
  * @param x - Position in meters
  * @returns Potential energy in Joules
