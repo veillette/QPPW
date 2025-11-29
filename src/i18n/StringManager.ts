@@ -650,6 +650,14 @@ export class StringManager {
     return this.stringProperties.rmsWavenumberLabelStringProperty;
   }
 
+  get averagePositionLabelStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.averagePositionLabelStringProperty;
+  }
+
+  get rmsPositionLabelStringProperty(): ReadOnlyProperty<string> {
+    return this.stringProperties.rmsPositionLabelStringProperty;
+  }
+
   get stateLabelProbabilityStringProperty(): ReadOnlyProperty<string> {
     return this.stringProperties.stateLabelProbabilityStringProperty;
   }

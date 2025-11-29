@@ -159,6 +159,8 @@
   "notAvailable": "N/A",
   "averageWavenumberLabel": "⟨k⟩ = {{value}} nm⁻¹",
   "rmsWavenumberLabel": "Δk_RMS = {{value}} nm⁻¹",
+  "averagePositionLabel": "⟨x⟩ = {{value}} nm",
+  "rmsPositionLabel": "Δx_RMS = {{value}} nm",
   "stateLabelProbability": "|{{label}}|²",
   "stateLabelWavefunction": "|{{label}}|",
   "valueWithPoints": "{{value}} points",
