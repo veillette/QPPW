@@ -320,7 +320,11 @@ export class IntroControlPanelNode extends Node {
     });
 
     // Build children array (no display mode controls since intro screen shows separate charts)
-    const children: Node[] = [classicalProbabilityCheckbox, showZerosCheckbox, rmsIndicatorCheckbox];
+    const children: Node[] = [
+      classicalProbabilityCheckbox,
+      showZerosCheckbox,
+      rmsIndicatorCheckbox,
+    ];
 
     // Add area tool checkbox if it exists
     if (areaToolCheckbox) {
