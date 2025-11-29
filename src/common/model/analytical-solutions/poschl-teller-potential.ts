@@ -40,7 +40,7 @@ import {
   PotentialFunction,
   FourierTransformResult,
 } from "../PotentialFunction.js";
-import { jacobiPolynomial, factorial, gamma } from "./math-utilities.js";
+import { jacobiPolynomial, factorial } from "./math-utilities.js";
 import { AnalyticalSolution } from "./AnalyticalSolution.js";
 import { computeNumericalFourierTransform } from "./fourier-transform-helper.js";
 
@@ -245,27 +245,29 @@ export function solvePoschlTellerPotential(
   const wavefunctions: number[][] = [];
 
   for (let n = 0; n < actualNumStates; n++) {
-    const wavefunction: number[] = [];
+    const psiRaw: number[] = [];
     const alpha = lambda - n - 0.5;
 
-    // Normalization for Pöschl-Teller wavefunctions
-    // N_n = √[(2n + 2α + 1) * Γ(n+1) * Γ(α+1) / (2a * Γ(n+α+1))]
-    // For symmetric Jacobi polynomials P_n^(α,α)
-    const normalization = Math.sqrt(
-      ((2 * n + 2 * alpha + 1) * factorial(n) * gamma(alpha + 1)) /
-        (2 * a * gamma(n + alpha + 1)),
-    );
-
+    // First, calculate unnormalized wavefunction
     for (const x of xGrid) {
       const tanhVal = Math.tanh(x / a);
       const sechVal = 1.0 / Math.cosh(x / a);
 
       // Use Legendre polynomials for Jacobi with α=β
       const jacobiPoly = jacobiPolynomial(n, alpha, alpha, tanhVal);
-      const value = normalization * Math.pow(sechVal, alpha) * jacobiPoly;
+      const value = Math.pow(sechVal, alpha) * jacobiPoly;
 
-      wavefunction.push(value);
+      psiRaw.push(value);
     }
+
+    // Normalize wavefunction numerically to ensure ∫|ψ|² dx = 1
+    let normSq = 0;
+    for (let i = 0; i < psiRaw.length; i++) {
+      normSq += psiRaw[i] * psiRaw[i] * dx;
+    }
+    const norm = 1 / Math.sqrt(normSq);
+    const wavefunction = psiRaw.map((psi) => norm * psi);
+
     wavefunctions.push(wavefunction);
   }
 
