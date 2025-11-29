@@ -712,6 +712,27 @@ export abstract class BaseModel {
   }
 
   /**
+   * Get the classical probability density in nanometer units.
+   * Converts from SI units (m^-1) to nm units (nm^-1).
+   *
+   * @param energyIndex - Index of the energy level (0-indexed)
+   * @returns Array of classical probability density values in nm^-1, or null if unavailable
+   */
+  public getClassicalProbabilityDensityInNmUnits(
+    energyIndex: number,
+  ): number[] | null {
+    const classicalProbabilitySI = this.getClassicalProbabilityDensity(energyIndex);
+    if (!classicalProbabilitySI) {
+      return null;
+    }
+
+    // Convert classical probability density from m^-1 to nm^-1
+    // P(nm^-1) = P(m^-1) * M_TO_NM
+    const conversionFactor = QuantumConstants.M_TO_NM;
+    return classicalProbabilitySI.map((p) => p * conversionFactor);
+  }
+
+  /**
    * Calculate the time-evolved superposition wavefunction.
    * Computes ψ(x,t) = Σ c_n * e^(iφ_n) * ψ_n(x) * e^(-iE_n*t/ℏ)
    *

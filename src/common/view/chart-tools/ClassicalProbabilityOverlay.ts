@@ -245,9 +245,9 @@ export class ClassicalProbabilityOverlay extends Node {
     this.rightForbiddenRegion.shape = shapes.rightShape;
     this.rightForbiddenRegion.visible = true;
 
-    // Update classical probability path
+    // Update classical probability path (in nm^-1 units)
     const classicalProbability =
-      this.model.getClassicalProbabilityDensity(selectedIndex);
+      this.model.getClassicalProbabilityDensityInNmUnits(selectedIndex);
     if (classicalProbability) {
       this.plotClassicalProbabilityDensity(
         boundStates.xGrid,
@@ -309,9 +309,9 @@ export class ClassicalProbabilityOverlay extends Node {
       return { leftShape, rightShape };
     }
 
-    // Get classical probability density data
+    // Get classical probability density data (in nm^-1 units)
     const classicalProbability =
-      this.model.getClassicalProbabilityDensity(selectedIndex);
+      this.model.getClassicalProbabilityDensityInNmUnits(selectedIndex);
     if (!classicalProbability) {
       return { leftShape, rightShape };
     }
