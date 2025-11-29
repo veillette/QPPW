@@ -21,6 +21,7 @@ import {
 import type { ScreenModel } from "../model/ScreenModels.js";
 import QPPWColors from "../../QPPWColors.js";
 import { PhetFont } from "scenerystack/scenery-phet";
+import stringManager from "../../i18n/StringManager.js";
 
 export class WavenumberChartNode extends Node {
   private readonly model: ScreenModel;
@@ -328,8 +329,16 @@ export class WavenumberChartNode extends Node {
 
       // Calculate and display average and RMS wavenumber
       const { avg, rms } = this.calculateStatistics(kGridNm, phiKSquared);
-      this.avgWavenumberLabel.string = `⟨k⟩ = ${avg.toFixed(2)} nm⁻¹`;
-      this.rmsWavenumberLabel.string = `k_rms = ${rms.toFixed(2)} nm⁻¹`;
+      this.avgWavenumberLabel.string =
+        stringManager.averageWavenumberLabelStringProperty.value.replace(
+          "{{value}}",
+          avg.toFixed(2),
+        );
+      this.rmsWavenumberLabel.string =
+        stringManager.rmsWavenumberLabelStringProperty.value.replace(
+          "{{value}}",
+          rms.toFixed(2),
+        );
     } finally {
       this.isUpdating = false;
     }

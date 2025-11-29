@@ -12,6 +12,7 @@ import { hasSuperpositionConfig } from "../../model/ModelTypeGuards.js";
 import { SuperpositionType } from "../../model/SuperpositionType.js";
 import QuantumConstants from "../../model/QuantumConstants.js";
 import QPPWColors from "../../../QPPWColors.js";
+import stringManager from "../../../i18n/StringManager.js";
 
 export type AreaMeasurementToolOptions = {
   chartMargins: { left: number; right: number; top: number; bottom: number };
@@ -231,12 +232,16 @@ export class AreaMeasurementTool extends Node {
 
     // Update label
     if (probability !== null) {
-      this.areaLabel.string = `${probability.toFixed(1)}%`;
+      this.areaLabel.string =
+        stringManager.percentageValueStringProperty.value.replace(
+          "{{value}}",
+          probability.toFixed(1),
+        );
       // Position label at the center between markers, near the top
       this.areaLabel.centerX = (leftViewX + rightViewX) / 2;
       this.areaLabel.top = chartMargins.top + 35;
     } else {
-      this.areaLabel.string = "N/A";
+      this.areaLabel.string = stringManager.notAvailableStringProperty.value;
     }
   }
 
