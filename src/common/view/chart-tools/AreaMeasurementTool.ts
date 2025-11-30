@@ -142,23 +142,37 @@ export class AreaMeasurementTool extends Node {
       focusable: true,
       accessibleName: "Left Measurement Marker",
       labelContent: "Left boundary for probability integration",
-      // TODO: Add ariaValueText when PhET accessibility is fully configured
-      // ariaValueText: new DerivedProperty(
-      //   [this.leftMarkerXProperty],
-      //   (position) => `Position: ${position.toFixed(2)} nanometers`,
-      // ),
-      // TODO: Add aria value attributes when PhET accessibility is fully configured
-      // ariaValueMin: -5,
-      // ariaValueMax: 5,
-      // ariaValueNow: this.leftMarkerXProperty,
-      // TODO: Add helpText when PhET accessibility is fully configured
-      // helpText:
-      //   "Use Left/Right arrow keys to move marker. " +
-      //   "Shift+Arrow for fine control (0.01 nm steps). " +
-      //   "Page Up/Down for large steps (0.5 nm). " +
-      //   "Home/End for range limits.",
+      pdomAttributes: [
+        { attribute: "aria-valuemin", value: -5 },
+        { attribute: "aria-valuemax", value: 5 },
+        {
+          attribute: "aria-valuenow",
+          value: this.leftMarkerXProperty.value.toFixed(2),
+        },
+        {
+          attribute: "aria-valuetext",
+          value: `Position: ${this.leftMarkerXProperty.value.toFixed(2)} nanometers`,
+        },
+      ],
+      accessibleHelpText:
+        "Use Left/Right arrow keys to move marker. " +
+        "Shift+Arrow for fine control (0.01 nm steps). " +
+        "Page Up/Down for large steps (0.5 nm). " +
+        "Home/End for range limits.",
     });
     this.container.addChild(this.leftMarkerHandle);
+
+    // Update aria-valuetext when left marker position changes
+    this.leftMarkerXProperty.link((position) => {
+      this.leftMarkerHandle.setPDOMAttribute(
+        "aria-valuenow",
+        position.toFixed(2),
+      );
+      this.leftMarkerHandle.setPDOMAttribute(
+        "aria-valuetext",
+        `Position: ${position.toFixed(2)} nanometers`,
+      );
+    });
 
     // Create right marker handle (draggable circle at top)
     this.rightMarkerHandle = new Circle(8, {
@@ -173,23 +187,37 @@ export class AreaMeasurementTool extends Node {
       focusable: true,
       accessibleName: "Right Measurement Marker",
       labelContent: "Right boundary for probability integration",
-      // TODO: Add ariaValueText when PhET accessibility is fully configured
-      // ariaValueText: new DerivedProperty(
-      //   [this.rightMarkerXProperty],
-      //   (position) => `Position: ${position.toFixed(2)} nanometers`,
-      // ),
-      // TODO: Add aria value attributes when PhET accessibility is fully configured
-      // ariaValueMin: -5,
-      // ariaValueMax: 5,
-      // ariaValueNow: this.rightMarkerXProperty,
-      // TODO: Add helpText when PhET accessibility is fully configured
-      // helpText:
-      //   "Use Left/Right arrow keys to move marker. " +
-      //   "Shift+Arrow for fine control (0.01 nm steps). " +
-      //   "Page Up/Down for large steps (0.5 nm). " +
-      //   "Home/End for range limits.",
+      pdomAttributes: [
+        { attribute: "aria-valuemin", value: -5 },
+        { attribute: "aria-valuemax", value: 5 },
+        {
+          attribute: "aria-valuenow",
+          value: this.rightMarkerXProperty.value.toFixed(2),
+        },
+        {
+          attribute: "aria-valuetext",
+          value: `Position: ${this.rightMarkerXProperty.value.toFixed(2)} nanometers`,
+        },
+      ],
+      accessibleHelpText:
+        "Use Left/Right arrow keys to move marker. " +
+        "Shift+Arrow for fine control (0.01 nm steps). " +
+        "Page Up/Down for large steps (0.5 nm). " +
+        "Home/End for range limits.",
     });
     this.container.addChild(this.rightMarkerHandle);
+
+    // Update aria-valuetext when right marker position changes
+    this.rightMarkerXProperty.link((position) => {
+      this.rightMarkerHandle.setPDOMAttribute(
+        "aria-valuenow",
+        position.toFixed(2),
+      );
+      this.rightMarkerHandle.setPDOMAttribute(
+        "aria-valuetext",
+        `Position: ${position.toFixed(2)} nanometers`,
+      );
+    });
 
     // Create area percentage label
     this.areaLabel = new Text("", {
@@ -203,8 +231,7 @@ export class AreaMeasurementTool extends Node {
     this.probabilityReadout = new Node({
       tagName: "div",
       ariaRole: "status",
-      // TODO: Add ariaLive when PhET accessibility is fully configured
-      // ariaLive: "polite",
+      pdomAttributes: [{ attribute: "aria-live", value: "polite" }],
       innerContent: new DerivedProperty(
         [
           this.leftMarkerXProperty,

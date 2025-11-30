@@ -36,8 +36,7 @@ export class ZerosVisualization extends Node {
     this.accessibleDescription = new Node({
       tagName: "div",
       ariaRole: "status",
-      // TODO: Add ariaLive when PhET accessibility is fully configured
-      // ariaLive: "polite",
+      pdomAttributes: [{ attribute: "aria-live", value: "polite" }],
       innerContent: new DerivedProperty(
         [this.showProperty, this.zerosPositionsProperty],
         (show, zeros) => {

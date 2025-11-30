@@ -115,23 +115,37 @@ export class CurvatureTool extends Node {
       focusable: true,
       accessibleName: "Curvature Measurement Position",
       labelContent: "Position for curvature and second derivative display",
-      // TODO: Add ariaValueText when PhET accessibility is fully configured
-      // ariaValueText: new DerivedProperty(
-      //   [this.markerXProperty],
-      //   (position) => `Position: ${position.toFixed(2)} nanometers`,
-      // ),
-      // TODO: Add aria value attributes when PhET accessibility is fully configured
-      // ariaValueMin: -5,
-      // ariaValueMax: 5,
-      // ariaValueNow: this.markerXProperty,
-      // TODO: Add helpText when PhET accessibility is fully configured
-      // helpText:
-      //   "Use Left/Right arrow keys to move marker. " +
-      //   "Shift+Arrow for fine control. " +
-      //   "Page Up/Down for large steps. " +
-      //   "Shows second derivative (curvature) at selected position.",
+      pdomAttributes: [
+        { attribute: "aria-valuemin", value: -5 },
+        { attribute: "aria-valuemax", value: 5 },
+        {
+          attribute: "aria-valuenow",
+          value: this.markerXProperty.value.toFixed(2),
+        },
+        {
+          attribute: "aria-valuetext",
+          value: `Position: ${this.markerXProperty.value.toFixed(2)} nanometers`,
+        },
+      ],
+      accessibleHelpText:
+        "Use Left/Right arrow keys to move marker. " +
+        "Shift+Arrow for fine control. " +
+        "Page Up/Down for large steps. " +
+        "Shows second derivative (curvature) at selected position.",
     });
     this.container.addChild(this.markerHandle);
+
+    // Update aria-valuetext when position changes
+    this.markerXProperty.link((position) => {
+      this.markerHandle.setPDOMAttribute(
+        "aria-valuenow",
+        position.toFixed(2),
+      );
+      this.markerHandle.setPDOMAttribute(
+        "aria-valuetext",
+        `Position: ${position.toFixed(2)} nanometers`,
+      );
+    });
 
     // Create position tracking circle (shows position on wavefunction)
     this.positionCircle = new Circle(5, {
