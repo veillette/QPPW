@@ -24,7 +24,15 @@
       "WebFetch(domain:pages.physics.wisc.edu)",
       "Bash(git checkout:*)",
       "Bash(git add:*)",
-      "Bash(gh run list:*)"
+      "Bash(gh run list:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill /F /PID 11480)",
+      "Bash(taskkill //F //PID 11480)",
+      "Bash(taskkill //F //PID 14856)",
+      "Bash(taskkill:*)",
+      "Bash(taskkill //F //PID 15188)",
+      "Bash(git commit:*)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []
