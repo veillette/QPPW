@@ -314,13 +314,34 @@ export function calculateCoulomb1DClassicalProbability(
   const classicalProbability: number[] = [];
   let integralSum = 0;
 
+  // Find maximum kinetic energy for epsilon calculation
+  let maxKE = 0;
+  for (let i = 0; i < xGrid.length; i++) {
+    const x = xGrid[i];
+    const absX = Math.abs(x);
+
+    if (absX < 1e-15) {
+      continue; // Skip singularity
+    }
+
+    const potential = -alpha / absX;
+    const ke = energy - potential;
+    if (ke > maxKE) {
+      maxKE = ke;
+    }
+  }
+
+  // Use minimum kinetic energy to prevent singularities at turning points
+  // This is 1% of maximum KE, which prevents infinities while preserving shape
+  const epsilon = 0.01 * maxKE;
+
   // Calculate unnormalized probability
   for (let i = 0; i < xGrid.length; i++) {
     const x = xGrid[i];
     const absX = Math.abs(x);
 
     if (absX < 1e-15) {
-      // Near singularity, probability approaches infinity
+      // Near singularity at origin
       classicalProbability.push(0);
       continue;
     }
@@ -331,12 +352,11 @@ export function calculateCoulomb1DClassicalProbability(
     if (kineticEnergy <= 0) {
       classicalProbability.push(0);
     } else {
-      const epsilon = 1e-10 * Math.abs(alpha);
-      const probability =
-        1 / Math.sqrt((2 * Math.max(kineticEnergy, epsilon)) / mass);
+      const safeKE = Math.max(kineticEnergy, epsilon);
+      const probability = 1 / Math.sqrt((2 * safeKE) / mass);
       classicalProbability.push(probability);
 
-      if (i > 0) {
+      if (i > 0 && classicalProbability[i - 1] > 0) {
         const dx = xGrid[i] - xGrid[i - 1];
         integralSum += ((probability + classicalProbability[i - 1]) * dx) / 2;
       }

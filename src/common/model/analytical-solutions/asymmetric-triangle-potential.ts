@@ -305,6 +305,22 @@ export function calculateAsymmetricTriangleClassicalProbability(
   // Classical turning point: x_0 = E/F
   const x0 = energy / F;
 
+  // Find maximum kinetic energy for epsilon calculation
+  let maxKE = 0;
+  for (let i = 0; i < xGrid.length; i++) {
+    const x = xGrid[i];
+    if (x >= 0 && x <= x0) {
+      const ke = energy - F * x;
+      if (ke > maxKE) {
+        maxKE = ke;
+      }
+    }
+  }
+
+  // Use minimum kinetic energy to prevent singularities at turning points
+  // This is 1% of maximum KE, which prevents infinities while preserving shape
+  const epsilon = 0.01 * maxKE;
+
   // Calculate unnormalized probability
   for (let i = 0; i < xGrid.length; i++) {
     const x = xGrid[i];
@@ -314,9 +330,8 @@ export function calculateAsymmetricTriangleClassicalProbability(
       classicalProbability.push(0);
     } else {
       const kineticEnergy = energy - F * x;
-      const epsilon = 1e-10 * Math.abs(energy);
-      const probability =
-        1 / Math.sqrt((2 * Math.max(kineticEnergy, epsilon)) / mass);
+      const safeKE = Math.max(kineticEnergy, epsilon);
+      const probability = 1 / Math.sqrt((2 * safeKE) / mass);
       classicalProbability.push(probability);
 
       if (i > 0) {
