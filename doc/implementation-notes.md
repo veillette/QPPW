@@ -16,6 +16,7 @@ QPPW follows a Model-View-Controller (MVC) architecture as established by PhET I
 - **Controller**: Manages user input, property updates, and coordinate transformations (implicit in SceneryStack)
 
 The simulation emphasizes:
+
 - **Accuracy**: Provides both analytical solutions (when available) and validated numerical methods
 - **Performance**: Uses optimized numerical algorithms and caching strategies
 - **Modularity**: Separates concerns between physics, numerics, and visualization
@@ -117,6 +118,7 @@ QPPW/
 Each screen follows a strict Model-View separation:
 
 **Model Responsibilities**:
+
 - Quantum mechanical calculations
 - Time evolution of quantum states
 - Energy eigenvalue/eigenfunction computation
@@ -124,6 +126,7 @@ Each screen follows a strict Model-View separation:
 - State synchronization
 
 **View Responsibilities**:
+
 - Chart rendering (wave functions, energy levels, momentum space)
 - User interface controls
 - Coordinate transformations (model ↔ view)
@@ -145,13 +148,14 @@ Views observe properties and automatically update when values change:
 
 ```typescript
 // Automatic view synchronization
-model.energyLevelIndexProperty.link(energyLevelIndex => {
+model.energyLevelIndexProperty.link((energyLevelIndex) => {
   // Update visualization
   this.updateWaveFunctionDisplay();
 });
 ```
 
 This pattern ensures:
+
 - Unidirectional data flow (model → view)
 - Automatic UI synchronization
 - Easy debugging (all state changes are observable)
@@ -160,6 +164,7 @@ This pattern ensures:
 ### 3. Abstract Base Classes
 
 **BaseModel** provides common functionality:
+
 - Time evolution (`step(dt)` method)
 - Simulation control (play/pause, time speed)
 - Solver configuration and dispatch
@@ -167,6 +172,7 @@ This pattern ensures:
 - Superposition state generation
 
 **BaseScreenView** provides common visualization:
+
 - Chart layout and positioning
 - Control panel structure
 - Play/pause/step controls
@@ -174,6 +180,7 @@ This pattern ensures:
 - Coordinate system transformations
 
 **BaseChartNode** provides common chart functionality:
+
 - Bamboo ChartTransform for model-to-view coordinate mapping
 - Axis rendering and tick marks
 - Grid display
@@ -199,6 +206,7 @@ export class OneWellScreenView extends BaseScreenView {
 QPPW has four screens, each targeting different learning objectives:
 
 #### 1. Intro Screen
+
 - **Purpose**: Simplified introduction to quantum bound states
 - **Features**: Basic potential types, limited controls
 - **Target**: First-time users, high school students
@@ -208,6 +216,7 @@ QPPW has four screens, each targeting different learning objectives:
   - Focus on core concepts
 
 #### 2. One Well Screen
+
 - **Purpose**: Comprehensive exploration of single-well potentials
 - **Features**: All 12 analytical potentials, full parameter control
 - **Target**: Undergraduate quantum mechanics students
@@ -218,6 +227,7 @@ QPPW has four screens, each targeting different learning objectives:
   - Classical probability comparison
 
 #### 3. Two Wells Screen
+
 - **Purpose**: Explore double-well systems and energy splitting
 - **Features**: Double square well, barrier height control
 - **Target**: Advanced undergraduate students
@@ -228,6 +238,7 @@ QPPW has four screens, each targeting different learning objectives:
   - Parity alternation visualization
 
 #### 4. Many Wells Screen
+
 - **Purpose**: Explore multi-well systems and band structure formation
 - **Features**: 1-10 wells, numerical solving only
 - **Target**: Advanced students, graduate level
@@ -244,6 +255,7 @@ QPPW has four screens, each targeting different learning objectives:
 The `BaseModel` class manages:
 
 1. **Physical Properties**:
+
    ```typescript
    public readonly potentialTypeProperty: EnumerationProperty<PotentialType>;
    public readonly wellWidthProperty: NumberProperty;
@@ -253,6 +265,7 @@ The `BaseModel` class manages:
    ```
 
 2. **Quantum State**:
+
    ```typescript
    public readonly energyLevelIndexProperty: NumberProperty;
    public readonly superpositionTypeProperty: EnumerationProperty<SuperpositionType>;
@@ -261,6 +274,7 @@ The `BaseModel` class manages:
    ```
 
 3. **Time Evolution**:
+
    ```typescript
    public readonly isPlayingProperty: Property<boolean>;
    public readonly timeSpeedProperty: EnumerationProperty<TimeSpeed>;
@@ -275,6 +289,7 @@ The `BaseModel` class manages:
    ```
 
 4. **Solver Management**:
+
    ```typescript
    private solver: Schrodinger1DSolver;
 
@@ -319,12 +334,14 @@ public solve(
 ```
 
 **Analytical Solutions** (12 potentials):
+
 - Evaluated at high resolution (1000 grid points by default)
 - Exact energy eigenvalues from closed-form formulas
 - Wave functions computed from analytical expressions
 - Used when available for maximum accuracy
 
 **Numerical Solutions** (6 methods):
+
 - DVR (Discrete Variable Representation) - Default method, good balance
 - FGH (Fourier Grid Hamiltonian) - Fast for smooth potentials
 - Matrix Numerov - High accuracy, good for all potentials
@@ -333,6 +350,7 @@ public solve(
 - QuantumBound - Advanced logarithmic derivative method
 
 **Multi-Well Solutions** (numerical only):
+
 - Multi-square well (1-10 wells)
 - Multi-Coulomb 1D (1-10 centers)
 - No analytical solutions available for N > 2
@@ -344,22 +362,24 @@ The simulation supports various superposition types:
 
 ```typescript
 export enum SuperpositionType {
-  SINGLE_STATE = "singleState",              // Pure eigenstate ψₙ
-  TWO_STATE_SUPERPOSITION = "twoState",      // ψ₀ + ψ₁
-  NARROW_WAVE_PACKET = "narrowWavePacket",   // Localized Gaussian
-  WIDE_WAVE_PACKET = "wideWavePacket",       // Broader Gaussian
-  COHERENT_STATE = "coherentState",          // Coherent state (for HO)
-  CUSTOM = "custom"                          // User-defined coefficients
+  SINGLE_STATE = "singleState", // Pure eigenstate ψₙ
+  TWO_STATE_SUPERPOSITION = "twoState", // ψ₀ + ψ₁
+  NARROW_WAVE_PACKET = "narrowWavePacket", // Localized Gaussian
+  WIDE_WAVE_PACKET = "wideWavePacket", // Broader Gaussian
+  COHERENT_STATE = "coherentState", // Coherent state (for HO)
+  CUSTOM = "custom", // User-defined coefficients
 }
 ```
 
 **Superposition Construction**:
+
 1. Compute all needed eigenstates
 2. Apply coefficients (Gaussian weights for wave packets)
 3. Normalize the total state
 4. For coherent states: use analytical formulas (harmonic oscillator) or approximate (other potentials)
 
 **Time Evolution**:
+
 ```typescript
 ψ(x,t) = Σₙ cₙ ψₙ(x) exp(-iEₙt/ℏ)
 ```
@@ -380,8 +400,8 @@ export class WaveFunctionChartNode extends BaseChartNode {
 
   protected updateChart(): void {
     // Transform model coordinates to view coordinates
-    const viewPoints = modelPoints.map(p =>
-      this.chartTransform.modelToViewPosition(p)
+    const viewPoints = modelPoints.map((p) =>
+      this.chartTransform.modelToViewPosition(p),
     );
 
     // Update path shapes
@@ -393,6 +413,7 @@ export class WaveFunctionChartNode extends BaseChartNode {
 ```
 
 **ChartTransform** handles:
+
 - Model coordinate system (physical units: nm, eV)
 - View coordinate system (screen pixels)
 - Scaling and translation
@@ -403,17 +424,20 @@ export class WaveFunctionChartNode extends BaseChartNode {
 Users can manipulate potentials directly:
 
 **Click-and-Drag on Charts**:
+
 - Potential well: Drag to change width, depth, position
 - Energy levels: Click to select different states
 - Wave function display: Hover for numerical values
 
 **Control Panel**:
+
 - Potential type selection (radio buttons)
 - Parameter sliders (width, depth, offset)
 - Superposition dialog (button opens modal)
 - Visualization options (checkboxes for phase, nodes, etc.)
 
 **Simulation Controls**:
+
 - Play/Pause button
 - Step button (advance by one frame)
 - Time speed control (normal, slow, fast)
@@ -426,17 +450,20 @@ Users can manipulate potentials directly:
 The simulation uses multiple coordinate systems:
 
 **Model Coordinates** (SI-based):
+
 - Position: nanometers (nm)
 - Energy: electron volts (eV)
 - Wave function: 1/√nm (normalized)
 - Time: seconds (s)
 
 **View Coordinates**:
+
 - Screen pixels
 - Origin at top-left
 - Y-axis inverted (down is positive)
 
 **Transformations**:
+
 ```typescript
 // Model to View
 const viewX = chartTransform.modelToViewX(modelX);
@@ -448,6 +475,7 @@ const modelY = chartTransform.viewToModelY(viewY);
 ```
 
 **Normalized Coordinates** (for some potentials):
+
 - Position: x/L (dimensionless, 0 to 1)
 - Energy: E/V₀ (dimensionless)
 - Used internally for some analytical solutions
@@ -455,17 +483,20 @@ const modelY = chartTransform.viewToModelY(viewY);
 ### 2. Time Evolution
 
 **Eigenstate Evolution**:
+
 - Individual eigenstates: Only phase changes, no shape change
 - Phase evolution: θₙ(t) = -Eₙt/ℏ
 - Visualization: Can show phase using color coding
 
 **Superposition Evolution**:
+
 - Each component evolves independently
 - Total state: ψ(x,t) = Σₙ cₙ ψₙ(x) exp(-iEₙt/ℏ)
 - Probability density oscillates periodically
 - Beat frequencies: (Eₘ - Eₙ)/ℏ
 
 **Implementation**:
+
 ```typescript
 public step(dt: number): void {
   if (!this.isPlayingProperty.value) return;
@@ -492,6 +523,7 @@ private updateQuantumPhases(): void {
 ### 3. Numerical Stability
 
 **Potential Issues**:
+
 - Division by zero at classical turning points
 - Overflow/underflow in exponential wave function tails
 - Ill-conditioned matrices for extreme parameters
@@ -499,29 +531,27 @@ private updateQuantumPhases(): void {
 **Solutions Implemented**:
 
 1. **Classical Probability Clamping**:
+
    ```typescript
    // Prevent infinities at turning points
    const MIN_KINETIC_ENERGY_FRACTION = 0.01;
-   const clampedKE = Math.max(
-     maxKE * MIN_KINETIC_ENERGY_FRACTION,
-     actualKE
-   );
+   const clampedKE = Math.max(maxKE * MIN_KINETIC_ENERGY_FRACTION, actualKE);
    ```
 
 2. **Wave Function Normalization**:
+
    ```typescript
    // Normalize to prevent overflow
-   const norm = Math.sqrt(
-     this.integrateProbability(waveFunction)
-   );
-   waveFunction = waveFunction.map(psi => psi / norm);
+   const norm = Math.sqrt(this.integrateProbability(waveFunction));
+   waveFunction = waveFunction.map((psi) => psi / norm);
    ```
 
 3. **Energy Bounds Checking**:
+
    ```typescript
    // Ensure energies are within valid range
    if (energy < potential.minEnergy || energy > potential.maxEnergy) {
-     console.warn('Energy out of bounds, clamping');
+     console.warn("Energy out of bounds, clamping");
      energy = clamp(energy, potential.minEnergy, potential.maxEnergy);
    }
    ```
@@ -536,6 +566,7 @@ private updateQuantumPhases(): void {
 **Caching Strategies**:
 
 1. **Eigenstate Caching**:
+
    ```typescript
    private eigenstateCache: Map<string, BoundStateResult>;
 
@@ -563,6 +594,7 @@ private updateQuantumPhases(): void {
    - Reduce resolution for distant objects
 
 **Profiling Results** (see PERFORMANCE_MONITORING.md):
+
 - Analytical solutions: ~1-5 ms
 - DVR solver (128 points): ~10-20 ms
 - FGH solver (128 points): ~8-15 ms
@@ -573,6 +605,7 @@ private updateQuantumPhases(): void {
 **Object Lifecycle**:
 
 Most objects persist for the simulation lifetime:
+
 - Models (one per screen)
 - Screen views (one per screen)
 - Chart nodes (created once, updated dynamically)
@@ -581,6 +614,7 @@ Most objects persist for the simulation lifetime:
 **Disposal Pattern**:
 
 Few objects require explicit disposal:
+
 ```typescript
 public dispose(): void {
   this.eigenstateCache.clear();
@@ -595,16 +629,16 @@ Most cleanup happens automatically through SceneryStack's scene graph management
 **Assertions**:
 
 Development builds include assertions for validation:
-```typescript
-assert && assert(
-  waveFunctionNorm > 0.99 && waveFunctionNorm < 1.01,
-  'Wave function normalization failed'
-);
 
-assert && assert(
-  energies[n] < energies[n+1],
-  'Energy levels not properly ordered'
-);
+```typescript
+assert &&
+  assert(
+    waveFunctionNorm > 0.99 && waveFunctionNorm < 1.01,
+    "Wave function normalization failed",
+  );
+
+assert &&
+  assert(energies[n] < energies[n + 1], "Energy levels not properly ordered");
 ```
 
 Assertions are stripped in production builds for performance.
@@ -623,6 +657,7 @@ npm run test:multi-square-well # Test multi-well systems
 ```
 
 **Test Coverage**:
+
 - All 12 analytical potentials
 - All 6 numerical methods
 - Multiple grid sizes (32, 64, 128 points)
@@ -651,7 +686,7 @@ Provides visual test results with pass/fail indicators and error percentages.
    - Energy ordering: E₀ < E₁ < E₂ < ...
    - Wave function normalization: ∫|ψ|²dx = 1
    - Node counting: n nodes for nth eigenstate
-   - Orthogonality: ∫ψₙ*ψₘdx = δₙₘ
+   - Orthogonality: ∫ψₙ\*ψₘdx = δₙₘ
    - Parity (symmetric potentials): ψ(-x) = ±ψ(x)
 
 3. **Known Limits**:
@@ -664,6 +699,7 @@ Provides visual test results with pass/fail indicators and error percentages.
 ### Adding a New Potential Type
 
 1. **Define the potential** in `src/common/model/potentials/`:
+
    ```typescript
    export class NewPotential implements PotentialFunction {
      public readonly type = PotentialType.NEW_POTENTIAL;
@@ -680,6 +716,7 @@ Provides visual test results with pass/fail indicators and error percentages.
    ```
 
 2. **Add analytical solution** (if available) in `src/common/model/analytical-solutions/`:
+
    ```typescript
    export function solveNewPotential(
      width: number,
@@ -696,14 +733,16 @@ Provides visual test results with pass/fail indicators and error percentages.
    ```
 
 3. **Register in PotentialType enum**:
+
    ```typescript
    export enum PotentialType {
      // ... existing types ...
-     NEW_POTENTIAL = "newPotential"
+     NEW_POTENTIAL = "newPotential",
    }
    ```
 
 4. **Add to solver dispatcher** in `Schrodinger1DSolver.ts`:
+
    ```typescript
    if (potential.type === PotentialType.NEW_POTENTIAL) {
      return solveNewPotential(width, depth, numPoints);
@@ -711,6 +750,7 @@ Provides visual test results with pass/fail indicators and error percentages.
    ```
 
 5. **Add UI controls** in appropriate screen view:
+
    ```typescript
    if (potentialType === PotentialType.NEW_POTENTIAL) {
      // Add parameter sliders, controls, etc.
@@ -725,12 +765,13 @@ Provides visual test results with pass/fail indicators and error percentages.
 ### Adding a New Numerical Method
 
 1. **Implement solver** in `src/common/model/`:
+
    ```typescript
    export class NewMethodSolver {
      public static solve(
        potential: PotentialFunction,
        width: number,
-       numPoints: number
+       numPoints: number,
      ): BoundStateResult {
        // Implement numerical method
      }
@@ -738,20 +779,23 @@ Provides visual test results with pass/fail indicators and error percentages.
    ```
 
 2. **Add to NumericalMethod enum**:
+
    ```typescript
    export enum NumericalMethod {
      // ... existing methods ...
-     NEW_METHOD = "newMethod"
+     NEW_METHOD = "newMethod",
    }
    ```
 
 3. **Register in solver dispatcher**:
+
    ```typescript
    case NumericalMethod.NEW_METHOD:
      return NewMethodSolver.solve(potential, width, numPoints);
    ```
 
 4. **Add preferences UI** in `main.ts`:
+
    ```typescript
    {
      value: NumericalMethod.NEW_METHOD,
@@ -771,6 +815,7 @@ Provides visual test results with pass/fail indicators and error percentages.
 ### Adding a New Visualization
 
 1. **Create chart node** in `src/common/view/`:
+
    ```typescript
    export class NewVisualizationNode extends BaseChartNode {
      public constructor(model: BaseModel, options?: NewVisualizationOptions) {
@@ -780,8 +825,8 @@ Provides visual test results with pass/fail indicators and error percentages.
        this.chartTransform = new ChartTransform({
          viewWidth: 400,
          viewHeight: 300,
-         modelXRange: new Range(-width/2, width/2),
-         modelYRange: new Range(minValue, maxValue)
+         modelXRange: new Range(-width / 2, width / 2),
+         modelYRange: new Range(minValue, maxValue),
        });
 
        // Add visual elements
@@ -795,6 +840,7 @@ Provides visual test results with pass/fail indicators and error percentages.
    ```
 
 2. **Add to screen view**:
+
    ```typescript
    const newVisualization = new NewVisualizationNode(model);
    this.addChild(newVisualization);
@@ -812,6 +858,7 @@ Provides visual test results with pass/fail indicators and error percentages.
 1. **Create screen directory**: `src/new-screen/`
 
 2. **Implement model**:
+
    ```typescript
    export class NewScreenModel extends BaseModel {
      // Add screen-specific properties and methods
@@ -819,6 +866,7 @@ Provides visual test results with pass/fail indicators and error percentages.
    ```
 
 3. **Implement view**:
+
    ```typescript
    export class NewScreenView extends BaseScreenView {
      // Add screen-specific visualizations
@@ -826,12 +874,13 @@ Provides visual test results with pass/fail indicators and error percentages.
    ```
 
 4. **Implement screen class**:
+
    ```typescript
    export class NewScreen extends Screen<NewScreenModel, NewScreenView> {
      public constructor() {
        super(
          () => new NewScreenModel(),
-         model => new NewScreenView(model)
+         (model) => new NewScreenView(model),
        );
      }
    }
@@ -839,13 +888,17 @@ Provides visual test results with pass/fail indicators and error percentages.
 
 5. **Register in main.ts**:
    ```typescript
-   const sim = new Sim("QPPW", [
-     new IntroScreen(),
-     new OneWellScreen(),
-     new TwoWellsScreen(),
-     new ManyWellsScreen(),
-     new NewScreen() // Add here
-   ], simOptions);
+   const sim = new Sim(
+     "QPPW",
+     [
+       new IntroScreen(),
+       new OneWellScreen(),
+       new TwoWellsScreen(),
+       new ManyWellsScreen(),
+       new NewScreen(), // Add here
+     ],
+     simOptions,
+   );
    ```
 
 ## Common Pitfalls and Solutions
@@ -855,6 +908,7 @@ Provides visual test results with pass/fail indicators and error percentages.
 **Problem**: Mixing up model and view coordinates leads to incorrect rendering.
 
 **Solution**: Always use `ChartTransform` methods explicitly:
+
 ```typescript
 // ✓ Correct
 const viewX = this.chartTransform.modelToViewX(modelX);
@@ -868,6 +922,7 @@ const viewX = modelX * someScaleFactor; // Don't do this!
 **Problem**: View doesn't update when model changes.
 
 **Solution**: Always link view updates to model properties:
+
 ```typescript
 model.energyLevelIndexProperty.link(() => {
   this.updateVisualization();
@@ -879,9 +934,10 @@ model.energyLevelIndexProperty.link(() => {
 **Problem**: Solver fails or produces garbage for certain parameters.
 
 **Solution**: Add bounds checking and validation:
+
 ```typescript
-assert && assert(isFinite(energy), 'Energy is not finite');
-assert && assert(norm > 0, 'Norm is non-positive');
+assert && assert(isFinite(energy), "Energy is not finite");
+assert && assert(norm > 0, "Norm is non-positive");
 ```
 
 ### Pitfall 4: Performance Degradation
@@ -889,6 +945,7 @@ assert && assert(norm > 0, 'Norm is non-positive');
 **Problem**: Simulation becomes slow or unresponsive.
 
 **Solution**: Profile with browser dev tools, then:
+
 - Cache expensive calculations
 - Reduce grid resolution for interactive changes
 - Use analytical solutions when available
@@ -899,6 +956,7 @@ assert && assert(norm > 0, 'Norm is non-positive');
 **Problem**: Memory usage grows over time.
 
 **Solution**: Ensure proper disposal:
+
 ```typescript
 public dispose(): void {
   this.propertyLinks.forEach(link => link.dispose());
@@ -926,6 +984,7 @@ npm run preview      # Preview production build locally
 ```
 
 The build process:
+
 1. TypeScript compilation with strict checks
 2. Vite bundling and optimization
 3. Terser minification
@@ -934,12 +993,14 @@ The build process:
 ### Deployment
 
 GitHub Actions automatically:
+
 1. Runs on push to main branch
 2. Executes type checking and tests
 3. Builds production bundle
 4. Deploys to GitHub Pages
 
 Manual deployment:
+
 ```bash
 npm run build
 npm run serve        # Serve locally to test
@@ -949,24 +1010,28 @@ npm run serve        # Serve locally to test
 ## Additional Resources
 
 ### Internal Documentation
+
 - Source code comments (TSDoc format)
 - `doc/SOLVER_DOCUMENTATION.md` - Detailed solver mathematics
 - `doc/PERFORMANCE_MONITORING.md` - Profiling guide
 - `tests/doc/ACCURACY_TESTS.md` - Test suite documentation
 
 ### External Resources
+
 - [SceneryStack Documentation](https://github.com/phetsims/scenery)
 - [PhET Development Overview](https://github.com/phetsims/phet-info/blob/main/doc/phet-development-overview.md)
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/)
-- Griffiths & Schroeter: *Introduction to Quantum Mechanics* (physics background)
+- Griffiths & Schroeter: _Introduction to Quantum Mechanics_ (physics background)
 
 ### Related Projects
+
 - [PhET Quantum Bound States](https://phet.colorado.edu/en/simulation/bound-states) - Original inspiration
 - [Quantum Tunneling and Wave Packets](https://phet.colorado.edu/en/simulation/quantum-tunneling)
 
 ## Versioning and Changelog
 
 This simulation follows semantic versioning (semver):
+
 - **Major**: Breaking changes to API or behavior
 - **Minor**: New features, backward compatible
 - **Patch**: Bug fixes, performance improvements
@@ -976,6 +1041,7 @@ See git commit history for detailed changes.
 ## Contributing
 
 Contributions are welcome! Please:
+
 1. Fork the repository
 2. Create a feature branch
 3. Implement changes with tests
@@ -989,6 +1055,7 @@ MIT License - see LICENSE file for details.
 ## Contact
 
 For questions, issues, or suggestions:
+
 - GitHub Issues: https://github.com/veillette/QPPW/issues
 - Repository: https://github.com/veillette/QPPW
 
