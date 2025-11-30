@@ -213,8 +213,8 @@ export class WavenumberChartNode extends Node {
    */
   private createWavenumberDescription(
     selectedIndex: number,
-    potentialType: PotentialType,
-    width: number,
+    _potentialType: PotentialType,
+    _width: number,
   ): string {
     const wavenumberResult = this.model.getWavenumberTransform();
     if (
