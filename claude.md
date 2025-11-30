@@ -295,7 +295,12 @@ const epsilon = 1e-10; // Too small, still causes infinities
 
 ```typescript
 // ✅ CORRECT: Numerical integration is robust
-const norm = Math.sqrt(trapezoidalIntegration(x, psi.map((p) => p * p)));
+const norm = Math.sqrt(
+  trapezoidalIntegration(
+    x,
+    psi.map((p) => p * p),
+  ),
+);
 const normalizedPsi = psi.map((p) => p / norm);
 ```
 
@@ -410,7 +415,6 @@ Each screen follows this pattern:
 ### Chart Types (All extend BaseChartNode)
 
 1. **WaveFunctionChartNode** - Displays wavefunction/probability density
-
    - Modes: probability density, wavefunction (real/imaginary), phase color
    - Features:
      - Area measurement tool (intro screen only)
@@ -421,14 +425,12 @@ Each screen follows this pattern:
    - File: `src/common/view/WaveFunctionChartNode.ts`
 
 2. **EnergyChartNode** - Displays energy levels and eigenstates
-
    - Shows potential well shape
    - Displays quantized energy levels as horizontal lines
    - Interactive eigenstate selection
    - File: `src/common/view/EnergyChartNode.ts`
 
 3. **WavenumberChartNode** - Displays Fourier transform |φ(k)|²
-
    - Shows momentum distribution of quantum state
    - Features:
      - Average wavenumber <k> indicator
@@ -446,7 +448,6 @@ Each screen follows this pattern:
 ### Control Panel Types
 
 - **ControlPanelNode** (`src/common/view/ControlPanelNode.ts`)
-
   - Used by: OneWellScreenView, TwoWellsScreenView, ManyWellsScreenView
   - Features: Full controls including superposition, phase color, wave function views
 
