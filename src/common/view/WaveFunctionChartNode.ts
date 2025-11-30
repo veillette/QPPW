@@ -5,7 +5,7 @@
 
 import { Node, Line, Path, Text } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
-import { NumberProperty } from "scenerystack/axon";
+import { NumberProperty, DerivedProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
 import {
@@ -120,7 +120,31 @@ export class WaveFunctionChartNode extends Node {
       fixedDisplayMode?: "probabilityDensity" | "waveFunction" | "phaseColor";
     },
   ) {
-    super();
+    super({
+      // PDOM - make wavefunction chart accessible
+      tagName: "div",
+      labelTagName: "h3",
+      labelContent: "Wavefunction Visualization",
+      descriptionTagName: "p",
+      descriptionContent: new DerivedProperty(
+        [
+          model.selectedEnergyLevelIndexProperty,
+          model.potentialTypeProperty,
+          model.superpositionTypeProperty,
+        ],
+        (
+          selectedIndex: number,
+          potentialType: PotentialType,
+          superpositionType: SuperpositionType,
+        ) => {
+          return this.createWavefunctionDescription(
+            selectedIndex,
+            potentialType,
+            superpositionType,
+          );
+        },
+      ),
+    });
 
     this.model = model;
     this.viewState = viewState;
@@ -320,6 +344,71 @@ export class WaveFunctionChartNode extends Node {
 
     // Note: Initial update is now done asynchronously inside linkToModel()
     // to prevent blocking the page load
+  }
+
+  /**
+   * Creates an accessible description of the wavefunction chart based on current state.
+   * This provides screen reader users with meaningful information about the visualization.
+   */
+  private createWavefunctionDescription(
+    selectedIndex: number,
+    potentialType: PotentialType,
+    superpositionType: SuperpositionType,
+  ): string {
+    const boundStates = this.model.getBoundStates();
+    if (!boundStates || boundStates.energies.length === 0) {
+      return "No wavefunction data available.";
+    }
+
+    const displayMode = this.getEffectiveDisplayMode();
+    const isSuperposition = superpositionType !== SuperpositionType.SINGLE;
+
+    let description = "";
+
+    // Describe what is being shown
+    if (isSuperposition) {
+      description += `Superposition state wavefunction. `;
+    } else {
+      description += `Wavefunction for energy level ${selectedIndex + 1}. `;
+    }
+
+    // Display mode description
+    if (displayMode === "probabilityDensity") {
+      description += `Showing probability density |ψ(x)|². `;
+      description += `This indicates where the particle is most likely to be found. `;
+    } else if (displayMode === "phaseColor") {
+      description += `Showing phase angle of complex wavefunction with color coding. `;
+    } else {
+      description += `Showing real and imaginary components of ψ(x). `;
+    }
+
+    // Get statistical properties if available
+    const nmData = isSuperposition
+      ? this.model.getTimeEvolvedSuperpositionInNmUnits(
+          this.model.timeProperty.value * 1e-15,
+        )
+      : this.model.getWavefunctionInNmUnits(selectedIndex + 1);
+
+    if (nmData) {
+      const xGrid = boundStates.xGrid.map((x) => x * 1e9); // Convert to nm
+      const { avg, rms } = calculateRMSStatistics(
+        xGrid,
+        nmData.probabilityDensity,
+      );
+
+      description += `\n\nPosition statistics: `;
+      description += `Average position: ${avg.toFixed(2)} nanometers. `;
+      description += `Position uncertainty (RMS, Δx): ${rms.toFixed(2)} nm. `;
+    }
+
+    // Node count for single eigenstates
+    if (!isSuperposition && selectedIndex >= 0) {
+      const nodes = selectedIndex; // Quantum number n-1
+      description += `\n\nWavefunction has ${nodes} node${nodes !== 1 ? "s" : ""} `;
+      description += `(zero crossing${nodes !== 1 ? "s" : ""}). `;
+    }
+
+    return description;
   }
 
   /**
