@@ -998,9 +998,13 @@ export abstract class BaseModel {
       return null;
     }
 
-    // Interpolate wavefunction value at xNm
+    // Interpolate wavefunction value at xNm (in SI units: m^-1/2)
     const t = (xInM - xGrid[i1]) / (xGrid[i1 + 1] - xGrid[i1]);
-    const value = wavefunction[i1] * (1 - t) + wavefunction[i1 + 1] * t;
+    const valueInM = wavefunction[i1] * (1 - t) + wavefunction[i1 + 1] * t;
+
+    // Convert wavefunction value from m^-1/2 to nm^-1/2
+    // For normalization: ∫|ψ|² dx = 1, when dx → dx * M_TO_NM, then ψ → ψ / sqrt(M_TO_NM)
+    const value = valueInM / Math.sqrt(QuantumConstants.M_TO_NM);
 
     // Try to use analytical solution for first derivative (more accurate)
     const firstDerivativeArray = this.getWavefunctionFirstDerivative(
@@ -1014,11 +1018,11 @@ export abstract class BaseModel {
       // Analytical solution available for first derivative
       const firstDerivativeInM = firstDerivativeArray[0];
 
-      // Convert derivative from per-meter to per-nanometer
-      // dψ/dx has units m^(-1/2)/m when x is in meters
-      // We need m^(-1/2)/nm for use with x in nanometers
-      // Since 1 m = 10^9 nm: dψ/dx_nm = dψ/dx_m / 10^9
-      firstDerivativeInNm = firstDerivativeInM / QuantumConstants.M_TO_NM;
+      // Convert derivative: dψ/dx from [m^-3/2] to [nm^-3/2]
+      // ψ → ψ / sqrt(M_TO_NM), x → x × M_TO_NM
+      // dψ/dx → (dψ/dx) / [sqrt(M_TO_NM) × M_TO_NM] = (dψ/dx) / M_TO_NM^(3/2)
+      firstDerivativeInNm =
+        firstDerivativeInM / Math.pow(QuantumConstants.M_TO_NM, 1.5);
     } else {
       // Fall back to finite difference for first derivative
       // Using forward difference: f'(x) ≈ (f(x+h) - f(x)) / h
@@ -1027,11 +1031,11 @@ export abstract class BaseModel {
       const psi_right = wavefunction[i1 + 1];
       const firstDerivativeInM = (psi_right - psi_left) / h;
 
-      // Convert derivative from per-meter to per-nanometer
-      // dψ/dx has units m^(-1/2)/m when x is in meters
-      // We need m^(-1/2)/nm for use with x in nanometers
-      // Since 1 m = 10^9 nm: dψ/dx_nm = dψ/dx_m / 10^9
-      firstDerivativeInNm = firstDerivativeInM / QuantumConstants.M_TO_NM;
+      // Convert derivative: dψ/dx from [m^-3/2] to [nm^-3/2]
+      // ψ → ψ / sqrt(M_TO_NM), x → x × M_TO_NM
+      // dψ/dx → (dψ/dx) / [sqrt(M_TO_NM) × M_TO_NM] = (dψ/dx) / M_TO_NM^(3/2)
+      firstDerivativeInNm =
+        firstDerivativeInM / Math.pow(QuantumConstants.M_TO_NM, 1.5);
     }
 
     // Try to use analytical solution for second derivative (more accurate)
@@ -1046,26 +1050,25 @@ export abstract class BaseModel {
       // Analytical solution available for second derivative
       const secondDerivativeInM = secondDerivativeArray[0];
 
-      // Convert second derivative from per-meter² to per-nanometer²
-      // d²ψ/dx² has units m^(-1/2)/m² when x is in meters
-      // We need m^(-1/2)/nm² for use with x in nanometers
-      // Since 1 m² = (10^9)² nm²: d²ψ/dx²_nm = d²ψ/dx²_m / (10^9)²
+      // Convert second derivative: d²ψ/dx² from [m^-5/2] to [nm^-5/2]
+      // ψ → ψ / sqrt(M_TO_NM), x → x × M_TO_NM
+      // d²ψ/dx² → (d²ψ/dx²) / [sqrt(M_TO_NM) × M_TO_NM²] = (d²ψ/dx²) / M_TO_NM^(5/2)
       secondDerivativeInNm =
-        secondDerivativeInM / Math.pow(QuantumConstants.M_TO_NM, 2);
+        secondDerivativeInM / Math.pow(QuantumConstants.M_TO_NM, 2.5);
     } else {
       // Fall back to finite difference for second derivative
       // f''(x) ≈ (f(x-h) - 2f(x) + f(x+h)) / h²
       const h = xGrid[1] - xGrid[0];
       const psi_left = wavefunction[i1];
       const psi_right = wavefunction[i1 + 1];
-      const secondDerivativeInM = (psi_left - 2 * value + psi_right) / (h * h);
+      const secondDerivativeInM =
+        (psi_left - 2 * valueInM + psi_right) / (h * h);
 
-      // Convert second derivative from per-meter² to per-nanometer²
-      // d²ψ/dx² has units m^(-1/2)/m² when x is in meters
-      // We need m^(-1/2)/nm² for use with x in nanometers
-      // Since 1 m² = (10^9)² nm²: d²ψ/dx²_nm = d²ψ/dx²_m / (10^9)²
+      // Convert second derivative: d²ψ/dx² from [m^-5/2] to [nm^-5/2]
+      // ψ → ψ / sqrt(M_TO_NM), x → x × M_TO_NM
+      // d²ψ/dx² → (d²ψ/dx²) / [sqrt(M_TO_NM) × M_TO_NM²] = (d²ψ/dx²) / M_TO_NM^(5/2)
       secondDerivativeInNm =
-        secondDerivativeInM / Math.pow(QuantumConstants.M_TO_NM, 2);
+        secondDerivativeInM / Math.pow(QuantumConstants.M_TO_NM, 2.5);
     }
 
     return {
