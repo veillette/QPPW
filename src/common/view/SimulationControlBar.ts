@@ -71,6 +71,11 @@ export class SimulationControlBar extends Node {
           },
           enabledProperty: DerivedProperty.not(this.model.isPlayingProperty),
           radius: 15, // Smaller than play/pause button
+
+          // PDOM
+          innerContent: "Step Forward",
+          helpText:
+            "Step forward one frame in time. Advances wavefunction by small time increment.",
         },
         stepBackwardButtonOptions: {
           listener: () => {
@@ -79,6 +84,20 @@ export class SimulationControlBar extends Node {
           },
           enabledProperty: DerivedProperty.not(this.model.isPlayingProperty),
           radius: 15, // Smaller than play/pause button
+
+          // PDOM
+          innerContent: "Step Backward",
+          helpText:
+            "Step backward one frame in time. Reverses wavefunction by small time increment.",
+        },
+        playPauseButtonOptions: {
+          // PDOM
+          innerContent: new DerivedProperty(
+            [this.model.isPlayingProperty],
+            (isPlaying) => (isPlaying ? "Pause" : "Play"),
+          ),
+          helpText:
+            "Start or stop time evolution of the wavefunction. Keyboard shortcut: Space bar.",
         },
       },
       speedRadioButtonGroupPlacement: "left",
@@ -86,6 +105,11 @@ export class SimulationControlBar extends Node {
         labelOptions: {
           fill: QPPWColors.textFillProperty,
         },
+
+        // PDOM
+        accessibleName: "Animation Speed",
+        helpText:
+          "Control time evolution speed. Use arrow keys to navigate options, Space or Enter to select.",
       },
     });
 
