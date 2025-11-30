@@ -3,8 +3,8 @@
  * These are points where the wavefunction crosses zero.
  */
 
-import { Node, Circle } from "scenerystack/scenery";
-import { BooleanProperty } from "scenerystack/axon";
+import { Node, Circle, DerivedProperty } from "scenerystack/scenery";
+import { BooleanProperty, Property } from "scenerystack/axon";
 import QuantumConstants from "../../model/QuantumConstants.js";
 import QPPWColors from "../../../QPPWColors.js";
 
@@ -17,14 +17,44 @@ export class ZerosVisualization extends Node {
   private readonly options: ZerosVisualizationOptions;
   public readonly showProperty: BooleanProperty;
   private readonly container: Node;
+  private readonly zerosPositionsProperty: Property<number[]>;
+  private readonly accessibleDescription: Node;
 
   constructor(options: ZerosVisualizationOptions) {
-    super();
+    super({
+      // pdom - container for zeros visualization
+      tagName: "div",
+      labelTagName: "h3",
+      labelContent: "Wavefunction Zeros",
+    });
 
     this.options = options;
     this.showProperty = new BooleanProperty(false);
+    this.zerosPositionsProperty = new Property<number[]>([]);
 
-    // Create container
+    // Create accessible description with live region
+    this.accessibleDescription = new Node({
+      tagName: "div",
+      ariaRole: "status",
+      ariaLive: "polite",
+      innerContent: new DerivedProperty(
+        [this.showProperty, this.zerosPositionsProperty],
+        (show, zeros) => {
+          if (!show || zeros.length === 0) {
+            return "";
+          }
+          const positions = zeros.map((z) => z.toFixed(2)).join(", ");
+          return (
+            `Wavefunction has ${zeros.length} node${zeros.length !== 1 ? "s" : ""} ` +
+            `(zero crossing${zeros.length !== 1 ? "s" : ""}) ` +
+            `at positions: ${positions} nanometers.`
+          );
+        },
+      ),
+    });
+    this.addChild(this.accessibleDescription);
+
+    // Create container for visual circles
     this.container = new Node({
       visible: false,
     });
@@ -48,11 +78,15 @@ export class ZerosVisualization extends Node {
     // Only show if enabled
     if (!this.showProperty.value) {
       this.container.visible = false;
+      this.zerosPositionsProperty.value = [];
       return;
     }
 
     // Find zeros
     const zeros = this.findZeros(xGrid, wavefunction);
+
+    // Update the accessible description with zero positions
+    this.zerosPositionsProperty.value = zeros;
 
     // Create circles at each zero position
     zeros.forEach((zeroX) => {

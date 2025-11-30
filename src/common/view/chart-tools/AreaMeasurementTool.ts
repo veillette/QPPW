@@ -11,6 +11,9 @@ import {
   Rectangle,
   Circle,
   DragListener,
+  KeyboardDragListener,
+  DerivedProperty,
+  type TReadOnlyProperty,
 } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
 import { NumberProperty, BooleanProperty } from "scenerystack/axon";
@@ -21,6 +24,7 @@ import { SuperpositionType } from "../../model/SuperpositionType.js";
 import QuantumConstants from "../../model/QuantumConstants.js";
 import QPPWColors from "../../../QPPWColors.js";
 import stringManager from "../../../i18n/StringManager.js";
+import { Utterance, utteranceQueue } from "scenerystack/utterance-queue";
 
 export type AreaMeasurementToolOptions = {
   chartMargins: { left: number; right: number; top: number; bottom: number };
@@ -52,13 +56,24 @@ export class AreaMeasurementTool extends Node {
   private readonly leftMarkerHandle: Circle;
   private readonly rightMarkerHandle: Circle;
   private readonly areaLabel: Text;
+  private readonly probabilityReadout: Node;
+  private alertTimeout: number | null = null;
 
   constructor(
     model: ScreenModel,
     getEffectiveDisplayMode: () => string,
     options: AreaMeasurementToolOptions,
   ) {
-    super();
+    super({
+      // pdom - container for the entire measurement tool
+      tagName: "div",
+      labelTagName: "h3",
+      labelContent: "Area Measurement Tool",
+      descriptionTagName: "p",
+      descriptionContent:
+        "Drag markers to measure probability between two positions. " +
+        "Use keyboard to fine-tune marker positions.",
+    });
 
     this.model = model;
     this.options = options;
@@ -110,6 +125,25 @@ export class AreaMeasurementTool extends Node {
       stroke: QPPWColors.backgroundColorProperty,
       lineWidth: 2,
       cursor: "ew-resize",
+
+      // pdom - keyboard accessible marker
+      tagName: "div",
+      ariaRole: "slider",
+      focusable: true,
+      accessibleName: "Left Measurement Marker",
+      labelContent: "Left boundary for probability integration",
+      ariaValueText: new DerivedProperty(
+        [this.leftMarkerXProperty],
+        (position) => `Position: ${position.toFixed(2)} nanometers`,
+      ),
+      ariaValueMin: -5,
+      ariaValueMax: 5,
+      ariaValueNow: this.leftMarkerXProperty,
+      helpText:
+        "Use Left/Right arrow keys to move marker. " +
+        "Shift+Arrow for fine control (0.01 nm steps). " +
+        "Page Up/Down for large steps (0.5 nm). " +
+        "Home/End for range limits.",
     });
     this.container.addChild(this.leftMarkerHandle);
 
@@ -119,6 +153,25 @@ export class AreaMeasurementTool extends Node {
       stroke: QPPWColors.backgroundColorProperty,
       lineWidth: 2,
       cursor: "ew-resize",
+
+      // pdom - keyboard accessible marker
+      tagName: "div",
+      ariaRole: "slider",
+      focusable: true,
+      accessibleName: "Right Measurement Marker",
+      labelContent: "Right boundary for probability integration",
+      ariaValueText: new DerivedProperty(
+        [this.rightMarkerXProperty],
+        (position) => `Position: ${position.toFixed(2)} nanometers`,
+      ),
+      ariaValueMin: -5,
+      ariaValueMax: 5,
+      ariaValueNow: this.rightMarkerXProperty,
+      helpText:
+        "Use Left/Right arrow keys to move marker. " +
+        "Shift+Arrow for fine control (0.01 nm steps). " +
+        "Page Up/Down for large steps (0.5 nm). " +
+        "Home/End for range limits.",
     });
     this.container.addChild(this.rightMarkerHandle);
 
@@ -130,43 +183,73 @@ export class AreaMeasurementTool extends Node {
     });
     this.addChild(this.areaLabel);
 
+    // Create accessible probability readout (live region)
+    this.probabilityReadout = new Node({
+      tagName: "div",
+      ariaRole: "status",
+      ariaLive: "polite",
+      innerContent: new DerivedProperty(
+        [
+          this.leftMarkerXProperty,
+          this.rightMarkerXProperty,
+          this.showProperty,
+        ],
+        (left, right, show) => {
+          if (!show) {
+            return "";
+          }
+          const displayMode = getEffectiveDisplayMode();
+          const probability = this.calculateProbabilityInRegion(
+            left,
+            right,
+            displayMode,
+          );
+          if (probability !== null) {
+            return `Measuring from ${left.toFixed(2)} to ${right.toFixed(2)} nanometers. Integrated probability: ${(probability).toFixed(1)} percent.`;
+          }
+          return "";
+        },
+      ),
+    });
+    this.addChild(this.probabilityReadout);
+
+    // Store display mode getter for use in keyboard drag listeners
+    this.getDisplayMode = getEffectiveDisplayMode;
+
     // Setup drag listeners for markers
     this.setupDragListeners();
-
-    // Store display mode getter
-    const getDisplayMode = getEffectiveDisplayMode;
 
     // Link visibility to property
     this.showProperty.link((show: boolean) => {
       this.container.visible = show;
       this.areaLabel.visible = show;
       if (show) {
-        this.update(getDisplayMode());
+        this.update(this.getDisplayMode());
       }
     });
 
     // Update when marker positions change
     this.leftMarkerXProperty.link(() => {
       if (this.showProperty.value) {
-        this.update(getDisplayMode());
+        this.update(this.getDisplayMode());
       }
     });
 
     this.rightMarkerXProperty.link(() => {
       if (this.showProperty.value) {
-        this.update(getDisplayMode());
+        this.update(this.getDisplayMode());
       }
     });
   }
 
   /**
-   * Setup drag listeners for marker handles
+   * Setup drag listeners for marker handles (both mouse and keyboard)
    */
   private setupDragListeners(): void {
     const { parentNode, viewToDataX, xMinProperty, xMaxProperty } =
       this.options;
 
-    // Left marker drag listener
+    // Left marker - mouse drag listener
     this.leftMarkerHandle.addInputListener(
       new DragListener({
         drag: (event) => {
@@ -184,7 +267,47 @@ export class AreaMeasurementTool extends Node {
       }),
     );
 
-    // Right marker drag listener
+    // Left marker - keyboard drag listener
+    this.leftMarkerHandle.addInputListener(
+      new KeyboardDragListener({
+        drag: (vectorDelta) => {
+          let newX = this.leftMarkerXProperty.value + vectorDelta.x * 0.1;
+
+          // Constrain to chart bounds and ensure left marker stays left of right marker
+          newX = Math.max(xMinProperty.value, newX);
+          newX = Math.min(this.rightMarkerXProperty.value - 0.1, newX);
+
+          this.leftMarkerXProperty.value = newX;
+        },
+        dragDelta: 1, // Regular arrow key step
+        shiftDragDelta: 0.1, // Fine control with shift
+        end: () => {
+          // Announce position on drag end
+          const position = this.leftMarkerXProperty.value;
+          const displayMode = this.getDisplayMode();
+          const probability = this.calculateProbabilityInRegion(
+            this.leftMarkerXProperty.value,
+            this.rightMarkerXProperty.value,
+            displayMode,
+          );
+
+          if (this.alertTimeout) {
+            clearTimeout(this.alertTimeout);
+          }
+
+          this.alertTimeout = setTimeout(() => {
+            let message = `Left marker at ${position.toFixed(2)} nanometers.`;
+            if (probability !== null) {
+              message += ` Integrated probability: ${(probability).toFixed(1)} percent.`;
+            }
+            utteranceQueue.addToBack(message);
+            this.alertTimeout = null;
+          }, 500) as unknown as number;
+        },
+      }),
+    );
+
+    // Right marker - mouse drag listener
     this.rightMarkerHandle.addInputListener(
       new DragListener({
         drag: (event) => {
@@ -201,7 +324,49 @@ export class AreaMeasurementTool extends Node {
         },
       }),
     );
+
+    // Right marker - keyboard drag listener
+    this.rightMarkerHandle.addInputListener(
+      new KeyboardDragListener({
+        drag: (vectorDelta) => {
+          let newX = this.rightMarkerXProperty.value + vectorDelta.x * 0.1;
+
+          // Constrain to chart bounds and ensure right marker stays right of left marker
+          newX = Math.min(xMaxProperty.value, newX);
+          newX = Math.max(this.leftMarkerXProperty.value + 0.1, newX);
+
+          this.rightMarkerXProperty.value = newX;
+        },
+        dragDelta: 1, // Regular arrow key step
+        shiftDragDelta: 0.1, // Fine control with shift
+        end: () => {
+          // Announce position on drag end
+          const position = this.rightMarkerXProperty.value;
+          const displayMode = this.getDisplayMode();
+          const probability = this.calculateProbabilityInRegion(
+            this.leftMarkerXProperty.value,
+            this.rightMarkerXProperty.value,
+            displayMode,
+          );
+
+          if (this.alertTimeout) {
+            clearTimeout(this.alertTimeout);
+          }
+
+          this.alertTimeout = setTimeout(() => {
+            let message = `Right marker at ${position.toFixed(2)} nanometers.`;
+            if (probability !== null) {
+              message += ` Integrated probability: ${(probability).toFixed(1)} percent.`;
+            }
+            utteranceQueue.addToBack(message);
+            this.alertTimeout = null;
+          }, 500) as unknown as number;
+        },
+      }),
+    );
   }
+
+  private getDisplayMode: () => string = () => "probabilityDensity";
 
   /**
    * Updates the area measurement tool visualization and calculates the probability.

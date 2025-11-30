@@ -10,6 +10,8 @@ import {
   Text,
   Circle,
   DragListener,
+  KeyboardDragListener,
+  DerivedProperty,
 } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
 import { NumberProperty, BooleanProperty } from "scenerystack/axon";
@@ -17,6 +19,7 @@ import { PhetFont } from "scenerystack/scenery-phet";
 import type { ScreenModel } from "../../model/ScreenModels.js";
 import QPPWColors from "../../../QPPWColors.js";
 import stringManager from "../../../i18n/StringManager.js";
+import { utteranceQueue } from "scenerystack/utterance-queue";
 
 export type DerivativeToolOptions = {
   chartMargins: { left: number; right: number; top: number; bottom: number };
@@ -43,18 +46,38 @@ export class DerivativeTool extends Node {
   private readonly tangentLine: Path;
   private readonly label: Text;
 
+  private readonly showPropertyInternal: BooleanProperty;
+
   constructor(
     model: ScreenModel,
     getEffectiveDisplayMode: () => string,
     options: DerivativeToolOptions,
   ) {
-    super();
+    // Initialize properties first so they can be used in super()
+    const showPropertyInternal = new BooleanProperty(false);
+
+    super({
+      // pdom - container for the derivative tool
+      tagName: "div",
+      labelTagName: "h3",
+      labelContent: "Derivative Visualization",
+      descriptionTagName: "p",
+      descriptionContent: new DerivedProperty(
+        [showPropertyInternal],
+        (enabled) =>
+          enabled
+            ? "Showing first derivative dψ/dx (slope) of the wavefunction. " +
+              "The tangent line shows the rate of change at the selected position."
+            : "Derivative visualization disabled.",
+      ),
+    });
 
     this.model = model;
     this.options = options;
 
-    // Initialize properties
-    this.showProperty = new BooleanProperty(false);
+    // Store properties
+    this.showPropertyInternal = showPropertyInternal;
+    this.showProperty = showPropertyInternal;
     this.markerXProperty = new NumberProperty(1);
 
     // Create container
@@ -77,6 +100,25 @@ export class DerivativeTool extends Node {
       stroke: QPPWColors.backgroundColorProperty,
       lineWidth: 2,
       cursor: "ew-resize",
+
+      // pdom - keyboard accessible marker
+      tagName: "div",
+      ariaRole: "slider",
+      focusable: true,
+      accessibleName: "Derivative Measurement Position",
+      labelContent: "Position for derivative and slope display",
+      ariaValueText: new DerivedProperty(
+        [this.markerXProperty],
+        (position) => `Position: ${position.toFixed(2)} nanometers`,
+      ),
+      ariaValueMin: -5,
+      ariaValueMax: 5,
+      ariaValueNow: this.markerXProperty,
+      helpText:
+        "Use Left/Right arrow keys to move marker. " +
+        "Shift+Arrow for fine control. " +
+        "Page Up/Down for large steps. " +
+        "Shows first derivative (slope) at selected position.",
     });
     this.container.addChild(this.markerHandle);
 
@@ -126,7 +168,7 @@ export class DerivativeTool extends Node {
   }
 
   /**
-   * Setup drag listener for marker handle
+   * Setup drag listeners for marker handle (both mouse and keyboard)
    */
   private setupDragListener(): void {
     const {
@@ -137,6 +179,7 @@ export class DerivativeTool extends Node {
       xMaxProperty,
     } = this.options;
 
+    // Mouse drag listener
     const dragListener = new DragListener({
       drag: (event) => {
         const parentPoint = parentNode.globalToParentPoint(event.pointer.point);
@@ -153,6 +196,37 @@ export class DerivativeTool extends Node {
     });
 
     this.markerHandle.addInputListener(dragListener);
+
+    // Keyboard drag listener
+    const keyboardDragListener = new KeyboardDragListener({
+      drag: (vectorDelta) => {
+        let newX = this.markerXProperty.value + vectorDelta.x * 0.1;
+
+        // Clamp to chart bounds
+        newX = Math.max(xMinProperty.value, Math.min(xMaxProperty.value, newX));
+
+        this.markerXProperty.value = newX;
+      },
+      dragDelta: 1, // Regular arrow key step
+      shiftDragDelta: 0.1, // Fine control with shift
+      end: () => {
+        // Announce position and derivative value on drag end
+        const position = this.markerXProperty.value;
+        const derivativeData = this.calculateFirstDerivative(
+          position,
+          "waveFunction",
+        );
+
+        if (derivativeData !== null) {
+          const message =
+            `Marker at ${position.toFixed(2)} nanometers. ` +
+            `First derivative: ${derivativeData.firstDerivative.toExponential(2)}.`;
+          utteranceQueue.addToBack(message);
+        }
+      },
+    });
+
+    this.markerHandle.addInputListener(keyboardDragListener);
   }
 
   /**
