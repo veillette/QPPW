@@ -58,6 +58,15 @@ We have completed the following:
 - ✅ **Dynamic Updates** - All chart descriptions update automatically when model state changes
 - ✅ **Physics Context** - Descriptions include meaningful physics information for screen reader users
 
+### Phase 6: Interactive Tools ✅ Complete
+- ✅ **Area Measurement Tool** - Keyboard-draggable markers for probability integration with accessible names and live announcements
+- ✅ **Curvature Tool** - PDOM descriptions explaining second derivative visualization, keyboard-accessible marker
+- ✅ **Derivative Tool** - PDOM descriptions for first derivative display, keyboard-accessible marker
+- ✅ **Zeros Visualization** - Accessible descriptions announcing number of nodes and their positions
+- ✅ **Keyboard Drag Listeners** - All interactive markers support arrow keys, Shift+Arrow for fine control, Page Up/Down for large steps
+- ✅ **Screen Reader Announcements** - Debounced announcements when markers are moved via keyboard
+- ✅ **ARIA Attributes** - Proper roles (slider), value text, help text for all interactive tools
+
 ## Planned Features
 
 Our accessibility implementation will include:
@@ -116,7 +125,13 @@ Our accessibility implementation follows a phased approach:
    - Wavefunction statistical summaries
    - Momentum distribution descriptions
 
-7. **Phase 6: Testing & Validation** (🚧 Next)
+7. **Phase 6: Interactive Tools** (✅ Complete)
+   - Area Measurement Tool keyboard accessibility
+   - Curvature Tool keyboard accessibility
+   - Derivative Tool keyboard accessibility
+   - Zeros Visualization accessible descriptions
+
+8. **Phase 7: Testing & Validation** (🚧 Next)
    - Screen reader testing
    - Keyboard-only navigation verification
    - User acceptance testing
@@ -170,7 +185,8 @@ Please see [CONTRIBUTE.md](CONTRIBUTE.md) for contribution guidelines or [open a
 - **Phase 3 (Sliders)**: ✅ Complete - November 2025
 - **Phase 4 (Complex Components)**: ✅ Complete - November 2025
 - **Phase 5 (Visualizations)**: ✅ Complete - November 2025
-- **Phase 6 (Testing & Validation)**: 🚧 Next - Q1 2026
+- **Phase 6 (Interactive Tools)**: ✅ Complete - November 2025
+- **Phase 7 (Testing & Validation)**: 🚧 Next - Q1 2026
 
 ## Contact
 
@@ -178,4 +194,4 @@ For accessibility-specific questions or feedback, please [open an issue](https:/
 
 ---
 
-*Last Updated: November 30, 2025 - Phase 5 Complete*
+*Last Updated: November 30, 2025 - Phase 6 Complete*
