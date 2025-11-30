@@ -139,9 +139,10 @@ export class AreaMeasurementTool extends Node {
       //   [this.leftMarkerXProperty],
       //   (position) => `Position: ${position.toFixed(2)} nanometers`,
       // ),
-      ariaValueMin: -5,
-      ariaValueMax: 5,
-      ariaValueNow: this.leftMarkerXProperty,
+      // TODO: Add aria value attributes when PhET accessibility is fully configured
+      // ariaValueMin: -5,
+      // ariaValueMax: 5,
+      // ariaValueNow: this.leftMarkerXProperty,
       // TODO: Add helpText when PhET accessibility is fully configured
       // helpText:
       //   "Use Left/Right arrow keys to move marker. " +
@@ -169,9 +170,10 @@ export class AreaMeasurementTool extends Node {
       //   [this.rightMarkerXProperty],
       //   (position) => `Position: ${position.toFixed(2)} nanometers`,
       // ),
-      ariaValueMin: -5,
-      ariaValueMax: 5,
-      ariaValueNow: this.rightMarkerXProperty,
+      // TODO: Add aria value attributes when PhET accessibility is fully configured
+      // ariaValueMin: -5,
+      // ariaValueMax: 5,
+      // ariaValueNow: this.rightMarkerXProperty,
       // TODO: Add helpText when PhET accessibility is fully configured
       // helpText:
       //   "Use Left/Right arrow keys to move marker. " +
@@ -277,8 +279,8 @@ export class AreaMeasurementTool extends Node {
     // Left marker - keyboard drag listener
     this.leftMarkerHandle.addInputListener(
       new KeyboardDragListener({
-        drag: (vectorDelta) => {
-          let newX = this.leftMarkerXProperty.value + vectorDelta.x * 0.1;
+        drag: (_event, listener) => {
+          let newX = this.leftMarkerXProperty.value + listener.modelDelta.x * 0.1;
 
           // Constrain to chart bounds and ensure left marker stays left of right marker
           newX = Math.max(xMinProperty.value, newX);
@@ -335,8 +337,8 @@ export class AreaMeasurementTool extends Node {
     // Right marker - keyboard drag listener
     this.rightMarkerHandle.addInputListener(
       new KeyboardDragListener({
-        drag: (vectorDelta) => {
-          let newX = this.rightMarkerXProperty.value + vectorDelta.x * 0.1;
+        drag: (_event, listener) => {
+          let newX = this.rightMarkerXProperty.value + listener.modelDelta.x * 0.1;
 
           // Constrain to chart bounds and ensure right marker stays right of left marker
           newX = Math.min(xMaxProperty.value, newX);
