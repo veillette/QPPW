@@ -70,7 +70,7 @@ export abstract class BaseScreenView extends ScreenView {
 
     this.model = model;
 
-    // Create the alerter for accessibility announcements
+    // Create the alerter for accessibility announcements using global voicing utterance queue
     this.alerter = new QPPWAlerter(model);
 
     // Create the reset all button in the bottom-right corner
