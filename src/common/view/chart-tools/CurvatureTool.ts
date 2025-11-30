@@ -100,9 +100,8 @@ export class CurvatureTool extends Node {
     this.label = new Text("", {
       font: new PhetFont({ size: 14, weight: "bold" }),
       fill: QPPWColors.curvatureToolFillDarkProperty,
-      visible: false,
     });
-    this.addChild(this.label);
+    this.container.addChild(this.label);
 
     // Setup drag listener for marker
     this.setupDragListener();
@@ -113,7 +112,6 @@ export class CurvatureTool extends Node {
     // Link visibility to property
     this.showProperty.link((show: boolean) => {
       this.container.visible = show;
-      this.label.visible = show;
       if (show) {
         this.update(getDisplayMode());
       }
@@ -203,7 +201,7 @@ export class CurvatureTool extends Node {
           derivatives.secondDerivative.toExponential(2),
         );
       this.label.centerX = viewX;
-      this.label.bottom = yTop - 5;
+      this.label.top = yTop + 5; // Position just inside the chart area
     } else {
       this.parabola.shape = null;
       this.label.string = stringManager.notAvailableStringProperty.value;

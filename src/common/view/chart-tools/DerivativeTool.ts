@@ -100,9 +100,8 @@ export class DerivativeTool extends Node {
     this.label = new Text("", {
       font: new PhetFont({ size: 14, weight: "bold" }),
       fill: QPPWColors.derivativeToolFillDarkProperty,
-      visible: false,
     });
-    this.addChild(this.label);
+    this.container.addChild(this.label);
 
     // Setup drag listener for marker
     this.setupDragListener();
@@ -113,7 +112,6 @@ export class DerivativeTool extends Node {
     // Link visibility to property
     this.showProperty.link((show: boolean) => {
       this.container.visible = show;
-      this.label.visible = show;
       if (show) {
         this.update(getDisplayMode());
       }
@@ -197,14 +195,14 @@ export class DerivativeTool extends Node {
         derivativeData.wavefunctionValue,
       );
 
-      // Update label with proper units (m^-1/2 per nm)
+      // Update label with proper units (nm^-3/2)
       this.label.string =
         stringManager.firstDerivativeLabelStringProperty.value.replace(
           "{{value}}",
           derivativeData.firstDerivative.toExponential(2),
         );
       this.label.centerX = viewX;
-      this.label.bottom = yTop - 5;
+      this.label.top = yTop + 5; // Position just inside the chart area
     } else {
       this.tangentLine.shape = null;
       this.label.string = stringManager.notAvailableStringProperty.value;
