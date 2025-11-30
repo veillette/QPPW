@@ -128,7 +128,7 @@ export class IntroScreenView extends BaseScreenView {
     this.playAreaNode.pdomOrder = [
       this.energyChart!,
       this.probabilityChart,
-      this.waveFunctionChart,
+      this.waveFunctionChart!,
       this.wavenumberChart,
     ];
 

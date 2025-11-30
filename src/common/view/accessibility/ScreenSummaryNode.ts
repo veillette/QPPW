@@ -99,14 +99,15 @@ export class ScreenSummaryNode extends Node {
   private createParametersNode(): Node {
     // Check if model has depth property (not all potentials do)
     const hasDepth = "wellDepthProperty" in this.model;
+    const model = this.model; // Store reference to avoid type narrowing issues
 
     // Create appropriate DerivedProperty based on available parameters
     const innerContent = hasDepth
       ? new DerivedProperty(
           [
-            this.model.particleMassProperty,
-            this.model.wellWidthProperty,
-            this.model.wellDepthProperty as NumberProperty,
+            model.particleMassProperty,
+            model.wellWidthProperty,
+            model.wellDepthProperty as NumberProperty,
           ],
           (mass: number, width: number, depth: number) => {
             return (
@@ -117,7 +118,7 @@ export class ScreenSummaryNode extends Node {
           },
         )
       : new DerivedProperty(
-          [this.model.particleMassProperty, this.model.wellWidthProperty],
+          [model.particleMassProperty, model.wellWidthProperty],
           (mass: number, width: number) => {
             return (
               `Particle mass: ${mass.toFixed(2)} electron masses. ` +

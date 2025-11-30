@@ -49,8 +49,6 @@ export class CurvatureTool extends Node {
   private readonly parabola: Path;
   private readonly label: Text;
 
-  private readonly showPropertyInternal: BooleanProperty;
-
   constructor(
     model: ScreenModel,
     getEffectiveDisplayMode: () => string,
@@ -79,7 +77,6 @@ export class CurvatureTool extends Node {
     this.options = options;
 
     // Store properties
-    this.showPropertyInternal = showPropertyInternal;
     this.showProperty = showPropertyInternal;
     this.markerXProperty = new NumberProperty(0);
 
@@ -115,9 +112,10 @@ export class CurvatureTool extends Node {
       //   [this.markerXProperty],
       //   (position) => `Position: ${position.toFixed(2)} nanometers`,
       // ),
-      ariaValueMin: -5,
-      ariaValueMax: 5,
-      ariaValueNow: this.markerXProperty,
+      // TODO: Add aria value attributes when PhET accessibility is fully configured
+      // ariaValueMin: -5,
+      // ariaValueMax: 5,
+      // ariaValueNow: this.markerXProperty,
       // TODO: Add helpText when PhET accessibility is fully configured
       // helpText:
       //   "Use Left/Right arrow keys to move marker. " +
@@ -204,8 +202,8 @@ export class CurvatureTool extends Node {
 
     // Keyboard drag listener
     const keyboardDragListener = new KeyboardDragListener({
-      drag: (vectorDelta) => {
-        let newX = this.markerXProperty.value + vectorDelta.x * 0.1;
+      drag: (_event, listener) => {
+        let newX = this.markerXProperty.value + listener.modelDelta.x * 0.1;
 
         // Clamp to chart bounds
         newX = Math.max(xMinProperty.value, Math.min(xMaxProperty.value, newX));

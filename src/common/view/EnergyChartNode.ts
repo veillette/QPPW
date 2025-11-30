@@ -3,7 +3,7 @@
  * This is the top chart in the One Well screen.
  */
 
-import { Rectangle, Line, Path, Text, VBox } from "scenerystack/scenery";
+import { Rectangle, Line, Path, Text, VBox, SceneryEvent } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
 import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
@@ -276,7 +276,11 @@ export class EnergyChartNode extends BaseChartNode {
   private setupKeyboardNavigation(): void {
     // Add keyboard listener to the entire chart node
     this.addInputListener({
-      keydown: (event: { domEvent: KeyboardEvent }) => {
+      keydown: (event: SceneryEvent<KeyboardEvent>) => {
+        if (!event.domEvent) {
+          return;
+        }
+
         const boundStates = this.model.getBoundStates();
         if (!boundStates || boundStates.energies.length === 0) {
           return;
