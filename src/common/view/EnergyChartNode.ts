@@ -466,7 +466,9 @@ export class EnergyChartNode extends BaseChartNode {
     }
 
     // Update classical probability visualization when property changes
-    this.viewState.showClassicalProbabilityProperty.lazyLink(() => this.update());
+    this.viewState.showClassicalProbabilityProperty.lazyLink(() =>
+      this.update(),
+    );
 
     // Perform initial updates (now that all listeners are set up)
     this.updateEnergyAxisRange();
