@@ -424,49 +424,54 @@ export class EnergyChartNode extends BaseChartNode {
    */
   protected linkToModel(): void {
     // Update when any parameter changes
-    this.model.potentialTypeProperty.link(() => {
+    this.model.potentialTypeProperty.lazyLink(() => {
       this.updateEnergyAxisRange();
       this.update();
     });
-    this.model.wellWidthProperty.link(() => this.update());
-    this.model.wellDepthProperty.link(() => this.update());
+    this.model.wellWidthProperty.lazyLink(() => this.update());
+    this.model.wellDepthProperty.lazyLink(() => this.update());
     if ("wellOffsetProperty" in this.model) {
-      this.model.wellOffsetProperty.link(() => this.update());
+      this.model.wellOffsetProperty.lazyLink(() => this.update());
     }
-    this.model.particleMassProperty.link(() => this.update());
-    this.model.selectedEnergyLevelIndexProperty.link(() =>
+    this.model.particleMassProperty.lazyLink(() => this.update());
+    this.model.selectedEnergyLevelIndexProperty.lazyLink(() =>
       this.updateSelection(),
     );
-    this.viewState.showTotalEnergyProperty.link((show: boolean) => {
+    this.viewState.showTotalEnergyProperty.lazyLink((show: boolean) => {
       this.totalEnergyLine.visible = show;
     });
-    this.viewState.showPotentialEnergyProperty.link((show: boolean) => {
+    this.viewState.showPotentialEnergyProperty.lazyLink((show: boolean) => {
       this.potentialPath.visible = show;
     });
 
     // Link to wellSeparationProperty if available (TwoWellsModel and ManyWellsModel)
     if (hasWellSeparation(this.model)) {
-      this.model.wellSeparationProperty.link(() => this.update());
+      this.model.wellSeparationProperty.lazyLink(() => this.update());
     }
 
     // Link to numberOfWellsProperty and electricFieldProperty if available (ManyWellsModel only)
     if (isManyWellsModel(this.model)) {
-      this.model.numberOfWellsProperty.link(() => this.update());
+      this.model.numberOfWellsProperty.lazyLink(() => this.update());
       if (hasElectricField(this.model)) {
-        this.model.electricFieldProperty.link(() => this.update());
+        this.model.electricFieldProperty.lazyLink(() => this.update());
       }
     }
 
     // Link to barrierHeightProperty and potentialOffsetProperty if available (OneWellModel only)
     if (hasBarrierHeight(this.model)) {
-      this.model.barrierHeightProperty.link(() => this.update());
+      this.model.barrierHeightProperty.lazyLink(() => this.update());
     }
     if (hasPotentialOffset(this.model)) {
-      this.model.potentialOffsetProperty.link(() => this.update());
+      this.model.potentialOffsetProperty.lazyLink(() => this.update());
     }
 
     // Update classical probability visualization when property changes
-    this.viewState.showClassicalProbabilityProperty.link(() => this.update());
+    this.viewState.showClassicalProbabilityProperty.lazyLink(() => this.update());
+
+    // Perform initial updates (now that all listeners are set up)
+    this.updateEnergyAxisRange();
+    this.update();
+    this.updateSelection();
   }
 
   /**

@@ -202,9 +202,9 @@ export class ManyWellsModel extends BaseModel {
       this.boundStateResult = null;
     };
 
-    this.numberOfWellsProperty.link(invalidateCache);
-    this.wellSeparationProperty.link(invalidateCache);
-    this.electricFieldProperty.link(invalidateCache);
+    this.numberOfWellsProperty.lazyLink(invalidateCache);
+    this.wellSeparationProperty.lazyLink(invalidateCache);
+    this.electricFieldProperty.lazyLink(invalidateCache);
   }
 
   /**

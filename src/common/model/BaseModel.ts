@@ -219,11 +219,11 @@ export abstract class BaseModel {
       this.boundStateResult = null;
     };
 
-    this.potentialTypeProperty.link(invalidateCache);
-    this.wellWidthProperty.link(invalidateCache);
-    this.wellDepthProperty.link(invalidateCache);
-    this.wellOffsetProperty.link(invalidateCache);
-    this.particleMassProperty.link(invalidateCache);
+    this.potentialTypeProperty.lazyLink(invalidateCache);
+    this.wellWidthProperty.lazyLink(invalidateCache);
+    this.wellDepthProperty.lazyLink(invalidateCache);
+    this.wellOffsetProperty.lazyLink(invalidateCache);
+    this.particleMassProperty.lazyLink(invalidateCache);
   }
 
   /**

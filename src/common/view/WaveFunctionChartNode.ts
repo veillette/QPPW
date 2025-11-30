@@ -457,69 +457,69 @@ export class WaveFunctionChartNode extends Node {
    */
   private linkToModel(): void {
     // Update when any parameter changes
-    this.model.potentialTypeProperty.link(() => this.update());
-    this.model.wellWidthProperty.link(() => this.update());
-    this.model.wellDepthProperty.link(() => this.update());
+    this.model.potentialTypeProperty.lazyLink(() => this.update());
+    this.model.wellWidthProperty.lazyLink(() => this.update());
+    this.model.wellDepthProperty.lazyLink(() => this.update());
     if (hasWellOffset(this.model)) {
-      this.model.wellOffsetProperty.link(() => this.update());
+      this.model.wellOffsetProperty.lazyLink(() => this.update());
     }
-    this.model.particleMassProperty.link(() => this.update());
+    this.model.particleMassProperty.lazyLink(() => this.update());
 
     // Link to wellSeparationProperty if available (TwoWellsModel and ManyWellsModel)
     if (hasWellSeparation(this.model)) {
-      this.model.wellSeparationProperty.link(() => this.update());
+      this.model.wellSeparationProperty.lazyLink(() => this.update());
     }
 
     // Update when grid points preference changes (affects wavefunction resolution)
-    QPPWPreferences.gridPointsProperty.link(() => {
+    QPPWPreferences.gridPointsProperty.lazyLink(() => {
       // Force model to invalidate its cache by notifying it of the change
       // The BaseModel listener will handle cache invalidation
       this.update();
     });
 
-    this.model.selectedEnergyLevelIndexProperty.link(() => {
+    this.model.selectedEnergyLevelIndexProperty.lazyLink(() => {
       this.updateStateLabel();
       this.update();
     });
-    this.viewState.displayModeProperty.link(() => {
+    this.viewState.displayModeProperty.lazyLink(() => {
       this.updateYAxisLabel();
       this.updateStateLabel();
       this.update();
     });
-    this.model.timeProperty.link(() => this.updateTimeEvolution());
+    this.model.timeProperty.lazyLink(() => this.updateTimeEvolution());
 
     // Update when superposition configuration changes
-    this.model.superpositionTypeProperty.link(() => {
+    this.model.superpositionTypeProperty.lazyLink(() => {
       this.updateStateLabel();
       this.update();
     });
-    this.model.superpositionConfigProperty.link(() => {
+    this.model.superpositionConfigProperty.lazyLink(() => {
       this.update();
     });
 
     // Update visibility of wave function components
-    this.viewState.showRealPartProperty.link((show: boolean) => {
+    this.viewState.showRealPartProperty.lazyLink((show: boolean) => {
       this.realPartPath.visible =
         show && this.getEffectiveDisplayMode() === "waveFunction";
     });
-    this.viewState.showImaginaryPartProperty.link((show: boolean) => {
+    this.viewState.showImaginaryPartProperty.lazyLink((show: boolean) => {
       this.imaginaryPartPath.visible =
         show && this.getEffectiveDisplayMode() === "waveFunction";
     });
-    this.viewState.showMagnitudeProperty.link((show: boolean) => {
+    this.viewState.showMagnitudeProperty.lazyLink((show: boolean) => {
       this.magnitudePath.visible =
         show && this.getEffectiveDisplayMode() === "waveFunction";
     });
 
     // Update visibility of classical probability (only for OneWellModel)
     if ("showClassicalProbabilityProperty" in this.model) {
-      this.viewState.showClassicalProbabilityProperty.link(() => {
+      this.viewState.showClassicalProbabilityProperty.lazyLink(() => {
         this.update();
       });
     }
 
     // Update visibility of zeros
-    this.viewState.showZerosProperty.link(() => {
+    this.viewState.showZerosProperty.lazyLink(() => {
       this.update();
     });
 
@@ -545,48 +545,52 @@ export class WaveFunctionChartNode extends Node {
     };
 
     // Update tools when display mode changes
-    this.viewState.displayModeProperty.link(() => {
+    this.viewState.displayModeProperty.lazyLink(() => {
       updateTools();
     });
 
     // Update tools when time changes (for superposition states)
-    this.model.timeProperty.link(() => {
+    this.model.timeProperty.lazyLink(() => {
       if (this.model.isPlayingProperty.value) {
         updateTools();
       }
     });
 
     // Update tools when potential or well parameters change
-    this.model.potentialTypeProperty.link(updateTools);
-    this.model.wellWidthProperty.link(updateTools);
-    this.model.wellDepthProperty.link(updateTools);
+    this.model.potentialTypeProperty.lazyLink(updateTools);
+    this.model.wellWidthProperty.lazyLink(updateTools);
+    this.model.wellDepthProperty.lazyLink(updateTools);
 
     if ("barrierHeightProperty" in this.model) {
-      this.model.barrierHeightProperty.link(updateTools);
+      this.model.barrierHeightProperty.lazyLink(updateTools);
     }
 
     if ("potentialOffsetProperty" in this.model) {
-      this.model.potentialOffsetProperty.link(updateTools);
+      this.model.potentialOffsetProperty.lazyLink(updateTools);
     }
 
     // Update tools when selected energy level changes
-    this.model.selectedEnergyLevelIndexProperty.link(updateTools);
+    this.model.selectedEnergyLevelIndexProperty.lazyLink(updateTools);
 
     if ("wellSeparationProperty" in this.model) {
-      this.model.wellSeparationProperty.link(updateTools);
+      this.model.wellSeparationProperty.lazyLink(updateTools);
     }
 
     if ("numberOfWellsProperty" in this.model) {
-      this.model.numberOfWellsProperty.link(updateTools);
+      this.model.numberOfWellsProperty.lazyLink(updateTools);
     }
 
     if ("electricFieldProperty" in this.model) {
-      this.model.electricFieldProperty.link(updateTools);
+      this.model.electricFieldProperty.lazyLink(updateTools);
     }
 
     // Initialize labels (important for fixed display mode charts)
     this.updateYAxisLabel();
     this.updateStateLabel();
+
+    // Perform initial update and tool updates (now that all listeners are set up)
+    this.update();
+    updateTools();
   }
 
   /**

@@ -226,7 +226,7 @@ export class TwoWellsModel extends BaseModel {
       this.boundStateResult = null;
     };
 
-    this.wellSeparationProperty.link(invalidateCache);
+    this.wellSeparationProperty.lazyLink(invalidateCache);
   }
 
   /**

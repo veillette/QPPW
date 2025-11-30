@@ -161,8 +161,8 @@ export class IntroModel extends BaseModel {
       this.boundStateResult = null;
     };
 
-    this.barrierHeightProperty.link(invalidateCache);
-    this.potentialOffsetProperty.link(invalidateCache);
+    this.barrierHeightProperty.lazyLink(invalidateCache);
+    this.potentialOffsetProperty.lazyLink(invalidateCache);
   }
 
   /**

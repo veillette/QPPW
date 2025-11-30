@@ -262,8 +262,8 @@ export class OneWellModel extends BaseModel {
       this.updateSuperpositionCoefficients();
     };
 
-    this.barrierHeightProperty.link(invalidateCache);
-    this.potentialOffsetProperty.link(invalidateCache);
+    this.barrierHeightProperty.lazyLink(invalidateCache);
+    this.potentialOffsetProperty.lazyLink(invalidateCache);
   }
 
   /**
