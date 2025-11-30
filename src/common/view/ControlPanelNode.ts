@@ -136,7 +136,9 @@ export class ControlPanelNode extends Node {
     });
 
     // Potential Well dropdown - all available options
-    const allPotentialItems: ComboBoxItem<PotentialType>[] = [
+    const allPotentialItems: Array<
+      ComboBoxItem<PotentialType> & { a11yLabel?: string; a11yDescription?: string }
+    > = [
       {
         value: PotentialType.INFINITE_WELL,
         createNode: () =>
@@ -144,6 +146,10 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+        a11yLabel: "Infinite Square Well",
+        a11yDescription: QPPWDescriber.getPotentialTypeDescription(
+          PotentialType.INFINITE_WELL,
+        ),
       },
       {
         value: PotentialType.FINITE_WELL,
@@ -152,6 +158,10 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+        a11yLabel: "Finite Square Well",
+        a11yDescription: QPPWDescriber.getPotentialTypeDescription(
+          PotentialType.FINITE_WELL,
+        ),
       },
       {
         value: PotentialType.HARMONIC_OSCILLATOR,
@@ -160,6 +170,10 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+        a11yLabel: "Harmonic Oscillator",
+        a11yDescription: QPPWDescriber.getPotentialTypeDescription(
+          PotentialType.HARMONIC_OSCILLATOR,
+        ),
       },
       {
         value: PotentialType.MORSE,
@@ -168,6 +182,10 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+        a11yLabel: "Morse Potential",
+        a11yDescription: QPPWDescriber.getPotentialTypeDescription(
+          PotentialType.MORSE,
+        ),
       },
       {
         value: PotentialType.POSCHL_TELLER,
@@ -176,6 +194,10 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+        a11yLabel: "Pöschl-Teller Potential",
+        a11yDescription: QPPWDescriber.getPotentialTypeDescription(
+          PotentialType.POSCHL_TELLER,
+        ),
       },
       {
         value: PotentialType.ROSEN_MORSE,
@@ -184,6 +206,10 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+        a11yLabel: "Rosen-Morse Potential",
+        a11yDescription: QPPWDescriber.getPotentialTypeDescription(
+          PotentialType.ROSEN_MORSE,
+        ),
       },
       {
         value: PotentialType.ECKART,
@@ -192,6 +218,10 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+        a11yLabel: "Eckart Potential",
+        a11yDescription: QPPWDescriber.getPotentialTypeDescription(
+          PotentialType.ECKART,
+        ),
       },
       {
         value: PotentialType.ASYMMETRIC_TRIANGLE,
@@ -200,6 +230,10 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+        a11yLabel: "Asymmetric Triangle",
+        a11yDescription: QPPWDescriber.getPotentialTypeDescription(
+          PotentialType.ASYMMETRIC_TRIANGLE,
+        ),
       },
       {
         value: PotentialType.TRIANGULAR,
@@ -208,6 +242,10 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+        a11yLabel: "Triangular Potential",
+        a11yDescription: QPPWDescriber.getPotentialTypeDescription(
+          PotentialType.TRIANGULAR,
+        ),
       },
       {
         value: PotentialType.COULOMB_1D,
@@ -216,6 +254,10 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+        a11yLabel: "Coulomb 1D",
+        a11yDescription: QPPWDescriber.getPotentialTypeDescription(
+          PotentialType.COULOMB_1D,
+        ),
       },
       {
         value: PotentialType.COULOMB_3D,
@@ -224,6 +266,10 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+        a11yLabel: "Coulomb 3D",
+        a11yDescription: QPPWDescriber.getPotentialTypeDescription(
+          PotentialType.COULOMB_3D,
+        ),
       },
       {
         value: PotentialType.DOUBLE_SQUARE_WELL,
@@ -232,6 +278,10 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+        a11yLabel: "Double Square Well",
+        a11yDescription: QPPWDescriber.getPotentialTypeDescription(
+          PotentialType.DOUBLE_SQUARE_WELL,
+        ),
       },
       {
         value: PotentialType.MULTI_SQUARE_WELL,
@@ -240,6 +290,10 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+        a11yLabel: "Multi-Square Well",
+        a11yDescription: QPPWDescriber.getPotentialTypeDescription(
+          PotentialType.MULTI_SQUARE_WELL,
+        ),
       },
       {
         value: PotentialType.MULTI_COULOMB_1D,
@@ -248,6 +302,10 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+        a11yLabel: "Multi-Coulomb 1D",
+        a11yDescription: QPPWDescriber.getPotentialTypeDescription(
+          PotentialType.MULTI_COULOMB_1D,
+        ),
       },
     ];
 
@@ -271,6 +329,13 @@ export class ControlPanelNode extends Node {
         listFill: QPPWColors.controlPanelBackgroundColorProperty,
         listStroke: QPPWColors.controlPanelStrokeColorProperty,
         highlightFill: QPPWColors.controlPanelStrokeColorProperty,
+
+        // PDOM - make potential type selector keyboard accessible
+        accessibleName: "Potential Type",
+        helpText:
+          "Select quantum potential well type. " +
+          "Press Enter to open menu, use arrow keys to navigate options, " +
+          "Enter to select, Escape to close.",
       },
     );
 
@@ -288,7 +353,9 @@ export class ControlPanelNode extends Node {
     });
 
     // Superposition State dropdown
-    const superpositionItems: ComboBoxItem<SuperpositionType>[] = [
+    const superpositionItems: Array<
+      ComboBoxItem<SuperpositionType> & { a11yLabel?: string; a11yDescription?: string }
+    > = [
       {
         value: SuperpositionType.PSI_I_PSI_J,
         createNode: () =>
@@ -296,6 +363,10 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+        a11yLabel: "Two-state superposition",
+        a11yDescription: QPPWDescriber.getSuperpositionTypeDescription(
+          SuperpositionType.PSI_I_PSI_J,
+        ),
       },
       {
         value: SuperpositionType.SINGLE,
@@ -304,6 +375,10 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+        a11yLabel: "Single eigenstate",
+        a11yDescription: QPPWDescriber.getSuperpositionTypeDescription(
+          SuperpositionType.SINGLE,
+        ),
       },
       {
         value: SuperpositionType.LOCALIZED_NARROW,
@@ -312,6 +387,10 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+        a11yLabel: "Narrow Gaussian wavepacket",
+        a11yDescription: QPPWDescriber.getSuperpositionTypeDescription(
+          SuperpositionType.LOCALIZED_NARROW,
+        ),
       },
       {
         value: SuperpositionType.LOCALIZED_WIDE,
@@ -320,6 +399,10 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+        a11yLabel: "Wide Gaussian wavepacket",
+        a11yDescription: QPPWDescriber.getSuperpositionTypeDescription(
+          SuperpositionType.LOCALIZED_WIDE,
+        ),
       },
       {
         value: SuperpositionType.COHERENT,
@@ -328,6 +411,10 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+        a11yLabel: "Coherent state",
+        a11yDescription: QPPWDescriber.getSuperpositionTypeDescription(
+          SuperpositionType.COHERENT,
+        ),
       },
       {
         value: SuperpositionType.CUSTOM,
@@ -336,6 +423,10 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+        a11yLabel: "Custom superposition",
+        a11yDescription: QPPWDescriber.getSuperpositionTypeDescription(
+          SuperpositionType.CUSTOM,
+        ),
       },
     ];
 
@@ -352,6 +443,13 @@ export class ControlPanelNode extends Node {
         listFill: QPPWColors.controlPanelBackgroundColorProperty,
         listStroke: QPPWColors.controlPanelStrokeColorProperty,
         highlightFill: QPPWColors.controlPanelStrokeColorProperty,
+
+        // PDOM - make superposition type selector keyboard accessible
+        accessibleName: "Superposition Type",
+        helpText:
+          "Select wavefunction superposition state. " +
+          "Press Enter to open menu, use arrow keys to navigate options, " +
+          "Enter to select, Escape to close.",
       },
     );
 

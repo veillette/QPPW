@@ -113,6 +113,15 @@ export class EnergyChartNode extends BaseChartNode {
       xRange: { min: -X_AXIS_RANGE_NM, max: X_AXIS_RANGE_NM },
       yRange: { min: initialEnergyRange.min, max: initialEnergyRange.max },
       showZeroLine: true,
+
+      // PDOM - make energy chart accessible
+      tagName: "div",
+      labelTagName: "h3",
+      labelContent: "Energy Level Diagram",
+      descriptionTagName: "p",
+      descriptionContent:
+        "Displays potential energy landscape and discrete energy levels. " +
+        "Click or use keyboard to select energy level for visualization.",
     };
 
     super(model, viewState, chartOptions);
@@ -169,8 +178,68 @@ export class EnergyChartNode extends BaseChartNode {
     // Link to model properties
     this.linkToModel();
 
+    // Set up keyboard navigation for energy levels
+    this.setupKeyboardNavigation();
+
     // Note: Initial update is now done asynchronously inside linkToModel()
     // to prevent blocking the page load
+  }
+
+  /**
+   * Sets up keyboard navigation for energy level selection.
+   * Arrow keys navigate between levels, Home/End jump to first/last.
+   */
+  private setupKeyboardNavigation(): void {
+    // Add keyboard listener to the entire chart node
+    this.addInputListener({
+      keydown: (event: { domEvent: KeyboardEvent }) => {
+        const boundStates = this.model.getBoundStates();
+        if (!boundStates || boundStates.energies.length === 0) {
+          return;
+        }
+
+        const currentLevel = this.model.selectedEnergyLevelIndexProperty.value;
+        const maxLevel = boundStates.energies.length - 1;
+        let newLevel = currentLevel;
+
+        switch (event.domEvent.key) {
+          case "ArrowUp":
+          case "ArrowRight":
+            // Move to higher energy level (higher index)
+            if (currentLevel < maxLevel) {
+              newLevel = currentLevel + 1;
+              event.domEvent.preventDefault();
+            }
+            break;
+
+          case "ArrowDown":
+          case "ArrowLeft":
+            // Move to lower energy level (lower index)
+            if (currentLevel > 0) {
+              newLevel = currentLevel - 1;
+              event.domEvent.preventDefault();
+            }
+            break;
+
+          case "Home":
+            // Jump to ground state (level 0)
+            newLevel = 0;
+            event.domEvent.preventDefault();
+            break;
+
+          case "End":
+            // Jump to highest energy level
+            newLevel = maxLevel;
+            event.domEvent.preventDefault();
+            break;
+        }
+
+        // Update selection if changed
+        if (newLevel !== currentLevel) {
+          this.model.selectedEnergyLevelIndexProperty.value = newLevel;
+        }
+      },
+    });
   }
 
   /**
@@ -1175,13 +1244,40 @@ export class EnergyChartNode extends BaseChartNode {
         {
           fill: "transparent",
           cursor: "pointer",
+
+          // PDOM - make energy level selection keyboard accessible
+          tagName: "button",
+          ariaRole: "radio",
+          innerContent: `Level ${index + 1}`,
+          accessibleName: `Energy Level ${index + 1}`,
+          descriptionContent: `Energy: ${energy.toFixed(3)} electron volts. ${index} node${index !== 1 ? "s" : ""}.`,
+          focusable: true,
         },
       );
+
+      // Update aria-checked when selection changes
+      const updateAriaChecked = () => {
+        const isSelected =
+          index === this.model.selectedEnergyLevelIndexProperty.value;
+        hitArea.setPDOMAttribute("aria-checked", isSelected.toString());
+      };
+
+      // Set initial state
+      updateAriaChecked();
+
+      // Update when selection changes
+      this.model.selectedEnergyLevelIndexProperty.link(updateAriaChecked);
 
       // Add click handler to hit area
       hitArea.addInputListener({
         down: () => {
           // Only set if index is within valid range
+          if (index >= 0 && index < boundStates.energies.length) {
+            this.model.selectedEnergyLevelIndexProperty.value = index;
+          }
+        },
+        click: () => {
+          // Also handle click events for mouse users
           if (index >= 0 && index < boundStates.energies.length) {
             this.model.selectedEnergyLevelIndexProperty.value = index;
           }

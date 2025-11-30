@@ -6,7 +6,7 @@ The Quantum Bound States Simulation (QPPW) is committed to providing an accessib
 
 ## Current Status
 
-🚀 **Active Development - Phases 1, 2 & 3 Complete**
+🚀 **Active Development - Phases 1-4 Complete**
 
 We have completed the following:
 
@@ -39,6 +39,17 @@ We have completed the following:
 - ✅ **Coherent Displacement Slider** - Keyboard accessible for coherent states
 - ✅ **Standard Keyboard Navigation** - Left/Right arrows, Page Up/Down, Home/End keys supported
 - ✅ **Descriptive Help Text** - Physics-focused descriptions for each slider parameter
+
+### Phase 4: Complex Components ✅ Complete
+- ✅ **Energy Level Selection** - Keyboard navigation with arrow keys, Home/End shortcuts
+- ✅ **Energy Level Radio Buttons** - PDOM structure with radio role and aria-checked state
+- ✅ **Energy Level Announcements** - Screen reader feedback with energy values and node counts
+- ✅ **Potential Type ComboBox** - Fully accessible with keyboard navigation
+- ✅ **Potential Type Descriptions** - Each potential has physics-focused accessible description
+- ✅ **Superposition Type ComboBox** - Keyboard accessible with descriptive help text
+- ✅ **Superposition State Descriptions** - Clear explanations for each quantum state option
+- ✅ **Keyboard Help Text** - Instructions for navigating dropdown menus
+- ✅ **ARIA Attributes** - Proper semantic roles and labels for all complex widgets
 
 ## Planned Features
 
@@ -87,12 +98,13 @@ Our accessibility implementation follows a phased approach:
    - Provide physics-focused help text for each control
    - Support standard keyboard shortcuts (arrows, Page Up/Down, Home/End)
 
-5. **Phase 4: Complex Components** (🚧 Next)
+5. **Phase 4: Complex Components** (✅ Complete)
    - Energy level selection via keyboard
    - Accessible potential type dropdown
-   - Interactive tool accessibility
+   - Accessible superposition type dropdown
+   - ARIA attributes for complex widgets
 
-6. **Phase 5: Visualizations** (Planned)
+6. **Phase 5: Visualizations** (🚧 Next)
    - Accessible descriptions for energy charts
    - Wavefunction statistical summaries
    - Momentum distribution descriptions
@@ -149,9 +161,9 @@ Please see [CONTRIBUTE.md](CONTRIBUTE.md) for contribution guidelines or [open a
 - **Phase 1 (Screen Structure)**: ✅ Complete - November 2025
 - **Phase 2 (Basic Controls)**: ✅ Complete - November 2025
 - **Phase 3 (Sliders)**: ✅ Complete - November 2025
-- **Phase 4 (Complex Components)**: 🚧 Next - Q1 2026
-- **Phases 5-6 (Visualizations & Testing)**: Planned Q1-Q2 2026
-- **Phase 7 (Testing & Launch)**: Planned Q2 2026
+- **Phase 4 (Complex Components)**: ✅ Complete - November 2025
+- **Phase 5 (Visualizations)**: 🚧 Next - Q1 2026
+- **Phase 6 (Testing & Validation)**: Planned Q1 2026
 
 ## Contact
 
@@ -159,4 +171,4 @@ For accessibility-specific questions or feedback, please [open an issue](https:/
 
 ---
 
-*Last Updated: November 30, 2025*
+*Last Updated: November 30, 2025 - Phase 4 Complete*
