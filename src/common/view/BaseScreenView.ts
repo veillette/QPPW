@@ -27,6 +27,7 @@ import {
   ScreenSummaryNode,
   ScreenSummaryOptions,
 } from "./accessibility/ScreenSummaryNode.js";
+import { QPPWAlerter } from "./accessibility/QPPWAlerter.js";
 
 /**
  * Screen-specific string properties for info dialog and screen summary.
@@ -59,6 +60,7 @@ export abstract class BaseScreenView extends ScreenView {
   protected screenSummaryNode?: ScreenSummaryNode;
   protected playAreaNode?: Node;
   protected controlAreaNode?: Node;
+  protected alerter?: QPPWAlerter;
 
   protected constructor(
     model: BaseModel | OneWellModel | TwoWellsModel | ManyWellsModel,
@@ -68,14 +70,27 @@ export abstract class BaseScreenView extends ScreenView {
 
     this.model = model;
 
+    // Create the alerter for accessibility announcements
+    this.alerter = new QPPWAlerter(model);
+
     // Create the reset all button in the bottom-right corner
     this.resetButton = new ResetAllButton({
       listener: () => {
         model.reset();
         this.reset();
+
+        // Announce reset to screen readers
+        if (this.alerter) {
+          this.alerter.alertResetAll();
+        }
       },
       right: this.layoutBounds.maxX - 10,
       bottom: this.layoutBounds.maxY - 10,
+
+      // PDOM
+      innerContent: "Reset All",
+      helpText:
+        "Return all parameters to their initial values. Keyboard shortcut: Alt+R.",
     });
     this.addChild(this.resetButton);
   }

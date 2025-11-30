@@ -6,13 +6,26 @@ The Quantum Bound States Simulation (QPPW) is committed to providing an accessib
 
 ## Current Status
 
-🚧 **Planning & Foundation Phase**
+🚀 **Active Development - Phases 1 & 2 Complete**
 
-We have completed the following foundational work:
+We have completed the following:
 
+### Phase 0: Foundation ✅ Complete
 - ✅ **Interactive Description Support Enabled** - Added `supportsInteractiveDescription: true` to package.json
 - ✅ **Directory Structure Created** - Established `src/common/view/accessibility/` for accessibility components
 - ✅ **Implementation Plan Developed** - Comprehensive technical roadmap documented
+
+### Phase 1: Screen Structure ✅ Complete
+- ✅ **Three-Section PDOM Layout** - Implemented for all four screens (Intro, One Well, Two Wells, Many Wells)
+- ✅ **Screen Summary Components** - Dynamic descriptions that update with model state
+- ✅ **Navigation Order** - Logical tab order: Screen Summary → Play Area → Control Area
+
+### Phase 2: Basic Interactive Controls ✅ Complete
+- ✅ **Play/Pause Button** - Accessible with keyboard, announces state changes
+- ✅ **Reset Button** - PDOM support with screen reader announcements
+- ✅ **Checkboxes** - Wave function views, classical probability (keyboard accessible)
+- ✅ **Radio Button Groups** - Display mode, animation speed (arrow key navigation)
+- ✅ **Live Announcements** - Screen reader feedback for energy level, potential type, and parameter changes
 
 ## Planned Features
 
@@ -45,15 +58,20 @@ Our accessibility implementation follows a phased approach:
    - Create directory structure
    - Set up development environment
 
-2. **Phase 1: Screen Structure** (Planned)
+2. **Phase 1: Screen Structure** (✅ Complete)
    - Implement three-section PDOM layout
    - Add screen summaries for all four screens
    - Establish navigation order
 
-3. **Phase 2-3: Interactive Controls** (Planned)
+3. **Phase 2: Basic Interactive Controls** (✅ Complete)
    - Make buttons, checkboxes, and radio buttons accessible
+   - Add PDOM attributes and help text
+   - Implement screen reader announcements
+
+4. **Phase 3: Sliders** (🚧 Next)
    - Add keyboard navigation to sliders
    - Implement accessible value announcements
+   - Configure keyboard step sizes
 
 4. **Phase 4: Complex Components** (Planned)
    - Energy level selection via keyboard
@@ -114,9 +132,11 @@ Please see [CONTRIBUTE.md](CONTRIBUTE.md) for contribution guidelines or [open a
 ## Timeline
 
 - **Phase 0 (Foundation)**: ✅ Complete - November 2025
-- **Phases 1-3 (Core Features)**: Planned Q1 2026
-- **Phases 4-5 (Advanced Features)**: Planned Q2 2026
-- **Phase 6 (Testing & Launch)**: Planned Q2 2026
+- **Phase 1 (Screen Structure)**: ✅ Complete - November 2025
+- **Phase 2 (Basic Controls)**: ✅ Complete - November 2025
+- **Phase 3 (Sliders)**: 🚧 In Progress
+- **Phases 4-5 (Advanced Features)**: Planned Q1 2026
+- **Phase 6 (Testing & Launch)**: Planned Q1-Q2 2026
 
 ## Contact
 

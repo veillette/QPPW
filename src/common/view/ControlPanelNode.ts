@@ -39,6 +39,7 @@ import stringManager from "../../i18n/StringManager.js";
 import type { OneWellViewState } from "../../one-well/view/OneWellViewState.js";
 import type { TwoWellsViewState } from "../../two-wells/view/TwoWellsViewState.js";
 import type { ManyWellsViewState } from "../../many-wells/view/ManyWellsViewState.js";
+import { QPPWDescriber } from "./accessibility/QPPWDescriber.js";
 
 type ComboBoxItem<T> = {
   value: T;
@@ -477,6 +478,12 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+
+        // PDOM
+        labelContent: "Probability Density",
+        descriptionContent: QPPWDescriber.getDisplayModeDescription(
+          "probabilityDensity",
+        ),
       },
       {
         value: "waveFunction" as const,
@@ -485,6 +492,11 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+
+        // PDOM
+        labelContent: "Wave Function",
+        descriptionContent:
+          QPPWDescriber.getDisplayModeDescription("waveFunction"),
       },
       {
         value: "phaseColor" as const,
@@ -493,6 +505,10 @@ export class ControlPanelNode extends Node {
             font: new PhetFont(14),
             fill: QPPWColors.textFillProperty,
           }),
+
+        // PDOM
+        labelContent: "Phase Color",
+        descriptionContent: QPPWDescriber.getDisplayModeDescription("phaseColor"),
       },
     ];
 
@@ -504,6 +520,11 @@ export class ControlPanelNode extends Node {
         radioButtonOptions: {
           radius: 8,
         },
+
+        // PDOM
+        accessibleName: "Display Mode",
+        helpText:
+          "Choose how to visualize the wavefunction. Use arrow keys to navigate options, Space or Enter to select.",
       },
     );
 
@@ -521,7 +542,14 @@ export class ControlPanelNode extends Node {
               font: new PhetFont(12),
               fill: QPPWColors.textFillProperty,
             }),
-            { boxWidth: 16 },
+            {
+              boxWidth: 16,
+
+              // PDOM
+              labelContent: "Show Classical Probability Density",
+              helpText:
+                "Toggle visibility of classical probability distribution. Shows where a classical particle would be found, for comparison with quantum probability.",
+            },
           )
         : null;
 
@@ -547,7 +575,14 @@ export class ControlPanelNode extends Node {
         font: new PhetFont(12),
         fill: QPPWColors.textFillProperty,
       }),
-      { boxWidth: 16 },
+      {
+        boxWidth: 16,
+
+        // PDOM
+        labelContent: "Show Real Part",
+        helpText:
+          "Toggle visibility of real component of wavefunction. Real part oscillates between positive and negative values.",
+      },
     );
 
     const imaginaryPartCheckbox = new Checkbox(
@@ -556,7 +591,14 @@ export class ControlPanelNode extends Node {
         font: new PhetFont(12),
         fill: QPPWColors.textFillProperty,
       }),
-      { boxWidth: 16 },
+      {
+        boxWidth: 16,
+
+        // PDOM
+        labelContent: "Show Imaginary Part",
+        helpText:
+          "Toggle visibility of imaginary component of wavefunction. Imaginary part oscillates 90 degrees out of phase with real part.",
+      },
     );
 
     const magnitudeCheckbox = new Checkbox(
@@ -565,7 +607,14 @@ export class ControlPanelNode extends Node {
         font: new PhetFont(12),
         fill: QPPWColors.textFillProperty,
       }),
-      { boxWidth: 16 },
+      {
+        boxWidth: 16,
+
+        // PDOM
+        labelContent: "Show Magnitude",
+        helpText:
+          "Toggle visibility of wavefunction magnitude. Magnitude equals square root of probability density.",
+      },
     );
 
     const phaseCheckbox = new Checkbox(
@@ -574,7 +623,14 @@ export class ControlPanelNode extends Node {
         font: new PhetFont(12),
         fill: QPPWColors.textFillProperty,
       }),
-      { boxWidth: 16 },
+      {
+        boxWidth: 16,
+
+        // PDOM
+        labelContent: "Show Phase",
+        helpText:
+          "Toggle visibility of quantum phase angle. Phase rotates continuously during time evolution.",
+      },
     );
 
     const waveFunctionCheckboxes = new VBox({
