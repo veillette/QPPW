@@ -285,6 +285,20 @@ The included GitHub Actions workflow automates:
 - Deployment to GitHub Pages
 - Release creation for tagged versions
 
+## Accessibility
+
+This project is committed to making quantum mechanics education accessible to all students. We are implementing comprehensive accessibility features including:
+
+- Screen reader compatibility (NVDA, JAWS, VoiceOver, TalkBack)
+- Full keyboard navigation
+- Semantic HTML structure (PDOM - Parallel DOM)
+- Live announcements for state changes
+- Accessible descriptions of visualizations
+
+For details on our accessibility implementation, see:
+- [ACCESSIBILITY.md](ACCESSIBILITY.md) - Overview and current status
+- [Accessibility Implementation Plan](docs/ACCESSIBILITY_IMPLEMENTATION_PLAN.md) - Detailed technical plan
+
 ## Educational Use
 
 This simulation is ideal for:

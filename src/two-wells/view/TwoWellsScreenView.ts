@@ -33,6 +33,39 @@ export class TwoWellsScreenView extends BaseScreenView {
         PotentialType.DOUBLE_SQUARE_WELL,
       ],
     });
+
+    // Set up PDOM (Parallel DOM) structure for accessibility
+    this.setupAccessibility(model);
+  }
+
+  /**
+   * Sets up the three-section PDOM structure for accessibility.
+   */
+  private setupAccessibility(_model: TwoWellsModel): void {
+    // Create screen summary (Section 1)
+    this.screenSummaryNode = this.createScreenSummaryNode({
+      screenName: "Two Wells",
+      screenDescription:
+        "Two Wells screen for exploring quantum tunneling and energy level splitting in double potential wells.",
+    });
+
+    // Create play area node (Section 2) and add charts to it
+    this.playAreaNode = this.createPlayAreaNode();
+    if (this.chartsContainer) {
+      this.playAreaNode.addChild(this.chartsContainer);
+    }
+
+    // Create control area node (Section 3) and add controls to it
+    this.controlAreaNode = this.createControlAreaNode();
+    if (this.controlPanel) {
+      this.controlAreaNode.addChild(this.controlPanel);
+    }
+    if (this.simulationControlBar) {
+      this.controlAreaNode.addChild(this.simulationControlBar);
+    }
+
+    // Set PDOM navigation order
+    this.setupPDOMStructure();
   }
 
   /**

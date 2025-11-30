@@ -67,6 +67,11 @@
   "engines": {
     "node": ">=18.0.0"
   },
+  "phet": {
+    "simFeatures": {
+      "supportsInteractiveDescription": true
+    }
+  },
   "phet-io": {
     "validation": false,
     "compareDesignedAPIChanges": false

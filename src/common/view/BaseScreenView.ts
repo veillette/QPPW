@@ -23,6 +23,10 @@ import { BaseModel } from "../model/BaseModel.js";
 import type { OneWellViewState } from "../../one-well/view/OneWellViewState.js";
 import type { TwoWellsViewState } from "../../two-wells/view/TwoWellsViewState.js";
 import type { ManyWellsViewState } from "../../many-wells/view/ManyWellsViewState.js";
+import {
+  ScreenSummaryNode,
+  ScreenSummaryOptions,
+} from "./accessibility/ScreenSummaryNode.js";
 
 /**
  * Screen-specific string properties for info dialog and screen summary.
@@ -50,6 +54,11 @@ export abstract class BaseScreenView extends ScreenView {
   protected simulationControlBar?: SimulationControlBar;
   protected chartsContainer?: Node;
   protected listBoxParent?: Node;
+
+  // PDOM (Parallel DOM) structure components for accessibility
+  protected screenSummaryNode?: ScreenSummaryNode;
+  protected playAreaNode?: Node;
+  protected controlAreaNode?: Node;
 
   protected constructor(
     model: BaseModel | OneWellModel | TwoWellsModel | ManyWellsModel,
@@ -263,5 +272,75 @@ export abstract class BaseScreenView extends ScreenView {
 
   public step(_dt: number): void {
     // Base implementation - subclasses should override
+  }
+
+  // ==================== ACCESSIBILITY PDOM METHODS ====================
+
+  /**
+   * Creates the screen summary node with PDOM structure.
+   * This is the first section of the three-section PDOM layout.
+   * Subclasses should call this method and provide screen-specific options.
+   */
+  protected createScreenSummaryNode(
+    options: ScreenSummaryOptions
+  ): ScreenSummaryNode {
+    return new ScreenSummaryNode(this.model, options);
+  }
+
+  /**
+   * Creates the Play Area node with PDOM structure.
+   * This is the second section of the three-section PDOM layout.
+   * Contains charts and interactive visualization elements.
+   */
+  protected createPlayAreaNode(): Node {
+    return new Node({
+      tagName: "div",
+
+      // PDOM - Accessible label for the play area section
+      labelTagName: "h2",
+      labelContent: "Play Area",
+
+      // PDOM - Description of what this section contains
+      descriptionContent:
+        "Interactive visualization showing energy levels, wavefunctions, and probability distributions.",
+    });
+  }
+
+  /**
+   * Creates the Control Area node with PDOM structure.
+   * This is the third section of the three-section PDOM layout.
+   * Contains control panels and simulation controls.
+   */
+  protected createControlAreaNode(): Node {
+    return new Node({
+      tagName: "div",
+
+      // PDOM - Accessible label for the control area section
+      labelTagName: "h2",
+      labelContent: "Control Area",
+
+      // PDOM - Description of what this section contains
+      descriptionContent:
+        "Controls for adjusting potential parameters, particle properties, and visualization options.",
+    });
+  }
+
+  /**
+   * Sets up the three-section PDOM structure for accessibility.
+   * This should be called by subclasses after creating their visual components.
+   *
+   * The PDOM order ensures screen readers navigate in a logical sequence:
+   * 1. Screen Summary - Overview of current state
+   * 2. Play Area - Interactive visualizations
+   * 3. Control Area - Parameter controls
+   */
+  protected setupPDOMStructure(): void {
+    if (this.screenSummaryNode && this.playAreaNode && this.controlAreaNode) {
+      this.pdomOrder = [
+        this.screenSummaryNode,
+        this.playAreaNode,
+        this.controlAreaNode,
+      ];
+    }
   }
 }
