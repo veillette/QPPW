@@ -105,6 +105,39 @@ export class IntroScreenView extends BaseScreenView {
     this.addChild(this.wavenumberChart);
     this.addChild(this.introControlPanel);
     this.addChild(this.listBoxParent); // ListBox parent must be added last for proper z-ordering
+
+    // Set up PDOM (Parallel DOM) structure for accessibility
+    this.setupAccessibility(model);
+  }
+
+  /**
+   * Sets up the three-section PDOM structure for accessibility.
+   */
+  private setupAccessibility(_model: IntroModel): void {
+    // Create screen summary (Section 1)
+    this.screenSummaryNode = this.createScreenSummaryNode({
+      screenName: "Intro",
+      screenDescription:
+        "Intro screen for exploring basic quantum bound states with simplified controls.",
+    });
+
+    // Create play area node (Section 2)
+    // Note: Charts are already added as visual children above.
+    // We create a PDOM container that groups them for screen readers.
+    this.playAreaNode = this.createPlayAreaNode();
+    this.playAreaNode.pdomOrder = [
+      this.energyChart!,
+      this.probabilityChart,
+      this.waveFunctionChart,
+      this.wavenumberChart,
+    ];
+
+    // Create control area node (Section 3)
+    this.controlAreaNode = this.createControlAreaNode();
+    this.controlAreaNode.pdomOrder = [this.introControlPanel];
+
+    // Set PDOM navigation order
+    this.setupPDOMStructure();
   }
 
   /**
