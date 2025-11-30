@@ -3,7 +3,7 @@
  * It uses the UtteranceQueue to provide non-visual feedback for state changes.
  */
 
-import { Utterance, utteranceQueue } from "scenerystack/utterance-queue";
+import { Utterance, UtteranceQueue, AriaLiveAnnouncer } from "scenerystack/utterance-queue";
 import type { BaseModel } from "../../model/BaseModel.js";
 import type { OneWellModel } from "../../../one-well/model/OneWellModel.js";
 import type { TwoWellsModel } from "../../../two-wells/model/TwoWellsModel.js";
@@ -15,11 +15,15 @@ import { SuperpositionType } from "../../model/SuperpositionType.js";
 export class QPPWAlerter {
   private readonly model: BaseModel | OneWellModel | TwoWellsModel | ManyWellsModel;
   private debouncedAlertTimer: number | null = null;
+  private readonly utteranceQueue: UtteranceQueue;
 
   public constructor(
     model: BaseModel | OneWellModel | TwoWellsModel | ManyWellsModel,
   ) {
     this.model = model;
+    // Create announcer and utterance queue for screen reader announcements
+    const announcer = new AriaLiveAnnouncer();
+    this.utteranceQueue = new UtteranceQueue(announcer);
     this.setupAlerts();
   }
 
@@ -103,7 +107,7 @@ export class QPPWAlerter {
       energyLevels.length,
     );
 
-    utteranceQueue.addToBack(new Utterance({ alert: announcement }));
+    this.utteranceQueue.addToBack(new Utterance({ alert: announcement }));
   }
 
   /**
@@ -124,7 +128,7 @@ export class QPPWAlerter {
       groundEnergy,
     );
 
-    utteranceQueue.addToBack(new Utterance({ alert: announcement }));
+    this.utteranceQueue.addToBack(new Utterance({ alert: announcement }));
   }
 
   /**
@@ -135,7 +139,7 @@ export class QPPWAlerter {
   ): void {
     const description =
       QPPWDescriber.getSuperpositionTypeDescription(superpositionType);
-    utteranceQueue.addToBack(new Utterance({ alert: description }));
+    this.utteranceQueue.addToBack(new Utterance({ alert: description }));
   }
 
   /**
@@ -146,7 +150,7 @@ export class QPPWAlerter {
       ? "Simulation playing. Wavefunction evolving in time."
       : "Simulation paused.";
 
-    utteranceQueue.addToBack(new Utterance({ alert }));
+    this.utteranceQueue.addToBack(new Utterance({ alert }));
   }
 
   /**
@@ -155,7 +159,7 @@ export class QPPWAlerter {
   public alertResetAll(): void {
     const alert =
       "Simulation reset. All parameters returned to initial values.";
-    utteranceQueue.addToBack(new Utterance({ alert }));
+    this.utteranceQueue.addToBack(new Utterance({ alert }));
   }
 
   /**
@@ -167,7 +171,7 @@ export class QPPWAlerter {
     }
 
     this.debouncedAlertTimer = window.setTimeout(() => {
-      utteranceQueue.addToBack(new Utterance({ alert: message }));
+      this.utteranceQueue.addToBack(new Utterance({ alert: message }));
       this.debouncedAlertTimer = null;
     }, delay);
   }

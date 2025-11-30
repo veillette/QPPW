@@ -12,6 +12,7 @@ import { PotentialType } from "../../common/model/PotentialFunction.js";
 import QPPWColors from "../../QPPWColors.js";
 import { PhetFont } from "scenerystack/scenery-phet";
 import stringManager from "../../i18n/StringManager.js";
+import { QPPWDescriber } from "../../common/view/accessibility/QPPWDescriber.js";
 
 type ComboBoxItem<T> = {
   value: T;
@@ -373,6 +374,13 @@ export class IntroControlPanelNode extends Node {
       {
         trackSize: new Dimension2(150, 4),
         thumbSize: new Dimension2(15, 30),
+
+        // PDOM
+        accessibleName: "Particle Mass",
+        descriptionContent: QPPWDescriber.getSliderHelpText(
+          "particle mass",
+          "Affects energy levels and wavefunction wavelength. Heavier particles have lower energies.",
+        ),
       },
     );
 
@@ -407,6 +415,13 @@ export class IntroControlPanelNode extends Node {
       {
         trackSize: new Dimension2(150, 4),
         thumbSize: new Dimension2(15, 30),
+
+        // PDOM
+        accessibleName: "Well Width",
+        descriptionContent: QPPWDescriber.getSliderHelpText(
+          "well width",
+          "Changes spatial extent of potential well. Wider wells have more closely spaced energy levels.",
+        ),
       },
     );
 
@@ -441,6 +456,13 @@ export class IntroControlPanelNode extends Node {
       {
         trackSize: new Dimension2(150, 4),
         thumbSize: new Dimension2(15, 30),
+
+        // PDOM
+        accessibleName: "Well Depth",
+        descriptionContent: QPPWDescriber.getSliderHelpText(
+          "well depth",
+          "Changes potential energy at bottom of well. Deeper wells support more bound states.",
+        ),
       },
     );
 
@@ -475,6 +497,13 @@ export class IntroControlPanelNode extends Node {
       {
         trackSize: new Dimension2(150, 4),
         thumbSize: new Dimension2(15, 30),
+
+        // PDOM
+        accessibleName: "Barrier Height",
+        descriptionContent: QPPWDescriber.getSliderHelpText(
+          "barrier height",
+          "Controls height of potential barrier. Affects tunneling probability and energy levels.",
+        ),
       },
     );
 
@@ -509,6 +538,13 @@ export class IntroControlPanelNode extends Node {
       {
         trackSize: new Dimension2(150, 4),
         thumbSize: new Dimension2(15, 30),
+
+        // PDOM
+        accessibleName: "Potential Offset",
+        descriptionContent: QPPWDescriber.getSliderHelpText(
+          "potential offset",
+          "Shifts entire potential up or down. Changes absolute energy values of all states.",
+        ),
       },
     );
 

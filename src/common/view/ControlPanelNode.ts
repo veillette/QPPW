@@ -386,6 +386,13 @@ export class ControlPanelNode extends Node {
         {
           trackSize: new Dimension2(120, 4),
           thumbSize: new Dimension2(15, 30),
+
+          // PDOM
+          accessibleName: "Coherent State Displacement",
+          descriptionContent: QPPWDescriber.getSliderHelpText(
+            "coherent state displacement",
+            "Changes the initial position of the coherent wavepacket.",
+          ),
         },
       );
 
@@ -703,6 +710,13 @@ export class ControlPanelNode extends Node {
       {
         trackSize: new Dimension2(150, 4),
         thumbSize: new Dimension2(15, 30),
+
+        // PDOM
+        accessibleName: "Particle Mass",
+        descriptionContent: QPPWDescriber.getSliderHelpText(
+          "particle mass",
+          "Affects energy levels and wavefunction wavelength. Heavier particles have lower energies.",
+        ),
       },
     );
 
@@ -744,6 +758,13 @@ export class ControlPanelNode extends Node {
       {
         trackSize: new Dimension2(150, 4),
         thumbSize: new Dimension2(15, 30),
+
+        // PDOM
+        accessibleName: "Well Width",
+        descriptionContent: QPPWDescriber.getSliderHelpText(
+          "well width",
+          "Changes spatial extent of potential well. Wider wells have more closely spaced energy levels.",
+        ),
       },
     );
 
@@ -778,6 +799,13 @@ export class ControlPanelNode extends Node {
       {
         trackSize: new Dimension2(150, 4),
         thumbSize: new Dimension2(15, 30),
+
+        // PDOM
+        accessibleName: "Well Depth",
+        descriptionContent: QPPWDescriber.getSliderHelpText(
+          "well depth",
+          "Changes potential energy at bottom of well. Deeper wells support more bound states.",
+        ),
       },
     );
 
@@ -814,6 +842,13 @@ export class ControlPanelNode extends Node {
         {
           trackSize: new Dimension2(150, 4),
           thumbSize: new Dimension2(15, 30),
+
+          // PDOM
+          accessibleName: "Barrier Height",
+          descriptionContent: QPPWDescriber.getSliderHelpText(
+            "barrier height",
+            "Controls height of potential barrier. Affects tunneling probability and energy levels.",
+          ),
         },
       );
 
@@ -851,6 +886,13 @@ export class ControlPanelNode extends Node {
         {
           trackSize: new Dimension2(150, 4),
           thumbSize: new Dimension2(15, 30),
+
+          // PDOM
+          accessibleName: "Potential Offset",
+          descriptionContent: QPPWDescriber.getSliderHelpText(
+            "potential offset",
+            "Shifts entire potential up or down. Changes absolute energy values of all states.",
+          ),
         },
       );
 
@@ -889,6 +931,13 @@ export class ControlPanelNode extends Node {
         {
           trackSize: new Dimension2(150, 4),
           thumbSize: new Dimension2(15, 30),
+
+          // PDOM
+          accessibleName: "Well Separation",
+          descriptionContent: QPPWDescriber.getSliderHelpText(
+            "well separation",
+            "Changes distance between wells. Affects quantum tunneling between wells and energy level splitting.",
+          ),
         },
       );
 
@@ -928,6 +977,13 @@ export class ControlPanelNode extends Node {
           trackSize: new Dimension2(150, 4),
           thumbSize: new Dimension2(15, 30),
           constrainValue: (value: number) => Math.round(value), // Integer values only
+
+          // PDOM
+          accessibleName: "Number of Wells",
+          descriptionContent: QPPWDescriber.getSliderHelpText(
+            "number of wells",
+            "Changes number of wells in periodic structure. More wells create band structure effects.",
+          ),
         },
       );
 
@@ -1027,6 +1083,13 @@ export class ControlPanelNode extends Node {
         {
           trackSize: new Dimension2(150, 4),
           thumbSize: new Dimension2(15, 30),
+
+          // PDOM
+          accessibleName: "Electric Field",
+          descriptionContent: QPPWDescriber.getSliderHelpText(
+            "electric field strength",
+            "Applies uniform electric field to wells. Creates energy tilt and Stark effect.",
+          ),
         },
       );
 
