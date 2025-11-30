@@ -488,17 +488,19 @@ export abstract class BaseModel {
     }
 
     // Convert wavefunction from m^-1/2 to nm^-1/2
-    // ψ(nm^-1/2) = ψ(m^-1/2) * sqrt(M_TO_NM)
+    // For normalization to be preserved: ∫|ψ|² dx = 1
+    // When dx → dx * M_TO_NM, then ψ → ψ / sqrt(M_TO_NM)
+    // ψ(nm^-1/2) = ψ(m^-1/2) / sqrt(M_TO_NM)
     const conversionFactorWavefunction = Math.sqrt(QuantumConstants.M_TO_NM);
     const wavefunction = wavefunctionSI.map(
-      (psi) => psi * conversionFactorWavefunction,
+      (psi) => psi / conversionFactorWavefunction,
     );
 
     // Convert probability density from m^-1 to nm^-1
-    // P(nm^-1) = |ψ(m^-1/2)|^2 * M_TO_NM
+    // P(nm^-1) = |ψ(m^-1/2)|^2 / M_TO_NM
     const conversionFactorProbability = QuantumConstants.M_TO_NM;
     const probabilityDensity = wavefunctionSI.map(
-      (psi) => psi * psi * conversionFactorProbability,
+      (psi) => (psi * psi) / conversionFactorProbability,
     );
 
     return {
@@ -837,24 +839,25 @@ export abstract class BaseModel {
     }
 
     // Convert wavefunction components from m^-1/2 to nm^-1/2
-    // ψ(nm^-1/2) = ψ(m^-1/2) * sqrt(M_TO_NM)
+    // For normalization: ∫|ψ|² dx = 1, when dx → dx * M_TO_NM, then ψ → ψ / sqrt(M_TO_NM)
+    // ψ(nm^-1/2) = ψ(m^-1/2) / sqrt(M_TO_NM)
     const conversionFactorWavefunction = Math.sqrt(QuantumConstants.M_TO_NM);
     const realPart = result.realPart.map(
-      (val) => val * conversionFactorWavefunction,
+      (val) => val / conversionFactorWavefunction,
     );
     const imagPart = result.imagPart.map(
-      (val) => val * conversionFactorWavefunction,
+      (val) => val / conversionFactorWavefunction,
     );
     const magnitude = result.magnitude.map(
-      (val) => val * conversionFactorWavefunction,
+      (val) => val / conversionFactorWavefunction,
     );
-    const maxMagnitude = result.maxMagnitude * conversionFactorWavefunction;
+    const maxMagnitude = result.maxMagnitude / conversionFactorWavefunction;
 
     // Convert probability density from m^-1 to nm^-1
-    // P(nm^-1) = P(m^-1) * M_TO_NM
+    // P(nm^-1) = P(m^-1) / M_TO_NM
     const conversionFactorProbability = QuantumConstants.M_TO_NM;
     const probabilityDensity = result.probabilityDensity.map(
-      (val) => val * conversionFactorProbability,
+      (val) => val / conversionFactorProbability,
     );
 
     return {

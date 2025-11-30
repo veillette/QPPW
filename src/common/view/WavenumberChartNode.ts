@@ -177,8 +177,8 @@ export class WavenumberChartNode extends Node {
     // Link to model properties
     this.linkToModel();
 
-    // Initial update
-    this.update();
+    // Note: Initial update is now done asynchronously inside linkToModel()
+    // to prevent blocking the page load
   }
 
   /**
@@ -287,18 +287,24 @@ export class WavenumberChartNode extends Node {
    */
   private linkToModel(): void {
     // Update when any parameter changes
-    this.model.potentialTypeProperty.link(() => this.update());
-    this.model.wellWidthProperty.link(() => this.update());
-    this.model.wellDepthProperty.link(() => this.update());
-    this.model.particleMassProperty.link(() => this.update());
-    this.model.selectedEnergyLevelIndexProperty.link(() => this.update());
+    this.model.potentialTypeProperty.lazyLink(() => this.update());
+    this.model.wellWidthProperty.lazyLink(() => this.update());
+    this.model.wellDepthProperty.lazyLink(() => this.update());
+    this.model.particleMassProperty.lazyLink(() => this.update());
+    this.model.selectedEnergyLevelIndexProperty.lazyLink(() => this.update());
 
     // Update visibility of RMS indicators if the property exists (IntroViewState only)
     if (this.viewState && "showRMSIndicatorProperty" in this.viewState) {
-      this.viewState.showRMSIndicatorProperty.link(() => {
+      this.viewState.showRMSIndicatorProperty.lazyLink(() => {
         this.update();
       });
     }
+
+    // Perform initial update asynchronously (after construction completes)
+    // This prevents blocking the page load with expensive calculations
+    setTimeout(() => {
+      this.update();
+    }, 0);
   }
 
   /**

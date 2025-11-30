@@ -169,8 +169,8 @@ export class EnergyChartNode extends BaseChartNode {
     // Link to model properties
     this.linkToModel();
 
-    // Initial update
-    this.update();
+    // Note: Initial update is now done asynchronously inside linkToModel()
+    // to prevent blocking the page load
   }
 
   /**
@@ -470,10 +470,13 @@ export class EnergyChartNode extends BaseChartNode {
       this.update(),
     );
 
-    // Perform initial updates (now that all listeners are set up)
-    this.updateEnergyAxisRange();
-    this.update();
-    this.updateSelection();
+    // Perform initial updates asynchronously (after construction completes)
+    // This prevents blocking the page load with expensive calculations
+    setTimeout(() => {
+      this.updateEnergyAxisRange();
+      this.update();
+      this.updateSelection();
+    }, 0);
   }
 
   /**

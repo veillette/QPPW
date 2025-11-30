@@ -318,8 +318,8 @@ export class WaveFunctionChartNode extends Node {
     // Link to model properties
     this.linkToModel();
 
-    // Initial update
-    this.update();
+    // Note: Initial update is now done asynchronously inside linkToModel()
+    // to prevent blocking the page load
   }
 
   /**
@@ -525,7 +525,7 @@ export class WaveFunctionChartNode extends Node {
 
     // Update visibility of RMS indicators if the property exists (IntroViewState only)
     if ("showRMSIndicatorProperty" in this.viewState) {
-      this.viewState.showRMSIndicatorProperty.link(() => {
+      this.viewState.showRMSIndicatorProperty.lazyLink(() => {
         this.update();
       });
     }
@@ -588,9 +588,12 @@ export class WaveFunctionChartNode extends Node {
     this.updateYAxisLabel();
     this.updateStateLabel();
 
-    // Perform initial update and tool updates (now that all listeners are set up)
-    this.update();
-    updateTools();
+    // Perform initial update and tool updates asynchronously (after construction completes)
+    // This prevents blocking the page load with expensive calculations
+    setTimeout(() => {
+      this.update();
+      updateTools();
+    }, 0);
   }
 
   /**
@@ -758,8 +761,18 @@ export class WaveFunctionChartNode extends Node {
     this.isUpdating = true;
     try {
       // Keep updating until no more updates are pending
+      let loopCount = 0;
       do {
         this.updatePending = false;
+        loopCount++;
+        if (loopCount > 10) {
+          console.warn(
+            "[WaveFunctionChartNode] Infinite loop detected! Breaking after",
+            loopCount,
+            "iterations",
+          );
+          break;
+        }
 
         const boundStates = this.model.getBoundStates();
         if (!boundStates) {
@@ -858,6 +871,18 @@ export class WaveFunctionChartNode extends Node {
       yMax = 0.01;
     }
 
+    // Safety check: if range values are too large (indicating a calculation error), use defaults
+    if (Math.abs(yMin) > 1000 || Math.abs(yMax) > 1000) {
+      console.warn(
+        "[WaveFunctionChartNode] Invalid range values detected!",
+        yMin,
+        yMax,
+        "Using defaults",
+      );
+      yMin = -1;
+      yMax = 1;
+    }
+
     // Update properties
     this.yMinProperty.value = yMin;
     this.yMaxProperty.value = yMax;
@@ -912,6 +937,18 @@ export class WaveFunctionChartNode extends Node {
     if (yMax - yMin < 0.01) {
       yMin = -0.01;
       yMax = 0.01;
+    }
+
+    // Safety check: if range values are too large (indicating a calculation error), use defaults
+    if (Math.abs(yMin) > 1000 || Math.abs(yMax) > 1000) {
+      console.warn(
+        "[WaveFunctionChartNode] Invalid range values detected!",
+        yMin,
+        yMax,
+        "Using defaults",
+      );
+      yMin = -1;
+      yMax = 1;
     }
 
     // Update properties
