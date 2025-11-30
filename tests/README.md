@@ -12,7 +12,7 @@ The test directory contains only essential files:
 - **run-terminal-tests.js** - Terminal-based test runner (used by `npm test`)
 - **verify-coulomb.ts** - Coulomb potential verification tests
 - **browser-globals.js** - Browser environment setup for testing
-- **docs/** - Test documentation
+- **doc/** - Test documentation
 
 ## Test Coverage
 
@@ -274,7 +274,7 @@ To add new test cases:
 3. Add your test to the `runAccuracyTests()` function
 4. Rebuild the project: `npm run build`
 
-See `docs/ACCURACY_TESTS.md` for more details on test design.
+See `doc/ACCURACY_TESTS.md` for more details on test design.
 
 ## Troubleshooting
 

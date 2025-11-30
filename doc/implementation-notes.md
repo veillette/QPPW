@@ -103,8 +103,8 @@ QPPW/
 │   ├── test-wavefunction-comprehensive.ts
 │   ├── test-double-well.ts
 │   └── ... (other test files)
-└── docs/
-    ├── teacher-guide.md                 # Educational resource for instructors
+└── doc/
+    ├── model.md                         # Educational resource for instructors
     ├── implementation-notes.md          # This file
     ├── SOLVER_DOCUMENTATION.md          # Detailed solver documentation
     └── PERFORMANCE_MONITORING.md        # Performance profiling guide
@@ -950,9 +950,9 @@ npm run serve        # Serve locally to test
 
 ### Internal Documentation
 - Source code comments (TSDoc format)
-- `docs/SOLVER_DOCUMENTATION.md` - Detailed solver mathematics
-- `docs/PERFORMANCE_MONITORING.md` - Profiling guide
-- `tests/docs/ACCURACY_TESTS.md` - Test suite documentation
+- `doc/SOLVER_DOCUMENTATION.md` - Detailed solver mathematics
+- `doc/PERFORMANCE_MONITORING.md` - Profiling guide
+- `tests/doc/ACCURACY_TESTS.md` - Test suite documentation
 
 ### External Resources
 - [SceneryStack Documentation](https://github.com/phetsims/scenery)
