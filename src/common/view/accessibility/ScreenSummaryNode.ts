@@ -29,10 +29,7 @@ export type ScreenSummaryOptions = {
 export class ScreenSummaryNode extends Node {
   private readonly model: BaseModel;
 
-  public constructor(
-    model: BaseModel,
-    options: ScreenSummaryOptions
-  ) {
+  public constructor(model: BaseModel, options: ScreenSummaryOptions) {
     super({
       tagName: "div",
 
@@ -72,7 +69,8 @@ export class ScreenSummaryNode extends Node {
         ],
         (potentialType, levelIndex) => {
           const energyLevels = this.model.getEnergyLevels();
-          const potentialName = QPPWDescriber.getPotentialTypeName(potentialType);
+          const potentialName =
+            QPPWDescriber.getPotentialTypeName(potentialType);
 
           if (energyLevels.length === 0) {
             return `Currently exploring a ${potentialName} potential well. No bound states found.`;
@@ -87,7 +85,7 @@ export class ScreenSummaryNode extends Node {
             `Selected energy level ${levelNumber} of ${totalLevels} ` +
             `with energy ${energy.toFixed(3)} electron volts.`
           );
-        }
+        },
       ),
     });
   }

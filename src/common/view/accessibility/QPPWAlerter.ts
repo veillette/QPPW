@@ -4,7 +4,11 @@
  * non-visual feedback for state changes.
  */
 
-import { Utterance, UtteranceQueue, AriaLiveAnnouncer } from "scenerystack/utterance-queue";
+import {
+  Utterance,
+  UtteranceQueue,
+  AriaLiveAnnouncer,
+} from "scenerystack/utterance-queue";
 
 // Create a global utteranceQueue instance for accessibility announcements
 // Using AriaLiveAnnouncer for screen reader support via aria-live regions
@@ -18,7 +22,11 @@ import { PotentialType } from "../../model/PotentialFunction.js";
 import { SuperpositionType } from "../../model/SuperpositionType.js";
 
 export class QPPWAlerter {
-  private readonly model: BaseModel | OneWellModel | TwoWellsModel | ManyWellsModel;
+  private readonly model:
+    | BaseModel
+    | OneWellModel
+    | TwoWellsModel
+    | ManyWellsModel;
   private debouncedAlertTimer: number | null = null;
 
   public constructor(
@@ -43,9 +51,11 @@ export class QPPWAlerter {
     });
 
     // Superposition type changes
-    this.model.superpositionTypeProperty.lazyLink((newType: SuperpositionType) => {
-      this.alertSuperpositionTypeChange(newType);
-    });
+    this.model.superpositionTypeProperty.lazyLink(
+      (newType: SuperpositionType) => {
+        this.alertSuperpositionTypeChange(newType);
+      },
+    );
 
     // Play/pause state
     this.model.isPlayingProperty.lazyLink((isPlaying: boolean) => {

@@ -13,12 +13,20 @@ import {
   KeyboardDragListener,
 } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
-import { NumberProperty, BooleanProperty, DerivedProperty } from "scenerystack/axon";
+import {
+  NumberProperty,
+  BooleanProperty,
+  DerivedProperty,
+} from "scenerystack/axon";
 import { PhetFont } from "scenerystack/scenery-phet";
 import type { ScreenModel } from "../../model/ScreenModels.js";
 import QPPWColors from "../../../QPPWColors.js";
 import stringManager from "../../../i18n/StringManager.js";
-import { Utterance, UtteranceQueue, AriaLiveAnnouncer } from "scenerystack/utterance-queue";
+import {
+  Utterance,
+  UtteranceQueue,
+  AriaLiveAnnouncer,
+} from "scenerystack/utterance-queue";
 
 // Create a global utteranceQueue instance for accessibility announcements
 // Using AriaLiveAnnouncer for screen reader support via aria-live regions

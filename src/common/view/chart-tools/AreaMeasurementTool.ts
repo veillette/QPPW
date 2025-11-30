@@ -14,7 +14,11 @@ import {
   KeyboardDragListener,
 } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
-import { NumberProperty, BooleanProperty, DerivedProperty } from "scenerystack/axon";
+import {
+  NumberProperty,
+  BooleanProperty,
+  DerivedProperty,
+} from "scenerystack/axon";
 import { PhetFont } from "scenerystack/scenery-phet";
 import type { ScreenModel } from "../../model/ScreenModels.js";
 import { hasSuperpositionConfig } from "../../model/ModelTypeGuards.js";
@@ -22,7 +26,11 @@ import { SuperpositionType } from "../../model/SuperpositionType.js";
 import QuantumConstants from "../../model/QuantumConstants.js";
 import QPPWColors from "../../../QPPWColors.js";
 import stringManager from "../../../i18n/StringManager.js";
-import { Utterance, UtteranceQueue, AriaLiveAnnouncer } from "scenerystack/utterance-queue";
+import {
+  Utterance,
+  UtteranceQueue,
+  AriaLiveAnnouncer,
+} from "scenerystack/utterance-queue";
 
 // Create a global utteranceQueue instance for accessibility announcements
 // Using AriaLiveAnnouncer for screen reader support via aria-live regions
@@ -214,7 +222,7 @@ export class AreaMeasurementTool extends Node {
             displayMode,
           );
           if (probability !== null) {
-            return `Measuring from ${left.toFixed(2)} to ${right.toFixed(2)} nanometers. Integrated probability: ${(probability).toFixed(1)} percent.`;
+            return `Measuring from ${left.toFixed(2)} to ${right.toFixed(2)} nanometers. Integrated probability: ${probability.toFixed(1)} percent.`;
           }
           return "";
         },
@@ -280,7 +288,8 @@ export class AreaMeasurementTool extends Node {
     this.leftMarkerHandle.addInputListener(
       new KeyboardDragListener({
         drag: (_event, listener) => {
-          let newX = this.leftMarkerXProperty.value + listener.modelDelta.x * 0.1;
+          let newX =
+            this.leftMarkerXProperty.value + listener.modelDelta.x * 0.1;
 
           // Constrain to chart bounds and ensure left marker stays left of right marker
           newX = Math.max(xMinProperty.value, newX);
@@ -338,7 +347,8 @@ export class AreaMeasurementTool extends Node {
     this.rightMarkerHandle.addInputListener(
       new KeyboardDragListener({
         drag: (_event, listener) => {
-          let newX = this.rightMarkerXProperty.value + listener.modelDelta.x * 0.1;
+          let newX =
+            this.rightMarkerXProperty.value + listener.modelDelta.x * 0.1;
 
           // Constrain to chart bounds and ensure right marker stays right of left marker
           newX = Math.min(xMaxProperty.value, newX);

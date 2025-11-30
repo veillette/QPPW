@@ -297,7 +297,7 @@ export abstract class BaseScreenView extends ScreenView {
    * Subclasses should call this method and provide screen-specific options.
    */
   protected createScreenSummaryNode(
-    options: ScreenSummaryOptions
+    options: ScreenSummaryOptions,
   ): ScreenSummaryNode {
     return new ScreenSummaryNode(this.model, options);
   }

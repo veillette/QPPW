@@ -296,6 +296,7 @@ This project is committed to making quantum mechanics education accessible to al
 - Accessible descriptions of visualizations
 
 For details on our accessibility implementation, see:
+
 - [ACCESSIBILITY.md](ACCESSIBILITY.md) - Overview and current status
 - [Accessibility Implementation Plan](docs/ACCESSIBILITY_IMPLEMENTATION_PLAN.md) - Detailed technical plan
 

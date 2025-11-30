@@ -137,7 +137,10 @@ export class ControlPanelNode extends Node {
 
     // Potential Well dropdown - all available options
     const allPotentialItems: Array<
-      ComboBoxItem<PotentialType> & { a11yLabel?: string; a11yDescription?: string }
+      ComboBoxItem<PotentialType> & {
+        a11yLabel?: string;
+        a11yDescription?: string;
+      }
     > = [
       {
         value: PotentialType.INFINITE_WELL,
@@ -355,7 +358,10 @@ export class ControlPanelNode extends Node {
 
     // Superposition State dropdown
     const superpositionItems: Array<
-      ComboBoxItem<SuperpositionType> & { a11yLabel?: string; a11yDescription?: string }
+      ComboBoxItem<SuperpositionType> & {
+        a11yLabel?: string;
+        a11yDescription?: string;
+      }
     > = [
       {
         value: SuperpositionType.PSI_I_PSI_J,
@@ -588,9 +594,8 @@ export class ControlPanelNode extends Node {
 
         // PDOM
         labelContent: "Probability Density",
-        descriptionContent: QPPWDescriber.getDisplayModeDescription(
-          "probabilityDensity",
-        ),
+        descriptionContent:
+          QPPWDescriber.getDisplayModeDescription("probabilityDensity"),
       },
       {
         value: "waveFunction" as const,
@@ -615,7 +620,8 @@ export class ControlPanelNode extends Node {
 
         // PDOM
         labelContent: "Phase Color",
-        descriptionContent: QPPWDescriber.getDisplayModeDescription("phaseColor"),
+        descriptionContent:
+          QPPWDescriber.getDisplayModeDescription("phaseColor"),
       },
     ];
 

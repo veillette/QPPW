@@ -36,7 +36,9 @@ export class QPPWDescriber {
   /**
    * Get a physics description for a potential type.
    */
-  public static getPotentialTypeDescription(potentialType: PotentialType): string {
+  public static getPotentialTypeDescription(
+    potentialType: PotentialType,
+  ): string {
     const descriptions: Record<PotentialType, string> = {
       [PotentialType.INFINITE_WELL]:
         "Particle confined in rigid box with infinite barriers. " +
@@ -70,8 +72,7 @@ export class QPPWDescriber {
         "Models particle in electric field.",
 
       [PotentialType.TRIANGULAR]:
-        "V-shaped potential well. " +
-        "Related to Airy functions.",
+        "V-shaped potential well. " + "Related to Airy functions.",
 
       [PotentialType.COULOMB_1D]:
         "One-dimensional hydrogen-like attractive potential. " +

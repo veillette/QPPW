@@ -11,16 +11,19 @@ The Quantum Bound States Simulation (QPPW) is committed to providing an accessib
 We have completed the following:
 
 ### Phase 0: Foundation ✅ Complete
+
 - ✅ **Interactive Description Support Enabled** - Added `supportsInteractiveDescription: true` to package.json
 - ✅ **Directory Structure Created** - Established `src/common/view/accessibility/` for accessibility components
 - ✅ **Implementation Plan Developed** - Comprehensive technical roadmap documented
 
 ### Phase 1: Screen Structure ✅ Complete
+
 - ✅ **Three-Section PDOM Layout** - Implemented for all four screens (Intro, One Well, Two Wells, Many Wells)
 - ✅ **Screen Summary Components** - Dynamic descriptions that update with model state
 - ✅ **Navigation Order** - Logical tab order: Screen Summary → Play Area → Control Area
 
 ### Phase 2: Basic Interactive Controls ✅ Complete
+
 - ✅ **Play/Pause Button** - Accessible with keyboard, announces state changes
 - ✅ **Reset Button** - PDOM support with screen reader announcements
 - ✅ **Checkboxes** - Wave function views, classical probability (keyboard accessible)
@@ -28,6 +31,7 @@ We have completed the following:
 - ✅ **Live Announcements** - Screen reader feedback for energy level, potential type, and parameter changes
 
 ### Phase 3: Sliders ✅ Complete
+
 - ✅ **Particle Mass Slider** - Full keyboard navigation with accessible name and help text
 - ✅ **Well Width Slider** - Keyboard accessible with physics context descriptions
 - ✅ **Well Depth Slider** - Arrow key navigation with value announcements
@@ -41,6 +45,7 @@ We have completed the following:
 - ✅ **Descriptive Help Text** - Physics-focused descriptions for each slider parameter
 
 ### Phase 4: Complex Components ✅ Complete
+
 - ✅ **Energy Level Selection** - Keyboard navigation with arrow keys, Home/End shortcuts
 - ✅ **Energy Level Radio Buttons** - PDOM structure with radio role and aria-checked state
 - ✅ **Energy Level Announcements** - Screen reader feedback with energy values and node counts
@@ -52,6 +57,7 @@ We have completed the following:
 - ✅ **ARIA Attributes** - Proper semantic roles and labels for all complex widgets
 
 ### Phase 5: Visualizations ✅ Complete
+
 - ✅ **Energy Chart Descriptions** - Dynamic accessible descriptions with bound state info, energy levels, spacing
 - ✅ **Wavefunction Chart Descriptions** - Statistical summaries including RMS position, average position, node counts
 - ✅ **Wavenumber Chart Descriptions** - Momentum distribution descriptions with uncertainty relations
@@ -59,6 +65,7 @@ We have completed the following:
 - ✅ **Physics Context** - Descriptions include meaningful physics information for screen reader users
 
 ### Phase 6: Interactive Tools ✅ Complete
+
 - ✅ **Area Measurement Tool** - Keyboard-draggable markers for probability integration with accessible names and live announcements
 - ✅ **Curvature Tool** - PDOM descriptions explaining second derivative visualization, keyboard-accessible marker
 - ✅ **Derivative Tool** - PDOM descriptions for first derivative display, keyboard-accessible marker
@@ -72,18 +79,21 @@ We have completed the following:
 Our accessibility implementation will include:
 
 ### Screen Reader Support
+
 - **Compatible with**: NVDA, JAWS, VoiceOver, TalkBack
 - **Parallel DOM (PDOM)**: Semantic HTML structure alongside visual canvas
 - **Dynamic Descriptions**: Real-time updates for quantum state changes
 - **Live Announcements**: Screen reader feedback for user actions
 
 ### Keyboard Navigation
+
 - **Full Keyboard Access**: All interactive elements controllable via keyboard
 - **Keyboard Shortcuts**: Quick access to common actions (Play/Pause, Reset, etc.)
 - **Focus Management**: Clear visual focus indicators and logical tab order
 - **Help Dialog**: Comprehensive keyboard shortcuts reference
 
 ### Accessible Content
+
 - **Screen Summaries**: Overview of current simulation state
 - **Chart Descriptions**: Textual descriptions of energy levels, wavefunctions, and momentum distributions
 - **Control Labels**: Clear, descriptive labels for all UI controls
@@ -146,6 +156,7 @@ Our accessibility implementation uses the **PhET Parallel DOM (PDOM)** architect
 - Keeps visual and accessible representations synchronized
 
 ### Key Technologies
+
 - **Scenery AccessibleNode**: Core accessibility properties
 - **UtteranceQueue**: Manages screen reader announcements
 - **KeyboardDragListener**: Keyboard interaction with draggable elements
@@ -194,4 +205,4 @@ For accessibility-specific questions or feedback, please [open an issue](https:/
 
 ---
 
-*Last Updated: November 30, 2025 - Phase 6 Complete*
+_Last Updated: November 30, 2025 - Phase 6 Complete_

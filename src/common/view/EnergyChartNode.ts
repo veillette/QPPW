@@ -3,7 +3,14 @@
  * This is the top chart in the One Well screen.
  */
 
-import { Rectangle, Line, Path, Text, VBox, SceneryEvent } from "scenerystack/scenery";
+import {
+  Rectangle,
+  Line,
+  Path,
+  Text,
+  VBox,
+  SceneryEvent,
+} from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
 import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
