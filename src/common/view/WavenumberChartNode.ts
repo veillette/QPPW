@@ -8,7 +8,7 @@
 
 import { Node, Line, Path, Text } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
-import { NumberProperty } from "scenerystack/axon";
+import { NumberProperty, DerivedProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
 import {
@@ -20,6 +20,8 @@ import {
 } from "scenerystack/bamboo";
 import type { ScreenModel } from "../model/ScreenModels.js";
 import type { ScreenViewState } from "./ScreenViewStates.js";
+import { PotentialType } from "../model/PotentialFunction.js";
+import QuantumConstants from "../model/QuantumConstants.js";
 import QPPWColors from "../../QPPWColors.js";
 import { PhetFont } from "scenerystack/scenery-phet";
 import stringManager from "../../i18n/StringManager.js";
@@ -70,7 +72,31 @@ export class WavenumberChartNode extends Node {
       viewState?: ScreenViewState;
     },
   ) {
-    super();
+    super({
+      // PDOM - make wavenumber chart accessible
+      tagName: "div",
+      labelTagName: "h3",
+      labelContent: "Momentum Distribution",
+      descriptionTagName: "p",
+      descriptionContent: new DerivedProperty(
+        [
+          model.selectedEnergyLevelIndexProperty,
+          model.potentialTypeProperty,
+          model.wellWidthProperty,
+        ],
+        (
+          selectedIndex: number,
+          potentialType: PotentialType,
+          width: number,
+        ) => {
+          return this.createWavenumberDescription(
+            selectedIndex,
+            potentialType,
+            width,
+          );
+        },
+      ),
+    });
 
     this.model = model;
     this.viewState = options?.viewState;
@@ -179,6 +205,69 @@ export class WavenumberChartNode extends Node {
 
     // Note: Initial update is now done asynchronously inside linkToModel()
     // to prevent blocking the page load
+  }
+
+  /**
+   * Creates an accessible description of the wavenumber chart based on current state.
+   * This provides screen reader users with meaningful information about the momentum distribution.
+   */
+  private createWavenumberDescription(
+    selectedIndex: number,
+    potentialType: PotentialType,
+    width: number,
+  ): string {
+    const wavenumberResult = this.model.getWavenumberTransform();
+    if (
+      !wavenumberResult ||
+      selectedIndex < 0 ||
+      selectedIndex >= wavenumberResult.wavenumberWavefunctions.length
+    ) {
+      return "No momentum distribution data available.";
+    }
+
+    const kGrid = wavenumberResult.kGrid;
+    const phiK = wavenumberResult.wavenumberWavefunctions[selectedIndex];
+
+    // Convert k from rad/m to nm^-1
+    const kGridNm = kGrid.map((k) => k / (2 * Math.PI * 1e9));
+
+    // Calculate |φ(k)|²
+    const phiKSquared = phiK.map((value) => value * value);
+
+    // Calculate statistics
+    const { avg, rms } = calculateRMSStatistics(kGridNm, phiKSquared);
+
+    let description = `Momentum space representation showing |φ(k)|². `;
+    description += `This is the Fourier transform of the position wavefunction. `;
+    description += `\n\n`;
+
+    description += `Average wavenumber: ${avg.toFixed(3)} inverse nanometers. `;
+    description += `Wavenumber uncertainty (Δk): ${rms.toFixed(3)} nm⁻¹. `;
+
+    // Calculate average momentum (p = ℏk)
+    const avgMomentum = avg * (2 * Math.PI * 1e9) * QuantumConstants.HBAR;
+    description += `\n\n`;
+    description += `Average momentum: ${avgMomentum.toExponential(2)} kg·m/s. `;
+
+    // Get position uncertainty from wavefunction chart if available
+    const nmData = this.model.getWavefunctionInNmUnits(selectedIndex + 1);
+    if (nmData) {
+      const boundStates = this.model.getBoundStates();
+      if (boundStates) {
+        const xGrid = boundStates.xGrid.map((x) => x * 1e9);
+        const { rms: positionRms } = calculateRMSStatistics(
+          xGrid,
+          nmData.probabilityDensity,
+        );
+
+        // Uncertainty product in dimensionless units
+        const uncertaintyProduct = positionRms * rms;
+        description += `\n\nPosition-momentum uncertainty: Δx·Δk = ${uncertaintyProduct.toFixed(2)}. `;
+        description += `Heisenberg minimum: 0.5 (dimensionless). `;
+      }
+    }
+
+    return description;
   }
 
   /**

@@ -9,6 +9,7 @@ import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
 import { Checkbox } from "scenerystack/sun";
 import { AxisLine, TickMarkSet, TickLabelSet } from "scenerystack/bamboo";
+import { DerivedProperty } from "scenerystack/axon";
 import { BaseChartNode, ChartOptions } from "./BaseChartNode.js";
 import type { ScreenModel } from "../model/ScreenModels.js";
 import {
@@ -113,18 +114,36 @@ export class EnergyChartNode extends BaseChartNode {
       xRange: { min: -X_AXIS_RANGE_NM, max: X_AXIS_RANGE_NM },
       yRange: { min: initialEnergyRange.min, max: initialEnergyRange.max },
       showZeroLine: true,
-
-      // PDOM - make energy chart accessible
-      tagName: "div",
-      labelTagName: "h3",
-      labelContent: "Energy Level Diagram",
-      descriptionTagName: "p",
-      descriptionContent:
-        "Displays potential energy landscape and discrete energy levels. " +
-        "Click or use keyboard to select energy level for visualization.",
     };
 
     super(model, viewState, chartOptions);
+
+    // PDOM - make energy chart accessible with dynamic description
+    this.tagName = "div";
+    this.labelTagName = "h3";
+    this.labelContent = "Energy Level Diagram";
+    this.descriptionTagName = "p";
+    this.descriptionContent = new DerivedProperty(
+      [
+        model.potentialTypeProperty,
+        model.wellWidthProperty,
+        model.wellDepthProperty,
+        model.selectedEnergyLevelIndexProperty,
+      ],
+      (
+        potentialType: PotentialType,
+        width: number,
+        depth: number,
+        selectedIndex: number,
+      ) => {
+        return this.createEnergyChartDescription(
+          potentialType,
+          width,
+          depth,
+          selectedIndex,
+        );
+      },
+    );
 
     // Reconfigure zero line with energy chart specific styling
     this.zeroLine.stroke = QPPWColors.potentialBarrierProperty;
@@ -183,6 +202,71 @@ export class EnergyChartNode extends BaseChartNode {
 
     // Note: Initial update is now done asynchronously inside linkToModel()
     // to prevent blocking the page load
+  }
+
+  /**
+   * Creates an accessible description of the energy chart based on current state.
+   * This provides screen reader users with meaningful information about the visualization.
+   */
+  private createEnergyChartDescription(
+    potentialType: PotentialType,
+    width: number,
+    depth: number,
+    selectedIndex: number,
+  ): string {
+    const boundStates = this.model.getBoundStates();
+    if (!boundStates || boundStates.energies.length === 0) {
+      return "No bound states found for current potential configuration.";
+    }
+
+    const numLevels = boundStates.energies.length;
+    const energies = boundStates.energies.map(
+      (e) => e * QuantumConstants.JOULES_TO_EV,
+    );
+    const groundEnergy = energies[0];
+
+    let description = `${potentialType} potential well. `;
+    description += `Width: ${width.toFixed(2)} nanometers. `;
+
+    // Add depth information if applicable
+    if (
+      potentialType !== PotentialType.INFINITE_WELL &&
+      potentialType !== PotentialType.HARMONIC_OSCILLATOR
+    ) {
+      description += `Depth: ${depth.toFixed(2)} electron volts. `;
+    }
+
+    description += `\n\n`;
+    description += `Found ${numLevels} bound state${numLevels !== 1 ? "s" : ""}. `;
+    description += `Ground state energy: ${groundEnergy.toFixed(3)} eV. `;
+
+    if (numLevels > 1) {
+      const firstExcited = energies[1];
+      const spacing = firstExcited - groundEnergy;
+      description += `First excited state: ${firstExcited.toFixed(3)} eV. `;
+      description += `Energy spacing: ${spacing.toFixed(3)} eV. `;
+    }
+
+    // Selected level information
+    if (selectedIndex >= 0 && selectedIndex < numLevels) {
+      const selectedEnergy = energies[selectedIndex];
+      description += `\n\n`;
+      description += `Currently viewing level ${selectedIndex + 1} `;
+      description += `with energy ${selectedEnergy.toFixed(3)} eV.`;
+
+      // Classical turning points if available
+      if (hasClassicalTurningPoints(this.model)) {
+        const turningPoints =
+          this.model.getClassicalTurningPoints(selectedIndex);
+        if (turningPoints) {
+          description += ` Classical turning points at `;
+          description += `${turningPoints.left.toFixed(2)} nm and `;
+          description += `${turningPoints.right.toFixed(2)} nm.`;
+        }
+      }
+    }
+
+    return description;
   }
 
   /**
