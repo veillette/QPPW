@@ -323,6 +323,19 @@ export function calculatePoschlTellerClassicalProbability(
   const classicalProbability: number[] = [];
   let integralSum = 0;
 
+  // Find maximum kinetic energy for epsilon calculation
+  let maxKE = 0;
+  for (let i = 0; i < xGrid.length; i++) {
+    const ke = energy - potentialFn(xGrid[i]);
+    if (ke > maxKE) {
+      maxKE = ke;
+    }
+  }
+
+  // Use minimum kinetic energy to prevent singularities at turning points
+  // This is 1% of maximum KE, which prevents infinities while preserving shape
+  const epsilon = 0.01 * maxKE;
+
   // Calculate unnormalized probability
   for (let i = 0; i < xGrid.length; i++) {
     const kineticEnergy = energy - potentialFn(xGrid[i]);
@@ -330,9 +343,8 @@ export function calculatePoschlTellerClassicalProbability(
     if (kineticEnergy <= 0) {
       classicalProbability.push(0);
     } else {
-      const epsilon = 1e-10 * Math.abs(potentialDepth);
-      const probability =
-        1 / Math.sqrt((2 * Math.max(kineticEnergy, epsilon)) / mass);
+      const safeKE = Math.max(kineticEnergy, epsilon);
+      const probability = 1 / Math.sqrt((2 * safeKE) / mass);
       classicalProbability.push(probability);
 
       if (i > 0) {

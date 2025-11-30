@@ -59,46 +59,69 @@ export function createHarmonicOscillatorPotential(
 /**
  * Calculate classical probability density for a harmonic oscillator.
  * For a classical harmonic oscillator, the probability density is:
- * P(x) = 1 / (π * √(A² - x²))  for |x| < A, where A = √(2E/k) is the amplitude
+ * P(x) ∝ 1/v(x) = 1/√[2(E - V(x))/m]
  *
- * This is one of the cases where the renormalization can be computed analytically.
- * The integral ∫_{-A}^{A} 1/√(A² - x²) dx = π, so the normalization is 1/π.
+ * While the analytical formula P(x) = 1 / (π * √(A² - x²)) is exact,
+ * it goes to infinity at the turning points x = ±A. To prevent display
+ * issues when plotted alongside quantum probability, we use a minimum
+ * kinetic energy threshold (similar to other potentials).
  *
  * @param springConstant - Spring constant k in N/m
  * @param energy - Energy of the particle in Joules
- * @param mass - Particle mass in kg (unused for harmonic oscillator)
+ * @param mass - Particle mass in kg
  * @param xGrid - Array of x positions in meters
  * @returns Array of normalized classical probability density values (in 1/meters)
  */
 export function calculateHarmonicOscillatorClassicalProbability(
   springConstant: number,
   energy: number,
-  _mass: number,
+  mass: number,
   xGrid: number[],
 ): number[] {
-  const probability: number[] = [];
+  const potentialFn = createHarmonicOscillatorPotential(springConstant);
+  const classicalProbability: number[] = [];
+  let integralSum = 0;
 
-  // Classical amplitude: A = √(2E/k)
-  const amplitude = Math.sqrt((2 * energy) / springConstant);
-
-  // Classical probability density: P(x) = 1 / (π * √(A² - x²))
-  // This is already analytically normalized
-
-  for (const x of xGrid) {
-    if (Math.abs(x) < amplitude) {
-      const arg = amplitude * amplitude - x * x;
-      if (arg > 0) {
-        const prob = 1 / (Math.PI * Math.sqrt(arg));
-        probability.push(prob);
-      } else {
-        probability.push(0);
-      }
-    } else {
-      probability.push(0);
+  // Find maximum kinetic energy for epsilon calculation
+  let maxKE = 0;
+  for (let i = 0; i < xGrid.length; i++) {
+    const ke = energy - potentialFn(xGrid[i]);
+    if (ke > maxKE) {
+      maxKE = ke;
     }
   }
 
-  return probability;
+  // Use minimum kinetic energy to prevent singularities at turning points
+  // This is 1% of maximum KE, which prevents infinities while preserving shape
+  const epsilon = 0.01 * maxKE;
+
+  // Calculate unnormalized probability
+  for (let i = 0; i < xGrid.length; i++) {
+    const kineticEnergy = energy - potentialFn(xGrid[i]);
+
+    if (kineticEnergy <= 0) {
+      classicalProbability.push(0);
+    } else {
+      // Use epsilon to prevent singularities at turning points
+      const safeKE = Math.max(kineticEnergy, epsilon);
+      const probability = 1 / Math.sqrt((2 * safeKE) / mass);
+      classicalProbability.push(probability);
+
+      if (i > 0) {
+        const dx = xGrid[i] - xGrid[i - 1];
+        integralSum += ((probability + classicalProbability[i - 1]) * dx) / 2;
+      }
+    }
+  }
+
+  // Normalize so that ∫P(x)dx = 1
+  if (integralSum > 0) {
+    for (let i = 0; i < classicalProbability.length; i++) {
+      classicalProbability[i] /= integralSum;
+    }
+  }
+
+  return classicalProbability;
 }
 
 /**
