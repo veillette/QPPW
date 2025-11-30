@@ -9,6 +9,31 @@ import { SuperpositionType } from "../../model/SuperpositionType.js";
 
 export class QPPWDescriber {
   /**
+   * Get a simple name for a potential type.
+   */
+  public static getPotentialTypeName(potentialType: PotentialType): string {
+    const names: Record<PotentialType, string> = {
+      [PotentialType.INFINITE_WELL]: "Infinite Well",
+      [PotentialType.FINITE_WELL]: "Finite Well",
+      [PotentialType.HARMONIC_OSCILLATOR]: "Harmonic Oscillator",
+      [PotentialType.MORSE]: "Morse Potential",
+      [PotentialType.POSCHL_TELLER]: "Pöschl-Teller Potential",
+      [PotentialType.ROSEN_MORSE]: "Rosen-Morse Potential",
+      [PotentialType.ECKART]: "Eckart Potential",
+      [PotentialType.ASYMMETRIC_TRIANGLE]: "Asymmetric Triangle",
+      [PotentialType.TRIANGULAR]: "Triangular Well",
+      [PotentialType.COULOMB_1D]: "1D Coulomb Potential",
+      [PotentialType.COULOMB_3D]: "3D Coulomb Potential",
+      [PotentialType.DOUBLE_SQUARE_WELL]: "Double Square Well",
+      [PotentialType.MULTI_SQUARE_WELL]: "Multiple Square Wells",
+      [PotentialType.MULTI_COULOMB_1D]: "Multiple Coulomb Centers",
+      [PotentialType.CUSTOM]: "Custom Potential",
+    };
+
+    return names[potentialType] || "Unknown Potential";
+  }
+
+  /**
    * Get a physics description for a potential type.
    */
   public static getPotentialTypeDescription(potentialType: PotentialType): string {
@@ -67,6 +92,9 @@ export class QPPWDescriber {
       [PotentialType.MULTI_COULOMB_1D]:
         "Multiple Coulomb centers in one dimension. " +
         "Models molecular ion systems.",
+
+      [PotentialType.CUSTOM]:
+        "Custom quantum potential defined by user parameters.",
     };
 
     return descriptions[potentialType] || "Custom quantum potential.";
@@ -144,7 +172,7 @@ export class QPPWDescriber {
    * Create an announcement for potential type change.
    */
   public static createPotentialTypeAnnouncement(
-    potentialType: PotentialType,
+    _potentialType: PotentialType,
     potentialName: string,
     numBoundStates: number,
     groundStateEnergy?: number,

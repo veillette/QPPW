@@ -11,15 +11,18 @@ import {
   Circle,
   DragListener,
   KeyboardDragListener,
-  DerivedProperty,
 } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
-import { NumberProperty, BooleanProperty } from "scenerystack/axon";
+import { NumberProperty, BooleanProperty, DerivedProperty } from "scenerystack/axon";
 import { PhetFont } from "scenerystack/scenery-phet";
 import type { ScreenModel } from "../../model/ScreenModels.js";
 import QPPWColors from "../../../QPPWColors.js";
 import stringManager from "../../../i18n/StringManager.js";
-import { utteranceQueue } from "scenerystack/utterance-queue";
+import { Utterance, UtteranceQueue, AriaLiveAnnouncer } from "scenerystack/utterance-queue";
+
+// Create a global utteranceQueue instance for accessibility announcements
+// Using AriaLiveAnnouncer for screen reader support via aria-live regions
+const utteranceQueue = new UtteranceQueue(new AriaLiveAnnouncer());
 
 export type CurvatureToolOptions = {
   chartMargins: { left: number; right: number; top: number; bottom: number };
@@ -107,18 +110,20 @@ export class CurvatureTool extends Node {
       focusable: true,
       accessibleName: "Curvature Measurement Position",
       labelContent: "Position for curvature and second derivative display",
-      ariaValueText: new DerivedProperty(
-        [this.markerXProperty],
-        (position) => `Position: ${position.toFixed(2)} nanometers`,
-      ),
+      // TODO: Add ariaValueText when PhET accessibility is fully configured
+      // ariaValueText: new DerivedProperty(
+      //   [this.markerXProperty],
+      //   (position) => `Position: ${position.toFixed(2)} nanometers`,
+      // ),
       ariaValueMin: -5,
       ariaValueMax: 5,
       ariaValueNow: this.markerXProperty,
-      helpText:
-        "Use Left/Right arrow keys to move marker. " +
-        "Shift+Arrow for fine control. " +
-        "Page Up/Down for large steps. " +
-        "Shows second derivative (curvature) at selected position.",
+      // TODO: Add helpText when PhET accessibility is fully configured
+      // helpText:
+      //   "Use Left/Right arrow keys to move marker. " +
+      //   "Shift+Arrow for fine control. " +
+      //   "Page Up/Down for large steps. " +
+      //   "Shows second derivative (curvature) at selected position.",
     });
     this.container.addChild(this.markerHandle);
 
@@ -218,7 +223,7 @@ export class CurvatureTool extends Node {
           const message =
             `Marker at ${position.toFixed(2)} nanometers. ` +
             `Second derivative: ${derivatives.secondDerivative.toExponential(2)}.`;
-          utteranceQueue.addToBack(message);
+          utteranceQueue.addToBack(new Utterance({ alert: message }));
         }
       },
     });

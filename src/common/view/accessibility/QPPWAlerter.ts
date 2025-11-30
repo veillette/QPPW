@@ -4,8 +4,11 @@
  * non-visual feedback for state changes.
  */
 
-import { Utterance } from "scenerystack/utterance-queue";
-import voicingUtteranceQueue from "scenerystack/scenery/voicing/voicingUtteranceQueue";
+import { Utterance, UtteranceQueue, AriaLiveAnnouncer } from "scenerystack/utterance-queue";
+
+// Create a global utteranceQueue instance for accessibility announcements
+// Using AriaLiveAnnouncer for screen reader support via aria-live regions
+const utteranceQueue = new UtteranceQueue(new AriaLiveAnnouncer());
 import type { BaseModel } from "../../model/BaseModel.js";
 import type { OneWellModel } from "../../../one-well/model/OneWellModel.js";
 import type { TwoWellsModel } from "../../../two-wells/model/TwoWellsModel.js";
@@ -105,7 +108,7 @@ export class QPPWAlerter {
       energyLevels.length,
     );
 
-    voicingUtteranceQueue.addToBack(new Utterance({ alert: announcement }));
+    utteranceQueue.addToBack(new Utterance({ alert: announcement }));
   }
 
   /**
@@ -126,7 +129,7 @@ export class QPPWAlerter {
       groundEnergy,
     );
 
-    voicingUtteranceQueue.addToBack(new Utterance({ alert: announcement }));
+    utteranceQueue.addToBack(new Utterance({ alert: announcement }));
   }
 
   /**
@@ -137,7 +140,7 @@ export class QPPWAlerter {
   ): void {
     const description =
       QPPWDescriber.getSuperpositionTypeDescription(superpositionType);
-    voicingUtteranceQueue.addToBack(new Utterance({ alert: description }));
+    utteranceQueue.addToBack(new Utterance({ alert: description }));
   }
 
   /**
@@ -147,8 +150,7 @@ export class QPPWAlerter {
     const alert = isPlaying
       ? "Simulation playing. Wavefunction evolving in time."
       : "Simulation paused.";
-
-    voicingUtteranceQueue.addToBack(new Utterance({ alert }));
+    utteranceQueue.addToBack(new Utterance({ alert }));
   }
 
   /**
@@ -157,7 +159,7 @@ export class QPPWAlerter {
   public alertResetAll(): void {
     const alert =
       "Simulation reset. All parameters returned to initial values.";
-    voicingUtteranceQueue.addToBack(new Utterance({ alert }));
+    utteranceQueue.addToBack(new Utterance({ alert }));
   }
 
   /**
@@ -169,7 +171,7 @@ export class QPPWAlerter {
     }
 
     this.debouncedAlertTimer = window.setTimeout(() => {
-      voicingUtteranceQueue.addToBack(new Utterance({ alert: message }));
+      utteranceQueue.addToBack(new Utterance({ alert: message }));
       this.debouncedAlertTimer = null;
     }, delay);
   }

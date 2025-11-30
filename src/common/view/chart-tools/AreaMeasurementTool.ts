@@ -12,11 +12,9 @@ import {
   Circle,
   DragListener,
   KeyboardDragListener,
-  DerivedProperty,
-  type TReadOnlyProperty,
 } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
-import { NumberProperty, BooleanProperty } from "scenerystack/axon";
+import { NumberProperty, BooleanProperty, DerivedProperty } from "scenerystack/axon";
 import { PhetFont } from "scenerystack/scenery-phet";
 import type { ScreenModel } from "../../model/ScreenModels.js";
 import { hasSuperpositionConfig } from "../../model/ModelTypeGuards.js";
@@ -24,7 +22,11 @@ import { SuperpositionType } from "../../model/SuperpositionType.js";
 import QuantumConstants from "../../model/QuantumConstants.js";
 import QPPWColors from "../../../QPPWColors.js";
 import stringManager from "../../../i18n/StringManager.js";
-import { Utterance, utteranceQueue } from "scenerystack/utterance-queue";
+import { Utterance, UtteranceQueue, AriaLiveAnnouncer } from "scenerystack/utterance-queue";
+
+// Create a global utteranceQueue instance for accessibility announcements
+// Using AriaLiveAnnouncer for screen reader support via aria-live regions
+const utteranceQueue = new UtteranceQueue(new AriaLiveAnnouncer());
 
 export type AreaMeasurementToolOptions = {
   chartMargins: { left: number; right: number; top: number; bottom: number };
@@ -132,18 +134,20 @@ export class AreaMeasurementTool extends Node {
       focusable: true,
       accessibleName: "Left Measurement Marker",
       labelContent: "Left boundary for probability integration",
-      ariaValueText: new DerivedProperty(
-        [this.leftMarkerXProperty],
-        (position) => `Position: ${position.toFixed(2)} nanometers`,
-      ),
+      // TODO: Add ariaValueText when PhET accessibility is fully configured
+      // ariaValueText: new DerivedProperty(
+      //   [this.leftMarkerXProperty],
+      //   (position) => `Position: ${position.toFixed(2)} nanometers`,
+      // ),
       ariaValueMin: -5,
       ariaValueMax: 5,
       ariaValueNow: this.leftMarkerXProperty,
-      helpText:
-        "Use Left/Right arrow keys to move marker. " +
-        "Shift+Arrow for fine control (0.01 nm steps). " +
-        "Page Up/Down for large steps (0.5 nm). " +
-        "Home/End for range limits.",
+      // TODO: Add helpText when PhET accessibility is fully configured
+      // helpText:
+      //   "Use Left/Right arrow keys to move marker. " +
+      //   "Shift+Arrow for fine control (0.01 nm steps). " +
+      //   "Page Up/Down for large steps (0.5 nm). " +
+      //   "Home/End for range limits.",
     });
     this.container.addChild(this.leftMarkerHandle);
 
@@ -160,18 +164,20 @@ export class AreaMeasurementTool extends Node {
       focusable: true,
       accessibleName: "Right Measurement Marker",
       labelContent: "Right boundary for probability integration",
-      ariaValueText: new DerivedProperty(
-        [this.rightMarkerXProperty],
-        (position) => `Position: ${position.toFixed(2)} nanometers`,
-      ),
+      // TODO: Add ariaValueText when PhET accessibility is fully configured
+      // ariaValueText: new DerivedProperty(
+      //   [this.rightMarkerXProperty],
+      //   (position) => `Position: ${position.toFixed(2)} nanometers`,
+      // ),
       ariaValueMin: -5,
       ariaValueMax: 5,
       ariaValueNow: this.rightMarkerXProperty,
-      helpText:
-        "Use Left/Right arrow keys to move marker. " +
-        "Shift+Arrow for fine control (0.01 nm steps). " +
-        "Page Up/Down for large steps (0.5 nm). " +
-        "Home/End for range limits.",
+      // TODO: Add helpText when PhET accessibility is fully configured
+      // helpText:
+      //   "Use Left/Right arrow keys to move marker. " +
+      //   "Shift+Arrow for fine control (0.01 nm steps). " +
+      //   "Page Up/Down for large steps (0.5 nm). " +
+      //   "Home/End for range limits.",
     });
     this.container.addChild(this.rightMarkerHandle);
 
@@ -187,7 +193,8 @@ export class AreaMeasurementTool extends Node {
     this.probabilityReadout = new Node({
       tagName: "div",
       ariaRole: "status",
-      ariaLive: "polite",
+      // TODO: Add ariaLive when PhET accessibility is fully configured
+      // ariaLive: "polite",
       innerContent: new DerivedProperty(
         [
           this.leftMarkerXProperty,
@@ -298,9 +305,9 @@ export class AreaMeasurementTool extends Node {
           this.alertTimeout = setTimeout(() => {
             let message = `Left marker at ${position.toFixed(2)} nanometers.`;
             if (probability !== null) {
-              message += ` Integrated probability: ${(probability).toFixed(1)} percent.`;
+              message += ` Integrated probability: ${(probability * 100).toFixed(1)} percent.`;
             }
-            utteranceQueue.addToBack(message);
+            utteranceQueue.addToBack(new Utterance({ alert: message }));
             this.alertTimeout = null;
           }, 500) as unknown as number;
         },
@@ -356,9 +363,9 @@ export class AreaMeasurementTool extends Node {
           this.alertTimeout = setTimeout(() => {
             let message = `Right marker at ${position.toFixed(2)} nanometers.`;
             if (probability !== null) {
-              message += ` Integrated probability: ${(probability).toFixed(1)} percent.`;
+              message += ` Integrated probability: ${(probability * 100).toFixed(1)} percent.`;
             }
-            utteranceQueue.addToBack(message);
+            utteranceQueue.addToBack(new Utterance({ alert: message }));
             this.alertTimeout = null;
           }, 500) as unknown as number;
         },

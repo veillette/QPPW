@@ -32,7 +32,10 @@
       "Bash(taskkill:*)",
       "Bash(taskkill //F //PID 15188)",
       "Bash(git commit:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "WebFetch(domain:scenerystack.org)",
+      "WebSearch",
+      "WebFetch(domain:github.com)"
     ],
     "deny": [],
     "ask": []

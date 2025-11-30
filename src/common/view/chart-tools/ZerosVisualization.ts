@@ -3,8 +3,8 @@
  * These are points where the wavefunction crosses zero.
  */
 
-import { Node, Circle, DerivedProperty } from "scenerystack/scenery";
-import { BooleanProperty, Property } from "scenerystack/axon";
+import { Node, Circle } from "scenerystack/scenery";
+import { BooleanProperty, Property, DerivedProperty } from "scenerystack/axon";
 import QuantumConstants from "../../model/QuantumConstants.js";
 import QPPWColors from "../../../QPPWColors.js";
 
@@ -36,7 +36,8 @@ export class ZerosVisualization extends Node {
     this.accessibleDescription = new Node({
       tagName: "div",
       ariaRole: "status",
-      ariaLive: "polite",
+      // TODO: Add ariaLive when PhET accessibility is fully configured
+      // ariaLive: "polite",
       innerContent: new DerivedProperty(
         [this.showProperty, this.zerosPositionsProperty],
         (show, zeros) => {

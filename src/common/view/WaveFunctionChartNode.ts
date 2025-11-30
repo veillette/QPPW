@@ -21,7 +21,7 @@ import {
   hasWellSeparation,
   hasSuperpositionConfig,
 } from "../model/ModelTypeGuards.js";
-import { BoundStateResult } from "../model/PotentialFunction.js";
+import { BoundStateResult, PotentialType } from "../model/PotentialFunction.js";
 import QuantumConstants from "../model/QuantumConstants.js";
 import QPPWColors from "../../QPPWColors.js";
 import { PhetFont } from "scenerystack/scenery-phet";
@@ -352,7 +352,7 @@ export class WaveFunctionChartNode extends Node {
    */
   private createWavefunctionDescription(
     selectedIndex: number,
-    potentialType: PotentialType,
+    _potentialType: PotentialType,
     superpositionType: SuperpositionType,
   ): string {
     const boundStates = this.model.getBoundStates();

@@ -448,6 +448,26 @@ export abstract class BaseModel {
   }
 
   /**
+   * Get all energy levels in eV.
+   * @returns Array of energy levels in eV
+   */
+  public getEnergyLevels(): number[] {
+    // Ensure bound states are calculated
+    if (!this.boundStateResult) {
+      this.calculateBoundStates();
+    }
+
+    if (!this.boundStateResult || !this.boundStateResult.energies) {
+      return [];
+    }
+
+    // Convert all energies from Joules to eV
+    return this.boundStateResult.energies.map((energyJoules) =>
+      Schrodinger1DSolver.joulesToEV(energyJoules),
+    );
+  }
+
+  /**
    * Get the wavefunction for a specific quantum number.
    * @param n - The quantum number (1, 2, 3, ...)
    * @returns Array of wavefunction values at grid points, or null if unavailable

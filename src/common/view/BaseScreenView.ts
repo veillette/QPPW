@@ -89,8 +89,8 @@ export abstract class BaseScreenView extends ScreenView {
 
       // PDOM
       innerContent: "Reset All",
-      helpText:
-        "Return all parameters to their initial values. Keyboard shortcut: Alt+R.",
+      // TODO: Add helpText when PhET accessibility is fully configured
+      // helpText: "Return all parameters to their initial values. Keyboard shortcut: Alt+R.",
     });
     this.addChild(this.resetButton);
   }

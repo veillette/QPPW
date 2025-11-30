@@ -74,8 +74,9 @@ export class SimulationControlBar extends Node {
 
           // PDOM
           innerContent: "Step Forward",
-          helpText:
-            "Step forward one frame in time. Advances wavefunction by small time increment.",
+          // TODO: Add helpText when PhET accessibility is fully configured
+          // helpText:
+          //   "Step forward one frame in time. Advances wavefunction by small time increment.",
         },
         stepBackwardButtonOptions: {
           listener: () => {
@@ -87,8 +88,9 @@ export class SimulationControlBar extends Node {
 
           // PDOM
           innerContent: "Step Backward",
-          helpText:
-            "Step backward one frame in time. Reverses wavefunction by small time increment.",
+          // TODO: Add helpText when PhET accessibility is fully configured
+          // helpText:
+          //   "Step backward one frame in time. Reverses wavefunction by small time increment.",
         },
         playPauseButtonOptions: {
           // PDOM
@@ -96,8 +98,9 @@ export class SimulationControlBar extends Node {
             [this.model.isPlayingProperty],
             (isPlaying) => (isPlaying ? "Pause" : "Play"),
           ),
-          helpText:
-            "Start or stop time evolution of the wavefunction. Keyboard shortcut: Space bar.",
+          // TODO: Add helpText when PhET accessibility is fully configured
+          // helpText:
+          //   "Start or stop time evolution of the wavefunction. Keyboard shortcut: Space bar.",
         },
       },
       speedRadioButtonGroupPlacement: "left",
@@ -108,8 +111,9 @@ export class SimulationControlBar extends Node {
 
         // PDOM
         accessibleName: "Animation Speed",
-        helpText:
-          "Control time evolution speed. Use arrow keys to navigate options, Space or Enter to select.",
+        // TODO: Add helpText when PhET accessibility is fully configured
+        // helpText:
+        //   "Control time evolution speed. Use arrow keys to navigate options, Space or Enter to select.",
       },
     });
 

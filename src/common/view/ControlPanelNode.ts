@@ -332,10 +332,11 @@ export class ControlPanelNode extends Node {
 
         // PDOM - make potential type selector keyboard accessible
         accessibleName: "Potential Type",
-        helpText:
-          "Select quantum potential well type. " +
-          "Press Enter to open menu, use arrow keys to navigate options, " +
-          "Enter to select, Escape to close.",
+        // TODO: Add helpText when PhET accessibility is fully configured
+        // helpText:
+        //   "Select quantum potential well type. " +
+        //   "Press Enter to open menu, use arrow keys to navigate options, " +
+        //   "Enter to select, Escape to close.",
       },
     );
 
@@ -446,10 +447,11 @@ export class ControlPanelNode extends Node {
 
         // PDOM - make superposition type selector keyboard accessible
         accessibleName: "Superposition Type",
-        helpText:
-          "Select wavefunction superposition state. " +
-          "Press Enter to open menu, use arrow keys to navigate options, " +
-          "Enter to select, Escape to close.",
+        // TODO: Add helpText when PhET accessibility is fully configured
+        // helpText:
+        //   "Select wavefunction superposition state. " +
+        //   "Press Enter to open menu, use arrow keys to navigate options, " +
+        //   "Enter to select, Escape to close.",
       },
     );
 
@@ -628,8 +630,9 @@ export class ControlPanelNode extends Node {
 
         // PDOM
         accessibleName: "Display Mode",
-        helpText:
-          "Choose how to visualize the wavefunction. Use arrow keys to navigate options, Space or Enter to select.",
+        // TODO: Add helpText when PhET accessibility is fully configured
+        // helpText:
+        //   "Choose how to visualize the wavefunction. Use arrow keys to navigate options, Space or Enter to select.",
       },
     );
 
@@ -652,8 +655,9 @@ export class ControlPanelNode extends Node {
 
               // PDOM
               labelContent: "Show Classical Probability Density",
-              helpText:
-                "Toggle visibility of classical probability distribution. Shows where a classical particle would be found, for comparison with quantum probability.",
+              // TODO: Add helpText when PhET accessibility is fully configured
+              // helpText:
+              //   "Toggle visibility of classical probability distribution. Shows where a classical particle would be found, for comparison with quantum probability.",
             },
           )
         : null;
@@ -685,8 +689,9 @@ export class ControlPanelNode extends Node {
 
         // PDOM
         labelContent: "Show Real Part",
-        helpText:
-          "Toggle visibility of real component of wavefunction. Real part oscillates between positive and negative values.",
+        // TODO: Add helpText when PhET accessibility is fully configured
+        // helpText:
+        //   "Toggle visibility of real component of wavefunction. Real part oscillates between positive and negative values.",
       },
     );
 
@@ -701,8 +706,9 @@ export class ControlPanelNode extends Node {
 
         // PDOM
         labelContent: "Show Imaginary Part",
-        helpText:
-          "Toggle visibility of imaginary component of wavefunction. Imaginary part oscillates 90 degrees out of phase with real part.",
+        // TODO: Add helpText when PhET accessibility is fully configured
+        // helpText:
+        //   "Toggle visibility of imaginary component of wavefunction. Imaginary part oscillates 90 degrees out of phase with real part.",
       },
     );
 
@@ -717,8 +723,9 @@ export class ControlPanelNode extends Node {
 
         // PDOM
         labelContent: "Show Magnitude",
-        helpText:
-          "Toggle visibility of wavefunction magnitude. Magnitude equals square root of probability density.",
+        // TODO: Add helpText when PhET accessibility is fully configured
+        // helpText:
+        //   "Toggle visibility of wavefunction magnitude. Magnitude equals square root of probability density.",
       },
     );
 
@@ -733,8 +740,9 @@ export class ControlPanelNode extends Node {
 
         // PDOM
         labelContent: "Show Phase",
-        helpText:
-          "Toggle visibility of quantum phase angle. Phase rotates continuously during time evolution.",
+        // TODO: Add helpText when PhET accessibility is fully configured
+        // helpText:
+        //   "Toggle visibility of quantum phase angle. Phase rotates continuously during time evolution.",
       },
     );
 
