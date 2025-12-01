@@ -99,10 +99,14 @@ export class AsymmetricTrianglePotentialSolution extends AnalyticalSolution {
   }
 
   calculateWavefunctionZeros(stateIndex: number, _energy: number): number[] {
+    // Get energy from Airy zero
+    const z_n = getAiryZero(stateIndex);
+    const energy = calculateTriangularWellEnergy(z_n, this.mass, this.slope);
+
     return calculateAsymmetricTriangleWavefunctionZeros(
       this.slope,
       this.mass,
-      stateIndex,
+      energy,
     );
   }
 
@@ -117,10 +121,14 @@ export class AsymmetricTrianglePotentialSolution extends AnalyticalSolution {
     stateIndex: number,
     xGrid: number[],
   ): number[] {
+    // Get energy from Airy zero
+    const z_n = getAiryZero(stateIndex);
+    const energy = calculateTriangularWellEnergy(z_n, this.mass, this.slope);
+
     return calculateAsymmetricTriangleWavefunctionFirstDerivative(
       this.slope,
       this.mass,
-      stateIndex,
+      energy,
       xGrid,
     );
   }
