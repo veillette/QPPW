@@ -21,7 +21,7 @@ export class IntroViewState extends BaseViewState {
 
     // Initialize intro-specific display settings
     this.displayModeProperty = new Property<DisplayMode>("probabilityDensity");
-    this.showRMSIndicatorProperty = new Property<boolean>(true); // Show indicators by default
+    this.showRMSIndicatorProperty = new Property<boolean>(false); // Hide indicators by default
   }
 
   /**

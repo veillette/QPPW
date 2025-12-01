@@ -712,11 +712,11 @@ export class WaveFunctionChartNode extends Node {
   private updateYAxisLabel(): void {
     const displayMode = this.getEffectiveDisplayMode();
     if (displayMode === "probabilityDensity") {
-      this.yAxisLabel.string = "Probability Density";
+      this.yAxisLabel.string = "Probability Density (nm⁻¹)";
     } else if (displayMode === "phaseColor") {
-      this.yAxisLabel.string = "Wave Function Magnitude";
+      this.yAxisLabel.string = "Wave Function Magnitude (nm⁻¹ᐟ²)";
     } else {
-      this.yAxisLabel.string = "Wave Function";
+      this.yAxisLabel.string = "Wave Function (nm⁻¹ᐟ²)";
     }
   }
 
@@ -820,26 +820,13 @@ export class WaveFunctionChartNode extends Node {
    * Uses appropriate precision based on the magnitude of the value.
    */
   private formatYTickLabel(value: number): string {
-    // For values close to zero, show as 0
+    // For values close to zero, show as 0.00
     if (Math.abs(value) < 1e-10) {
-      return "0";
+      return "0.00";
     }
 
-    // Determine appropriate decimal places based on magnitude
-    const absValue = Math.abs(value);
-    let decimalPlaces;
-
-    if (absValue >= 10) {
-      decimalPlaces = 0;
-    } else if (absValue >= 1) {
-      decimalPlaces = 1;
-    } else if (absValue >= 0.1) {
-      decimalPlaces = 2;
-    } else {
-      decimalPlaces = 3;
-    }
-
-    return value.toFixed(decimalPlaces);
+    // Use consistent 2 decimal places for all tick values
+    return value.toFixed(2);
   }
 
   public update(): void {
