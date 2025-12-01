@@ -45,7 +45,9 @@
       "Bash(nvm use:*)",
       "Bash(nvm alias:*)",
       "Bash(npm --version:*)",
-      "Bash(npm audit:*)"
+      "Bash(npm audit:*)",
+      "Bash(GITHUB_PAGES=true npm run build)",
+      "Bash(python3:*)"
     ],
     "deny": [],
     "ask": []
