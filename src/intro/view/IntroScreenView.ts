@@ -25,7 +25,15 @@ export class IntroScreenView extends BaseScreenView {
   private wavenumberChart: WavenumberChartNode;
 
   public constructor(model: IntroModel, options?: ScreenViewOptions) {
-    super(model, options);
+    super(
+      model,
+      {
+        screenName: "Intro",
+        screenDescription:
+          "Intro screen for exploring basic quantum bound states with simplified controls.",
+      },
+      options
+    );
 
     // Create the view state for display properties
     this.viewState = new IntroViewState();
@@ -111,33 +119,21 @@ export class IntroScreenView extends BaseScreenView {
   }
 
   /**
-   * Sets up the three-section PDOM structure for accessibility.
+   * Sets up the PDOM structure for accessibility.
    */
   private setupAccessibility(_model: IntroModel): void {
-    // Create screen summary (Section 1)
-    this.screenSummaryNode = this.createScreenSummaryNode({
-      screenName: "Intro",
-      screenDescription:
-        "Intro screen for exploring basic quantum bound states with simplified controls.",
-    });
-
-    // Create play area node (Section 2)
-    // Note: Charts are already added as visual children above.
-    // We create a PDOM container that groups them for screen readers.
-    this.playAreaNode = this.createPlayAreaNode();
-    this.playAreaNode.pdomOrder = [
-      this.energyChart!,
-      this.probabilityChart,
-      this.waveFunctionChart!,
-      this.wavenumberChart,
-    ];
-
-    // Create control area node (Section 3)
-    this.controlAreaNode = this.createControlAreaNode();
-    this.controlAreaNode.pdomOrder = [this.introControlPanel];
-
-    // Set PDOM navigation order
-    this.setupPDOMStructure();
+    // Set PDOM navigation order for play area and control area
+    this.setupPDOMStructure(
+      // Play area children
+      [
+        this.energyChart!,
+        this.probabilityChart,
+        this.waveFunctionChart!,
+        this.wavenumberChart,
+      ],
+      // Control area children
+      [this.introControlPanel]
+    );
   }
 
   /**

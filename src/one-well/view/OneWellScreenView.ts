@@ -18,7 +18,15 @@ export class OneWellScreenView extends BaseScreenView {
   private readonly viewState: OneWellViewState;
 
   public constructor(model: OneWellModel, options?: ScreenViewOptions) {
-    super(model, options);
+    super(
+      model,
+      {
+        screenName: "One Well",
+        screenDescription:
+          "One Well screen for exploring quantum bound states in various potential wells.",
+      },
+      options
+    );
 
     // Create the view state for display properties
     this.viewState = new OneWellViewState();
@@ -48,33 +56,24 @@ export class OneWellScreenView extends BaseScreenView {
   }
 
   /**
-   * Sets up the three-section PDOM structure for accessibility.
+   * Sets up the PDOM structure for accessibility.
    */
   private setupAccessibility(_model: OneWellModel): void {
-    // Create screen summary (Section 1)
-    this.screenSummaryNode = this.createScreenSummaryNode({
-      screenName: "One Well",
-      screenDescription:
-        "One Well screen for exploring quantum bound states in various potential wells.",
-    });
-
-    // Create play area node (Section 2) and add charts to it
-    this.playAreaNode = this.createPlayAreaNode();
+    // Set PDOM navigation order for play area and control area
+    const playAreaChildren = [];
     if (this.chartsContainer) {
-      this.playAreaNode.addChild(this.chartsContainer);
+      playAreaChildren.push(this.chartsContainer);
     }
 
-    // Create control area node (Section 3) and add controls to it
-    this.controlAreaNode = this.createControlAreaNode();
+    const controlAreaChildren = [];
     if (this.controlPanel) {
-      this.controlAreaNode.addChild(this.controlPanel);
+      controlAreaChildren.push(this.controlPanel);
     }
     if (this.simulationControlBar) {
-      this.controlAreaNode.addChild(this.simulationControlBar);
+      controlAreaChildren.push(this.simulationControlBar);
     }
 
-    // Set PDOM navigation order
-    this.setupPDOMStructure();
+    this.setupPDOMStructure(playAreaChildren, controlAreaChildren);
   }
 
   /**

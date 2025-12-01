@@ -20,7 +20,15 @@ export class ManyWellsScreenView extends BaseScreenView {
   private readonly viewState: ManyWellsViewState;
 
   public constructor(model: ManyWellsModel, options?: ScreenViewOptions) {
-    super(model, options);
+    super(
+      model,
+      {
+        screenName: "Many Wells",
+        screenDescription:
+          "Many Wells screen for exploring band structure and quantum mechanics in multi-well potentials.",
+      },
+      options
+    );
 
     // Create the view state for display properties
     this.viewState = new ManyWellsViewState();
@@ -42,33 +50,24 @@ export class ManyWellsScreenView extends BaseScreenView {
   }
 
   /**
-   * Sets up the three-section PDOM structure for accessibility.
+   * Sets up the PDOM structure for accessibility.
    */
   private setupAccessibility(_model: ManyWellsModel): void {
-    // Create screen summary (Section 1)
-    this.screenSummaryNode = this.createScreenSummaryNode({
-      screenName: "Many Wells",
-      screenDescription:
-        "Many Wells screen for exploring band structure and quantum mechanics in multi-well potentials.",
-    });
-
-    // Create play area node (Section 2) and add charts to it
-    this.playAreaNode = this.createPlayAreaNode();
+    // Set PDOM navigation order for play area and control area
+    const playAreaChildren = [];
     if (this.chartsContainer) {
-      this.playAreaNode.addChild(this.chartsContainer);
+      playAreaChildren.push(this.chartsContainer);
     }
 
-    // Create control area node (Section 3) and add controls to it
-    this.controlAreaNode = this.createControlAreaNode();
+    const controlAreaChildren = [];
     if (this.controlPanel) {
-      this.controlAreaNode.addChild(this.controlPanel);
+      controlAreaChildren.push(this.controlPanel);
     }
     if (this.simulationControlBar) {
-      this.controlAreaNode.addChild(this.simulationControlBar);
+      controlAreaChildren.push(this.simulationControlBar);
     }
 
-    // Set PDOM navigation order
-    this.setupPDOMStructure();
+    this.setupPDOMStructure(playAreaChildren, controlAreaChildren);
   }
 
   /**

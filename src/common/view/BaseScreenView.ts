@@ -3,11 +3,11 @@
  * It provides common functionality including standard layout for quantum well simulations.
  */
 
-import { ScreenView, ScreenViewOptions } from "scenerystack/sim";
+import { ScreenView, ScreenViewOptions, ScreenSummaryContent } from "scenerystack/sim";
 import { ResetAllButton } from "scenerystack/scenery-phet";
 import { Node, Text, VBox, RichText } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
-import { TReadOnlyProperty } from "scenerystack/axon";
+import { TReadOnlyProperty, DerivedProperty, Property } from "scenerystack/axon";
 import QPPWColors from "../../QPPWColors.js";
 import { OneWellModel } from "../../one-well/model/OneWellModel.js";
 import { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
@@ -23,11 +23,8 @@ import { BaseModel } from "../model/BaseModel.js";
 import type { OneWellViewState } from "../../one-well/view/OneWellViewState.js";
 import type { TwoWellsViewState } from "../../two-wells/view/TwoWellsViewState.js";
 import type { ManyWellsViewState } from "../../many-wells/view/ManyWellsViewState.js";
-import {
-  ScreenSummaryNode,
-  ScreenSummaryOptions,
-} from "./accessibility/ScreenSummaryNode.js";
 import { QPPWAlerter } from "./accessibility/QPPWAlerter.js";
+import { QPPWDescriber } from "./accessibility/QPPWDescriber.js";
 
 /**
  * Screen-specific string properties for info dialog and screen summary.
@@ -38,6 +35,14 @@ export type ScreenStringProperties = {
   keyConceptsStringProperty: TReadOnlyProperty<string>;
   interactionsStringProperty: TReadOnlyProperty<string>;
   educationalContentStringProperty: TReadOnlyProperty<string>;
+};
+
+/**
+ * Options for screen summary content.
+ */
+export type ScreenSummaryOptions = {
+  screenName: string;
+  screenDescription: string;
 };
 
 export abstract class BaseScreenView extends ScreenView {
@@ -57,16 +62,23 @@ export abstract class BaseScreenView extends ScreenView {
   protected listBoxParent?: Node;
 
   // PDOM (Parallel DOM) structure components for accessibility
-  protected screenSummaryNode?: ScreenSummaryNode;
-  protected playAreaNode?: Node;
-  protected controlAreaNode?: Node;
   protected alerter?: QPPWAlerter;
 
   protected constructor(
     model: BaseModel | OneWellModel | TwoWellsModel | ManyWellsModel,
+    screenSummaryOptions: ScreenSummaryOptions,
     options?: ScreenViewOptions,
   ) {
-    super(options);
+    // Create screen summary content before calling super()
+    const screenSummaryContent = BaseScreenView.createScreenSummaryContent(
+      model,
+      screenSummaryOptions
+    );
+
+    super({
+      ...options,
+      screenSummaryContent,
+    });
 
     this.model = model;
 
@@ -292,70 +304,75 @@ export abstract class BaseScreenView extends ScreenView {
   // ==================== ACCESSIBILITY PDOM METHODS ====================
 
   /**
-   * Creates the screen summary node with PDOM structure.
-   * This is the first section of the three-section PDOM layout.
-   * Subclasses should call this method and provide screen-specific options.
+   * Creates screen summary content for accessibility.
+   * This provides dynamic descriptions that update when model properties change.
    */
-  protected createScreenSummaryNode(
-    options: ScreenSummaryOptions,
-  ): ScreenSummaryNode {
-    return new ScreenSummaryNode(this.model, options);
-  }
+  private static createScreenSummaryContent(
+    model: BaseModel | OneWellModel | TwoWellsModel | ManyWellsModel,
+    _options: ScreenSummaryOptions,
+  ): ScreenSummaryContent {
+    // Create dynamic description of current state
+    const currentStateProperty = new DerivedProperty(
+      [model.potentialTypeProperty, model.selectedEnergyLevelIndexProperty],
+      (potentialType, levelIndex) => {
+        const energyLevels = model.getEnergyLevels();
+        const potentialName = QPPWDescriber.getPotentialTypeName(potentialType);
 
-  /**
-   * Creates the Play Area node with PDOM structure.
-   * This is the second section of the three-section PDOM layout.
-   * Contains charts and interactive visualization elements.
-   */
-  protected createPlayAreaNode(): Node {
-    return new Node({
-      tagName: "div",
+        if (energyLevels.length === 0) {
+          return `Currently exploring a ${potentialName} potential well. No bound states found.`;
+        }
 
-      // PDOM - Accessible label for the play area section
-      labelTagName: "h2",
-      labelContent: "Play Area",
+        const energy = energyLevels[levelIndex];
+        const levelNumber = levelIndex + 1;
+        const totalLevels = energyLevels.length;
 
-      // PDOM - Description of what this section contains
-      descriptionContent:
-        "Interactive visualization showing energy levels, wavefunctions, and probability distributions.",
+        return (
+          `Currently exploring a ${potentialName} potential well. ` +
+          `Selected energy level ${levelNumber} of ${totalLevels} ` +
+          `with energy ${energy.toFixed(3)} electron volts.`
+        );
+      }
+    );
+
+    // Create dynamic description of parameters
+    const parametersProperty = new DerivedProperty(
+      [model.particleMassProperty, model.wellWidthProperty],
+      (mass, width) => {
+        return (
+          `Particle mass: ${mass.toFixed(2)} electron masses. ` +
+          `Well width: ${width.toFixed(2)} nanometers.`
+        );
+      }
+    );
+
+    // Create the ScreenSummaryContent with our dynamic properties
+    return new ScreenSummaryContent({
+      playAreaContent: [currentStateProperty, parametersProperty],
+      controlAreaContent: new Property(
+        "Use controls to adjust potential type, particle mass, well dimensions, and other parameters."
+      ),
     });
   }
 
   /**
-   * Creates the Control Area node with PDOM structure.
-   * This is the third section of the three-section PDOM layout.
-   * Contains control panels and simulation controls.
-   */
-  protected createControlAreaNode(): Node {
-    return new Node({
-      tagName: "div",
-
-      // PDOM - Accessible label for the control area section
-      labelTagName: "h2",
-      labelContent: "Control Area",
-
-      // PDOM - Description of what this section contains
-      descriptionContent:
-        "Controls for adjusting potential parameters, particle properties, and visualization options.",
-    });
-  }
-
-  /**
-   * Sets up the three-section PDOM structure for accessibility.
+   * Sets up the PDOM structure for accessibility by adding content to the parent ScreenView's
+   * pdomPlayAreaNode and pdomControlAreaNode.
    * This should be called by subclasses after creating their visual components.
    *
-   * The PDOM order ensures screen readers navigate in a logical sequence:
-   * 1. Screen Summary - Overview of current state
+   * The PDOM order is managed by the parent ScreenView class:
+   * 1. Screen Summary - Overview of current state (managed by parent ScreenView)
    * 2. Play Area - Interactive visualizations
    * 3. Control Area - Parameter controls
+   *
+   * @param playAreaChildren - Nodes to add to the play area (charts, visualizations)
+   * @param controlAreaChildren - Nodes to add to the control area (control panels)
    */
-  protected setupPDOMStructure(): void {
-    if (this.screenSummaryNode && this.playAreaNode && this.controlAreaNode) {
-      this.pdomOrder = [
-        this.screenSummaryNode,
-        this.playAreaNode,
-        this.controlAreaNode,
-      ];
-    }
+  protected setupPDOMStructure(
+    playAreaChildren: Node[],
+    controlAreaChildren: Node[],
+  ): void {
+    // Add children to the parent ScreenView's PDOM nodes
+    this.pdomPlayAreaNode.pdomOrder = playAreaChildren;
+    this.pdomControlAreaNode.pdomOrder = controlAreaChildren;
   }
 }

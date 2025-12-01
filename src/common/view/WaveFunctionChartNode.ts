@@ -126,28 +126,30 @@ export class WaveFunctionChartNode extends Node {
       labelTagName: "h3",
       labelContent: "Wavefunction Visualization",
       descriptionTagName: "p",
-      descriptionContent: new DerivedProperty(
-        [
-          model.selectedEnergyLevelIndexProperty,
-          model.potentialTypeProperty,
-          model.superpositionTypeProperty,
-        ],
-        (
-          selectedIndex: number,
-          potentialType: PotentialType,
-          superpositionType: SuperpositionType,
-        ) => {
-          return this.createWavefunctionDescription(
-            selectedIndex,
-            potentialType,
-            superpositionType,
-          );
-        },
-      ),
     });
 
     this.model = model;
     this.viewState = viewState;
+
+    // Set up accessible description after this.model is initialized
+    this.descriptionContent = new DerivedProperty(
+      [
+        model.selectedEnergyLevelIndexProperty,
+        model.potentialTypeProperty,
+        model.superpositionTypeProperty,
+      ],
+      (
+        selectedIndex: number,
+        potentialType: PotentialType,
+        superpositionType: SuperpositionType,
+      ) => {
+        return this.createWavefunctionDescription(
+          selectedIndex,
+          potentialType,
+          superpositionType,
+        );
+      },
+    );
     this.chartWidth = options?.width ?? 600;
     this.chartHeight = options?.height ?? 140;
     this.fixedDisplayMode = options?.fixedDisplayMode;

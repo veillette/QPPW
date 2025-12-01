@@ -78,28 +78,30 @@ export class WavenumberChartNode extends Node {
       labelTagName: "h3",
       labelContent: "Momentum Distribution",
       descriptionTagName: "p",
-      descriptionContent: new DerivedProperty(
-        [
-          model.selectedEnergyLevelIndexProperty,
-          model.potentialTypeProperty,
-          model.wellWidthProperty,
-        ],
-        (
-          selectedIndex: number,
-          potentialType: PotentialType,
-          width: number,
-        ) => {
-          return this.createWavenumberDescription(
-            selectedIndex,
-            potentialType,
-            width,
-          );
-        },
-      ),
     });
 
     this.model = model;
     this.viewState = options?.viewState;
+
+    // Set up accessible description after this.model is initialized
+    this.descriptionContent = new DerivedProperty(
+      [
+        model.selectedEnergyLevelIndexProperty,
+        model.potentialTypeProperty,
+        model.wellWidthProperty,
+      ],
+      (
+        selectedIndex: number,
+        potentialType: PotentialType,
+        width: number,
+      ) => {
+        return this.createWavenumberDescription(
+          selectedIndex,
+          potentialType,
+          width,
+        );
+      },
+    );
     this.chartWidth = options?.width ?? 600;
     this.chartHeight = options?.height ?? 140;
 
