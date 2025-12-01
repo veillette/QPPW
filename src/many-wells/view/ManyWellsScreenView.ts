@@ -27,7 +27,7 @@ export class ManyWellsScreenView extends BaseScreenView {
         screenDescription:
           "Many Wells screen for exploring band structure and quantum mechanics in multi-well potentials.",
       },
-      options
+      options,
     );
 
     // Create the view state for display properties

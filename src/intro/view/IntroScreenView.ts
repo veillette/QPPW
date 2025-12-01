@@ -32,7 +32,7 @@ export class IntroScreenView extends BaseScreenView {
         screenDescription:
           "Intro screen for exploring basic quantum bound states with simplified controls.",
       },
-      options
+      options,
     );
 
     // Create the view state for display properties
@@ -132,7 +132,7 @@ export class IntroScreenView extends BaseScreenView {
         this.wavenumberChart,
       ],
       // Control area children
-      [this.introControlPanel]
+      [this.introControlPanel],
     );
   }
 

@@ -3,11 +3,19 @@
  * It provides common functionality including standard layout for quantum well simulations.
  */
 
-import { ScreenView, ScreenViewOptions, ScreenSummaryContent } from "scenerystack/sim";
+import {
+  ScreenView,
+  ScreenViewOptions,
+  ScreenSummaryContent,
+} from "scenerystack/sim";
 import { ResetAllButton } from "scenerystack/scenery-phet";
 import { Node, Text, VBox, RichText } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
-import { TReadOnlyProperty, DerivedProperty, Property } from "scenerystack/axon";
+import {
+  TReadOnlyProperty,
+  DerivedProperty,
+  Property,
+} from "scenerystack/axon";
 import QPPWColors from "../../QPPWColors.js";
 import { OneWellModel } from "../../one-well/model/OneWellModel.js";
 import { TwoWellsModel } from "../../two-wells/model/TwoWellsModel.js";
@@ -72,7 +80,7 @@ export abstract class BaseScreenView extends ScreenView {
     // Create screen summary content before calling super()
     const screenSummaryContent = BaseScreenView.createScreenSummaryContent(
       model,
-      screenSummaryOptions
+      screenSummaryOptions,
     );
 
     super({
@@ -331,7 +339,7 @@ export abstract class BaseScreenView extends ScreenView {
           `Selected energy level ${levelNumber} of ${totalLevels} ` +
           `with energy ${energy.toFixed(3)} electron volts.`
         );
-      }
+      },
     );
 
     // Create dynamic description of parameters
@@ -342,14 +350,14 @@ export abstract class BaseScreenView extends ScreenView {
           `Particle mass: ${mass.toFixed(2)} electron masses. ` +
           `Well width: ${width.toFixed(2)} nanometers.`
         );
-      }
+      },
     );
 
     // Create the ScreenSummaryContent with our dynamic properties
     return new ScreenSummaryContent({
       playAreaContent: [currentStateProperty, parametersProperty],
       controlAreaContent: new Property(
-        "Use controls to adjust potential type, particle mass, well dimensions, and other parameters."
+        "Use controls to adjust potential type, particle mass, well dimensions, and other parameters.",
       ),
     });
   }

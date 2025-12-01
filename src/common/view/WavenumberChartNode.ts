@@ -90,11 +90,7 @@ export class WavenumberChartNode extends Node {
         model.potentialTypeProperty,
         model.wellWidthProperty,
       ],
-      (
-        selectedIndex: number,
-        potentialType: PotentialType,
-        width: number,
-      ) => {
+      (selectedIndex: number, potentialType: PotentialType, width: number) => {
         return this.createWavenumberDescription(
           selectedIndex,
           potentialType,

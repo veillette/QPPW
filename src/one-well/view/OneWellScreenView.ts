@@ -25,7 +25,7 @@ export class OneWellScreenView extends BaseScreenView {
         screenDescription:
           "One Well screen for exploring quantum bound states in various potential wells.",
       },
-      options
+      options,
     );
 
     // Create the view state for display properties

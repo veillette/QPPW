@@ -25,7 +25,7 @@ export class TwoWellsScreenView extends BaseScreenView {
         screenDescription:
           "Two Wells screen for exploring quantum tunneling and energy level splitting in double potential wells.",
       },
-      options
+      options,
     );
 
     // Create the view state for display properties
