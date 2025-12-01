@@ -372,7 +372,10 @@ export class IntroModel extends BaseModel {
           xGrid,
         );
       } catch (error) {
-        console.warn('Failed to use analytical classical probability, falling back to numerical:', error);
+        console.warn(
+          "Failed to use analytical classical probability, falling back to numerical:",
+          error,
+        );
       }
     }
 
@@ -413,12 +416,14 @@ export class IntroModel extends BaseModel {
     const analyticalSolution = this.solver.getAnalyticalSolution();
     if (analyticalSolution) {
       try {
-        const turningPointsPairs = analyticalSolution.calculateTurningPoints(energy);
+        const turningPointsPairs =
+          analyticalSolution.calculateTurningPoints(energy);
         if (turningPointsPairs && turningPointsPairs.length > 0) {
           // For simple single-well potentials, use the first pair
           // Convert from meters to nanometers
           const leftNm = turningPointsPairs[0].left * QuantumConstants.M_TO_NM;
-          const rightNm = turningPointsPairs[0].right * QuantumConstants.M_TO_NM;
+          const rightNm =
+            turningPointsPairs[0].right * QuantumConstants.M_TO_NM;
 
           // Clamp turning points to chart's X-axis range
           const minX = -IntroModel.CHART_DISPLAY_RANGE_NM;
@@ -429,7 +434,10 @@ export class IntroModel extends BaseModel {
           return { left, right };
         }
       } catch (error) {
-        console.warn('Failed to use analytical turning points, falling back to numerical:', error);
+        console.warn(
+          "Failed to use analytical turning points, falling back to numerical:",
+          error,
+        );
       }
     }
 

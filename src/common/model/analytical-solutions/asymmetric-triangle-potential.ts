@@ -520,7 +520,12 @@ export function calculateAsymmetricTriangleWavefunctionFirstDerivative(
   // Compute normalization to match the wavefunction normalization
   const xMin = xGrid[0];
   const xMax = xGrid[xGrid.length - 1];
-  const normalization = computeAsymmetricTriangleNormalization(alpha, x0, xMin, xMax);
+  const normalization = computeAsymmetricTriangleNormalization(
+    alpha,
+    x0,
+    xMin,
+    xMax,
+  );
 
   const firstDerivative: number[] = [];
   const h = 1e-12; // Small step for numerical differentiation
@@ -573,7 +578,12 @@ export function calculateAsymmetricTriangleWavefunctionSecondDerivative(
   // Compute normalization to match the wavefunction normalization
   const xMin = xGrid[0];
   const xMax = xGrid[xGrid.length - 1];
-  const normalization = computeAsymmetricTriangleNormalization(alpha, x0, xMin, xMax);
+  const normalization = computeAsymmetricTriangleNormalization(
+    alpha,
+    x0,
+    xMin,
+    xMax,
+  );
 
   const secondDerivative: number[] = [];
   const h = 1e-12; // Small step for numerical differentiation

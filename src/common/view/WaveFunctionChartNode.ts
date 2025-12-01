@@ -933,7 +933,8 @@ export class WaveFunctionChartNode extends Node {
           // Show forbidden regions on both wavefunction and probability density charts
           // But only show the classical probability curve on probability density chart
           const displayMode = this.getEffectiveDisplayMode();
-          const showOverlay = this.viewState.showClassicalProbabilityProperty.value;
+          const showOverlay =
+            this.viewState.showClassicalProbabilityProperty.value;
           const showCurve = displayMode === "probabilityDensity";
           this.classicalProbabilityOverlay.update(
             boundStates,

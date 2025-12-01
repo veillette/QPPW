@@ -557,7 +557,13 @@ export function calculatePoschlTellerWavefunctionFirstDerivative(
   // Use numerical normalization to match the wavefunction normalization
   const xMin = xGrid[0];
   const xMax = xGrid[xGrid.length - 1];
-  const normalization = computePoschlTellerNormalization(a, lambda, n, xMin, xMax);
+  const normalization = computePoschlTellerNormalization(
+    a,
+    lambda,
+    n,
+    xMin,
+    xMax,
+  );
 
   const firstDerivative: number[] = [];
 
@@ -626,7 +632,13 @@ export function calculatePoschlTellerWavefunctionSecondDerivative(
   // Use numerical normalization to match the wavefunction normalization
   const xMin = xGrid[0];
   const xMax = xGrid[xGrid.length - 1];
-  const normalization = computePoschlTellerNormalization(a, lambda, n, xMin, xMax);
+  const normalization = computePoschlTellerNormalization(
+    a,
+    lambda,
+    n,
+    xMin,
+    xMax,
+  );
 
   // Calculate energy for this state: E_n = -V_0 * [(λ - n - 1/2)/λ]²
   const term = lambda - n - 0.5;

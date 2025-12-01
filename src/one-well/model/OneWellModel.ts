@@ -717,7 +717,7 @@ export class OneWellModel extends BaseModel {
   public override getClassicalProbabilityDensity(
     energyIndex: number,
   ): number[] | null {
-    console.log('getClassicalProbabilityDensity called:', {
+    console.log("getClassicalProbabilityDensity called:", {
       energyIndex,
       potentialType: this.potentialTypeProperty.value,
       hasBoundStates: !!this.boundStateResult,
@@ -732,7 +732,7 @@ export class OneWellModel extends BaseModel {
       energyIndex < 0 ||
       energyIndex >= this.boundStateResult.energies.length
     ) {
-      console.log('Returning null - no bound states or invalid index');
+      console.log("Returning null - no bound states or invalid index");
       return null;
     }
 
@@ -746,7 +746,7 @@ export class OneWellModel extends BaseModel {
 
     // Use analytical solver methods when available
     const potentialType = this.potentialTypeProperty.value;
-    console.log('Processing potential type:', potentialType);
+    console.log("Processing potential type:", potentialType);
 
     try {
       switch (potentialType) {
@@ -804,9 +804,11 @@ export class OneWellModel extends BaseModel {
     console.log(`Classical probability for ${potentialType}:`, {
       energyEV: energy * QuantumConstants.JOULES_TO_EV,
       potentialType,
-      samplePotential: potential.slice(0, 5).map(v => v * QuantumConstants.JOULES_TO_EV),
+      samplePotential: potential
+        .slice(0, 5)
+        .map((v) => v * QuantumConstants.JOULES_TO_EV),
       sampleResult: result.slice(0, 5),
-      nonZeroCount: result.filter(p => p > 0).length,
+      nonZeroCount: result.filter((p) => p > 0).length,
     });
 
     return result;
