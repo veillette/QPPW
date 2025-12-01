@@ -68,6 +68,7 @@ export class IntroScreenView extends BaseScreenView {
       width: chartsWidth,
       height: waveFunctionChartHeight,
       fixedDisplayMode: "waveFunction",
+      showToolCheckboxes: true, // Show curvature/derivative checkboxes on intro screen
     });
 
     // Create the wavenumber chart (bottom plot) - shows |φ(k)|²

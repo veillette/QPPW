@@ -119,6 +119,7 @@ export class WaveFunctionChartNode extends Node {
       width?: number;
       height?: number;
       fixedDisplayMode?: "probabilityDensity" | "waveFunction" | "phaseColor";
+      showToolCheckboxes?: boolean; // Whether to show curvature/derivative checkboxes (intro screen only)
     },
   ) {
     super({
@@ -339,43 +340,45 @@ export class WaveFunctionChartNode extends Node {
     });
     this.addChild(this.rmsPositionLabel);
 
-    // Create checkboxes for derivative and curvature tools (only for wavefunction mode)
-    const curvatureCheckbox = new Checkbox(
-      this.curvatureTool.showProperty,
-      new Text("Show Curvature", {
-        font: new PhetFont(12),
-        fill: QPPWColors.textFillProperty,
-      }),
-      { boxWidth: 14 },
-    );
+    // Create checkboxes for derivative and curvature tools (only on intro screen)
+    if (options?.showToolCheckboxes) {
+      const curvatureCheckbox = new Checkbox(
+        this.curvatureTool.showProperty,
+        new Text("Show Curvature", {
+          font: new PhetFont(12),
+          fill: QPPWColors.textFillProperty,
+        }),
+        { boxWidth: 14 },
+      );
 
-    const derivativeCheckbox = new Checkbox(
-      this.derivativeTool.showProperty,
-      new Text("Show Derivative", {
-        font: new PhetFont(12),
-        fill: QPPWColors.textFillProperty,
-      }),
-      { boxWidth: 14 },
-    );
+      const derivativeCheckbox = new Checkbox(
+        this.derivativeTool.showProperty,
+        new Text("Show Derivative", {
+          font: new PhetFont(12),
+          fill: QPPWColors.textFillProperty,
+        }),
+        { boxWidth: 14 },
+      );
 
-    // Group checkboxes in a VBox
-    const toolCheckboxes = new VBox({
-      children: [curvatureCheckbox, derivativeCheckbox],
-      spacing: 5,
-      align: "left",
-      right: this.chartWidth - this.chartMargins.right - 5,
-      top: this.chartMargins.top + 5,
-    });
-    this.addChild(toolCheckboxes);
+      // Group checkboxes in a VBox
+      const toolCheckboxes = new VBox({
+        children: [curvatureCheckbox, derivativeCheckbox],
+        spacing: 5,
+        align: "left",
+        right: this.chartWidth - this.chartMargins.right - 5,
+        top: this.chartMargins.top + 5,
+      });
+      this.addChild(toolCheckboxes);
 
-    // Only show checkboxes in wavefunction mode
-    this.viewState.displayModeProperty.link((displayMode) => {
-      const effectiveMode =
-        this.fixedDisplayMode !== undefined
-          ? this.fixedDisplayMode
-          : displayMode;
-      toolCheckboxes.visible = effectiveMode === "waveFunction";
-    });
+      // Only show checkboxes in wavefunction mode
+      this.viewState.displayModeProperty.link((displayMode) => {
+        const effectiveMode =
+          this.fixedDisplayMode !== undefined
+            ? this.fixedDisplayMode
+            : displayMode;
+        toolCheckboxes.visible = effectiveMode === "waveFunction";
+      });
+    }
 
     // Ensure axes are on top of the clipped plot content
     this.axesNode.moveToFront();

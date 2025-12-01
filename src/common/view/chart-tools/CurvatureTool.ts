@@ -191,6 +191,28 @@ export class CurvatureTool extends Node {
         this.update(getDisplayMode());
       }
     });
+
+    // Invalidate cache when model parameters change
+    model.potentialTypeProperty.lazyLink(() => this.invalidateCache());
+    model.wellWidthProperty.lazyLink(() => this.invalidateCache());
+    model.wellDepthProperty.lazyLink(() => this.invalidateCache());
+    model.particleMassProperty.lazyLink(() => this.invalidateCache());
+
+    // Check for optional properties using type guards
+    if ("wellOffsetProperty" in model) {
+      (model as any).wellOffsetProperty.lazyLink(() => this.invalidateCache());
+    }
+    if ("wellSeparationProperty" in model) {
+      (model as any).wellSeparationProperty.lazyLink(() => this.invalidateCache());
+    }
+  }
+
+  /**
+   * Invalidates the extrema positions cache, forcing recalculation on next access.
+   */
+  private invalidateCache(): void {
+    this.extremaPositionsCache = null;
+    this.lastCachedEnergyLevel = -1;
   }
 
   /**
