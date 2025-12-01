@@ -41,7 +41,7 @@ import {
   PotentialFunction,
   FourierTransformResult,
 } from "../PotentialFunction.js";
-import { associatedLaguerre, factorial, gamma } from "./math-utilities.js";
+import { associatedLaguerre } from "./math-utilities.js";
 import { AnalyticalSolution } from "./AnalyticalSolution.js";
 import { computeNumericalFourierTransform } from "./fourier-transform-helper.js";
 
@@ -266,23 +266,29 @@ export function solveMorsePotential(
   const wavefunctions: number[][] = [];
 
   for (let n = 0; n < actualNumStates; n++) {
-    const wavefunction: number[] = [];
-
-    // Normalization constant (includes 1/a factor from variable change)
+    const psiRaw: number[] = [];
     const alpha = 2 * lambda - 2 * n - 1;
-    const normalization = Math.sqrt(factorial(n) / a / gamma(2 * lambda - n));
 
+    // First, calculate unnormalized wavefunction
     for (const x of xGrid) {
       const z = 2 * lambda * Math.exp(-(x - xe) / a);
 
-      // Calculate wavefunction
+      // Calculate wavefunction without normalization
       const exponent = lambda - n - 0.5;
       const laguerre = associatedLaguerre(n, alpha, z);
-      const value =
-        normalization * Math.pow(z, exponent) * Math.exp(-z / 2) * laguerre;
+      const value = Math.pow(z, exponent) * Math.exp(-z / 2) * laguerre;
 
-      wavefunction.push(value);
+      psiRaw.push(value);
     }
+
+    // Normalize wavefunction numerically to ensure ∫|ψ|² dx = 1
+    let normSq = 0;
+    for (let i = 0; i < psiRaw.length; i++) {
+      normSq += psiRaw[i] * psiRaw[i] * dx;
+    }
+    const norm = 1 / Math.sqrt(normSq);
+    const wavefunction = psiRaw.map((psi) => norm * psi);
+
     wavefunctions.push(wavefunction);
   }
 
@@ -426,6 +432,44 @@ export function calculateMorsePotentialTurningPoints(
 }
 
 /**
+ * Helper function to compute normalization constant for a Morse wavefunction.
+ * Uses numerical integration to ensure ∫|ψ|² dx = 1.
+ *
+ * @param a - Well width parameter in meters
+ * @param lambda - Dimensionless parameter (a * sqrt(2*m*D_e)/ℏ)
+ * @param n - State index
+ * @param xe - Equilibrium position in meters
+ * @param xMin - Left boundary for integration
+ * @param xMax - Right boundary for integration
+ * @param numPoints - Number of points for integration (default: 1000)
+ * @returns Normalization constant
+ */
+function computeMorseNormalization(
+  a: number,
+  lambda: number,
+  n: number,
+  xe: number,
+  xMin: number = -20e-9,
+  xMax: number = 20e-9,
+  numPoints: number = 1000,
+): number {
+  const alpha = 2 * lambda - 2 * n - 1;
+  const exponent = lambda - n - 0.5;
+  const dx = (xMax - xMin) / (numPoints - 1);
+  let normSq = 0;
+
+  for (let i = 0; i < numPoints; i++) {
+    const x = xMin + i * dx;
+    const z = 2 * lambda * Math.exp(-(x - xe) / a);
+    const laguerre = associatedLaguerre(n, alpha, z);
+    const psi = Math.pow(z, exponent) * Math.exp(-z / 2) * laguerre;
+    normSq += psi * psi * dx;
+  }
+
+  return 1 / Math.sqrt(normSq);
+}
+
+/**
  * Calculate wavefunction zeros for Morse potential (numerical approach).
  * Finds zeros by detecting sign changes in the wavefunction.
  *
@@ -453,7 +497,7 @@ export function calculateMorsePotentialWavefunctionZeros(
 
   const lambda = (a * Math.sqrt(2 * mass * De)) / HBAR;
   const alpha = 2 * lambda - 2 * n - 1;
-  const normalization = Math.sqrt(factorial(n) / a / gamma(2 * lambda - n));
+  const exponent = lambda - n - 0.5;
 
   // Ground state has no zeros
   if (n === 0) {
@@ -469,8 +513,7 @@ export function calculateMorsePotentialWavefunctionZeros(
   let prevX = xMin;
   const prevZ = 2 * lambda * Math.exp(-(prevX - xe) / a);
   let prevVal =
-    normalization *
-    Math.pow(prevZ, lambda - n - 0.5) *
+    Math.pow(prevZ, exponent) *
     Math.exp(-prevZ / 2) *
     associatedLaguerre(n, alpha, prevZ);
 
@@ -478,8 +521,7 @@ export function calculateMorsePotentialWavefunctionZeros(
     const x = xMin + i * dx;
     const z = 2 * lambda * Math.exp(-(x - xe) / a);
     const val =
-      normalization *
-      Math.pow(z, lambda - n - 0.5) *
+      Math.pow(z, exponent) *
       Math.exp(-z / 2) *
       associatedLaguerre(n, alpha, z);
 
@@ -492,8 +534,7 @@ export function calculateMorsePotentialWavefunctionZeros(
         const mid = (left + right) / 2;
         const zMid = 2 * lambda * Math.exp(-(mid - xe) / a);
         const valMid =
-          normalization *
-          Math.pow(zMid, lambda - n - 0.5) *
+          Math.pow(zMid, exponent) *
           Math.exp(-zMid / 2) *
           associatedLaguerre(n, alpha, zMid);
 
@@ -549,7 +590,12 @@ export function calculateMorsePotentialWavefunctionFirstDerivative(
 
   const lambda = (a * Math.sqrt(2 * mass * De)) / HBAR;
   const alpha = 2 * lambda - 2 * n - 1;
-  const normalization = Math.sqrt(factorial(n) / a / gamma(2 * lambda - n));
+  const exponent = lambda - n - 0.5;
+
+  // Get numerical normalization constant
+  const xMin = xGrid[0];
+  const xMax = xGrid[xGrid.length - 1];
+  const normalization = computeMorseNormalization(a, lambda, n, xe, xMin, xMax);
 
   const firstDerivative: number[] = [];
   const h = 1e-12; // Small step for numerical differentiation
@@ -564,13 +610,13 @@ export function calculateMorsePotentialWavefunctionFirstDerivative(
 
     const psiMinus =
       normalization *
-      Math.pow(zMinus, lambda - n - 0.5) *
+      Math.pow(zMinus, exponent) *
       Math.exp(-zMinus / 2) *
       associatedLaguerre(n, alpha, zMinus);
 
     const psiPlus =
       normalization *
-      Math.pow(zPlus, lambda - n - 0.5) *
+      Math.pow(zPlus, exponent) *
       Math.exp(-zPlus / 2) *
       associatedLaguerre(n, alpha, zPlus);
 
@@ -610,7 +656,12 @@ export function calculateMorsePotentialWavefunctionSecondDerivative(
 
   const lambda = (a * Math.sqrt(2 * mass * De)) / HBAR;
   const alpha = 2 * lambda - 2 * n - 1;
-  const normalization = Math.sqrt(factorial(n) / a / gamma(2 * lambda - n));
+  const exponent = lambda - n - 0.5;
+
+  // Get numerical normalization constant
+  const xMin = xGrid[0];
+  const xMax = xGrid[xGrid.length - 1];
+  const normalization = computeMorseNormalization(a, lambda, n, xe, xMin, xMax);
 
   const secondDerivative: number[] = [];
   const h = 1e-12; // Small step for numerical differentiation
@@ -626,19 +677,19 @@ export function calculateMorsePotentialWavefunctionSecondDerivative(
 
     const psiMinus =
       normalization *
-      Math.pow(zMinus, lambda - n - 0.5) *
+      Math.pow(zMinus, exponent) *
       Math.exp(-zMinus / 2) *
       associatedLaguerre(n, alpha, zMinus);
 
     const psi =
       normalization *
-      Math.pow(z, lambda - n - 0.5) *
+      Math.pow(z, exponent) *
       Math.exp(-z / 2) *
       associatedLaguerre(n, alpha, z);
 
     const psiPlus =
       normalization *
-      Math.pow(zPlus, lambda - n - 0.5) *
+      Math.pow(zPlus, exponent) *
       Math.exp(-zPlus / 2) *
       associatedLaguerre(n, alpha, zPlus);
 
@@ -684,7 +735,18 @@ export function calculateMorsePotentialWavefunctionMinMax(
 
   const lambda = (a * Math.sqrt(2 * mass * De)) / HBAR;
   const alpha = 2 * lambda - 2 * n - 1;
-  const normalization = Math.sqrt(factorial(n) / a / gamma(2 * lambda - n));
+  const exponent = lambda - n - 0.5;
+
+  // Get numerical normalization constant
+  const normalization = computeMorseNormalization(
+    a,
+    lambda,
+    n,
+    xe,
+    xMin,
+    xMax,
+    numPoints,
+  );
 
   let min = Infinity;
   let max = -Infinity;
@@ -695,7 +757,6 @@ export function calculateMorsePotentialWavefunctionMinMax(
     const x = xMin + i * dx;
 
     const z = 2 * lambda * Math.exp(-(x - xe) / a);
-    const exponent = lambda - n - 0.5;
     const laguerre = associatedLaguerre(n, alpha, z);
     const psi =
       normalization * Math.pow(z, exponent) * Math.exp(-z / 2) * laguerre;
@@ -762,9 +823,20 @@ export function calculateMorsePotentialSuperpositionMinMax(
 
       // Calculate wavefunction value
       const alpha = 2 * lambda - 2 * n - 1;
-      const normalization = Math.sqrt(factorial(n) / a / gamma(2 * lambda - n));
-      const z = 2 * lambda * Math.exp(-(x - xe) / a);
       const exponent = lambda - n - 0.5;
+
+      // Get numerical normalization constant
+      const normalization = computeMorseNormalization(
+        a,
+        lambda,
+        n,
+        xe,
+        xMin,
+        xMax,
+        numPoints,
+      );
+
+      const z = 2 * lambda * Math.exp(-(x - xe) / a);
       const laguerre = associatedLaguerre(n, alpha, z);
       const psi =
         normalization * Math.pow(z, exponent) * Math.exp(-z / 2) * laguerre;

@@ -46,7 +46,7 @@ import {
   PotentialFunction,
   FourierTransformResult,
 } from "../PotentialFunction.js";
-import { jacobiPolynomial, factorial, logGamma } from "./math-utilities.js";
+import { jacobiPolynomial } from "./math-utilities.js";
 import { AnalyticalSolution } from "./AnalyticalSolution.js";
 import { computeNumericalFourierTransform } from "./fourier-transform-helper.js";
 
@@ -277,23 +277,12 @@ export function solveEckartPotential(
   const wavefunctions: number[][] = [];
 
   for (let n = 0; n < actualNumStates; n++) {
-    const wavefunction: number[] = [];
+    const psiRaw: number[] = [];
 
     const alpha_jac = 2 * (s2 - n) - 1;
     const beta_jac = 2 * (s1 - s2 + n);
 
-    // Normalization (with 1/a factor from variable change)
-    const normalization = Math.sqrt(
-      (1 / a) *
-        factorial(n) *
-        Math.exp(
-          logGamma(2 * s2 - n) +
-            logGamma(alpha_jac + beta_jac + n + 1) -
-            logGamma(n + alpha_jac + 1) -
-            logGamma(n + beta_jac + 1),
-        ),
-    );
-
+    // First, calculate unnormalized wavefunction
     for (const x of xGrid) {
       const xi = Math.exp(x / a);
       const xiPlus1 = 1 + xi;
@@ -302,15 +291,23 @@ export function solveEckartPotential(
       const jacobiArg = 1 - (2 * xi) / xiPlus1;
       const jacobiPoly = jacobiPolynomial(n, alpha_jac, beta_jac, jacobiArg);
 
-      // Calculate wavefunction
+      // Calculate wavefunction without normalization
       const value =
-        normalization *
         Math.pow(xi, s2 - n) *
         Math.pow(xiPlus1, -s1 - s2 + n) *
         jacobiPoly;
 
-      wavefunction.push(value);
+      psiRaw.push(value);
     }
+
+    // Normalize wavefunction numerically to ensure ∫|ψ|² dx = 1
+    let normSq = 0;
+    for (let i = 0; i < psiRaw.length; i++) {
+      normSq += psiRaw[i] * psiRaw[i] * dx;
+    }
+    const norm = 1 / Math.sqrt(normSq);
+    const wavefunction = psiRaw.map((psi) => norm * psi);
+
     wavefunctions.push(wavefunction);
   }
 
@@ -490,6 +487,47 @@ export function calculateEckartPotentialTurningPoints(
 }
 
 /**
+ * Helper function to compute normalization constant for an Eckart wavefunction.
+ * Uses numerical integration to ensure ∫|ψ|² dx = 1.
+ *
+ * @param a - Well width parameter in meters
+ * @param s1 - First characteristic parameter
+ * @param s2 - Second characteristic parameter
+ * @param n - State index
+ * @param xMin - Left boundary for integration
+ * @param xMax - Right boundary for integration
+ * @param numPoints - Number of points for integration (default: 1000)
+ * @returns Normalization constant
+ */
+function computeEckartNormalization(
+  a: number,
+  s1: number,
+  s2: number,
+  n: number,
+  xMin: number = -20e-9,
+  xMax: number = 20e-9,
+  numPoints: number = 1000,
+): number {
+  const alpha_jac = 2 * (s2 - n) - 1;
+  const beta_jac = 2 * (s1 - s2 + n);
+  const dx = (xMax - xMin) / (numPoints - 1);
+  let normSq = 0;
+
+  for (let i = 0; i < numPoints; i++) {
+    const x = xMin + i * dx;
+    const xi = Math.exp(x / a);
+    const xiPlus1 = 1 + xi;
+    const jacobiArg = 1 - (2 * xi) / xiPlus1;
+    const jacobiPoly = jacobiPolynomial(n, alpha_jac, beta_jac, jacobiArg);
+    const psi =
+      Math.pow(xi, s2 - n) * Math.pow(xiPlus1, -s1 - s2 + n) * jacobiPoly;
+    normSq += psi * psi * dx;
+  }
+
+  return 1 / Math.sqrt(normSq);
+}
+
+/**
  * Calculate wavefunction zeros for Eckart potential (numerical approach).
  * Finds zeros by detecting sign changes in the wavefunction.
  *
@@ -525,17 +563,6 @@ export function calculateEckartPotentialWavefunctionZeros(
   const alpha_jac = 2 * (s2 - n) - 1;
   const beta_jac = 2 * (s1 - s2 + n);
 
-  const normalization = Math.sqrt(
-    (1 / a) *
-      factorial(n) *
-      Math.exp(
-        logGamma(2 * s2 - n) +
-          logGamma(alpha_jac + beta_jac + n + 1) -
-          logGamma(n + alpha_jac + 1) -
-          logGamma(n + beta_jac + 1),
-      ),
-  );
-
   // Ground state has no zeros
   if (n === 0) {
     return [];
@@ -551,7 +578,6 @@ export function calculateEckartPotentialWavefunctionZeros(
   const prevJacobiArg = 1 - (2 * prevXi) / prevXiPlus1;
   const prevJacobi = jacobiPolynomial(n, alpha_jac, beta_jac, prevJacobiArg);
   let prevVal =
-    normalization *
     Math.pow(prevXi, s2 - n) *
     Math.pow(prevXiPlus1, -s1 - s2 + n) *
     prevJacobi;
@@ -563,7 +589,6 @@ export function calculateEckartPotentialWavefunctionZeros(
     const jacobiArg = 1 - (2 * xi) / xiPlus1;
     const jacobiPoly = jacobiPolynomial(n, alpha_jac, beta_jac, jacobiArg);
     const val =
-      normalization *
       Math.pow(xi, s2 - n) *
       Math.pow(xiPlus1, -s1 - s2 + n) *
       jacobiPoly;
@@ -585,7 +610,6 @@ export function calculateEckartPotentialWavefunctionZeros(
           midJacobiArg,
         );
         const valMid =
-          normalization *
           Math.pow(midXi, s2 - n) *
           Math.pow(midXiPlus1, -s1 - s2 + n) *
           midJacobi;
@@ -650,15 +674,16 @@ export function calculateEckartPotentialWavefunctionFirstDerivative(
   const alpha_jac = 2 * (s2 - n) - 1;
   const beta_jac = 2 * (s1 - s2 + n);
 
-  const normalization = Math.sqrt(
-    (1 / a) *
-      factorial(n) *
-      Math.exp(
-        logGamma(2 * s2 - n) +
-          logGamma(alpha_jac + beta_jac + n + 1) -
-          logGamma(n + alpha_jac + 1) -
-          logGamma(n + beta_jac + 1),
-      ),
+  // Get numerical normalization constant
+  const xMin = xGrid[0];
+  const xMax = xGrid[xGrid.length - 1];
+  const normalization = computeEckartNormalization(
+    a,
+    s1,
+    s2,
+    n,
+    xMin,
+    xMax,
   );
 
   const firstDerivative: number[] = [];
@@ -743,15 +768,16 @@ export function calculateEckartPotentialWavefunctionSecondDerivative(
   const alpha_jac = 2 * (s2 - n) - 1;
   const beta_jac = 2 * (s1 - s2 + n);
 
-  const normalization = Math.sqrt(
-    (1 / a) *
-      factorial(n) *
-      Math.exp(
-        logGamma(2 * s2 - n) +
-          logGamma(alpha_jac + beta_jac + n + 1) -
-          logGamma(n + alpha_jac + 1) -
-          logGamma(n + beta_jac + 1),
-      ),
+  // Get numerical normalization constant
+  const xMin = xGrid[0];
+  const xMax = xGrid[xGrid.length - 1];
+  const normalization = computeEckartNormalization(
+    a,
+    s1,
+    s2,
+    n,
+    xMin,
+    xMax,
   );
 
   const secondDerivative: number[] = [];
@@ -849,15 +875,15 @@ export function calculateEckartPotentialWavefunctionMinMax(
   const alpha_jac = 2 * (s2 - n) - 1;
   const beta_jac = 2 * (s1 - s2 + n);
 
-  const normalization = Math.sqrt(
-    (1 / a) *
-      factorial(n) *
-      Math.exp(
-        logGamma(2 * s2 - n) +
-          logGamma(alpha_jac + beta_jac + n + 1) -
-          logGamma(n + alpha_jac + 1) -
-          logGamma(n + beta_jac + 1),
-      ),
+  // Get numerical normalization constant
+  const normalization = computeEckartNormalization(
+    a,
+    s1,
+    s2,
+    n,
+    xMin,
+    xMax,
+    numPoints,
   );
 
   let min = Infinity;
@@ -944,15 +970,15 @@ export function calculateEckartPotentialSuperpositionMinMax(
       const alpha_jac = 2 * (s2 - n) - 1;
       const beta_jac = 2 * (s1 - s2 + n);
 
-      const normalization = Math.sqrt(
-        (1 / a) *
-          factorial(n) *
-          Math.exp(
-            logGamma(2 * s2 - n) +
-              logGamma(alpha_jac + beta_jac + n + 1) -
-              logGamma(n + alpha_jac + 1) -
-              logGamma(n + beta_jac + 1),
-          ),
+      // Get numerical normalization constant
+      const normalization = computeEckartNormalization(
+        a,
+        s1,
+        s2,
+        n,
+        xMin,
+        xMax,
+        numPoints,
       );
 
       const xi = Math.exp(x / a);
