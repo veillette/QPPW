@@ -155,7 +155,7 @@ export abstract class BaseModel {
     );
 
     // Initialize well parameters with default values
-    this.wellWidthProperty = new NumberProperty(1.0, {
+    this.wellWidthProperty = new NumberProperty(4.0, {
       range: new Range(BaseModel.WELL_WIDTH_MIN, BaseModel.WELL_WIDTH_MAX),
     }); // in nanometers
     this.wellDepthProperty = new NumberProperty(5.0, {
@@ -631,20 +631,20 @@ export abstract class BaseModel {
    *
    * This method finds the extrema of an eigenstate wavefunction within the specified
    * spatial range. The wavefunction is sampled at multiple points to accurately
-   * capture the minimum and maximum values.
+   * capture the minimum and maximum values and their x-positions.
    *
    * @param n - The quantum number (1, 2, 3, ...)
    * @param xMinNm - Left boundary of the region in nanometers
    * @param xMaxNm - Right boundary of the region in nanometers
    * @param numPoints - Number of points to sample (default: 1000)
-   * @returns Object containing min and max values, or null if unavailable
+   * @returns Object containing min/max values and extrema positions in nm, or null if unavailable
    */
   public getWavefunctionMinMax(
     n: number,
     xMinNm: number,
     xMaxNm: number,
     numPoints?: number,
-  ): { min: number; max: number } | null {
+  ): { min: number; max: number; extremaPositions: number[] } | null {
     if (!this.boundStateResult) {
       this.calculateBoundStates();
     }
@@ -658,12 +658,23 @@ export abstract class BaseModel {
       const xMaxM = xMaxNm * QuantumConstants.NM_TO_M;
 
       // Calculate using analytical solution (stateIndex is 0-indexed)
-      return analyticalSolution.calculateWavefunctionMinMax(
+      const result = analyticalSolution.calculateWavefunctionMinMax(
         n - 1,
         xMinM,
         xMaxM,
         numPoints,
       );
+
+      // Convert extrema positions from meters back to nanometers
+      const extremaPositionsNm = result.extremaPositions.map(
+        (xM) => xM * QuantumConstants.M_TO_NM,
+      );
+
+      return {
+        min: result.min,
+        max: result.max,
+        extremaPositions: extremaPositionsNm,
+      };
     }
 
     return null;

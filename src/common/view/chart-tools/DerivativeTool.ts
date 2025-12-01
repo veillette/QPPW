@@ -102,10 +102,10 @@ export class DerivativeTool extends Node {
     });
     this.container.addChild(this.marker);
 
-    // Create marker handle (draggable circle)
+    // Create marker handle (draggable circle) - made invisible but still functional
     this.markerHandle = new Circle(8, {
-      fill: QPPWColors.derivativeToolFillLightProperty,
-      stroke: QPPWColors.backgroundColorProperty,
+      fill: "transparent",
+      stroke: "transparent",
       lineWidth: 2,
       cursor: "ew-resize",
 
@@ -193,20 +193,15 @@ export class DerivativeTool extends Node {
    * Setup drag listeners for marker handle (both mouse and keyboard)
    */
   private setupDragListener(): void {
-    const {
-      parentNode,
-      chartMargins,
-      viewToDataX,
-      xMinProperty,
-      xMaxProperty,
-    } = this.options;
+    const { parentNode, viewToDataX, xMinProperty, xMaxProperty } =
+      this.options;
 
     // Mouse drag listener
     const dragListener = new DragListener({
       drag: (event) => {
-        const parentPoint = parentNode.globalToParentPoint(event.pointer.point);
-        const localX = parentPoint.x - chartMargins.left;
-        const dataX = viewToDataX(localX);
+        // Convert to parent coordinate system (where dataToView/viewToData transforms are defined)
+        const parentPoint = parentNode.globalToLocalPoint(event.pointer.point);
+        const dataX = viewToDataX(parentPoint.x);
 
         // Clamp to chart bounds
         const clampedX = Math.max(
@@ -242,7 +237,7 @@ export class DerivativeTool extends Node {
         if (derivativeData !== null) {
           const message =
             `Marker at ${position.toFixed(2)} nanometers. ` +
-            `First derivative: ${derivativeData.firstDerivative.toExponential(2)}.`;
+            `First derivative: ${derivativeData.firstDerivative.toFixed(3)}.`;
           utteranceQueue.addToBack(new Utterance({ alert: message }));
         }
       },
@@ -295,7 +290,7 @@ export class DerivativeTool extends Node {
       this.label.string =
         stringManager.firstDerivativeLabelStringProperty.value.replace(
           "{{value}}",
-          derivativeData.firstDerivative.toExponential(2),
+          derivativeData.firstDerivative.toFixed(3),
         );
       this.label.centerX = viewX;
       this.label.top = yTop + 5; // Position just inside the chart area

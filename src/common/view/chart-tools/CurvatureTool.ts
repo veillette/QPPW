@@ -57,6 +57,10 @@ export class CurvatureTool extends Node {
   private readonly parabola: Path;
   private readonly label: Text;
 
+  // Cache for extrema positions to avoid recalculating on every drag event
+  private extremaPositionsCache: number[] | null = null;
+  private lastCachedEnergyLevel: number = -1;
+
   constructor(
     model: ScreenModel,
     getEffectiveDisplayMode: () => string,
@@ -102,10 +106,10 @@ export class CurvatureTool extends Node {
     });
     this.container.addChild(this.marker);
 
-    // Create marker handle (draggable circle)
+    // Create marker handle (draggable circle) - made invisible but still functional
     this.markerHandle = new Circle(8, {
-      fill: QPPWColors.curvatureToolFillLightProperty,
-      stroke: QPPWColors.backgroundColorProperty,
+      fill: "transparent",
+      stroke: "transparent",
       lineWidth: 2,
       cursor: "ew-resize",
 
@@ -193,27 +197,25 @@ export class CurvatureTool extends Node {
    * Setup drag listeners for marker handle (both mouse and keyboard)
    */
   private setupDragListener(): void {
-    const {
-      parentNode,
-      chartMargins,
-      viewToDataX,
-      xMinProperty,
-      xMaxProperty,
-    } = this.options;
+    const { parentNode, viewToDataX, xMinProperty, xMaxProperty } =
+      this.options;
 
     // Mouse drag listener
     const dragListener = new DragListener({
       drag: (event) => {
-        const parentPoint = parentNode.globalToParentPoint(event.pointer.point);
-        const localX = parentPoint.x - chartMargins.left;
-        const dataX = viewToDataX(localX);
+        // Convert to parent coordinate system (where dataToView/viewToData transforms are defined)
+        const parentPoint = parentNode.globalToLocalPoint(event.pointer.point);
+        let dataX = viewToDataX(parentPoint.x);
 
         // Clamp to chart bounds
-        const clampedX = Math.max(
+        dataX = Math.max(
           xMinProperty.value,
           Math.min(xMaxProperty.value, dataX),
         );
-        this.markerXProperty.value = clampedX;
+
+        // Apply snapping to extrema (max/min values)
+        const snappedX = this.snapToExtrema(dataX);
+        this.markerXProperty.value = snappedX;
       },
     });
 
@@ -239,7 +241,7 @@ export class CurvatureTool extends Node {
         if (derivatives !== null) {
           const message =
             `Marker at ${position.toFixed(2)} nanometers. ` +
-            `Second derivative: ${derivatives.secondDerivative.toExponential(2)}.`;
+            `Second derivative: ${derivatives.secondDerivative.toFixed(3)}.`;
           utteranceQueue.addToBack(new Utterance({ alert: message }));
         }
       },
@@ -291,7 +293,7 @@ export class CurvatureTool extends Node {
       this.label.string =
         stringManager.secondDerivativeLabelStringProperty.value.replace(
           "{{value}}",
-          derivatives.secondDerivative.toExponential(2),
+          derivatives.secondDerivative.toFixed(3),
         );
       this.label.centerX = viewX;
       this.label.top = yTop + 5; // Position just inside the chart area
@@ -299,6 +301,73 @@ export class CurvatureTool extends Node {
       this.parabola.shape = null;
       this.label.string = stringManager.notAvailableStringProperty.value;
     }
+  }
+
+  /**
+   * Finds extrema (maxima and minima) positions in the wavefunction.
+   * Returns an array of x-positions where the wavefunction has local extrema.
+   * Uses caching to avoid recalculating on every drag event.
+   */
+  private findExtremaPositions(): number[] {
+    const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
+
+    // Return cached result if energy level hasn't changed
+    if (
+      this.extremaPositionsCache !== null &&
+      this.lastCachedEnergyLevel === selectedIndex
+    ) {
+      return this.extremaPositionsCache;
+    }
+
+    const { xMinProperty, xMaxProperty } = this.options;
+    const xMin = xMinProperty.value;
+    const xMax = xMaxProperty.value;
+
+    // Use model's method to get extrema positions
+    // selectedIndex is 0-based, but getWavefunctionMinMax expects quantum number (1-based)
+    const result = this.model.getWavefunctionMinMax(
+      selectedIndex + 1,
+      xMin,
+      xMax,
+      200, // numPoints for sampling
+    );
+
+    const extremaPositions = result ? result.extremaPositions : [];
+
+    // Cache the results
+    this.extremaPositionsCache = extremaPositions;
+    this.lastCachedEnergyLevel = selectedIndex;
+
+    return extremaPositions;
+  }
+
+  /**
+   * Snaps the x-position to nearby extrema if close enough.
+   * @param x - The current x-position
+   * @returns The snapped x-position or the original if no nearby extrema
+   */
+  private snapToExtrema(x: number): number {
+    const extremaPositions = this.findExtremaPositions();
+    const snapThreshold = 0.15; // Snap within 0.15 nm
+
+    // Find the closest extremum
+    let closestExtremum: number | null = null;
+    let minDistance = Infinity;
+
+    for (const extremumX of extremaPositions) {
+      const distance = Math.abs(x - extremumX);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestExtremum = extremumX;
+      }
+    }
+
+    // Snap if within threshold
+    if (closestExtremum !== null && minDistance < snapThreshold) {
+      return closestExtremum;
+    }
+
+    return x;
   }
 
   /**

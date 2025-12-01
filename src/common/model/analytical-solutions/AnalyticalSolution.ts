@@ -133,21 +133,22 @@ export abstract class AnalyticalSolution {
    * Calculate the minimum and maximum values of a wavefunction in a given region.
    *
    * This method evaluates the wavefunction at multiple points within the specified
-   * region and returns the minimum and maximum values encountered. The wavefunction
-   * is sampled at a sufficient density to accurately capture the extrema.
+   * region and returns the minimum and maximum values encountered, along with their
+   * x-positions. The wavefunction is sampled at a sufficient density to accurately
+   * capture the extrema.
    *
    * @param stateIndex - Index of the eigenstate (0 for ground state, 1 for first excited, etc.)
    * @param xMin - Left boundary of the region in meters
    * @param xMax - Right boundary of the region in meters
    * @param numPoints - Number of points to sample (default: 1000)
-   * @returns Object containing min and max values of the wavefunction
+   * @returns Object containing min/max values and their x-positions (all extrema positions)
    */
   abstract calculateWavefunctionMinMax(
     stateIndex: number,
     xMin: number,
     xMax: number,
     numPoints?: number,
-  ): { min: number; max: number };
+  ): { min: number; max: number; extremaPositions: number[] };
 
   /**
    * Calculate the minimum and maximum values of a superposition of wavefunctions.

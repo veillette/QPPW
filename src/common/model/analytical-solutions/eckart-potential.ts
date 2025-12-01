@@ -153,7 +153,7 @@ export class EckartPotentialSolution extends AnalyticalSolution {
     xMin: number,
     xMax: number,
     numPoints?: number,
-  ): { min: number; max: number } {
+  ): { min: number; max: number; extremaPositions: number[] } {
     return calculateEckartPotentialWavefunctionMinMax(
       this.potentialDepth,
       this.barrierHeight,
@@ -838,7 +838,7 @@ export function calculateEckartPotentialWavefunctionMinMax(
   xMin: number,
   xMax: number,
   numPoints: number = 1000,
-): { min: number; max: number } {
+): { min: number; max: number; extremaPositions: number[] } {
   const { HBAR } = QuantumConstants;
   const V0 = potentialDepth;
   const V1 = barrierHeight;
@@ -868,8 +868,11 @@ export function calculateEckartPotentialWavefunctionMinMax(
 
   let min = Infinity;
   let max = -Infinity;
+  const extremaPositions: number[] = [];
 
   const dx = (xMax - xMin) / (numPoints - 1);
+  const h = 1e-12; // Small step for numerical derivative
+  let prevDerivativeSign: number | null = null;
 
   for (let i = 0; i < numPoints; i++) {
     const x = xMin + i * dx;
@@ -884,11 +887,52 @@ export function calculateEckartPotentialWavefunctionMinMax(
       Math.pow(xiPlus1, -s1 - s2 + n) *
       jacobiPoly;
 
+    // Calculate derivative using central difference for extrema detection
+    let derivative = 0;
+    if (i > 0 && i < numPoints - 1) {
+      const xMinus = x - h;
+      const xPlus = x + h;
+
+      const xiMinus = Math.exp(xMinus / a);
+      const xiPlus1Minus = 1 + xiMinus;
+      const jacobiArgMinus = 1 - (2 * xiMinus) / xiPlus1Minus;
+      const jacobiPolyMinus = jacobiPolynomial(n, alpha_jac, beta_jac, jacobiArgMinus);
+      const psiMinus =
+        normalization *
+        Math.pow(xiMinus, s2 - n) *
+        Math.pow(xiPlus1Minus, -s1 - s2 + n) *
+        jacobiPolyMinus;
+
+      const xiPlusVal = Math.exp(xPlus / a);
+      const xiPlus1Plus = 1 + xiPlusVal;
+      const jacobiArgPlus = 1 - (2 * xiPlusVal) / xiPlus1Plus;
+      const jacobiPolyPlus = jacobiPolynomial(n, alpha_jac, beta_jac, jacobiArgPlus);
+      const psiPlus =
+        normalization *
+        Math.pow(xiPlusVal, s2 - n) *
+        Math.pow(xiPlus1Plus, -s1 - s2 + n) *
+        jacobiPolyPlus;
+
+      derivative = (psiPlus - psiMinus) / (2 * h);
+    }
+
     if (psi < min) min = psi;
     if (psi > max) max = psi;
+
+    // Detect extrema by sign change in derivative
+    const currentDerivativeSign = Math.sign(derivative);
+    if (
+      prevDerivativeSign !== null &&
+      currentDerivativeSign !== prevDerivativeSign &&
+      prevDerivativeSign !== 0 &&
+      Math.abs(derivative) > 1e-10 // Avoid numerical noise
+    ) {
+      extremaPositions.push(x);
+    }
+    prevDerivativeSign = currentDerivativeSign;
   }
 
-  return { min, max };
+  return { min, max, extremaPositions };
 }
 
 /**

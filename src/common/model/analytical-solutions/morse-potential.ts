@@ -148,7 +148,7 @@ export class MorsePotentialSolution extends AnalyticalSolution {
     xMin: number,
     xMax: number,
     numPoints?: number,
-  ): { min: number; max: number } {
+  ): { min: number; max: number; extremaPositions: number[] } {
     return calculateMorsePotentialWavefunctionMinMax(
       this.dissociationEnergy,
       this.wellWidth,
@@ -705,7 +705,7 @@ export function calculateMorsePotentialWavefunctionSecondDerivative(
  * Calculate the minimum and maximum values of the wavefunction for a Morse potential.
  *
  * For ψ_n(z) = N_n · z^(λ-n-1/2) · exp(-z/2) · L_n^(2λ-2n-1)(z), the function is sampled
- * at multiple points in the range [xMin, xMax] to find the extrema.
+ * at multiple points in the range [xMin, xMax] to find the extrema and their positions.
  *
  * @param dissociationEnergy - Dissociation energy D_e in Joules
  * @param wellWidth - Width parameter a in meters
@@ -715,7 +715,7 @@ export function calculateMorsePotentialWavefunctionSecondDerivative(
  * @param xMin - Left boundary of the region in meters
  * @param xMax - Right boundary of the region in meters
  * @param numPoints - Number of points to sample (default: 1000)
- * @returns Object containing min and max values of the wavefunction
+ * @returns Object containing min/max values and x-positions of all extrema
  */
 export function calculateMorsePotentialWavefunctionMinMax(
   dissociationEnergy: number,
@@ -726,7 +726,7 @@ export function calculateMorsePotentialWavefunctionMinMax(
   xMin: number,
   xMax: number,
   numPoints: number = 1000,
-): { min: number; max: number } {
+): { min: number; max: number; extremaPositions: number[] } {
   const { HBAR } = QuantumConstants;
   const De = dissociationEnergy;
   const a = wellWidth;
@@ -750,8 +750,11 @@ export function calculateMorsePotentialWavefunctionMinMax(
 
   let min = Infinity;
   let max = -Infinity;
+  const extremaPositions: number[] = [];
 
   const dx = (xMax - xMin) / (numPoints - 1);
+  const h = 1e-12; // Small step for numerical derivative
+  let prevDerivativeSign: number | null = null;
 
   for (let i = 0; i < numPoints; i++) {
     const x = xMin + i * dx;
@@ -761,11 +764,47 @@ export function calculateMorsePotentialWavefunctionMinMax(
     const psi =
       normalization * Math.pow(z, exponent) * Math.exp(-z / 2) * laguerre;
 
+    // Calculate derivative using central difference for extrema detection
+    let derivative = 0;
+    if (i > 0 && i < numPoints - 1) {
+      const xMinus = x - h;
+      const xPlus = x + h;
+
+      const zMinus = 2 * lambda * Math.exp(-(xMinus - xe) / a);
+      const zPlus = 2 * lambda * Math.exp(-(xPlus - xe) / a);
+
+      const psiMinus =
+        normalization *
+        Math.pow(zMinus, exponent) *
+        Math.exp(-zMinus / 2) *
+        associatedLaguerre(n, alpha, zMinus);
+
+      const psiPlus =
+        normalization *
+        Math.pow(zPlus, exponent) *
+        Math.exp(-zPlus / 2) *
+        associatedLaguerre(n, alpha, zPlus);
+
+      derivative = (psiPlus - psiMinus) / (2 * h);
+    }
+
     if (psi < min) min = psi;
     if (psi > max) max = psi;
+
+    // Detect extrema by sign change in derivative
+    const currentDerivativeSign = Math.sign(derivative);
+    if (
+      prevDerivativeSign !== null &&
+      currentDerivativeSign !== prevDerivativeSign &&
+      prevDerivativeSign !== 0 &&
+      Math.abs(derivative) > 1e-10 // Avoid numerical noise
+    ) {
+      extremaPositions.push(x);
+    }
+    prevDerivativeSign = currentDerivativeSign;
   }
 
-  return { min, max };
+  return { min, max, extremaPositions };
 }
 
 /**

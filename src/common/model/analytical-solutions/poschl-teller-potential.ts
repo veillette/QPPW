@@ -136,7 +136,7 @@ export class PoschlTellerPotentialSolution extends AnalyticalSolution {
     xMin: number,
     xMax: number,
     numPoints?: number,
-  ): { min: number; max: number } {
+  ): { min: number; max: number; extremaPositions: number[] } {
     return calculatePoschlTellerWavefunctionMinMax(
       this.potentialDepth,
       this.wellWidth,
@@ -612,7 +612,7 @@ export function calculatePoschlTellerWavefunctionSecondDerivative(
  * Calculate the minimum and maximum values of the wavefunction for a Pöschl-Teller potential.
  *
  * For ψ_n(x) = N_n · sech^(λ-n-1/2)(x/a) · P_n^(α,α)(tanh(x/a)), the function is sampled
- * at multiple points in the range [xMin, xMax] to find the extrema.
+ * at multiple points in the range [xMin, xMax] to find the extrema and their positions.
  *
  * @param potentialDepth - Potential depth V_0 in Joules (positive value)
  * @param wellWidth - Width parameter a in meters
@@ -621,7 +621,7 @@ export function calculatePoschlTellerWavefunctionSecondDerivative(
  * @param xMin - Left boundary of the region in meters
  * @param xMax - Right boundary of the region in meters
  * @param numPoints - Number of points to sample (default: 1000)
- * @returns Object containing min and max values of the wavefunction
+ * @returns Object containing min/max values and x-positions of all extrema
  */
 export function calculatePoschlTellerWavefunctionMinMax(
   potentialDepth: number,
@@ -631,7 +631,7 @@ export function calculatePoschlTellerWavefunctionMinMax(
   xMin: number,
   xMax: number,
   numPoints: number = 1000,
-): { min: number; max: number } {
+): { min: number; max: number; extremaPositions: number[] } {
   const { HBAR } = QuantumConstants;
   const V0 = potentialDepth;
   const a = wellWidth;
@@ -644,8 +644,11 @@ export function calculatePoschlTellerWavefunctionMinMax(
 
   let min = Infinity;
   let max = -Infinity;
+  const extremaPositions: number[] = [];
 
   const dx = (xMax - xMin) / (numPoints - 1);
+  const h = 1e-12; // Small step for numerical derivative
+  let prevDerivativeSign: number | null = null;
 
   for (let i = 0; i < numPoints; i++) {
     const x = xMin + i * dx;
@@ -655,11 +658,42 @@ export function calculatePoschlTellerWavefunctionMinMax(
     const jacobiPoly = jacobiPolynomial(n, alpha, alpha, tanhVal);
     const psi = normalization * Math.pow(sechVal, alpha) * jacobiPoly;
 
+    // Calculate derivative using central difference for extrema detection
+    let derivative = 0;
+    if (i > 0 && i < numPoints - 1) {
+      const xMinus = x - h;
+      const xPlus = x + h;
+
+      const tanhMinus = Math.tanh(xMinus / a);
+      const sechMinus = 1.0 / Math.cosh(xMinus / a);
+      const jacobiMinus = jacobiPolynomial(n, alpha, alpha, tanhMinus);
+      const psiMinus = normalization * Math.pow(sechMinus, alpha) * jacobiMinus;
+
+      const tanhPlus = Math.tanh(xPlus / a);
+      const sechPlus = 1.0 / Math.cosh(xPlus / a);
+      const jacobiPlus = jacobiPolynomial(n, alpha, alpha, tanhPlus);
+      const psiPlus = normalization * Math.pow(sechPlus, alpha) * jacobiPlus;
+
+      derivative = (psiPlus - psiMinus) / (2 * h);
+    }
+
     if (psi < min) min = psi;
     if (psi > max) max = psi;
+
+    // Detect extrema by sign change in derivative
+    const currentDerivativeSign = Math.sign(derivative);
+    if (
+      prevDerivativeSign !== null &&
+      currentDerivativeSign !== prevDerivativeSign &&
+      prevDerivativeSign !== 0 &&
+      Math.abs(derivative) > 1e-10 // Avoid numerical noise
+    ) {
+      extremaPositions.push(x);
+    }
+    prevDerivativeSign = currentDerivativeSign;
   }
 
-  return { min, max };
+  return { min, max, extremaPositions };
 }
 
 /**

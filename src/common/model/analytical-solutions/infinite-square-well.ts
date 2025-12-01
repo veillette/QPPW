@@ -233,14 +233,14 @@ export function calculateInfiniteWellWavefunctionSecondDerivative(
  * Calculate the minimum and maximum values of the wavefunction for an infinite square well.
  *
  * For ψ_n(x) = √(2/L) sin(nπ(x + L/2)/L), the function is sampled at multiple points
- * in the range [xMin, xMax] to find the extrema.
+ * in the range [xMin, xMax] to find the extrema and their positions.
  *
  * @param wellWidth - Width of the well (L) in meters
  * @param stateIndex - Index of the eigenstate (0 for ground state, 1 for first excited, etc.)
  * @param xMin - Left boundary of the region in meters
  * @param xMax - Right boundary of the region in meters
  * @param numPoints - Number of points to sample (default: 1000)
- * @returns Object containing min and max values of the wavefunction
+ * @returns Object containing min/max values and x-positions of all extrema
  */
 export function calculateInfiniteWellWavefunctionMinMax(
   wellWidth: number,
@@ -248,7 +248,7 @@ export function calculateInfiniteWellWavefunctionMinMax(
   xMin: number,
   xMax: number,
   numPoints: number = 1000,
-): { min: number; max: number } {
+): { min: number; max: number; extremaPositions: number[] } {
   const n = stateIndex + 1; // Quantum number (1, 2, 3, ...)
   const L = wellWidth;
   const halfWidth = L / 2;
@@ -257,28 +257,47 @@ export function calculateInfiniteWellWavefunctionMinMax(
 
   let min = Infinity;
   let max = -Infinity;
+  const extremaPositions: number[] = [];
 
   const dx = (xMax - xMin) / (numPoints - 1);
+  let prevDerivativeSign: number | null = null;
 
   for (let i = 0; i < numPoints; i++) {
     const x = xMin + i * dx;
 
     let psi: number;
+    let derivative: number;
+
     // Check if x is inside the well [-L/2, L/2]
     if (x >= -halfWidth && x <= halfWidth) {
       // Shift coordinate to [0, L] range for standard formula
       const xShifted = x + halfWidth;
       psi = normalization * Math.sin(waveFactor * xShifted);
+      // ψ'_n(x) = normalization * waveFactor * cos(waveFactor * xShifted)
+      derivative = normalization * waveFactor * Math.cos(waveFactor * xShifted);
     } else {
       // Outside the well, wavefunction is zero
       psi = 0;
+      derivative = 0;
     }
 
     if (psi < min) min = psi;
     if (psi > max) max = psi;
+
+    // Detect extrema by sign change in derivative
+    const currentDerivativeSign = Math.sign(derivative);
+    if (
+      prevDerivativeSign !== null &&
+      currentDerivativeSign !== prevDerivativeSign &&
+      prevDerivativeSign !== 0 &&
+      Math.abs(derivative) > 1e-10 // Avoid numerical noise
+    ) {
+      extremaPositions.push(x);
+    }
+    prevDerivativeSign = currentDerivativeSign;
   }
 
-  return { min, max };
+  return { min, max, extremaPositions };
 }
 
 /**
@@ -561,7 +580,7 @@ export class InfiniteSquareWellSolution extends AnalyticalSolution {
     xMin: number,
     xMax: number,
     numPoints?: number,
-  ): { min: number; max: number } {
+  ): { min: number; max: number; extremaPositions: number[] } {
     return calculateInfiniteWellWavefunctionMinMax(
       this.wellWidth,
       stateIndex,

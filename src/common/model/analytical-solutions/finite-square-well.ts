@@ -398,7 +398,7 @@ export function calculateFiniteWellWavefunctionSecondDerivative(
  * @param xMin - Left boundary of the region in meters
  * @param xMax - Right boundary of the region in meters
  * @param numPoints - Number of points to sample (default: 1000)
- * @returns Object containing min and max values of the wavefunction
+ * @returns Object containing min/max values and x-positions of all extrema
  */
 export function calculateFiniteWellWavefunctionMinMax(
   wellWidth: number,
@@ -409,7 +409,7 @@ export function calculateFiniteWellWavefunctionMinMax(
   xMin: number,
   xMax: number,
   numPoints: number = 1000,
-): { min: number; max: number } {
+): { min: number; max: number; extremaPositions: number[] } {
   const { HBAR } = QuantumConstants;
   const halfWidth = wellWidth / 2;
   const k = Math.sqrt(2 * mass * (energy + wellDepth)) / HBAR;
@@ -439,19 +439,20 @@ export function calculateFiniteWellWavefunctionMinMax(
 
   let min = Infinity;
   let max = -Infinity;
+  const extremaPositions: number[] = [];
 
   const dx = (xMax - xMin) / (numPoints - 1);
+  const h = 1e-12; // Small step for numerical derivative
+  let prevDerivativeSign: number | null = null;
 
-  for (let i = 0; i < numPoints; i++) {
-    const x = xMin + i * dx;
-    let psi: number;
-
+  // Helper function to calculate psi at a given x
+  const calculatePsi = (x: number): number => {
     if (Math.abs(x) <= halfWidth) {
       // Inside the well
       if (parity === "even") {
-        psi = normalization * Math.cos(k * x);
+        return normalization * Math.cos(k * x);
       } else {
-        psi = normalization * Math.sin(k * x);
+        return normalization * Math.sin(k * x);
       }
     } else {
       // Outside the well
@@ -461,19 +462,44 @@ export function calculateFiniteWellWavefunctionMinMax(
       if (parity === "even") {
         const cosVal = Math.cos(k * halfWidth);
         const B = normalization * cosVal * Math.exp(kappa * halfWidth);
-        psi = B * Math.exp(-kappa * absX);
+        return B * Math.exp(-kappa * absX);
       } else {
         const sinVal = Math.sin(k * halfWidth);
         const B = normalization * sinVal * Math.exp(kappa * halfWidth);
-        psi = B * signX * Math.exp(-kappa * absX);
+        return B * signX * Math.exp(-kappa * absX);
       }
+    }
+  };
+
+  for (let i = 0; i < numPoints; i++) {
+    const x = xMin + i * dx;
+    const psi = calculatePsi(x);
+
+    // Calculate derivative using central difference for extrema detection
+    let derivative = 0;
+    if (i > 0 && i < numPoints - 1) {
+      const psiMinus = calculatePsi(x - h);
+      const psiPlus = calculatePsi(x + h);
+      derivative = (psiPlus - psiMinus) / (2 * h);
     }
 
     if (psi < min) min = psi;
     if (psi > max) max = psi;
+
+    // Detect extrema by sign change in derivative
+    const currentDerivativeSign = Math.sign(derivative);
+    if (
+      prevDerivativeSign !== null &&
+      currentDerivativeSign !== prevDerivativeSign &&
+      prevDerivativeSign !== 0 &&
+      Math.abs(derivative) > 1e-10 // Avoid numerical noise
+    ) {
+      extremaPositions.push(x);
+    }
+    prevDerivativeSign = currentDerivativeSign;
   }
 
-  return { min, max };
+  return { min, max, extremaPositions };
 }
 
 /**
@@ -745,7 +771,7 @@ export class FiniteSquareWellSolution extends AnalyticalSolution {
     xMin: number,
     xMax: number,
     numPoints?: number,
-  ): { min: number; max: number } {
+  ): { min: number; max: number; extremaPositions: number[] } {
     const parity =
       this.parities[stateIndex] || (stateIndex % 2 === 0 ? "even" : "odd");
 
@@ -761,7 +787,7 @@ export class FiniteSquareWellSolution extends AnalyticalSolution {
     }
 
     if (xi === null) {
-      return { min: 0, max: 0 };
+      return { min: 0, max: 0, extremaPositions: [] };
     }
 
     const energy =

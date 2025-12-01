@@ -154,7 +154,7 @@ export class AsymmetricTrianglePotentialSolution extends AnalyticalSolution {
     xMin: number,
     xMax: number,
     numPoints?: number,
-  ): { min: number; max: number } {
+  ): { min: number; max: number; extremaPositions: number[] } {
     return calculateAsymmetricTriangleWavefunctionMinMax(
       this.slope,
       this.mass,
@@ -566,7 +566,7 @@ export function calculateAsymmetricTriangleWavefunctionSecondDerivative(
  * @param xMin - Left boundary of the region in meters
  * @param xMax - Right boundary of the region in meters
  * @param numPoints - Number of points to sample (default: 1000)
- * @returns Object containing min and max values of the wavefunction
+ * @returns Object containing min/max values and x-positions of all extrema
  */
 export function calculateAsymmetricTriangleWavefunctionMinMax(
   slope: number,
@@ -575,7 +575,7 @@ export function calculateAsymmetricTriangleWavefunctionMinMax(
   xMin: number,
   xMax: number,
   numPoints: number = 1000,
-): { min: number; max: number } {
+): { min: number; max: number; extremaPositions: number[] } {
   const F = slope;
   const alpha = calculateAiryAlpha(mass, F);
 
@@ -586,25 +586,51 @@ export function calculateAsymmetricTriangleWavefunctionMinMax(
 
   let min = Infinity;
   let max = -Infinity;
+  const extremaPositions: number[] = [];
 
   const dx = (xMax - xMin) / (numPoints - 1);
+  const h = 1e-12; // Small step for numerical derivative
+  let prevDerivativeSign: number | null = null;
+
+  // Helper function to calculate psi at a given x
+  const calculatePsi = (x: number): number => {
+    if (x < 0) {
+      return 0;
+    } else {
+      const z = alpha * (x - x0);
+      return airyAi(z);
+    }
+  };
 
   for (let i = 0; i < numPoints; i++) {
     const x = xMin + i * dx;
+    const psi = calculatePsi(x);
 
-    let psi: number;
-    if (x < 0) {
-      psi = 0;
-    } else {
-      const z = alpha * (x - x0);
-      psi = airyAi(z);
+    // Calculate derivative using central difference for extrema detection
+    let derivative = 0;
+    if (i > 0 && i < numPoints - 1) {
+      const psiMinus = calculatePsi(x - h);
+      const psiPlus = calculatePsi(x + h);
+      derivative = (psiPlus - psiMinus) / (2 * h);
     }
 
     if (psi < min) min = psi;
     if (psi > max) max = psi;
+
+    // Detect extrema by sign change in derivative
+    const currentDerivativeSign = Math.sign(derivative);
+    if (
+      prevDerivativeSign !== null &&
+      currentDerivativeSign !== prevDerivativeSign &&
+      prevDerivativeSign !== 0 &&
+      Math.abs(derivative) > 1e-10 // Avoid numerical noise
+    ) {
+      extremaPositions.push(x);
+    }
+    prevDerivativeSign = currentDerivativeSign;
   }
 
-  return { min, max };
+  return { min, max, extremaPositions };
 }
 
 /**

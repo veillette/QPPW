@@ -353,7 +353,7 @@ export function calculateHarmonicOscillatorWavefunctionSecondDerivative(
  * Calculate the minimum and maximum values of the wavefunction for a harmonic oscillator.
  *
  * For ψ_n(x) = N_n · exp(-αx²/2) · H_n(√α x), the function is sampled at multiple points
- * in the range [xMin, xMax] to find the extrema.
+ * in the range [xMin, xMax] to find the extrema and their positions.
  *
  * @param springConstant - Spring constant k in N/m
  * @param mass - Particle mass in kg
@@ -361,7 +361,7 @@ export function calculateHarmonicOscillatorWavefunctionSecondDerivative(
  * @param xMin - Left boundary of the region in meters
  * @param xMax - Right boundary of the region in meters
  * @param numPoints - Number of points to sample (default: 1000)
- * @returns Object containing min and max values of the wavefunction
+ * @returns Object containing min/max values and x-positions of all extrema
  */
 export function calculateHarmonicOscillatorWavefunctionMinMax(
   springConstant: number,
@@ -370,7 +370,7 @@ export function calculateHarmonicOscillatorWavefunctionMinMax(
   xMin: number,
   xMax: number,
   numPoints: number = 1000,
-): { min: number; max: number } {
+): { min: number; max: number; extremaPositions: number[] } {
   const { HBAR } = QuantumConstants;
   const n = stateIndex; // Quantum number (0, 1, 2, ...)
   const omega = Math.sqrt(springConstant / mass);
@@ -382,22 +382,50 @@ export function calculateHarmonicOscillatorWavefunctionMinMax(
 
   let min = Infinity;
   let max = -Infinity;
+  const extremaPositions: number[] = [];
 
   const dx = (xMax - xMin) / (numPoints - 1);
+  let prevDerivativeSign: number | null = null;
 
   for (let i = 0; i < numPoints; i++) {
     const x = xMin + i * dx;
 
     const xi = alpha * x;
     const gaussianFactor = Math.exp((-xi * xi) / 2);
-    const hermite = hermitePolynomial(n, xi);
-    const psi = normalization * gaussianFactor * hermite;
+    const hermite_n = hermitePolynomial(n, xi);
+    const psi = normalization * gaussianFactor * hermite_n;
+
+    // Calculate first derivative for extrema detection
+    // ψ'_n(x) = N * α * exp(-αx²/2) * [H'_n(ξ) - ξ * H_n(ξ)]
+    // where H'_n(ξ) = 2n H_{n-1}(ξ)
+    let hermite_derivative = 0;
+    if (n > 0) {
+      const hermite_n_minus_1 = hermitePolynomial(n - 1, xi);
+      hermite_derivative = 2 * n * hermite_n_minus_1;
+    }
+    const derivative =
+      normalization *
+      alpha *
+      gaussianFactor *
+      (hermite_derivative - xi * hermite_n);
 
     if (psi < min) min = psi;
     if (psi > max) max = psi;
+
+    // Detect extrema by sign change in derivative
+    const currentDerivativeSign = Math.sign(derivative);
+    if (
+      prevDerivativeSign !== null &&
+      currentDerivativeSign !== prevDerivativeSign &&
+      prevDerivativeSign !== 0 &&
+      Math.abs(derivative) > 1e-10 // Avoid numerical noise
+    ) {
+      extremaPositions.push(x);
+    }
+    prevDerivativeSign = currentDerivativeSign;
   }
 
-  return { min, max };
+  return { min, max, extremaPositions };
 }
 
 /**
@@ -630,7 +658,7 @@ export class HarmonicOscillatorSolution extends AnalyticalSolution {
     xMin: number,
     xMax: number,
     numPoints?: number,
-  ): { min: number; max: number } {
+  ): { min: number; max: number; extremaPositions: number[] } {
     return calculateHarmonicOscillatorWavefunctionMinMax(
       this.springConstant,
       this.mass,

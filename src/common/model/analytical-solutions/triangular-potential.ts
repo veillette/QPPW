@@ -183,7 +183,7 @@ export class TriangularPotentialSolution extends AnalyticalSolution {
     xMin: number,
     xMax: number,
     numPoints?: number,
-  ): { min: number; max: number } {
+  ): { min: number; max: number; extremaPositions: number[] } {
     // Need energy to calculate min/max
     // Solve if not already done
     const result = this.solve(stateIndex + 1, {
@@ -1163,7 +1163,7 @@ export function calculateTriangularPotentialWavefunctionSecondDerivative(
  * @param xMin - Left boundary of the region in meters
  * @param xMax - Right boundary of the region in meters
  * @param numPoints - Number of points to sample (default: 1000)
- * @returns Object containing min and max values of the wavefunction
+ * @returns Object containing min/max values and x-positions of all extrema
  */
 export function calculateTriangularPotentialWavefunctionMinMax(
   height: number,
@@ -1174,7 +1174,7 @@ export function calculateTriangularPotentialWavefunctionMinMax(
   xMin: number,
   xMax: number,
   numPoints: number = 1000,
-): { min: number; max: number } {
+): { min: number; max: number; extremaPositions: number[] } {
   const { HBAR } = QuantumConstants;
   const F = height / width;
   const V0 = height + offset;
@@ -1222,24 +1222,25 @@ export function calculateTriangularPotentialWavefunctionMinMax(
 
   let min = Infinity;
   let max = -Infinity;
+  const extremaPositions: number[] = [];
 
   const dx = (xMax - xMin) / (numPoints - 1);
+  const h = 1e-12; // Small step for numerical derivative
+  let prevDerivativeSign: number | null = null;
 
-  for (let i = 0; i < numPoints; i++) {
-    const x = xMin + i * dx;
-    let psi: number;
-
+  // Helper function to calculate psi at a given x
+  const calculatePsi = (x: number): number => {
     if (x < 0) {
-      psi = normalization * psiAt0 * Math.exp(kappa * x);
+      return normalization * psiAt0 * Math.exp(kappa * x);
     } else if (x <= x0) {
       const z = alpha * (x - x0);
-      psi = normalization * (A * airyAi(z) + B * airyBi(z));
+      return normalization * (A * airyAi(z) + B * airyBi(z));
     } else if (x < width) {
       const z = alpha * (x - x0);
       if (z < 4.0) {
         const aiAtZ = airyAi(z);
         const aiAt0 = airyAi(0);
-        psi = normalization * psiAtX0 * (aiAtZ / aiAt0);
+        return normalization * psiAtX0 * (aiAtZ / aiAt0);
       } else {
         const zeta = (2.0 / 3.0) * Math.pow(z, 1.5);
         const aiAt0 = airyAi(0);
@@ -1247,7 +1248,7 @@ export function calculateTriangularPotentialWavefunctionMinMax(
           ((1.0 / (2.0 * Math.sqrt(Math.PI) * Math.pow(z, 0.25))) *
             Math.exp(-zeta)) /
           aiAt0;
-        psi = normalization * psiAtX0 * ratio;
+        return normalization * psiAtX0 * ratio;
       }
     } else {
       const zAtWidth = alpha * (width - x0);
@@ -1265,14 +1266,39 @@ export function calculateTriangularPotentialWavefunctionMinMax(
           aiAt0;
         psiAtWidth = psiAtX0 * ratio;
       }
-      psi = normalization * psiAtWidth * Math.exp(-kappa * (x - width));
+      return normalization * psiAtWidth * Math.exp(-kappa * (x - width));
+    }
+  };
+
+  for (let i = 0; i < numPoints; i++) {
+    const x = xMin + i * dx;
+    const psi = calculatePsi(x);
+
+    // Calculate derivative using central difference for extrema detection
+    let derivative = 0;
+    if (i > 0 && i < numPoints - 1) {
+      const psiMinus = calculatePsi(x - h);
+      const psiPlus = calculatePsi(x + h);
+      derivative = (psiPlus - psiMinus) / (2 * h);
     }
 
     if (psi < min) min = psi;
     if (psi > max) max = psi;
+
+    // Detect extrema by sign change in derivative
+    const currentDerivativeSign = Math.sign(derivative);
+    if (
+      prevDerivativeSign !== null &&
+      currentDerivativeSign !== prevDerivativeSign &&
+      prevDerivativeSign !== 0 &&
+      Math.abs(derivative) > 1e-10 // Avoid numerical noise
+    ) {
+      extremaPositions.push(x);
+    }
+    prevDerivativeSign = currentDerivativeSign;
   }
 
-  return { min, max };
+  return { min, max, extremaPositions };
 }
 
 /**

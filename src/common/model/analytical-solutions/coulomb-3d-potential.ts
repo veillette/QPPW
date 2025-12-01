@@ -123,7 +123,7 @@ export class Coulomb3DPotentialSolution extends AnalyticalSolution {
     xMin: number,
     xMax: number,
     numPoints?: number,
-  ): { min: number; max: number } {
+  ): { min: number; max: number; extremaPositions: number[] } {
     return calculateCoulomb3DWavefunctionMinMax(
       this.coulombStrength,
       this.mass,
@@ -599,7 +599,7 @@ export function calculateCoulomb3DWavefunctionSecondDerivative(
  * @param xMin - Left boundary of the region in meters
  * @param xMax - Right boundary of the region in meters
  * @param numPoints - Number of points to sample (default: 1000)
- * @returns Object containing min and max values of the wavefunction
+ * @returns Object containing min/max values and x-positions of all extrema
  */
 export function calculateCoulomb3DWavefunctionMinMax(
   coulombStrength: number,
@@ -608,7 +608,7 @@ export function calculateCoulomb3DWavefunctionMinMax(
   xMin: number,
   xMax: number,
   numPoints: number = 1000,
-): { min: number; max: number } {
+): { min: number; max: number; extremaPositions: number[] } {
   const { HBAR } = QuantumConstants;
   const alpha = coulombStrength;
   const n = stateIndex + 1; // Convert index to principal quantum number (1, 2, 3, ...)
@@ -620,27 +620,53 @@ export function calculateCoulomb3DWavefunctionMinMax(
 
   let min = Infinity;
   let max = -Infinity;
+  const extremaPositions: number[] = [];
 
   const dx = (xMax - xMin) / (numPoints - 1);
+  const h = 1e-12; // Small step for numerical derivative
+  let prevDerivativeSign: number | null = null;
 
-  for (let i = 0; i < numPoints; i++) {
-    const x = xMin + i * dx;
+  // Helper function to calculate psi at a given x
+  const calculatePsi = (x: number): number => {
     const r = Math.abs(x);
-
-    let psi: number;
     if (r === 0) {
-      psi = 0;
+      return 0;
     } else {
       const rho = (2 * r) / a_n;
       const laguerre = associatedLaguerre(n - 1, 1, rho);
-      psi = normalization * Math.exp(-rho / 2) * laguerre;
+      return normalization * Math.exp(-rho / 2) * laguerre;
+    }
+  };
+
+  for (let i = 0; i < numPoints; i++) {
+    const x = xMin + i * dx;
+    const psi = calculatePsi(x);
+
+    // Calculate derivative using central difference for extrema detection
+    let derivative = 0;
+    if (i > 0 && i < numPoints - 1) {
+      const psiMinus = calculatePsi(x - h);
+      const psiPlus = calculatePsi(x + h);
+      derivative = (psiPlus - psiMinus) / (2 * h);
     }
 
     if (psi < min) min = psi;
     if (psi > max) max = psi;
+
+    // Detect extrema by sign change in derivative
+    const currentDerivativeSign = Math.sign(derivative);
+    if (
+      prevDerivativeSign !== null &&
+      currentDerivativeSign !== prevDerivativeSign &&
+      prevDerivativeSign !== 0 &&
+      Math.abs(derivative) > 1e-10 // Avoid numerical noise
+    ) {
+      extremaPositions.push(x);
+    }
+    prevDerivativeSign = currentDerivativeSign;
   }
 
-  return { min, max };
+  return { min, max, extremaPositions };
 }
 
 /**
