@@ -42,6 +42,10 @@ onReadyToLaunch(() => {
         supportsProjectorMode: true,
         supportsInteractiveHighlights: true,
       },
+      audioOptions: {
+        supportsVoicing: true,
+        supportsSound: true,
+      },
       simulationOptions: {
         customPreferences: [
           {
