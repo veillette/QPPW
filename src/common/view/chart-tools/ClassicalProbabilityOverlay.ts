@@ -104,8 +104,8 @@ export class ClassicalProbabilityOverlay extends Node {
     // Create classical probability path
     this.classicalProbabilityPath = new Path(null, {
       stroke: QPPWColors.classicalProbabilityProperty,
-      lineWidth: 2,
-      lineDash: [5, 3],
+      lineWidth: 3,
+      lineDash: [8, 4],
       visible: false,
     });
     this.addChild(this.classicalProbabilityPath);
@@ -175,6 +175,7 @@ export class ClassicalProbabilityOverlay extends Node {
     boundStates: BoundStateResult,
     selectedIndex: number,
     showClassicalProbability: boolean,
+    showClassicalProbabilityCurve: boolean = true, // Whether to show the curve (optional, defaults to true)
   ): void {
     const { chartMargins, plotWidth, plotHeight, dataToViewX, dataToViewY } =
       this.options;
@@ -245,17 +246,23 @@ export class ClassicalProbabilityOverlay extends Node {
     this.rightForbiddenRegion.shape = shapes.rightShape;
     this.rightForbiddenRegion.visible = true;
 
-    // Update classical probability path (in nm^-1 units)
-    const classicalProbability =
-      this.model.getClassicalProbabilityDensityInNmUnits(selectedIndex);
-    if (classicalProbability) {
-      this.plotClassicalProbabilityDensity(
-        boundStates.xGrid,
-        classicalProbability,
-        dataToViewX,
-        dataToViewY,
-      );
-      this.classicalProbabilityPath.visible = true;
+    // Update classical probability path (in nm^-1 units) - only if requested
+    if (showClassicalProbabilityCurve) {
+      const classicalProbability =
+        this.model.getClassicalProbabilityDensityInNmUnits(selectedIndex);
+      if (classicalProbability) {
+        this.plotClassicalProbabilityDensity(
+          boundStates.xGrid,
+          classicalProbability,
+          dataToViewX,
+          dataToViewY,
+        );
+        this.classicalProbabilityPath.visible = true;
+      } else {
+        this.classicalProbabilityPath.visible = false;
+      }
+    } else {
+      this.classicalProbabilityPath.visible = false;
     }
   }
 
@@ -270,19 +277,23 @@ export class ClassicalProbabilityOverlay extends Node {
   ): void {
     const shape = new Shape();
 
-    // Build points array
+    // Build points array, filtering out zero probability points
     const points: { x: number; y: number }[] = [];
     for (let i = 0; i < xGrid.length; i++) {
-      const x = dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
-      const y = dataToViewY(classicalProbability[i]);
-      points.push({ x, y });
+      const dataValue = classicalProbability[i];
+      // Only include non-zero probability points
+      if (dataValue > 0) {
+        const x = dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
+        const y = dataToViewY(dataValue);
+        points.push({ x, y });
+      }
     }
 
-    // Draw curve
+    // Draw curve - only connect consecutive non-zero points
     if (points.length > 0) {
       shape.moveTo(points[0].x, points[0].y);
 
-      for (let i = 0; i < points.length - 1; i++) {
+      for (let i = 1; i < points.length; i++) {
         shape.lineTo(points[i].x, points[i].y);
       }
     }

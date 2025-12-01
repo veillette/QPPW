@@ -644,12 +644,10 @@ export class WaveFunctionChartNode extends Node {
         show && this.getEffectiveDisplayMode() === "waveFunction";
     });
 
-    // Update visibility of classical probability (only for OneWellModel)
-    if ("showClassicalProbabilityProperty" in this.model) {
-      this.viewState.showClassicalProbabilityProperty.lazyLink(() => {
-        this.update();
-      });
-    }
+    // Update visibility of classical probability
+    this.viewState.showClassicalProbabilityProperty.lazyLink(() => {
+      this.update();
+    });
 
     // Update visibility of zeros
     this.viewState.showZerosProperty.lazyLink(() => {
@@ -928,10 +926,16 @@ export class WaveFunctionChartNode extends Node {
           this.updateStateLabel();
 
           // Update classical probability visualization
+          // Show forbidden regions on both wavefunction and probability density charts
+          // But only show the classical probability curve on probability density chart
+          const displayMode = this.getEffectiveDisplayMode();
+          const showOverlay = this.viewState.showClassicalProbabilityProperty.value;
+          const showCurve = displayMode === "probabilityDensity";
           this.classicalProbabilityOverlay.update(
             boundStates,
             selectedIndex,
-            this.viewState.showClassicalProbabilityProperty.value,
+            showOverlay,
+            showCurve,
           );
         }
       } while (this.updatePending);

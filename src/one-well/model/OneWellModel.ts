@@ -716,6 +716,12 @@ export class OneWellModel extends BaseModel {
   public override getClassicalProbabilityDensity(
     energyIndex: number,
   ): number[] | null {
+    console.log('getClassicalProbabilityDensity called:', {
+      energyIndex,
+      potentialType: this.potentialTypeProperty.value,
+      hasBoundStates: !!this.boundStateResult,
+    });
+
     if (!this.boundStateResult) {
       this.calculateBoundStates();
     }
@@ -725,6 +731,7 @@ export class OneWellModel extends BaseModel {
       energyIndex < 0 ||
       energyIndex >= this.boundStateResult.energies.length
     ) {
+      console.log('Returning null - no bound states or invalid index');
       return null;
     }
 
@@ -738,6 +745,7 @@ export class OneWellModel extends BaseModel {
 
     // Use analytical solver methods when available
     const potentialType = this.potentialTypeProperty.value;
+    console.log('Processing potential type:', potentialType);
 
     try {
       switch (potentialType) {
@@ -785,12 +793,22 @@ export class OneWellModel extends BaseModel {
     const potential = this.calculatePotentialEnergy(xGrid);
 
     // Use BaseModel's common method to calculate classical probability density
-    return this.calculateClassicalProbabilityDensity(
+    const result = this.calculateClassicalProbabilityDensity(
       potential,
       energy,
       mass,
       xGrid,
     );
+
+    console.log(`Classical probability for ${potentialType}:`, {
+      energyEV: energy * QuantumConstants.JOULES_TO_EV,
+      potentialType,
+      samplePotential: potential.slice(0, 5).map(v => v * QuantumConstants.JOULES_TO_EV),
+      sampleResult: result.slice(0, 5),
+      nonZeroCount: result.filter(p => p > 0).length,
+    });
+
+    return result;
   }
 
   /**

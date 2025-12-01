@@ -361,6 +361,20 @@ export class IntroModel extends BaseModel {
     const mass =
       this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
 
+    // Use the analytical solution's method if available
+    const analyticalSolution = this.solver.getAnalyticalSolution();
+    if (analyticalSolution) {
+      try {
+        return analyticalSolution.calculateClassicalProbability(
+          energy,
+          mass,
+          xGrid,
+        );
+      } catch (error) {
+        console.warn('Failed to use analytical classical probability, falling back to numerical:', error);
+      }
+    }
+
     // Fallback: numerical calculation using potential function
     const potential = this.calculatePotentialEnergy(xGrid);
 

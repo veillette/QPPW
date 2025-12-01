@@ -23,6 +23,7 @@ export class IntroControlPanelNode extends Node {
   private readonly model: IntroModel;
   private readonly viewState: IntroViewState;
   private readonly probabilityChartNode?: import("../../common/view/WaveFunctionChartNode.js").WaveFunctionChartNode;
+  // @ts-expect-error - Kept for potential future use, currently tool checkboxes are in chart node
   private readonly waveFunctionChartNode?: import("../../common/view/WaveFunctionChartNode.js").WaveFunctionChartNode;
 
   public constructor(

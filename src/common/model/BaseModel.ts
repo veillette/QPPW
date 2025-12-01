@@ -761,8 +761,10 @@ export abstract class BaseModel {
     }
 
     // Convert classical probability density from m^-1 to nm^-1
-    // P(nm^-1) = P(m^-1) * M_TO_NM
-    const conversionFactor = QuantumConstants.M_TO_NM;
+    // For a density in units of [length]^-1:
+    // P(nm^-1) = P(m^-1) * NM_TO_M = P(m^-1) / M_TO_NM
+    // Example: For a 4nm well, P = 1/L = 0.25 nm^-1 = 0.25×10^9 m^-1
+    const conversionFactor = QuantumConstants.NM_TO_M;
     return classicalProbabilitySI.map((p) => p * conversionFactor);
   }
 
