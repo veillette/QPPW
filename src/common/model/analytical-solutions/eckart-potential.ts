@@ -896,7 +896,12 @@ export function calculateEckartPotentialWavefunctionMinMax(
       const xiMinus = Math.exp(xMinus / a);
       const xiPlus1Minus = 1 + xiMinus;
       const jacobiArgMinus = 1 - (2 * xiMinus) / xiPlus1Minus;
-      const jacobiPolyMinus = jacobiPolynomial(n, alpha_jac, beta_jac, jacobiArgMinus);
+      const jacobiPolyMinus = jacobiPolynomial(
+        n,
+        alpha_jac,
+        beta_jac,
+        jacobiArgMinus,
+      );
       const psiMinus =
         normalization *
         Math.pow(xiMinus, s2 - n) *
@@ -906,7 +911,12 @@ export function calculateEckartPotentialWavefunctionMinMax(
       const xiPlusVal = Math.exp(xPlus / a);
       const xiPlus1Plus = 1 + xiPlusVal;
       const jacobiArgPlus = 1 - (2 * xiPlusVal) / xiPlus1Plus;
-      const jacobiPolyPlus = jacobiPolynomial(n, alpha_jac, beta_jac, jacobiArgPlus);
+      const jacobiPolyPlus = jacobiPolynomial(
+        n,
+        alpha_jac,
+        beta_jac,
+        jacobiArgPlus,
+      );
       const psiPlus =
         normalization *
         Math.pow(xiPlusVal, s2 - n) *
