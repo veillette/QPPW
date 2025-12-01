@@ -484,7 +484,14 @@ export function calculatePoschlTellerWavefunctionZeros(
 
 /**
  * Calculate the first derivative of the wavefunction for a Pöschl-Teller potential.
- * Uses numerical differentiation on the analytical wavefunction.
+ * Uses analytical derivative formula based on product rule and chain rule.
+ *
+ * For ψ_n(x) = N_n · sech^α(x/a) · P_n^(α,α)(tanh(x/a)), where α = λ - n - 1/2
+ *
+ * The derivative is:
+ * ψ'(x) = N_n · sech^α(x/a) · {-α/a · tanh(x/a) · P_n^(α,α)(t)
+ *                               + 1/a · sech^2(x/a) · [(n + 2α + 1)/2] · P_{n-1}^(α+1,α+1)(t)}
+ * where t = tanh(x/a)
  *
  * @param potentialDepth - Potential depth V_0 in Joules (positive value)
  * @param wellWidth - Width parameter a in meters
@@ -511,25 +518,29 @@ export function calculatePoschlTellerWavefunctionFirstDerivative(
     Math.sqrt(((1 / a) * (2 * alpha)) / factorial(n)) * Math.sqrt(factorial(n));
 
   const firstDerivative: number[] = [];
-  const h = 1e-12; // Small step for numerical differentiation
 
   for (const x of xGrid) {
-    // Evaluate at x-h, x+h
-    const xMinus = x - h;
-    const xPlus = x + h;
+    const t = Math.tanh(x / a);
+    const sech = 1.0 / Math.cosh(x / a);
+    const sechAlpha = Math.pow(sech, alpha);
 
-    const tanhMinus = Math.tanh(xMinus / a);
-    const sechMinus = 1.0 / Math.cosh(xMinus / a);
-    const jacobiMinus = jacobiPolynomial(n, alpha, alpha, tanhMinus);
-    const psiMinus = normalization * Math.pow(sechMinus, alpha) * jacobiMinus;
+    // Calculate P_n^(α,α)(t)
+    const Pn = jacobiPolynomial(n, alpha, alpha, t);
 
-    const tanhPlus = Math.tanh(xPlus / a);
-    const sechPlus = 1.0 / Math.cosh(xPlus / a);
-    const jacobiPlus = jacobiPolynomial(n, alpha, alpha, tanhPlus);
-    const psiPlus = normalization * Math.pow(sechPlus, alpha) * jacobiPlus;
+    // First term: -α/a · tanh(x/a) · P_n^(α,α)(t)
+    const term1 = -(alpha / a) * t * Pn;
 
-    // First derivative using central difference
-    const firstDeriv = (psiPlus - psiMinus) / (2 * h);
+    // Second term: 1/a · sech^2(x/a) · [(n + 2α + 1)/2] · P_{n-1}^(α+1,α+1)(t)
+    // For ground state (n=0), there is no P_{-1}, so this term is zero
+    let term2 = 0;
+    if (n > 0) {
+      const Pn_minus_1 = jacobiPolynomial(n - 1, alpha + 1, alpha + 1, t);
+      const derivCoeff = (n + 2 * alpha + 1) / 2;
+      term2 = (1 / a) * sech * sech * derivCoeff * Pn_minus_1;
+    }
+
+    // Combine terms: ψ'(x) = N_n · sech^α(x/a) · (term1 + term2)
+    const firstDeriv = normalization * sechAlpha * (term1 + term2);
     firstDerivative.push(firstDeriv);
   }
 
@@ -538,7 +549,15 @@ export function calculatePoschlTellerWavefunctionFirstDerivative(
 
 /**
  * Calculate the second derivative of the wavefunction for a Pöschl-Teller potential.
- * Uses numerical differentiation on the analytical wavefunction.
+ * Uses the Schrödinger equation to compute the exact second derivative:
+ *
+ * From the time-independent Schrödinger equation:
+ *   -ℏ²/(2m) · ψ''(x) + V(x) · ψ(x) = E_n · ψ(x)
+ *
+ * Rearranging:
+ *   ψ''(x) = 2m/ℏ² · [V(x) - E_n] · ψ(x)
+ *
+ * This gives the exact second derivative without numerical differentiation errors.
  *
  * @param potentialDepth - Potential depth V_0 in Joules (positive value)
  * @param wellWidth - Width parameter a in meters
@@ -564,31 +583,25 @@ export function calculatePoschlTellerWavefunctionSecondDerivative(
   const normalization =
     Math.sqrt(((1 / a) * (2 * alpha)) / factorial(n)) * Math.sqrt(factorial(n));
 
+  // Calculate energy for this state: E_n = -V_0 * [(λ - n - 1/2)/λ]²
+  const term = lambda - n - 0.5;
+  const energy = (-V0 * (term * term)) / (lambda * lambda);
+
   const secondDerivative: number[] = [];
-  const h = 1e-12; // Small step for numerical differentiation
 
   for (const x of xGrid) {
-    // Evaluate at x-h, x, x+h
-    const xMinus = x - h;
-    const xPlus = x + h;
-
-    const tanhMinus = Math.tanh(xMinus / a);
-    const sechMinus = 1.0 / Math.cosh(xMinus / a);
-    const jacobiMinus = jacobiPolynomial(n, alpha, alpha, tanhMinus);
-    const psiMinus = normalization * Math.pow(sechMinus, alpha) * jacobiMinus;
-
-    const tanh = Math.tanh(x / a);
+    // Calculate wavefunction value at x
+    const t = Math.tanh(x / a);
     const sech = 1.0 / Math.cosh(x / a);
-    const jacobi = jacobiPolynomial(n, alpha, alpha, tanh);
-    const psi = normalization * Math.pow(sech, alpha) * jacobi;
+    const sechAlpha = Math.pow(sech, alpha);
+    const Pn = jacobiPolynomial(n, alpha, alpha, t);
+    const psi = normalization * sechAlpha * Pn;
 
-    const tanhPlus = Math.tanh(xPlus / a);
-    const sechPlus = 1.0 / Math.cosh(xPlus / a);
-    const jacobiPlus = jacobiPolynomial(n, alpha, alpha, tanhPlus);
-    const psiPlus = normalization * Math.pow(sechPlus, alpha) * jacobiPlus;
+    // Calculate potential at x: V(x) = -V_0 / cosh²(x/a)
+    const V = -V0 * sech * sech;
 
-    // Second derivative using central difference
-    const secondDeriv = (psiPlus - 2 * psi + psiMinus) / (h * h);
+    // Use Schrödinger equation: ψ''(x) = 2m/ℏ² · [V(x) - E_n] · ψ(x)
+    const secondDeriv = ((2 * mass) / (HBAR * HBAR)) * (V - energy) * psi;
     secondDerivative.push(secondDeriv);
   }
 
