@@ -72,7 +72,7 @@ jobs:
           path: "./dist"
           retention-days: 5
       - name: Upload build artifact for release
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: build-dist
           path: "./dist"
