@@ -137,10 +137,7 @@ export class CurvatureTool extends Node {
 
     // Update aria-valuetext when position changes
     this.markerXProperty.link((position) => {
-      this.markerHandle.setPDOMAttribute(
-        "aria-valuenow",
-        position.toFixed(2),
-      );
+      this.markerHandle.setPDOMAttribute("aria-valuenow", position.toFixed(2));
       this.markerHandle.setPDOMAttribute(
         "aria-valuetext",
         `Position: ${position.toFixed(2)} nanometers`,
