@@ -3,7 +3,7 @@
  * for the selected energy state. This is the bottom chart in the One Well screen.
  */
 
-import { Node, Line, Path, Text } from "scenerystack/scenery";
+import { Node, Line, Path, Text, VBox } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
 import { NumberProperty, DerivedProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
@@ -15,6 +15,7 @@ import {
   TickMarkSet,
   TickLabelSet,
 } from "scenerystack/bamboo";
+import { Checkbox } from "scenerystack/sun";
 import type { ScreenModel } from "../model/ScreenModels.js";
 import {
   hasWellOffset,
@@ -337,6 +338,44 @@ export class WaveFunctionChartNode extends Node {
       top: this.chartMargins.top + 25,
     });
     this.addChild(this.rmsPositionLabel);
+
+    // Create checkboxes for derivative and curvature tools (only for wavefunction mode)
+    const curvatureCheckbox = new Checkbox(
+      this.curvatureTool.showProperty,
+      new Text("Show Curvature", {
+        font: new PhetFont(12),
+        fill: QPPWColors.textFillProperty,
+      }),
+      { boxWidth: 14 },
+    );
+
+    const derivativeCheckbox = new Checkbox(
+      this.derivativeTool.showProperty,
+      new Text("Show Derivative", {
+        font: new PhetFont(12),
+        fill: QPPWColors.textFillProperty,
+      }),
+      { boxWidth: 14 },
+    );
+
+    // Group checkboxes in a VBox
+    const toolCheckboxes = new VBox({
+      children: [curvatureCheckbox, derivativeCheckbox],
+      spacing: 5,
+      align: "left",
+      right: this.chartWidth - this.chartMargins.right - 5,
+      top: this.chartMargins.top + 5,
+    });
+    this.addChild(toolCheckboxes);
+
+    // Only show checkboxes in wavefunction mode
+    this.viewState.displayModeProperty.link((displayMode) => {
+      const effectiveMode =
+        this.fixedDisplayMode !== undefined
+          ? this.fixedDisplayMode
+          : displayMode;
+      toolCheckboxes.visible = effectiveMode === "waveFunction";
+    });
 
     // Ensure axes are on top of the clipped plot content
     this.axesNode.moveToFront();

@@ -267,45 +267,8 @@ export class IntroControlPanelNode extends Node {
         })
       : null;
 
-    // Curvature visualization tool checkbox (for wavefunction chart)
-    const curvatureToolCheckboxContent = this.waveFunctionChartNode
-      ? new Checkbox(
-          this.waveFunctionChartNode.showCurvatureToolProperty,
-          new Text("Show Curvature", {
-            font: new PhetFont(12),
-            fill: QPPWColors.textFillProperty,
-          }),
-          { boxWidth: 16 },
-        )
-      : null;
-
-    const curvatureToolCheckbox = curvatureToolCheckboxContent
-      ? new Node({
-          children: [curvatureToolCheckboxContent],
-          x: 20,
-        })
-      : null;
-
-    // Derivative visualization tool checkbox (for wavefunction chart)
-    const derivativeToolCheckboxContent = this.waveFunctionChartNode
-      ? new Checkbox(
-          this.waveFunctionChartNode.showDerivativeToolProperty,
-          new Text("Show Derivative", {
-            font: new PhetFont(12),
-            fill: QPPWColors.textFillProperty,
-          }),
-          { boxWidth: 16 },
-        )
-      : null;
-
-    const derivativeToolCheckbox = derivativeToolCheckboxContent
-      ? new Node({
-          children: [derivativeToolCheckboxContent],
-          x: 20,
-        })
-      : null;
-
     // RMS indicator checkbox (controls visibility of average and RMS indicators on charts)
+    // Note: Curvature and Derivative checkboxes are now integrated within the WaveFunctionChartNode
     const rmsIndicatorCheckboxContent = new Checkbox(
       this.viewState.showRMSIndicatorProperty,
       new Text("Show Average & RMS", {
@@ -330,16 +293,6 @@ export class IntroControlPanelNode extends Node {
     // Add area tool checkbox if it exists
     if (areaToolCheckbox) {
       children.push(areaToolCheckbox);
-    }
-
-    // Add curvature tool checkbox if it exists
-    if (curvatureToolCheckbox) {
-      children.push(curvatureToolCheckbox);
-    }
-
-    // Add derivative tool checkbox if it exists
-    if (derivativeToolCheckbox) {
-      children.push(derivativeToolCheckbox);
     }
 
     return new VBox({
