@@ -49,11 +49,12 @@ export function createDoubleArrowShape(
  * Calculates average and RMS (root mean square) for a given distribution.
  * Uses trapezoidal integration to compute:
  * - Average: <x> = ∫ x * ρ(x) dx
- * - RMS: sqrt(<x²>) = sqrt(∫ x² * ρ(x) dx)
+ * - RMS: sqrt(<x²> - <x>²) = sqrt(∫ x² * ρ(x) dx - (∫ x * ρ(x) dx)²)
+ *   This is the standard deviation, representing the spread/uncertainty.
  *
  * @param grid - Array of x values (position or wavenumber)
  * @param density - Array of probability density values ρ(x)
- * @returns Object containing average and RMS values
+ * @returns Object containing average and RMS values (standard deviation)
  */
 export function calculateRMSStatistics(
   grid: number[],
@@ -77,7 +78,7 @@ export function calculateRMSStatistics(
   }
   avg /= totalProbability;
 
-  // Calculate RMS: sqrt(<x²>) = sqrt(∫ x² * ρ(x) dx)
+  // Calculate RMS: sqrt(<x²> - <x>²) where <x²> = ∫ x² * ρ(x) dx
   let avgSquared = 0;
   for (let i = 0; i < grid.length - 1; i++) {
     const dx = grid[i + 1] - grid[i];
@@ -86,7 +87,7 @@ export function calculateRMSStatistics(
     avgSquared += avgX * avgX * avgDensity * dx;
   }
   avgSquared /= totalProbability;
-  const rms = Math.sqrt(avgSquared);
+  const rms = Math.sqrt(avgSquared - avg * avg);
 
   return { avg, rms };
 }
