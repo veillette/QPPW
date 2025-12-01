@@ -1,8 +1,9 @@
 {
-  "name": "QPPW",
+  "name": "qppw",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Interactive quantum mechanics simulation exploring bound states in potential wells with real-time solutions to the 1D Schrödinger equation.",
+  "author": "Martin Veillette",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -14,40 +15,39 @@
   "homepage": "https://github.com/veillette/QPPW#readme",
   "type": "module",
   "keywords": [
-    "quantum physics",
-    "physics",
-    "simulation",
-    "SceneryStack",
-    "interactive",
-    "education"
+    "quantum-physics",
+    "quantum-mechanics", 
+    "schrodinger-equation",
+    "physics-simulation",
+    "educational-software",
+    "interactive-visualization",
+    "bound-states",
+    "wavefunction",
+    "scenerystack",
+    "typescript"
   ],
   "scripts": {
-    "start": "npx vite",
-    "dev": "npx vite",
-    "build": "npx tsc --noEmit && npx vite build",
+    "start": "vite",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
     "build:analyze": "ANALYZE=true npm run build",
-    "preview": "npx vite preview",
+    "preview": "vite preview",
     "test": "tsx --tsconfig tsconfig.test.json --import ./tests/browser-globals.js tests/run-terminal-tests.js",
     "test:wavefunction": "tsx --tsconfig tsconfig.test.json --import ./tests/browser-globals.js tests/test-wavefunction-comprehensive.ts",
     "test:double-well": "tsx --tsconfig tsconfig.test.json --import ./tests/browser-globals.js tests/test-double-well.ts",
     "test:coulomb": "tsx --tsconfig tsconfig.test.json --import ./tests/browser-globals.js tests/verify-coulomb.ts",
     "test:multi-square-well": "tsx --tsconfig tsconfig.test.json --import ./tests/browser-globals.js tests/test-multi-square-well.ts",
     "test:multi-coulomb-1d": "tsx --tsconfig tsconfig.test.json --import ./tests/browser-globals.js tests/test-multi-coulomb-1d.ts",
-    "lint": "npx eslint .",
-    "lint:fix": "npx eslint --fix .",
-    "format": "npx prettier --write .",
-    "format:check": "npx prettier --check .",
-    "fix": "npx eslint --fix . && npx prettier --write .",
-    "release": "npm version patch && git push && git push --tags",
-    "check": "npx tsc --noEmit",
-    "check:tsc": "npx tsc --noEmit",
-    "serve": "npx serve -s dist",
-    "watch": "npx tsc --watch",
-    "watch:tsc": "npx tsc --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "fix": "eslint --fix . && prettier --write .",
+    "check": "tsc --noEmit",
+    "serve": "vite preview",
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@typescript/native-preview": "^7.0.0-dev.20251128.1",
     "katex": "^0.16.25",
     "scenerystack": "^3.0.0"
   },
@@ -65,10 +65,13 @@
     "vite-plugin-singlefile": "^2.2.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   },
-  "phet-io": {
-    "validation": false,
-    "compareDesignedAPIChanges": false
-  }
+  "browserslist": [
+    "> 0.5%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "supportsInteractiveDescription": true
 }

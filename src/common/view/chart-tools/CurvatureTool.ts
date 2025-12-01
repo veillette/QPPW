@@ -200,10 +200,10 @@ export class CurvatureTool extends Node {
 
     // Check for optional properties using type guards
     if ("wellOffsetProperty" in model) {
-      (model as any).wellOffsetProperty.lazyLink(() => this.invalidateCache());
+      (model as { wellOffsetProperty: NumberProperty }).wellOffsetProperty.lazyLink(() => this.invalidateCache());
     }
     if ("wellSeparationProperty" in model) {
-      (model as any).wellSeparationProperty.lazyLink(() => this.invalidateCache());
+      (model as { wellSeparationProperty: NumberProperty }).wellSeparationProperty.lazyLink(() => this.invalidateCache());
     }
   }
 
