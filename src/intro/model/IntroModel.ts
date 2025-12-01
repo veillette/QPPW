@@ -302,7 +302,7 @@ export class IntroModel extends BaseModel {
           potentialParams.slope = wellDepth / wellWidth;
           break;
         case PotentialType.TRIANGULAR:
-          potentialParams.potentialDepth = wellDepth;
+          potentialParams.wellDepth = wellDepth;
           potentialParams.wellWidth = wellWidth;
           potentialParams.energyOffset =
             this.potentialOffsetProperty.value * QuantumConstants.EV_TO_JOULES;

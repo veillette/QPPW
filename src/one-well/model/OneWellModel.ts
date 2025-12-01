@@ -658,7 +658,7 @@ export class OneWellModel extends BaseModel {
           // V(x) = offset at x = 0
           // V(x) = offset + (height/width) * x for 0 < x < width
           // V(x) = height + offset for x > width
-          potentialParams.potentialDepth = wellDepth; // height in Joules
+          potentialParams.wellDepth = wellDepth; // height in Joules
           potentialParams.wellWidth = wellWidth; // width in meters
           potentialParams.energyOffset =
             this.potentialOffsetProperty.value * QuantumConstants.EV_TO_JOULES; // offset in Joules
