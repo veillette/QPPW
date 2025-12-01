@@ -407,6 +407,32 @@ export class IntroModel extends BaseModel {
     }
 
     const energy = this.boundStateResult.energies[energyLevel];
+
+    // Try to use analytical solution's turning point calculation
+    const analyticalSolution = this.solver.getAnalyticalSolution();
+    if (analyticalSolution) {
+      try {
+        const turningPointsPairs = analyticalSolution.calculateTurningPoints(energy);
+        if (turningPointsPairs && turningPointsPairs.length > 0) {
+          // For simple single-well potentials, use the first pair
+          // Convert from meters to nanometers
+          const leftNm = turningPointsPairs[0].left * QuantumConstants.M_TO_NM;
+          const rightNm = turningPointsPairs[0].right * QuantumConstants.M_TO_NM;
+
+          // Clamp turning points to chart's X-axis range
+          const minX = -IntroModel.CHART_DISPLAY_RANGE_NM;
+          const maxX = IntroModel.CHART_DISPLAY_RANGE_NM;
+          const left = Math.max(minX, Math.min(maxX, leftNm));
+          const right = Math.max(minX, Math.min(maxX, rightNm));
+
+          return { left, right };
+        }
+      } catch (error) {
+        console.warn('Failed to use analytical turning points, falling back to numerical:', error);
+      }
+    }
+
+    // Fallback: numerical calculation using potential
     const energyEV = energy * QuantumConstants.JOULES_TO_EV;
     const xGrid = this.boundStateResult.xGrid;
 
@@ -419,7 +445,7 @@ export class IntroModel extends BaseModel {
       return { left: -halfWidth, right: halfWidth };
     }
 
-    // Existing loop to find turning points for other potentials
+    // Loop to find turning points numerically
     for (let i = 0; i < xGrid.length - 1; i++) {
       const x = xGrid[i] * QuantumConstants.M_TO_NM;
       const V = this.getPotentialAtPosition(x);
