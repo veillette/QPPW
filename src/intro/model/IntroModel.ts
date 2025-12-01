@@ -300,6 +300,7 @@ export class IntroModel extends BaseModel {
           break;
         case PotentialType.ASYMMETRIC_TRIANGLE:
           potentialParams.slope = wellDepth / wellWidth;
+          potentialParams.wellWidth = wellWidth;
           break;
         case PotentialType.TRIANGULAR:
           potentialParams.wellDepth = wellDepth;

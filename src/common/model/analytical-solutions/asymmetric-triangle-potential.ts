@@ -459,6 +459,45 @@ export function calculateAsymmetricTriangleWavefunctionZeros(
 }
 
 /**
+ * Compute numerical normalization constant for asymmetric triangle wavefunction.
+ * Ensures the wavefunction satisfies ∫|ψ|² dx = 1.
+ */
+function computeAsymmetricTriangleNormalization(
+  alpha: number,
+  x0: number,
+  xMin: number,
+  xMax: number,
+  numSamples: number = 1000,
+): number {
+  // If xMin and xMax are too close (e.g., single point evaluation),
+  // use a default integration range that covers the wavefunction
+  let integrationMin = xMin;
+  let integrationMax = xMax;
+  if (Math.abs(xMax - xMin) < 1e-10) {
+    // For asymmetric triangle, wavefunction exists for x >= 0
+    // Classical turning point is at x0, use range [0, 2*x0] or [0, 10nm] if x0 is small
+    integrationMin = 0;
+    integrationMax = Math.max(2 * x0, 10e-9);
+  }
+
+  const dx = (integrationMax - integrationMin) / (numSamples - 1);
+  let normSq = 0;
+
+  for (let i = 0; i < numSamples; i++) {
+    const x = integrationMin + i * dx;
+    if (x < 0) {
+      // Infinite wall region, ψ = 0
+      continue;
+    }
+    const z = alpha * (x - x0);
+    const psiUnnorm = airyAi(z);
+    normSq += psiUnnorm * psiUnnorm * dx;
+  }
+
+  return 1 / Math.sqrt(normSq);
+}
+
+/**
  * Calculate the first derivative of the wavefunction for an asymmetric triangle potential.
  * Uses numerical differentiation on the analytical wavefunction.
  *
@@ -478,6 +517,11 @@ export function calculateAsymmetricTriangleWavefunctionFirstDerivative(
   const alpha = calculateAiryAlpha(mass, F);
   const x0 = energy / F;
 
+  // Compute normalization to match the wavefunction normalization
+  const xMin = xGrid[0];
+  const xMax = xGrid[xGrid.length - 1];
+  const normalization = computeAsymmetricTriangleNormalization(alpha, x0, xMin, xMax);
+
   const firstDerivative: number[] = [];
   const h = 1e-12; // Small step for numerical differentiation
 
@@ -493,10 +537,10 @@ export function calculateAsymmetricTriangleWavefunctionFirstDerivative(
     const xPlus = x + h;
 
     const zMinus = alpha * (xMinus - x0);
-    const psiMinus = xMinus < 0 ? 0 : airyAi(zMinus);
+    const psiMinus = xMinus < 0 ? 0 : normalization * airyAi(zMinus);
 
     const zPlus = alpha * (xPlus - x0);
-    const psiPlus = airyAi(zPlus);
+    const psiPlus = normalization * airyAi(zPlus);
 
     // First derivative using central difference
     const firstDeriv = (psiPlus - psiMinus) / (2 * h);
@@ -526,6 +570,11 @@ export function calculateAsymmetricTriangleWavefunctionSecondDerivative(
   const alpha = calculateAiryAlpha(mass, F);
   const x0 = energy / F;
 
+  // Compute normalization to match the wavefunction normalization
+  const xMin = xGrid[0];
+  const xMax = xGrid[xGrid.length - 1];
+  const normalization = computeAsymmetricTriangleNormalization(alpha, x0, xMin, xMax);
+
   const secondDerivative: number[] = [];
   const h = 1e-12; // Small step for numerical differentiation
 
@@ -541,13 +590,13 @@ export function calculateAsymmetricTriangleWavefunctionSecondDerivative(
     const xPlus = x + h;
 
     const zMinus = alpha * (xMinus - x0);
-    const psiMinus = xMinus < 0 ? 0 : airyAi(zMinus);
+    const psiMinus = xMinus < 0 ? 0 : normalization * airyAi(zMinus);
 
     const z = alpha * (x - x0);
-    const psi = airyAi(z);
+    const psi = normalization * airyAi(z);
 
     const zPlus = alpha * (xPlus - x0);
-    const psiPlus = airyAi(zPlus);
+    const psiPlus = normalization * airyAi(zPlus);
 
     // Second derivative using central difference
     const secondDeriv = (psiPlus - 2 * psi + psiMinus) / (h * h);

@@ -500,6 +500,45 @@ export function calculatePoschlTellerWavefunctionZeros(
  * @param xGrid - Array of x positions in meters where derivatives should be evaluated
  * @returns Array of first derivative values
  */
+/**
+ * Compute numerical normalization constant for Pöschl-Teller wavefunction.
+ * Ensures the wavefunction satisfies ∫|ψ|² dx = 1.
+ */
+function computePoschlTellerNormalization(
+  a: number,
+  lambda: number,
+  n: number,
+  xMin: number,
+  xMax: number,
+  numSamples: number = 1000,
+): number {
+  const alpha = lambda - n - 0.5;
+
+  // If xMin and xMax are too close (e.g., single point evaluation),
+  // use a default integration range that covers the wavefunction
+  let integrationMin = xMin;
+  let integrationMax = xMax;
+  if (Math.abs(xMax - xMin) < 1e-10) {
+    // Use ±5a as a reasonable range that captures most of the wavefunction
+    integrationMin = -5 * a;
+    integrationMax = 5 * a;
+  }
+
+  const dx = (integrationMax - integrationMin) / (numSamples - 1);
+
+  let normSq = 0;
+  for (let i = 0; i < numSamples; i++) {
+    const x = integrationMin + i * dx;
+    const tanhVal = Math.tanh(x / a);
+    const sechVal = 1.0 / Math.cosh(x / a);
+    const jacobiPoly = jacobiPolynomial(n, alpha, alpha, tanhVal);
+    const psiUnnorm = Math.pow(sechVal, alpha) * jacobiPoly;
+    normSq += psiUnnorm * psiUnnorm * dx;
+  }
+
+  return 1 / Math.sqrt(normSq);
+}
+
 export function calculatePoschlTellerWavefunctionFirstDerivative(
   potentialDepth: number,
   wellWidth: number,
@@ -514,8 +553,11 @@ export function calculatePoschlTellerWavefunctionFirstDerivative(
 
   const lambda = (a * Math.sqrt(2 * mass * V0)) / HBAR;
   const alpha = lambda - n - 0.5;
-  const normalization =
-    Math.sqrt(((1 / a) * (2 * alpha)) / factorial(n)) * Math.sqrt(factorial(n));
+
+  // Use numerical normalization to match the wavefunction normalization
+  const xMin = xGrid[0];
+  const xMax = xGrid[xGrid.length - 1];
+  const normalization = computePoschlTellerNormalization(a, lambda, n, xMin, xMax);
 
   const firstDerivative: number[] = [];
 
@@ -580,8 +622,11 @@ export function calculatePoschlTellerWavefunctionSecondDerivative(
 
   const lambda = (a * Math.sqrt(2 * mass * V0)) / HBAR;
   const alpha = lambda - n - 0.5;
-  const normalization =
-    Math.sqrt(((1 / a) * (2 * alpha)) / factorial(n)) * Math.sqrt(factorial(n));
+
+  // Use numerical normalization to match the wavefunction normalization
+  const xMin = xGrid[0];
+  const xMax = xGrid[xGrid.length - 1];
+  const normalization = computePoschlTellerNormalization(a, lambda, n, xMin, xMax);
 
   // Calculate energy for this state: E_n = -V_0 * [(λ - n - 1/2)/λ]²
   const term = lambda - n - 0.5;

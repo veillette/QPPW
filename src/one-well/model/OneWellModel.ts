@@ -651,6 +651,7 @@ export class OneWellModel extends BaseModel {
         case PotentialType.ASYMMETRIC_TRIANGLE:
           // Slope is the field strength
           potentialParams.slope = wellDepth / wellWidth;
+          potentialParams.wellWidth = wellWidth;
           break;
         case PotentialType.TRIANGULAR:
           // Triangular potential:
