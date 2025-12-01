@@ -10,6 +10,7 @@
 
 import { Node, Text, VBox, HBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
+import { ReadOnlyProperty } from "scenerystack";
 import stringManager from "../../../i18n/StringManager.js";
 
 /**
@@ -152,7 +153,7 @@ export class KeyboardShortcutsNode extends Node {
    */
   private createShortcutRow(
     key: string,
-    descriptionProperty: any,
+    descriptionProperty: ReadOnlyProperty<string>,
   ): HBox {
     const keyText = new Text(key, {
       font: new PhetFont({ size: 14, weight: "bold" }),
