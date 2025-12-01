@@ -563,12 +563,16 @@ export class WaveFunctionChartNode extends Node {
     yTickLabelSet.y = this.chartMargins.top;
     axesNode.addChild(yTickLabelSet);
 
-    // Y-axis label
+    // Y-axis label - centered on the visual center of the plot area
+    // Account for labels at top of chart (state label, avg/rms labels take ~40px)
+    const labelAreaHeight = 40;
+    const visualTop = this.chartMargins.top + labelAreaHeight;
+    const visualBottom = this.chartMargins.top + this.plotHeight;
     this.yAxisLabel = new Text("", {
       font: new PhetFont(14),
       fill: QPPWColors.labelFillProperty,
       centerX: 15,
-      centerY: this.chartHeight / 2,
+      centerY: (visualTop + visualBottom) / 2,
       rotation: -Math.PI / 2,
     });
     axesNode.addChild(this.yAxisLabel);

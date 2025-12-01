@@ -154,7 +154,7 @@ export abstract class BaseScreenView extends ScreenView {
     this.energyChart.top = 10; // Reduced from margin to move energy chart upward and avoid overlap
 
     this.waveFunctionChart.left = margin; // Same left position to align x-axes
-    this.waveFunctionChart.top = margin + energyChartHeight + 30; // Added extra spacing between charts
+    this.waveFunctionChart.top = margin + energyChartHeight; // Reduced spacing between charts
 
     // Create container for charts
     this.chartsContainer = new Node({

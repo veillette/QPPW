@@ -40,12 +40,12 @@ export class IntroScreenView extends BaseScreenView {
 
     // Calculate layout dimensions
     const margin = 10;
-    const chartSpacing = 15;
+    const chartSpacing = 5; // Reduced spacing between charts
 
     // Fixed chart dimensions
     const chartsWidth = 600;
-    const energyChartHeight = 200;
-    const probabilityChartHeight = 150;
+    const energyChartHeight = 220; // Increased from 200
+    const probabilityChartHeight = 170; // Increased from 150
     const waveFunctionChartHeight = 150;
     const wavenumberChartHeight = 200;
     const wavenumberChartWidth = 350;
