@@ -86,13 +86,7 @@ export class KeyboardShortcutsNode extends Node {
     const energyLevelBox = new VBox({
       align: "left",
       spacing: 8,
-      children: [
-        energyLevelHeader,
-        arrowUpRow,
-        arrowDownRow,
-        homeRow,
-        endRow,
-      ],
+      children: [energyLevelHeader, arrowUpRow, arrowDownRow, homeRow, endRow],
     });
 
     // Graph Interactions Section

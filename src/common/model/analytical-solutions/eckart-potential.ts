@@ -293,9 +293,7 @@ export function solveEckartPotential(
 
       // Calculate wavefunction without normalization
       const value =
-        Math.pow(xi, s2 - n) *
-        Math.pow(xiPlus1, -s1 - s2 + n) *
-        jacobiPoly;
+        Math.pow(xi, s2 - n) * Math.pow(xiPlus1, -s1 - s2 + n) * jacobiPoly;
 
       psiRaw.push(value);
     }
@@ -578,9 +576,7 @@ export function calculateEckartPotentialWavefunctionZeros(
   const prevJacobiArg = 1 - (2 * prevXi) / prevXiPlus1;
   const prevJacobi = jacobiPolynomial(n, alpha_jac, beta_jac, prevJacobiArg);
   let prevVal =
-    Math.pow(prevXi, s2 - n) *
-    Math.pow(prevXiPlus1, -s1 - s2 + n) *
-    prevJacobi;
+    Math.pow(prevXi, s2 - n) * Math.pow(prevXiPlus1, -s1 - s2 + n) * prevJacobi;
 
   for (let i = 1; i <= numSamples; i++) {
     const x = -searchRange + i * dx;
@@ -589,9 +585,7 @@ export function calculateEckartPotentialWavefunctionZeros(
     const jacobiArg = 1 - (2 * xi) / xiPlus1;
     const jacobiPoly = jacobiPolynomial(n, alpha_jac, beta_jac, jacobiArg);
     const val =
-      Math.pow(xi, s2 - n) *
-      Math.pow(xiPlus1, -s1 - s2 + n) *
-      jacobiPoly;
+      Math.pow(xi, s2 - n) * Math.pow(xiPlus1, -s1 - s2 + n) * jacobiPoly;
 
     // Sign change detected
     if (prevVal * val < 0) {
@@ -677,14 +671,7 @@ export function calculateEckartPotentialWavefunctionFirstDerivative(
   // Get numerical normalization constant
   const xMin = xGrid[0];
   const xMax = xGrid[xGrid.length - 1];
-  const normalization = computeEckartNormalization(
-    a,
-    s1,
-    s2,
-    n,
-    xMin,
-    xMax,
-  );
+  const normalization = computeEckartNormalization(a, s1, s2, n, xMin, xMax);
 
   const firstDerivative: number[] = [];
   const h = 1e-12; // Small step for numerical differentiation
@@ -771,14 +758,7 @@ export function calculateEckartPotentialWavefunctionSecondDerivative(
   // Get numerical normalization constant
   const xMin = xGrid[0];
   const xMax = xGrid[xGrid.length - 1];
-  const normalization = computeEckartNormalization(
-    a,
-    s1,
-    s2,
-    n,
-    xMin,
-    xMax,
-  );
+  const normalization = computeEckartNormalization(a, s1, s2, n, xMin, xMax);
 
   const secondDerivative: number[] = [];
   const h = 1e-12; // Small step for numerical differentiation
