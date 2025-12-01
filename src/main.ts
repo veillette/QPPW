@@ -25,6 +25,7 @@ import { OneWellScreenIcon } from "./one-well/view/OneWellScreenIcon.js";
 import { TwoWellsScreenIcon } from "./two-wells/view/TwoWellsScreenIcon.js";
 import { ManyWellsScreenIcon } from "./many-wells/view/ManyWellsScreenIcon.js";
 import { IntroScreenIcon } from "./intro/view/IntroScreenIcon.js";
+import { KeyboardShortcutsNode } from "./common/view/accessibility/KeyboardShortcutsNode.js";
 
 onReadyToLaunch(() => {
   const screenNames = stringManager.getScreenNames();
@@ -385,30 +386,37 @@ onReadyToLaunch(() => {
     }),
   };
 
+  // Create a single keyboard help node to be shared across all screens
+  const keyboardHelpNode = new KeyboardShortcutsNode();
+
   const screens = [
     new IntroScreen({
       name: screenNames.introStringProperty,
       tandem: Tandem.ROOT.createTandem("introScreen"),
       backgroundColorProperty: QPPWColors.backgroundColorProperty,
       homeScreenIcon: new IntroScreenIcon(),
+      createKeyboardHelpNode: () => keyboardHelpNode,
     }),
     new OneWellScreen({
       name: screenNames.oneWellStringProperty,
       tandem: Tandem.ROOT.createTandem("oneWellScreen"),
       backgroundColorProperty: QPPWColors.backgroundColorProperty,
       homeScreenIcon: new OneWellScreenIcon(),
+      createKeyboardHelpNode: () => keyboardHelpNode,
     }),
     new TwoWellsScreen({
       name: screenNames.twoWellsStringProperty,
       tandem: Tandem.ROOT.createTandem("twoWellsScreen"),
       backgroundColorProperty: QPPWColors.backgroundColorProperty,
       homeScreenIcon: new TwoWellsScreenIcon(),
+      createKeyboardHelpNode: () => keyboardHelpNode,
     }),
     new ManyWellsScreen({
       name: screenNames.manyWellsStringProperty,
       tandem: Tandem.ROOT.createTandem("manyWellsScreen"),
       backgroundColorProperty: QPPWColors.backgroundColorProperty,
       homeScreenIcon: new ManyWellsScreenIcon(),
+      createKeyboardHelpNode: () => keyboardHelpNode,
     }),
   ];
 

@@ -35,7 +35,8 @@
       "Bash(git log:*)",
       "WebFetch(domain:scenerystack.org)",
       "WebSearch",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ],
     "deny": [],
     "ask": []

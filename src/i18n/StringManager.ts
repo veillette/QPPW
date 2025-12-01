@@ -692,6 +692,45 @@ export class StringManager {
   }
 
   /**
+   * Gets an object containing the keyboard shortcuts string properties.
+   */
+  public getKeyboardShortcutsStrings() {
+    return {
+      titleStringProperty:
+        this.stringProperties.keyboardShortcutsTitleStringProperty,
+      simulationControlsStringProperty:
+        this.stringProperties.keyboardShortcutsSimulationControlsStringProperty,
+      playPauseDescriptionStringProperty:
+        this.stringProperties
+          .keyboardShortcutsPlayPauseDescriptionStringProperty,
+      resetDescriptionStringProperty:
+        this.stringProperties.keyboardShortcutsResetDescriptionStringProperty,
+      energyLevelNavigationStringProperty:
+        this.stringProperties
+          .keyboardShortcutsEnergyLevelNavigationStringProperty,
+      arrowUpRightDescriptionStringProperty:
+        this.stringProperties
+          .keyboardShortcutsArrowUpRightDescriptionStringProperty,
+      arrowDownLeftDescriptionStringProperty:
+        this.stringProperties
+          .keyboardShortcutsArrowDownLeftDescriptionStringProperty,
+      homeDescriptionStringProperty:
+        this.stringProperties.keyboardShortcutsHomeDescriptionStringProperty,
+      endDescriptionStringProperty:
+        this.stringProperties.keyboardShortcutsEndDescriptionStringProperty,
+      graphInteractionsStringProperty:
+        this.stringProperties.keyboardShortcutsGraphInteractionsStringProperty,
+      doubleClickResetZoomStringProperty:
+        this.stringProperties
+          .keyboardShortcutsDoubleClickResetZoomStringProperty,
+      mouseWheelZoomStringProperty:
+        this.stringProperties.keyboardShortcutsMouseWheelZoomStringProperty,
+      dragToPanStringProperty:
+        this.stringProperties.keyboardShortcutsDragToPanStringProperty,
+    };
+  }
+
+  /**
    * Get all raw string properties
    * This can be used if direct access is needed to a specific string property
    */
