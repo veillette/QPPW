@@ -573,6 +573,106 @@ export function createTriangularPotential(
 }
 
 /**
+ * Compute the normalization constant for a triangular potential wavefunction.
+ * This ensures ∫|ψ|² dx = 1 through numerical integration.
+ *
+ * @param height - Height of the potential barrier (Joules)
+ * @param width - Width of the triangular region (meters)
+ * @param offset - Energy offset/minimum of the well (Joules)
+ * @param mass - Particle mass in kg
+ * @param energy - Energy of the eigenstate in Joules
+ * @param A - Coefficient for Ai in the Airy solution
+ * @param B - Coefficient for Bi in the Airy solution
+ * @param xMin - Left boundary for integration (meters)
+ * @param xMax - Right boundary for integration (meters)
+ * @param numPoints - Number of integration points (default: 1000)
+ * @returns Normalization constant N such that ∫|N·ψ|² dx = 1
+ */
+function computeTriangularPotentialNormalization(
+  height: number,
+  width: number,
+  offset: number,
+  mass: number,
+  energy: number,
+  A: number,
+  B: number,
+  xMin: number,
+  xMax: number,
+  numPoints: number = 1000,
+): number {
+  const { HBAR } = QuantumConstants;
+  const F = height / width;
+  const V0 = height + offset;
+  const alpha = calculateAiryAlpha(mass, F);
+  const kappa = Math.sqrt(2 * mass * (V0 - energy)) / HBAR;
+  const x0 = (energy - offset) / F;
+
+  const z0 = alpha * (0 - x0);
+  const Ai0 = airyAi(z0);
+  const Bi0 = airyBi(z0);
+  const psiAt0 = A * Ai0 + B * Bi0;
+  const psiAtX0 = A * airyAi(0) + B * airyBi(0);
+
+  let integral = 0;
+  const dx = (xMax - xMin) / (numPoints - 1);
+
+  for (let i = 0; i < numPoints; i++) {
+    const x = xMin + i * dx;
+    let psi: number;
+
+    if (x < 0) {
+      psi = psiAt0 * Math.exp(kappa * x);
+    } else if (x <= x0) {
+      const z = alpha * (x - x0);
+      psi = A * airyAi(z) + B * airyBi(z);
+    } else if (x < width) {
+      const z = alpha * (x - x0);
+      if (z < 4.0) {
+        const aiAtZ = airyAi(z);
+        const aiAt0 = airyAi(0);
+        psi = psiAtX0 * (aiAtZ / aiAt0);
+      } else {
+        const zeta = (2.0 / 3.0) * Math.pow(z, 1.5);
+        const aiAt0 = airyAi(0);
+        const ratio =
+          ((1.0 / (2.0 * Math.sqrt(Math.PI) * Math.pow(z, 0.25))) *
+            Math.exp(-zeta)) /
+          aiAt0;
+        psi = psiAtX0 * ratio;
+      }
+    } else {
+      const zAtWidth = alpha * (width - x0);
+      let psiAtWidth: number;
+      if (zAtWidth < 4.0) {
+        const aiAtWidth = airyAi(zAtWidth);
+        const aiAt0 = airyAi(0);
+        psiAtWidth = psiAtX0 * (aiAtWidth / aiAt0);
+      } else {
+        const zeta = (2.0 / 3.0) * Math.pow(zAtWidth, 1.5);
+        const aiAt0 = airyAi(0);
+        const ratio =
+          ((1.0 / (2.0 * Math.sqrt(Math.PI) * Math.pow(zAtWidth, 0.25))) *
+            Math.exp(-zeta)) /
+          aiAt0;
+        psiAtWidth = psiAtX0 * ratio;
+      }
+      psi = psiAtWidth * Math.exp(-kappa * (x - width));
+    }
+
+    // Trapezoidal rule
+    if (i === 0 || i === numPoints - 1) {
+      integral += 0.5 * psi * psi;
+    } else {
+      integral += psi * psi;
+    }
+  }
+
+  integral *= dx;
+
+  return integral > 0 ? 1.0 / Math.sqrt(integral) : 1.0;
+}
+
+/**
  * Calculate classical probability density for a finite triangular potential well.
  * P(x) ∝ 1/v(x) = 1/√[2(E - V(x))/m]
  *
@@ -713,43 +813,62 @@ export function calculateTriangularPotentialWavefunctionZeros(
     B = 0;
   }
 
+  const psiAt0 = A * Ai0 + B * Bi0;
+  const psiAtX0 = A * airyAi(0) + B * airyBi(0);
+
+  // Helper function to evaluate wavefunction
+  const evaluatePsi = (x: number): number => {
+    if (x < 0) {
+      return psiAt0 * Math.exp(kappa * x);
+    } else if (x <= x0) {
+      const z = alpha * (x - x0);
+      return A * airyAi(z) + B * airyBi(z);
+    } else if (x < width) {
+      const z = alpha * (x - x0);
+      if (z < 4.0) {
+        const aiAtZ = airyAi(z);
+        const aiAt0 = airyAi(0);
+        return psiAtX0 * (aiAtZ / aiAt0);
+      } else {
+        const zeta = (2.0 / 3.0) * Math.pow(z, 1.5);
+        const aiAt0 = airyAi(0);
+        const ratio =
+          ((1.0 / (2.0 * Math.sqrt(Math.PI) * Math.pow(z, 0.25))) *
+            Math.exp(-zeta)) /
+          aiAt0;
+        return psiAtX0 * ratio;
+      }
+    } else {
+      const zAtWidth = alpha * (width - x0);
+      let psiAtWidth: number;
+      if (zAtWidth < 4.0) {
+        const aiAtWidth = airyAi(zAtWidth);
+        const aiAt0 = airyAi(0);
+        psiAtWidth = psiAtX0 * (aiAtWidth / aiAt0);
+      } else {
+        const zeta = (2.0 / 3.0) * Math.pow(zAtWidth, 1.5);
+        const aiAt0 = airyAi(0);
+        const ratio =
+          ((1.0 / (2.0 * Math.sqrt(Math.PI) * Math.pow(zAtWidth, 0.25))) *
+            Math.exp(-zeta)) /
+          aiAt0;
+        psiAtWidth = psiAtX0 * ratio;
+      }
+      return psiAtWidth * Math.exp(-kappa * (x - width));
+    }
+  };
+
   const zeros: number[] = [];
   const numSamples = 1000;
   const dx = (2 * searchRange) / numSamples;
 
   // Evaluate wavefunction at first point
   let prevX = -searchRange;
-  let prevVal: number;
-  if (prevX < 0) {
-    const psiAt0 = A * Ai0 + B * Bi0;
-    prevVal = psiAt0 * Math.exp(kappa * prevX);
-  } else if (prevX <= x0) {
-    const z = alpha * (prevX - x0);
-    prevVal = A * airyAi(z) + B * airyBi(z);
-  } else {
-    const z = alpha * (prevX - x0);
-    prevVal = airyAi(z);
-  }
+  let prevVal = evaluatePsi(prevX);
 
   for (let i = 1; i <= numSamples; i++) {
     const x = -searchRange + i * dx;
-    let val: number;
-
-    if (x < 0) {
-      const psiAt0 = A * Ai0 + B * Bi0;
-      val = psiAt0 * Math.exp(kappa * x);
-    } else if (x <= x0) {
-      const z = alpha * (x - x0);
-      val = A * airyAi(z) + B * airyBi(z);
-    } else if (x < width) {
-      const z = alpha * (x - x0);
-      val = airyAi(z);
-    } else {
-      // Beyond width, exponential decay
-      const zAtWidth = alpha * (width - x0);
-      const psiAtWidth = airyAi(zAtWidth);
-      val = psiAtWidth * Math.exp(-kappa * (x - width));
-    }
+    const val = evaluatePsi(x);
 
     // Sign change detected
     if (prevVal * val < 0) {
@@ -758,22 +877,7 @@ export function calculateTriangularPotentialWavefunctionZeros(
       let right = x;
       for (let iter = 0; iter < 20; iter++) {
         const mid = (left + right) / 2;
-        let valMid: number;
-
-        if (mid < 0) {
-          const psiAt0 = A * Ai0 + B * Bi0;
-          valMid = psiAt0 * Math.exp(kappa * mid);
-        } else if (mid <= x0) {
-          const z = alpha * (mid - x0);
-          valMid = A * airyAi(z) + B * airyBi(z);
-        } else if (mid < width) {
-          const z = alpha * (mid - x0);
-          valMid = airyAi(z);
-        } else {
-          const zAtWidth = alpha * (width - x0);
-          const psiAtWidth = airyAi(zAtWidth);
-          valMid = psiAtWidth * Math.exp(-kappa * (mid - width));
-        }
+        const valMid = evaluatePsi(mid);
 
         if (Math.abs(valMid) < 1e-12) {
           zeros.push(mid);
@@ -847,24 +951,67 @@ export function calculateTriangularPotentialWavefunctionFirstDerivative(
     B = 0;
   }
 
+  // Compute normalization constant
+  const xMin = Math.min(...xGrid);
+  const xMax = Math.max(...xGrid);
+  const normalization = computeTriangularPotentialNormalization(
+    height,
+    width,
+    offset,
+    mass,
+    energy,
+    A,
+    B,
+    xMin,
+    xMax,
+    1000,
+  );
+
+  const psiAt0 = A * Ai0 + B * Bi0;
+  const psiAtX0 = A * airyAi(0) + B * airyBi(0);
+
   const firstDerivative: number[] = [];
   const h = 1e-12;
 
   // Helper function to evaluate wavefunction
   const evaluatePsi = (x: number): number => {
     if (x < 0) {
-      const psiAt0 = A * Ai0 + B * Bi0;
-      return psiAt0 * Math.exp(kappa * x);
+      return normalization * psiAt0 * Math.exp(kappa * x);
     } else if (x <= x0) {
       const z = alpha * (x - x0);
-      return A * airyAi(z) + B * airyBi(z);
+      return normalization * (A * airyAi(z) + B * airyBi(z));
     } else if (x < width) {
       const z = alpha * (x - x0);
-      return airyAi(z);
+      if (z < 4.0) {
+        const aiAtZ = airyAi(z);
+        const aiAt0 = airyAi(0);
+        return normalization * psiAtX0 * (aiAtZ / aiAt0);
+      } else {
+        const zeta = (2.0 / 3.0) * Math.pow(z, 1.5);
+        const aiAt0 = airyAi(0);
+        const ratio =
+          ((1.0 / (2.0 * Math.sqrt(Math.PI) * Math.pow(z, 0.25))) *
+            Math.exp(-zeta)) /
+          aiAt0;
+        return normalization * psiAtX0 * ratio;
+      }
     } else {
       const zAtWidth = alpha * (width - x0);
-      const psiAtWidth = airyAi(zAtWidth);
-      return psiAtWidth * Math.exp(-kappa * (x - width));
+      let psiAtWidth: number;
+      if (zAtWidth < 4.0) {
+        const aiAtWidth = airyAi(zAtWidth);
+        const aiAt0 = airyAi(0);
+        psiAtWidth = psiAtX0 * (aiAtWidth / aiAt0);
+      } else {
+        const zeta = (2.0 / 3.0) * Math.pow(zAtWidth, 1.5);
+        const aiAt0 = airyAi(0);
+        const ratio =
+          ((1.0 / (2.0 * Math.sqrt(Math.PI) * Math.pow(zAtWidth, 0.25))) *
+            Math.exp(-zeta)) /
+          aiAt0;
+        psiAtWidth = psiAtX0 * ratio;
+      }
+      return normalization * psiAtWidth * Math.exp(-kappa * (x - width));
     }
   };
 
@@ -928,24 +1075,67 @@ export function calculateTriangularPotentialWavefunctionSecondDerivative(
     B = 0;
   }
 
+  // Compute normalization constant
+  const xMin = Math.min(...xGrid);
+  const xMax = Math.max(...xGrid);
+  const normalization = computeTriangularPotentialNormalization(
+    height,
+    width,
+    offset,
+    mass,
+    energy,
+    A,
+    B,
+    xMin,
+    xMax,
+    1000,
+  );
+
+  const psiAt0 = A * Ai0 + B * Bi0;
+  const psiAtX0 = A * airyAi(0) + B * airyBi(0);
+
   const secondDerivative: number[] = [];
   const h = 1e-12;
 
   // Helper function to evaluate wavefunction
   const evaluatePsi = (x: number): number => {
     if (x < 0) {
-      const psiAt0 = A * Ai0 + B * Bi0;
-      return psiAt0 * Math.exp(kappa * x);
+      return normalization * psiAt0 * Math.exp(kappa * x);
     } else if (x <= x0) {
       const z = alpha * (x - x0);
-      return A * airyAi(z) + B * airyBi(z);
+      return normalization * (A * airyAi(z) + B * airyBi(z));
     } else if (x < width) {
       const z = alpha * (x - x0);
-      return airyAi(z);
+      if (z < 4.0) {
+        const aiAtZ = airyAi(z);
+        const aiAt0 = airyAi(0);
+        return normalization * psiAtX0 * (aiAtZ / aiAt0);
+      } else {
+        const zeta = (2.0 / 3.0) * Math.pow(z, 1.5);
+        const aiAt0 = airyAi(0);
+        const ratio =
+          ((1.0 / (2.0 * Math.sqrt(Math.PI) * Math.pow(z, 0.25))) *
+            Math.exp(-zeta)) /
+          aiAt0;
+        return normalization * psiAtX0 * ratio;
+      }
     } else {
       const zAtWidth = alpha * (width - x0);
-      const psiAtWidth = airyAi(zAtWidth);
-      return psiAtWidth * Math.exp(-kappa * (x - width));
+      let psiAtWidth: number;
+      if (zAtWidth < 4.0) {
+        const aiAtWidth = airyAi(zAtWidth);
+        const aiAt0 = airyAi(0);
+        psiAtWidth = psiAtX0 * (aiAtWidth / aiAt0);
+      } else {
+        const zeta = (2.0 / 3.0) * Math.pow(zAtWidth, 1.5);
+        const aiAt0 = airyAi(0);
+        const ratio =
+          ((1.0 / (2.0 * Math.sqrt(Math.PI) * Math.pow(zAtWidth, 0.25))) *
+            Math.exp(-zeta)) /
+          aiAt0;
+        psiAtWidth = psiAtX0 * ratio;
+      }
+      return normalization * psiAtWidth * Math.exp(-kappa * (x - width));
     }
   };
 
@@ -1013,6 +1203,23 @@ export function calculateTriangularPotentialWavefunctionMinMax(
     B = 0;
   }
 
+  // Compute normalization constant
+  const normalization = computeTriangularPotentialNormalization(
+    height,
+    width,
+    offset,
+    mass,
+    energy,
+    A,
+    B,
+    xMin,
+    xMax,
+    numPoints,
+  );
+
+  const psiAt0 = A * Ai0 + B * Bi0;
+  const psiAtX0 = A * airyAi(0) + B * airyBi(0);
+
   let min = Infinity;
   let max = -Infinity;
 
@@ -1023,18 +1230,42 @@ export function calculateTriangularPotentialWavefunctionMinMax(
     let psi: number;
 
     if (x < 0) {
-      const psiAt0 = A * Ai0 + B * Bi0;
-      psi = psiAt0 * Math.exp(kappa * x);
+      psi = normalization * psiAt0 * Math.exp(kappa * x);
     } else if (x <= x0) {
       const z = alpha * (x - x0);
-      psi = A * airyAi(z) + B * airyBi(z);
+      psi = normalization * (A * airyAi(z) + B * airyBi(z));
     } else if (x < width) {
       const z = alpha * (x - x0);
-      psi = airyAi(z);
+      if (z < 4.0) {
+        const aiAtZ = airyAi(z);
+        const aiAt0 = airyAi(0);
+        psi = normalization * psiAtX0 * (aiAtZ / aiAt0);
+      } else {
+        const zeta = (2.0 / 3.0) * Math.pow(z, 1.5);
+        const aiAt0 = airyAi(0);
+        const ratio =
+          ((1.0 / (2.0 * Math.sqrt(Math.PI) * Math.pow(z, 0.25))) *
+            Math.exp(-zeta)) /
+          aiAt0;
+        psi = normalization * psiAtX0 * ratio;
+      }
     } else {
       const zAtWidth = alpha * (width - x0);
-      const psiAtWidth = airyAi(zAtWidth);
-      psi = psiAtWidth * Math.exp(-kappa * (x - width));
+      let psiAtWidth: number;
+      if (zAtWidth < 4.0) {
+        const aiAtWidth = airyAi(zAtWidth);
+        const aiAt0 = airyAi(0);
+        psiAtWidth = psiAtX0 * (aiAtWidth / aiAt0);
+      } else {
+        const zeta = (2.0 / 3.0) * Math.pow(zAtWidth, 1.5);
+        const aiAt0 = airyAi(0);
+        const ratio =
+          ((1.0 / (2.0 * Math.sqrt(Math.PI) * Math.pow(zAtWidth, 0.25))) *
+            Math.exp(-zeta)) /
+          aiAt0;
+        psiAtWidth = psiAtX0 * ratio;
+      }
+      psi = normalization * psiAtWidth * Math.exp(-kappa * (x - width));
     }
 
     if (psi < min) min = psi;
@@ -1117,21 +1348,62 @@ export function calculateTriangularPotentialSuperpositionMinMax(
         B = 0;
       }
 
+      // Compute normalization constant for this state
+      const normalization = computeTriangularPotentialNormalization(
+        height,
+        width,
+        offset,
+        mass,
+        energy,
+        A,
+        B,
+        xMin,
+        xMax,
+        numPoints,
+      );
+
+      const psiAt0 = A * Ai0 + B * Bi0;
+      const psiAtX0 = A * airyAi(0) + B * airyBi(0);
+
       // Calculate wavefunction value
       let psi: number;
       if (x < 0) {
-        const psiAt0 = A * Ai0 + B * Bi0;
-        psi = psiAt0 * Math.exp(kappa * x);
+        psi = normalization * psiAt0 * Math.exp(kappa * x);
       } else if (x <= x0) {
         const z = alpha * (x - x0);
-        psi = A * airyAi(z) + B * airyBi(z);
+        psi = normalization * (A * airyAi(z) + B * airyBi(z));
       } else if (x < width) {
         const z = alpha * (x - x0);
-        psi = airyAi(z);
+        if (z < 4.0) {
+          const aiAtZ = airyAi(z);
+          const aiAt0 = airyAi(0);
+          psi = normalization * psiAtX0 * (aiAtZ / aiAt0);
+        } else {
+          const zeta = (2.0 / 3.0) * Math.pow(z, 1.5);
+          const aiAt0 = airyAi(0);
+          const ratio =
+            ((1.0 / (2.0 * Math.sqrt(Math.PI) * Math.pow(z, 0.25))) *
+              Math.exp(-zeta)) /
+            aiAt0;
+          psi = normalization * psiAtX0 * ratio;
+        }
       } else {
         const zAtWidth = alpha * (width - x0);
-        const psiAtWidth = airyAi(zAtWidth);
-        psi = psiAtWidth * Math.exp(-kappa * (x - width));
+        let psiAtWidth: number;
+        if (zAtWidth < 4.0) {
+          const aiAtWidth = airyAi(zAtWidth);
+          const aiAt0 = airyAi(0);
+          psiAtWidth = psiAtX0 * (aiAtWidth / aiAt0);
+        } else {
+          const zeta = (2.0 / 3.0) * Math.pow(zAtWidth, 1.5);
+          const aiAt0 = airyAi(0);
+          const ratio =
+            ((1.0 / (2.0 * Math.sqrt(Math.PI) * Math.pow(zAtWidth, 0.25))) *
+              Math.exp(-zeta)) /
+            aiAt0;
+          psiAtWidth = psiAtX0 * ratio;
+        }
+        psi = normalization * psiAtWidth * Math.exp(-kappa * (x - width));
       }
 
       // Time evolution: exp(-iEt/ℏ) = cos(Et/ℏ) - i*sin(Et/ℏ)
