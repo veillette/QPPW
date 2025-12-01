@@ -308,8 +308,7 @@ export function solveRosenMorsePotential(
 
       // Calculate wavefunction without normalization
       const jacobiPoly = jacobiPolynomial(n, alpha_jac, beta_jac, tanhVal);
-      const value =
-        Math.pow(sechVal, s) * Math.exp(mu * tanhVal) * jacobiPoly;
+      const value = Math.pow(sechVal, s) * Math.exp(mu * tanhVal) * jacobiPoly;
 
       psiRaw.push(value);
     }
