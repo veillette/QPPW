@@ -3,44 +3,21 @@
  * of the complex wavefunction. The height represents magnitude, and the hue represents phase.
  */
 
-import { Node, Rectangle } from "scenerystack/scenery";
+import { Rectangle } from "scenerystack/scenery";
 import QuantumConstants from "../../model/QuantumConstants.js";
 import QPPWColors from "../../../QPPWColors.js";
+import {
+  BaseVisualization,
+  type BaseVisualizationOptions,
+} from "./BaseVisualization.js";
 
-export type PhaseColorVisualizationOptions = {
-  dataToViewX: (x: number) => number;
-  dataToViewY: (y: number) => number;
-};
+export type PhaseColorVisualizationOptions = BaseVisualizationOptions;
 
-export class PhaseColorVisualization extends Node {
-  private readonly options: PhaseColorVisualizationOptions;
-  private readonly container: Node;
+export class PhaseColorVisualization extends BaseVisualization {
   private phaseColorStrips: Rectangle[] = [];
 
   constructor(options: PhaseColorVisualizationOptions) {
-    super();
-
-    this.options = options;
-
-    // Create container
-    this.container = new Node({
-      visible: false,
-    });
-    this.addChild(this.container);
-  }
-
-  /**
-   * Show the phase color visualization
-   */
-  public show(): void {
-    this.container.visible = true;
-  }
-
-  /**
-   * Hide the phase color visualization
-   */
-  public hide(): void {
-    this.container.visible = false;
+    super(options);
   }
 
   /**
@@ -51,8 +28,7 @@ export class PhaseColorVisualization extends Node {
     wavefunction: number[],
     globalPhase: number,
   ): void {
-    const { dataToViewX, dataToViewY } = this.options;
-    const y0 = dataToViewY(0);
+    const y0 = this.dataToViewY(0);
     const numStrips = xGrid.length - 1;
 
     // Ensure we have enough rectangles in the pool
@@ -67,8 +43,8 @@ export class PhaseColorVisualization extends Node {
 
     // Update each strip
     for (let i = 0; i < numStrips; i++) {
-      const x1 = dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
-      const x2 = dataToViewX(xGrid[i + 1] * QuantumConstants.M_TO_NM);
+      const x1 = this.dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
+      const x2 = this.dataToViewX(xGrid[i + 1] * QuantumConstants.M_TO_NM);
       const stripWidth = x2 - x1;
 
       const psi = wavefunction[i];
@@ -95,7 +71,7 @@ export class PhaseColorVisualization extends Node {
       const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 
       // Height of the strip is proportional to magnitude
-      const yTop = dataToViewY(magnitude);
+      const yTop = this.dataToViewY(magnitude);
       const stripHeight = Math.abs(y0 - yTop);
 
       // Update the rectangle from the pool
@@ -119,8 +95,7 @@ export class PhaseColorVisualization extends Node {
     realPart: number[],
     imagPart: number[],
   ): void {
-    const { dataToViewX, dataToViewY } = this.options;
-    const y0 = dataToViewY(0);
+    const y0 = this.dataToViewY(0);
     const numStrips = xGrid.length - 1;
 
     // Ensure we have enough rectangles in the pool
@@ -135,8 +110,8 @@ export class PhaseColorVisualization extends Node {
 
     // Update each strip
     for (let i = 0; i < numStrips; i++) {
-      const x1 = dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
-      const x2 = dataToViewX(xGrid[i + 1] * QuantumConstants.M_TO_NM);
+      const x1 = this.dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
+      const x2 = this.dataToViewX(xGrid[i + 1] * QuantumConstants.M_TO_NM);
       const stripWidth = x2 - x1;
 
       const real = realPart[i];
@@ -156,7 +131,7 @@ export class PhaseColorVisualization extends Node {
       const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 
       // Height of the strip is proportional to magnitude
-      const yTop = dataToViewY(magnitude);
+      const yTop = this.dataToViewY(magnitude);
       const stripHeight = Math.abs(y0 - yTop);
 
       // Update the rectangle from the pool

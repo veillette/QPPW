@@ -3,58 +3,28 @@
  * of the wavefunction at a specific point. Shows a parabola based on Taylor expansion.
  */
 
-import {
-  Node,
-  Line,
-  Path,
-  Text,
-  Circle,
-  DragListener,
-  KeyboardDragListener,
-} from "scenerystack/scenery";
+import { Line, Path, Text, Circle } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
-import {
-  NumberProperty,
-  BooleanProperty,
-  DerivedProperty,
-} from "scenerystack/axon";
+import { NumberProperty } from "scenerystack/axon";
 import { PhetFont } from "scenerystack/scenery-phet";
 import type { ScreenModel } from "../../model/ScreenModels.js";
 import QPPWColors from "../../../QPPWColors.js";
 import stringManager from "../../../i18n/StringManager.js";
+import { Utterance } from "scenerystack/utterance-queue";
 import {
-  Utterance,
-  UtteranceQueue,
-  AriaLiveAnnouncer,
-} from "scenerystack/utterance-queue";
+  BaseChartTool,
+  utteranceQueue,
+  type BaseChartToolOptions,
+} from "./BaseChartTool.js";
 
-// Create a global utteranceQueue instance for accessibility announcements
-// Using AriaLiveAnnouncer for screen reader support via aria-live regions
-const utteranceQueue = new UtteranceQueue(new AriaLiveAnnouncer());
+export type CurvatureToolOptions = BaseChartToolOptions;
 
-export type CurvatureToolOptions = {
-  chartMargins: { left: number; right: number; top: number; bottom: number };
-  plotHeight: number;
-  xMinProperty: NumberProperty;
-  xMaxProperty: NumberProperty;
-  dataToViewX: (x: number) => number;
-  dataToViewY: (y: number) => number;
-  viewToDataX: (x: number) => number;
-  parentNode: Node; // Reference to parent chart node for coordinate conversions
-};
-
-export class CurvatureTool extends Node {
-  private readonly model: ScreenModel;
-  private readonly options: CurvatureToolOptions;
-
-  public readonly showProperty: BooleanProperty;
+export class CurvatureTool extends BaseChartTool {
   private readonly markerXProperty: NumberProperty; // X position in nm
-
-  private readonly container: Node;
-  private readonly marker: Line;
-  private readonly positionCircle: Circle; // Circle tracking wavefunction position
-  private readonly parabola: Path;
-  private readonly label: Text;
+  private marker!: Line;
+  private positionCircle!: Circle; // Circle tracking wavefunction position
+  private parabola!: Path;
+  private label!: Text;
 
   // Cache for extrema positions to avoid recalculating on every drag event
   private extremaPositionsCache: number[] | null = null;
@@ -65,79 +35,55 @@ export class CurvatureTool extends Node {
     getEffectiveDisplayMode: () => string,
     options: CurvatureToolOptions,
   ) {
-    // Initialize properties first so they can be used in super()
-    const showPropertyInternal = new BooleanProperty(false);
+    super(
+      model,
+      getEffectiveDisplayMode,
+      options,
+      "Curvature Visualization",
+      "Showing second derivative d²ψ/dx². Curvature is proportional to (V(x) - E)ψ(x) " +
+        "according to the Schrödinger equation. Positive curvature where V > E, negative where V < E.",
+    );
 
-    super({
-      // pdom - container for the curvature tool
-      tagName: "div",
-      labelTagName: "h3",
-      labelContent: "Curvature Visualization",
-      descriptionTagName: "p",
-      descriptionContent: new DerivedProperty(
-        [showPropertyInternal],
-        (enabled) =>
-          enabled
-            ? "Showing second derivative d²ψ/dx². Curvature is proportional to (V(x) - E)ψ(x) " +
-              "according to the Schrödinger equation. Positive curvature where V > E, negative where V < E."
-            : "Curvature visualization disabled.",
-      ),
-    });
-
-    this.model = model;
-    this.options = options;
-
-    // Store properties
-    this.showProperty = showPropertyInternal;
     this.markerXProperty = new NumberProperty(0);
 
-    // Create container
-    this.container = new Node({
-      visible: false,
+    // Update when marker position changes
+    this.markerXProperty.link(() => {
+      if (this.showProperty.value) {
+        this.update(getEffectiveDisplayMode());
+      }
     });
-    this.addChild(this.container);
 
+    // Invalidate cache when model parameters change
+    model.potentialTypeProperty.lazyLink(() => this.invalidateCache());
+    model.wellWidthProperty.lazyLink(() => this.invalidateCache());
+    model.wellDepthProperty.lazyLink(() => this.invalidateCache());
+    model.particleMassProperty.lazyLink(() => this.invalidateCache());
+
+    // Check for optional properties using type guards
+    if ("wellOffsetProperty" in model) {
+      (
+        model as { wellOffsetProperty: NumberProperty }
+      ).wellOffsetProperty.lazyLink(() => this.invalidateCache());
+    }
+    if ("wellSeparationProperty" in model) {
+      (
+        model as { wellSeparationProperty: NumberProperty }
+      ).wellSeparationProperty.lazyLink(() => this.invalidateCache());
+    }
+  }
+
+  /**
+   * Setup visual elements for the curvature tool
+   */
+  protected setupVisualElements(): void {
     // Create marker line
     this.marker = new Line(0, 0, 0, 0, {
       stroke: QPPWColors.curvatureToolStrokeProperty,
       lineWidth: 2,
       lineDash: [4, 3],
-      cursor: "ew-resize", // Make it clear the line is draggable
-
-      // pdom - keyboard accessible marker
-      tagName: "div",
-      ariaRole: "slider",
-      focusable: true,
-      accessibleName: "Curvature Measurement Position",
-      labelContent: "Position for curvature and second derivative display",
-      pdomAttributes: [
-        { attribute: "aria-valuemin", value: -5 },
-        { attribute: "aria-valuemax", value: 5 },
-        {
-          attribute: "aria-valuenow",
-          value: this.markerXProperty.value.toFixed(2),
-        },
-        {
-          attribute: "aria-valuetext",
-          value: `Position: ${this.markerXProperty.value.toFixed(2)} nanometers`,
-        },
-      ],
-      accessibleHelpText:
-        "Use Left/Right arrow keys to move marker. " +
-        "Shift+Arrow for fine control. " +
-        "Page Up/Down for large steps. " +
-        "Shows second derivative (curvature) at selected position.",
+      cursor: "ew-resize",
     });
     this.container.addChild(this.marker);
-
-    // Update aria-valuetext when position changes
-    this.markerXProperty.link((position) => {
-      this.marker.setPDOMAttribute("aria-valuenow", position.toFixed(2));
-      this.marker.setPDOMAttribute(
-        "aria-valuetext",
-        `Position: ${position.toFixed(2)} nanometers`,
-      );
-    });
 
     // Create position tracking circle (shows position on wavefunction)
     this.positionCircle = new Circle(5, {
@@ -162,44 +108,37 @@ export class CurvatureTool extends Node {
     });
     this.container.addChild(this.label);
 
-    // Setup drag listener for marker
-    this.setupDragListener();
-
-    // Store display mode getter
-    const getDisplayMode = getEffectiveDisplayMode;
-
-    // Link visibility to property
-    this.showProperty.link((show: boolean) => {
-      this.container.visible = show;
-      if (show) {
-        this.update(getDisplayMode());
-      }
+    // Setup drag listener for marker using base class method with snapping constraint
+    this.setupMarkerDragListener({
+      markerNode: this.marker,
+      positionProperty: this.markerXProperty,
+      accessibleName: "Curvature Measurement Position",
+      labelContent: "Position for curvature and second derivative display",
+      helpText:
+        "Use Left/Right arrow keys to move marker. " +
+        "Shift+Arrow for fine control. " +
+        "Page Up/Down for large steps. " +
+        "Shows second derivative (curvature) at selected position.",
+      constraintFn: (newX) => {
+        // Clamp to bounds first
+        const clamped = this.clampToRange(
+          newX,
+          this.options.xMinProperty.value,
+          this.options.xMaxProperty.value,
+        );
+        // Then apply snapping to extrema
+        return this.snapToExtrema(clamped);
+      },
+      onDragEnd: (position) => {
+        const derivatives = this.calculateDerivatives(position, "waveFunction");
+        if (derivatives !== null) {
+          const message =
+            `Marker at ${position.toFixed(2)} nanometers. ` +
+            `Second derivative: ${derivatives.secondDerivative.toFixed(3)}.`;
+          utteranceQueue.addToBack(new Utterance({ alert: message }));
+        }
+      },
     });
-
-    // Update when marker position changes
-    this.markerXProperty.link(() => {
-      if (this.showProperty.value) {
-        this.update(getDisplayMode());
-      }
-    });
-
-    // Invalidate cache when model parameters change
-    model.potentialTypeProperty.lazyLink(() => this.invalidateCache());
-    model.wellWidthProperty.lazyLink(() => this.invalidateCache());
-    model.wellDepthProperty.lazyLink(() => this.invalidateCache());
-    model.particleMassProperty.lazyLink(() => this.invalidateCache());
-
-    // Check for optional properties using type guards
-    if ("wellOffsetProperty" in model) {
-      (
-        model as { wellOffsetProperty: NumberProperty }
-      ).wellOffsetProperty.lazyLink(() => this.invalidateCache());
-    }
-    if ("wellSeparationProperty" in model) {
-      (
-        model as { wellSeparationProperty: NumberProperty }
-      ).wellSeparationProperty.lazyLink(() => this.invalidateCache());
-    }
   }
 
   /**
@@ -211,63 +150,6 @@ export class CurvatureTool extends Node {
   }
 
   /**
-   * Setup drag listeners for marker handle (both mouse and keyboard)
-   */
-  private setupDragListener(): void {
-    const { parentNode, viewToDataX, xMinProperty, xMaxProperty } =
-      this.options;
-
-    // Mouse drag listener
-    const dragListener = new DragListener({
-      drag: (event) => {
-        // Convert to parent coordinate system (where dataToView/viewToData transforms are defined)
-        const parentPoint = parentNode.globalToLocalPoint(event.pointer.point);
-        let dataX = viewToDataX(parentPoint.x);
-
-        // Clamp to chart bounds
-        dataX = Math.max(
-          xMinProperty.value,
-          Math.min(xMaxProperty.value, dataX),
-        );
-
-        // Apply snapping to extrema (max/min values)
-        const snappedX = this.snapToExtrema(dataX);
-        this.markerXProperty.value = snappedX;
-      },
-    });
-
-    this.marker.addInputListener(dragListener);
-
-    // Keyboard drag listener
-    const keyboardDragListener = new KeyboardDragListener({
-      drag: (_event, listener) => {
-        let newX = this.markerXProperty.value + listener.modelDelta.x * 0.1;
-
-        // Clamp to chart bounds
-        newX = Math.max(xMinProperty.value, Math.min(xMaxProperty.value, newX));
-
-        this.markerXProperty.value = newX;
-      },
-      dragDelta: 1, // Regular arrow key step
-      shiftDragDelta: 0.1, // Fine control with shift
-      end: () => {
-        // Announce position and curvature value on drag end
-        const position = this.markerXProperty.value;
-        const derivatives = this.calculateDerivatives(position, "waveFunction");
-
-        if (derivatives !== null) {
-          const message =
-            `Marker at ${position.toFixed(2)} nanometers. ` +
-            `Second derivative: ${derivatives.secondDerivative.toFixed(3)}.`;
-          utteranceQueue.addToBack(new Utterance({ alert: message }));
-        }
-      },
-    });
-
-    this.marker.addInputListener(keyboardDragListener);
-  }
-
-  /**
    * Updates the curvature tool visualization.
    */
   public update(displayMode: string): void {
@@ -275,11 +157,10 @@ export class CurvatureTool extends Node {
       return;
     }
 
-    const { chartMargins, plotHeight, dataToViewX } = this.options;
     const x = this.markerXProperty.value;
-    const viewX = dataToViewX(x);
-    const yTop = chartMargins.top;
-    const yBottom = chartMargins.top + plotHeight;
+    const viewX = this.dataToViewX(x);
+    const yTop = this.getChartTop();
+    const yBottom = this.getChartBottom();
 
     // Update marker line
     this.marker.setLine(viewX, yTop, viewX, yBottom);
@@ -298,9 +179,10 @@ export class CurvatureTool extends Node {
       this.parabola.shape = parabolaShape;
 
       // Update position tracking circle
-      const { dataToViewY } = this.options;
       this.positionCircle.centerX = viewX;
-      this.positionCircle.centerY = dataToViewY(derivatives.wavefunctionValue);
+      this.positionCircle.centerY = this.dataToViewY(
+        derivatives.wavefunctionValue,
+      );
 
       // Update label with proper units (nm^-5/2)
       this.label.string =
@@ -425,7 +307,6 @@ export class CurvatureTool extends Node {
     wavefunctionValue: number,
   ): Shape {
     const shape = new Shape();
-    const { dataToViewX, dataToViewY } = this.options;
 
     // Create a small parabola centered at (xData, wavefunctionValue)
     const centerX = xData;
@@ -447,8 +328,8 @@ export class CurvatureTool extends Node {
       const y =
         centerY + firstDerivative * dx + 0.5 * secondDerivative * dx * dx;
 
-      const viewX = dataToViewX(x);
-      const viewY = dataToViewY(y);
+      const viewX = this.dataToViewX(x);
+      const viewY = this.dataToViewY(y);
 
       points.push({ x: viewX, y: viewY });
     }
