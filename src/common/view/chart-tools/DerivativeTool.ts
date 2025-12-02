@@ -3,137 +3,65 @@
  * of the wavefunction at a specific point. Shows a tangent line.
  */
 
-import {
-  Node,
-  Line,
-  Path,
-  Text,
-  Circle,
-  DragListener,
-  KeyboardDragListener,
-} from "scenerystack/scenery";
+import { Line, Path, Text, Circle } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
-import {
-  NumberProperty,
-  BooleanProperty,
-  DerivedProperty,
-} from "scenerystack/axon";
+import { NumberProperty } from "scenerystack/axon";
 import { PhetFont } from "scenerystack/scenery-phet";
 import type { ScreenModel } from "../../model/ScreenModels.js";
 import QPPWColors from "../../../QPPWColors.js";
 import stringManager from "../../../i18n/StringManager.js";
+import { Utterance } from "scenerystack/utterance-queue";
 import {
-  Utterance,
-  UtteranceQueue,
-  AriaLiveAnnouncer,
-} from "scenerystack/utterance-queue";
+  BaseChartTool,
+  utteranceQueue,
+  type BaseChartToolOptions,
+} from "./BaseChartTool.js";
 
-// Create a global utteranceQueue instance for accessibility announcements
-// Using AriaLiveAnnouncer for screen reader support via aria-live regions
-const utteranceQueue = new UtteranceQueue(new AriaLiveAnnouncer());
+export type DerivativeToolOptions = BaseChartToolOptions;
 
-export type DerivativeToolOptions = {
-  chartMargins: { left: number; right: number; top: number; bottom: number };
-  plotHeight: number;
-  xMinProperty: NumberProperty;
-  xMaxProperty: NumberProperty;
-  dataToViewX: (x: number) => number;
-  dataToViewY: (y: number) => number;
-  viewToDataX: (x: number) => number;
-  parentNode: Node; // Reference to parent chart node for coordinate conversions
-};
-
-export class DerivativeTool extends Node {
-  private readonly model: ScreenModel;
-  private readonly options: DerivativeToolOptions;
-
-  public readonly showProperty: BooleanProperty;
+export class DerivativeTool extends BaseChartTool {
   private readonly markerXProperty: NumberProperty; // X position in nm
-
-  private readonly container: Node;
-  private readonly marker: Line;
-  private readonly positionCircle: Circle; // Circle tracking wavefunction position
-  private readonly tangentLine: Path;
-  private readonly label: Text;
+  private marker!: Line;
+  private positionCircle!: Circle; // Circle tracking wavefunction position
+  private tangentLine!: Path;
+  private label!: Text;
 
   constructor(
     model: ScreenModel,
     getEffectiveDisplayMode: () => string,
     options: DerivativeToolOptions,
   ) {
-    // Initialize properties first so they can be used in super()
-    const showPropertyInternal = new BooleanProperty(false);
+    super(
+      model,
+      getEffectiveDisplayMode,
+      options,
+      "Derivative Visualization",
+      "Showing first derivative dψ/dx (slope) of the wavefunction. " +
+        "The tangent line shows the rate of change at the selected position.",
+    );
 
-    super({
-      // pdom - container for the derivative tool
-      tagName: "div",
-      labelTagName: "h3",
-      labelContent: "Derivative Visualization",
-      descriptionTagName: "p",
-      descriptionContent: new DerivedProperty(
-        [showPropertyInternal],
-        (enabled) =>
-          enabled
-            ? "Showing first derivative dψ/dx (slope) of the wavefunction. " +
-              "The tangent line shows the rate of change at the selected position."
-            : "Derivative visualization disabled.",
-      ),
-    });
-
-    this.model = model;
-    this.options = options;
-
-    // Store properties
-    this.showProperty = showPropertyInternal;
     this.markerXProperty = new NumberProperty(1);
 
-    // Create container
-    this.container = new Node({
-      visible: false,
+    // Update when marker position changes
+    this.markerXProperty.link(() => {
+      if (this.showProperty.value) {
+        this.update(getEffectiveDisplayMode());
+      }
     });
-    this.addChild(this.container);
+  }
 
+  /**
+   * Setup visual elements for the derivative tool
+   */
+  protected setupVisualElements(): void {
     // Create marker line
     this.marker = new Line(0, 0, 0, 0, {
       stroke: QPPWColors.derivativeToolStrokeProperty,
       lineWidth: 2,
       lineDash: [4, 3],
-      cursor: "ew-resize", // Make it clear the line is draggable
-
-      // pdom - keyboard accessible marker
-      tagName: "div",
-      ariaRole: "slider",
-      focusable: true,
-      accessibleName: "Derivative Measurement Position",
-      labelContent: "Position for derivative and slope display",
-      pdomAttributes: [
-        { attribute: "aria-valuemin", value: -5 },
-        { attribute: "aria-valuemax", value: 5 },
-        {
-          attribute: "aria-valuenow",
-          value: this.markerXProperty.value.toFixed(2),
-        },
-        {
-          attribute: "aria-valuetext",
-          value: `Position: ${this.markerXProperty.value.toFixed(2)} nanometers`,
-        },
-      ],
-      accessibleHelpText:
-        "Use Left/Right arrow keys to move marker. " +
-        "Shift+Arrow for fine control. " +
-        "Page Up/Down for large steps. " +
-        "Shows first derivative (slope) at selected position.",
+      cursor: "ew-resize",
     });
     this.container.addChild(this.marker);
-
-    // Update aria-valuetext when position changes
-    this.markerXProperty.link((position) => {
-      this.marker.setPDOMAttribute("aria-valuenow", position.toFixed(2));
-      this.marker.setPDOMAttribute(
-        "aria-valuetext",
-        `Position: ${position.toFixed(2)} nanometers`,
-      );
-    });
 
     // Create position tracking circle (shows position on wavefunction)
     this.positionCircle = new Circle(5, {
@@ -158,73 +86,22 @@ export class DerivativeTool extends Node {
     });
     this.container.addChild(this.label);
 
-    // Setup drag listener for marker
-    this.setupDragListener();
-
-    // Store display mode getter
-    const getDisplayMode = getEffectiveDisplayMode;
-
-    // Link visibility to property
-    this.showProperty.link((show: boolean) => {
-      this.container.visible = show;
-      if (show) {
-        this.update(getDisplayMode());
-      }
-    });
-
-    // Update when marker position changes
-    this.markerXProperty.link(() => {
-      if (this.showProperty.value) {
-        this.update(getDisplayMode());
-      }
-    });
-  }
-
-  /**
-   * Setup drag listeners for marker handle (both mouse and keyboard)
-   */
-  private setupDragListener(): void {
-    const { parentNode, viewToDataX, xMinProperty, xMaxProperty } =
-      this.options;
-
-    // Mouse drag listener
-    const dragListener = new DragListener({
-      drag: (event) => {
-        // Convert to parent coordinate system (where dataToView/viewToData transforms are defined)
-        const parentPoint = parentNode.globalToLocalPoint(event.pointer.point);
-        const dataX = viewToDataX(parentPoint.x);
-
-        // Clamp to chart bounds
-        const clampedX = Math.max(
-          xMinProperty.value,
-          Math.min(xMaxProperty.value, dataX),
-        );
-        this.markerXProperty.value = clampedX;
-      },
-    });
-
-    this.marker.addInputListener(dragListener);
-
-    // Keyboard drag listener
-    const keyboardDragListener = new KeyboardDragListener({
-      drag: (_event, listener) => {
-        let newX = this.markerXProperty.value + listener.modelDelta.x * 0.1;
-
-        // Clamp to chart bounds
-        newX = Math.max(xMinProperty.value, Math.min(xMaxProperty.value, newX));
-
-        this.markerXProperty.value = newX;
-      },
-      dragDelta: 1, // Regular arrow key step
-      shiftDragDelta: 0.1, // Fine control with shift
-      end: () => {
-        // Announce position and derivative value on drag end
-        const position = this.markerXProperty.value;
+    // Setup drag listener for marker using base class method
+    this.setupMarkerDragListener({
+      markerNode: this.marker,
+      positionProperty: this.markerXProperty,
+      accessibleName: "Derivative Measurement Position",
+      labelContent: "Position for derivative and slope display",
+      helpText:
+        "Use Left/Right arrow keys to move marker. " +
+        "Shift+Arrow for fine control. " +
+        "Page Up/Down for large steps. " +
+        "Shows first derivative (slope) at selected position.",
+      onDragEnd: (position) => {
         const derivativeData = this.calculateFirstDerivative(
           position,
           "waveFunction",
         );
-
         if (derivativeData !== null) {
           const message =
             `Marker at ${position.toFixed(2)} nanometers. ` +
@@ -233,8 +110,6 @@ export class DerivativeTool extends Node {
         }
       },
     });
-
-    this.marker.addInputListener(keyboardDragListener);
   }
 
   /**
@@ -245,11 +120,10 @@ export class DerivativeTool extends Node {
       return;
     }
 
-    const { chartMargins, plotHeight, dataToViewX } = this.options;
     const x = this.markerXProperty.value;
-    const viewX = dataToViewX(x);
-    const yTop = chartMargins.top;
-    const yBottom = chartMargins.top + plotHeight;
+    const viewX = this.dataToViewX(x);
+    const yTop = this.getChartTop();
+    const yBottom = this.getChartBottom();
 
     // Update marker line
     this.marker.setLine(viewX, yTop, viewX, yBottom);
@@ -267,9 +141,8 @@ export class DerivativeTool extends Node {
       this.tangentLine.shape = tangentLineShape;
 
       // Update position tracking circle
-      const { dataToViewY } = this.options;
       this.positionCircle.centerX = viewX;
-      this.positionCircle.centerY = dataToViewY(
+      this.positionCircle.centerY = this.dataToViewY(
         derivativeData.wavefunctionValue,
       );
 
@@ -326,7 +199,6 @@ export class DerivativeTool extends Node {
     wavefunctionValue: number,
   ): Shape {
     const shape = new Shape();
-    const { dataToViewX, dataToViewY } = this.options;
 
     // Create a tangent line centered at (xData, wavefunctionValue)
     const centerX = xData;
@@ -342,10 +214,10 @@ export class DerivativeTool extends Node {
     const y2 = centerY + firstDerivative * tangentHalfWidth;
 
     // Convert to view coordinates
-    const viewX1 = dataToViewX(x1);
-    const viewY1 = dataToViewY(y1);
-    const viewX2 = dataToViewX(x2);
-    const viewY2 = dataToViewY(y2);
+    const viewX1 = this.dataToViewX(x1);
+    const viewY1 = this.dataToViewY(y1);
+    const viewX2 = this.dataToViewX(x2);
+    const viewY2 = this.dataToViewY(y2);
 
     // Draw the tangent line
     shape.moveTo(viewX1, viewY1);

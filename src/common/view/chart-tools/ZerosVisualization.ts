@@ -7,28 +7,26 @@ import { Node, Circle } from "scenerystack/scenery";
 import { BooleanProperty, Property, DerivedProperty } from "scenerystack/axon";
 import QuantumConstants from "../../model/QuantumConstants.js";
 import QPPWColors from "../../../QPPWColors.js";
+import {
+  BaseVisualization,
+  type BaseVisualizationOptions,
+} from "./BaseVisualization.js";
 
-export type ZerosVisualizationOptions = {
-  dataToViewX: (x: number) => number;
-  dataToViewY: (y: number) => number;
-};
+export type ZerosVisualizationOptions = BaseVisualizationOptions;
 
-export class ZerosVisualization extends Node {
-  private readonly options: ZerosVisualizationOptions;
+export class ZerosVisualization extends BaseVisualization {
   public readonly showProperty: BooleanProperty;
-  private readonly container: Node;
   private readonly zerosPositionsProperty: Property<number[]>;
   private readonly accessibleDescription: Node;
 
   constructor(options: ZerosVisualizationOptions) {
-    super({
-      // pdom - container for zeros visualization
-      tagName: "div",
-      labelTagName: "h3",
-      labelContent: "Wavefunction Zeros",
-    });
+    super(options);
 
-    this.options = options;
+    // Set PDOM attributes for accessibility
+    this.tagName = "div";
+    this.labelTagName = "h3";
+    this.labelContent = "Wavefunction Zeros";
+
     this.showProperty = new BooleanProperty(false);
     this.zerosPositionsProperty = new Property<number[]>([]);
 
@@ -54,16 +52,12 @@ export class ZerosVisualization extends Node {
     });
     this.addChild(this.accessibleDescription);
 
-    // Create container for visual circles
-    this.container = new Node({
-      visible: false,
-    });
-    this.addChild(this.container);
-
     // Link visibility to property
     this.showProperty.link((show: boolean) => {
-      if (!show) {
-        this.container.visible = false;
+      if (show) {
+        this.show();
+      } else {
+        this.hide();
       }
     });
   }
@@ -77,7 +71,7 @@ export class ZerosVisualization extends Node {
 
     // Only show if enabled
     if (!this.showProperty.value) {
-      this.container.visible = false;
+      this.hide();
       this.zerosPositionsProperty.value = [];
       return;
     }
@@ -90,8 +84,8 @@ export class ZerosVisualization extends Node {
 
     // Create circles at each zero position
     zeros.forEach((zeroX) => {
-      const x = this.options.dataToViewX(zeroX);
-      const y = this.options.dataToViewY(0); // Zeros are at y=0
+      const x = this.dataToViewX(zeroX);
+      const y = this.dataToViewY(0); // Zeros are at y=0
 
       const circle = new Circle(4, {
         fill: QPPWColors.energyLevelSelectedProperty,
@@ -104,7 +98,11 @@ export class ZerosVisualization extends Node {
       this.container.addChild(circle);
     });
 
-    this.container.visible = zeros.length > 0;
+    if (zeros.length > 0) {
+      this.show();
+    } else {
+      this.hide();
+    }
   }
 
   /**
