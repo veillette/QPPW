@@ -44,12 +44,14 @@ This critical review identifies **significant issues** in the QPPW codebase and 
 #### Problem 1: Outdated and Inconsistent Timestamps
 
 **Files claiming "Last Updated: November 2024":**
+
 - `doc/model.md` (Teacher Guide)
 - `doc/implementation-notes.md`
 
 **Current date:** December 2, 2025
 
 **Issue:** Documentation is **over 1 year out of date**. In a rapidly evolving codebase, this is unacceptable. Either:
+
 - The documentation hasn't been updated in a year (neglect)
 - The timestamps are wrong (sloppy maintenance)
 - The dates are copy-pasted boilerplate (carelessness)
@@ -69,6 +71,7 @@ This critical review identifies **significant issues** in the QPPW codebase and 
 **File:** `doc/implementation-notes.md`
 **Length:** 1,067 lines
 **Problems:**
+
 - Impossible to navigate
 - Mixes high-level overview with code snippets
 - Code examples likely stale or non-functional
@@ -82,6 +85,7 @@ This critical review identifies **significant issues** in the QPPW codebase and 
 **File:** `doc/CODEBASE_REVIEW.md`
 **Length:** 1,133 lines
 **Problems:**
+
 - Reads like marketing copy, not a technical review
 - Grades everything A or A+ without justification
 - "Areas for Improvement" section is weak
@@ -91,6 +95,7 @@ This critical review identifies **significant issues** in the QPPW codebase and 
 #### Problem 4: Missing Critical Documentation
 
 **What's missing:**
+
 1. ❌ **API Reference** - No auto-generated documentation (TypeDoc mentioned but not implemented)
 2. ❌ **CHANGELOG.md** - No record of changes between versions
 3. ❌ **KNOWN_ISSUES.md** - No tracking of bugs or limitations
@@ -105,6 +110,7 @@ This critical review identifies **significant issues** in the QPPW codebase and 
 **Issue:** No clear ownership or maintenance schedule for documentation.
 
 **Evidence:**
+
 - Stale timestamps (November 2024 when we're in December 2025)
 - Inconsistent formatting between documents
 - No documentation style guide
@@ -121,17 +127,18 @@ This critical review identifies **significant issues** in the QPPW codebase and 
 
 **Problem:** Several files exceed 1,000 lines, making them difficult to understand, test, and maintain.
 
-| File | Lines | Issue |
-|------|-------|-------|
-| `WaveFunctionChartNode.ts` | 1,610 | Should be split into chart rendering, interaction handling, and data transformation |
-| `QuantumBoundStateSolver.ts` | 1,547 | Should extract solver algorithms into separate modules |
-| `EnergyChartNode.ts` | 1,464 | Should separate rendering from event handling |
-| `triangular-potential.ts` | 1,449 | Should extract Airy function utilities |
-| `ControlPanelNode.ts` | 1,257 | Should split into smaller control components |
+| File                         | Lines | Issue                                                                               |
+| ---------------------------- | ----- | ----------------------------------------------------------------------------------- |
+| `WaveFunctionChartNode.ts`   | 1,610 | Should be split into chart rendering, interaction handling, and data transformation |
+| `QuantumBoundStateSolver.ts` | 1,547 | Should extract solver algorithms into separate modules                              |
+| `EnergyChartNode.ts`         | 1,464 | Should separate rendering from event handling                                       |
+| `triangular-potential.ts`    | 1,449 | Should extract Airy function utilities                                              |
+| `ControlPanelNode.ts`        | 1,257 | Should split into smaller control components                                        |
 
 **Industry Standard:** Files should generally be <300 lines, rarely >500 lines
 
 **Impact:**
+
 - Difficult to review in pull requests
 - Hard to test individual components
 - Cognitive overload for developers
@@ -145,6 +152,7 @@ This critical review identifies **significant issues** in the QPPW codebase and 
 **Issue:** The codebase has tests but **no code coverage reports**.
 
 **Missing:**
+
 - Overall coverage percentage
 - Line coverage
 - Branch coverage
@@ -152,6 +160,7 @@ This critical review identifies **significant issues** in the QPPW codebase and 
 - Coverage trends over time
 
 **Without coverage metrics:**
+
 - Can't identify untested code paths
 - Can't ensure new code is tested
 - Can't track testing progress
@@ -169,12 +178,13 @@ This critical review identifies **significant issues** in the QPPW codebase and 
 4. **Type assertions (as) used where type guards would be safer**
 
 **Example of potential improvement:**
+
 ```typescript
 // Current (unsafe)
 const energy = result.energies[n] as number;
 
 // Better (type guard)
-if (typeof result.energies[n] === 'number') {
+if (typeof result.energies[n] === "number") {
   const energy = result.energies[n];
 }
 ```
@@ -184,22 +194,25 @@ if (typeof result.energies[n] === 'number') {
 **Issue:** Many numerical methods can fail silently or return `null` without logging why.
 
 **Example from code review:**
+
 ```typescript
 if (!this.boundStateResult) {
   this.calculateBoundStates();
 }
 if (!boundStates || !boundStates.energies) {
-  return [];  // Silent failure - why did this fail?
+  return []; // Silent failure - why did this fail?
 }
 ```
 
 **Problems:**
+
 - No error messages for users
 - No logging for debugging
 - No telemetry for tracking failures
 - Difficult to diagnose issues in production
 
 **Recommendation:**
+
 - Add structured logging
 - Return Result<T, Error> types instead of null
 - Log failures with context
@@ -214,6 +227,7 @@ if (!boundStates || !boundStates.energies) {
 **Issue:** While the base classes (`BaseModel`, `BaseScreenView`) promote reuse, they also create tight coupling.
 
 **Evidence:**
+
 ```typescript
 export class OneWellModel extends BaseModel {
   // Inherits ALL BaseModel properties and methods
@@ -222,12 +236,14 @@ export class OneWellModel extends BaseModel {
 ```
 
 **Problems:**
+
 - Changes to BaseModel affect all four screens
 - Difficult to test screens in isolation
 - Screen-specific features leak into base classes
 - Violates Interface Segregation Principle
 
 **Better approach:** Composition over inheritance
+
 - Use mixins or composition for shared behavior
 - Inject dependencies rather than inheriting them
 - Use interfaces to define contracts
@@ -237,6 +253,7 @@ export class OneWellModel extends BaseModel {
 **Issue:** `Schrodinger1DSolver` acts as a "god class" that knows about all solvers and all potentials.
 
 **Current design:**
+
 ```typescript
 public solve(potential, width, numPoints, method) {
   if (potential.hasAnalyticalSolution) {
@@ -251,12 +268,14 @@ public solve(potential, width, numPoints, method) {
 ```
 
 **Problems:**
+
 - Violates Open/Closed Principle (must modify to add solvers)
 - Difficult to test individual solvers
 - No dependency injection
 - Hard to swap implementations
 
 **Better approach:** Strategy pattern with registry
+
 ```typescript
 interface Solver {
   solve(potential, config): BoundStateResult;
@@ -275,6 +294,7 @@ class SolverRegistry {
 **Issue:** Everything uses Axon properties, even for data that never changes.
 
 **Example:**
+
 ```typescript
 public readonly particleMassProperty: NumberProperty;
 // In quantum mechanics, particle mass doesn't change during simulation
@@ -282,11 +302,13 @@ public readonly particleMassProperty: NumberProperty;
 ```
 
 **Problems:**
+
 - Memory overhead for observable machinery
 - Performance cost for change listeners
 - Complexity for values that don't need observation
 
 **Recommendation:**
+
 - Use properties only for values that change
 - Use plain constants for fixed values
 - Document why each property needs to be observable
@@ -296,6 +318,7 @@ public readonly particleMassProperty: NumberProperty;
 **Issue:** Most classes create their own dependencies directly.
 
 **Example:**
+
 ```typescript
 class OneWellModel extends BaseModel {
   private solver = new Schrodinger1DSolver(method);
@@ -304,12 +327,14 @@ class OneWellModel extends BaseModel {
 ```
 
 **Problems:**
+
 - Hard to unit test (can't mock dependencies)
 - Tight coupling
 - Can't easily swap implementations
 - Circular dependency risks
 
 **Better approach:**
+
 ```typescript
 class OneWellModel extends BaseModel {
   constructor(private solver: ISolver) {
@@ -327,6 +352,7 @@ class OneWellModel extends BaseModel {
 **Issue:** All tests are integration/accuracy tests for the physics. **Zero tests for UI components.**
 
 **Missing tests:**
+
 - Chart rendering correctness
 - User interaction handling
 - Coordinate transformations
@@ -335,6 +361,7 @@ class OneWellModel extends BaseModel {
 - Focus management
 
 **Impact:**
+
 - UI bugs not caught by tests
 - Refactoring UI is risky
 - Can't verify accessibility programmatically
@@ -344,6 +371,7 @@ class OneWellModel extends BaseModel {
 **Issue:** No automated browser tests simulating user workflows.
 
 **Missing:**
+
 - User can select potential type and see wave function update
 - User can adjust parameters and see real-time updates
 - User can play/pause animation
@@ -357,6 +385,7 @@ class OneWellModel extends BaseModel {
 **Issue:** Performance monitoring code exists but **no automated performance tests**.
 
 **Missing:**
+
 - Regression tests (ensure performance doesn't degrade)
 - Benchmark suite for each solver
 - Memory usage tests
@@ -369,6 +398,7 @@ class OneWellModel extends BaseModel {
 **Issue:** Claims "modern browsers" support but no test matrix.
 
 **Missing:**
+
 - Automated tests on Chrome, Firefox, Safari, Edge
 - Mobile browser testing (iOS Safari, Chrome Mobile)
 - Different screen sizes/resolutions
@@ -378,6 +408,7 @@ class OneWellModel extends BaseModel {
 ### 4.5 Accessibility Testing NOT DONE
 
 **Critical Issue:** `ACCESSIBILITY.md` shows:
+
 - Phase 7 (Testing & Validation): 🚧 **Next - Q1 2026**
 - No actual testing with screen readers
 - No keyboard-only user testing
@@ -398,12 +429,14 @@ class OneWellModel extends BaseModel {
 **Critical Issue:** `ACCESSIBILITY.md` claims "Phases 1-6 Complete" but Phase 7 (Testing) is "Next - Q1 2026"
 
 **This means:**
+
 - ❌ No user testing with actual screen reader users
 - ❌ No WCAG 2.1 AA compliance audit
 - ❌ No keyboard-only navigation verification
 - ❌ No automated accessibility testing
 
 **Timeline issues:**
+
 ```
 Phase 6 (Interactive Tools): ✅ Complete - November 2025
 Phase 7 (Testing & Validation): 🚧 Next - Q1 2026
@@ -412,6 +445,7 @@ Phase 7 (Testing & Validation): 🚧 Next - Q1 2026
 **Current date:** December 2, 2025
 
 **Questions:**
+
 1. Were Phases 1-6 actually completed in November 2025?
 2. Why is testing deferred to Q1 2026?
 3. How can features be marked "complete" without testing?
@@ -419,11 +453,13 @@ Phase 7 (Testing & Validation): 🚧 Next - Q1 2026
 ### 5.2 Claims Without Evidence
 
 **Document claims:**
+
 > "Compatible with: NVDA, JAWS, VoiceOver, TalkBack"
 
 **Reality:** No test results provided, no evidence of actual compatibility testing
 
 **Document claims:**
+
 > "Follows WCAG 2.1 Level AA"
 
 **Reality:** No compliance audit, no automated accessibility testing, no test results
@@ -431,6 +467,7 @@ Phase 7 (Testing & Validation): 🚧 Next - Q1 2026
 ### 5.3 Missing Accessibility Documentation
 
 **What's missing:**
+
 1. ❌ Test results from screen reader users
 2. ❌ WCAG compliance checklist
 3. ❌ Known accessibility issues
@@ -449,6 +486,7 @@ Phase 7 (Testing & Validation): 🚧 Next - Q1 2026
 **Issue:** `PERFORMANCE_MONITORING.md` contains example output but **no real benchmark data**.
 
 **Example from document:**
+
 ```
 [INFO] solve-quantum-bound: count=1, mean=45.23ms, min=45.23ms, max=45.23ms, total=45.23ms
 ```
@@ -456,6 +494,7 @@ Phase 7 (Testing & Validation): 🚧 Next - Q1 2026
 **This appears to be hypothetical data, not actual measurements.**
 
 **Missing:**
+
 - Real performance data from each solver
 - Comparison between solvers (which is fastest?)
 - Memory usage measurements
@@ -471,6 +510,7 @@ const FRAME_TIME_MS = 16.67; // 60 FPS threshold
 ```
 
 **Problems:**
+
 - Many displays run at 120Hz or 144Hz
 - Mobile devices may target 30fps to save battery
 - VR needs 90fps minimum
@@ -483,6 +523,7 @@ const FRAME_TIME_MS = 16.67; // 60 FPS threshold
 **Issue:** Code mentions memoization and caching but no memory usage analysis.
 
 **Missing:**
+
 - Memory usage over time
 - Cache hit rates
 - Memory leak detection
@@ -493,14 +534,17 @@ const FRAME_TIME_MS = 16.67; // 60 FPS threshold
 ### 6.4 Large Bundle Size
 
 **Previous review mentions:**
+
 > "Size Warning: 2000 KB (reasonable for physics simulation)"
 
 **Is 2MB reasonable?**
+
 - For educational content: Debatable
 - For students on mobile data: Problematic
 - For classroom use with slow internet: Unacceptable
 
 **Missing:**
+
 - Bundle size analysis over time
 - Chunk loading strategy
 - Code splitting effectiveness metrics
@@ -517,6 +561,7 @@ const FRAME_TIME_MS = 16.67; // 60 FPS threshold
 **Issue:** No semantic versioning, no version tags in git.
 
 **Evidence:**
+
 ```typescript
 // doc/implementation-notes.md
 Document Version: 1.0
@@ -524,12 +569,14 @@ Last Updated: November 2024
 ```
 
 **Problems:**
+
 - Users can't tell what version they're running
 - No way to track breaking changes
 - No release notes or changelog
 - Can't roll back to specific versions
 
 **Recommendation:**
+
 - Use semantic versioning (semver)
 - Tag releases in git
 - Maintain CHANGELOG.md
@@ -540,6 +587,7 @@ Last Updated: November 2024
 **Issue:** No documented approach to dependency updates.
 
 **Missing:**
+
 - Dependency update policy
 - Security vulnerability scanning
 - Automated dependency updates (Dependabot)
@@ -550,6 +598,7 @@ Last Updated: November 2024
 ### 7.3 No Issue Tracking Template
 
 **Issue:** GitHub repository likely lacks issue templates for:
+
 - Bug reports
 - Feature requests
 - Security vulnerabilities
@@ -562,6 +611,7 @@ Last Updated: November 2024
 **Issue:** No documented PR review process or checklist.
 
 **Missing:**
+
 - PR template
 - Review checklist (tests pass, docs updated, etc.)
 - Code review guidelines
@@ -574,6 +624,7 @@ Last Updated: November 2024
 ### 8.1 No Internationalization (i18n) Documentation
 
 **Code has i18n support** (`src/i18n/`) **but no documentation on:**
+
 - How to add new languages
 - Translation contribution process
 - String externalization guidelines
@@ -584,6 +635,7 @@ Last Updated: November 2024
 **Issue:** No way for users to report errors or bugs from within the app.
 
 **Missing:**
+
 - Error boundary components
 - Crash reporting
 - User feedback mechanism
@@ -594,6 +646,7 @@ Last Updated: November 2024
 **Issue:** No way to understand how the simulation is actually used.
 
 **Missing:**
+
 - Usage analytics (which features are used most?)
 - Performance telemetry (real-world performance data)
 - Error tracking (what fails in production?)
@@ -604,10 +657,12 @@ Last Updated: November 2024
 ### 8.4 No Offline Support Strategy
 
 **Claims:**
+
 > "Single HTML file for easy deployment"
 > "Offline capability"
 
 **Questions:**
+
 1. Does it work offline? (No service worker mentioned)
 2. Are all assets inlined? (No evidence)
 3. What about external resources?
@@ -620,24 +675,24 @@ Last Updated: November 2024
 
 **The following metrics should be tracked but aren't:**
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| Test Coverage | ❌ Unknown | Not measured |
-| Cyclomatic Complexity | ❌ Unknown | Not measured |
-| Code Duplication | ❌ Unknown | Not measured |
-| Technical Debt Ratio | ❌ Unknown | Not measured |
-| Bug Density | ❌ Unknown | Not measured |
-| Security Vulnerabilities | ❌ Unknown | Not scanned |
+| Metric                   | Value      | Status       |
+| ------------------------ | ---------- | ------------ |
+| Test Coverage            | ❌ Unknown | Not measured |
+| Cyclomatic Complexity    | ❌ Unknown | Not measured |
+| Code Duplication         | ❌ Unknown | Not measured |
+| Technical Debt Ratio     | ❌ Unknown | Not measured |
+| Bug Density              | ❌ Unknown | Not measured |
+| Security Vulnerabilities | ❌ Unknown | Not scanned  |
 
 ### 9.2 File Complexity
 
 **Files exceeding complexity thresholds:**
 
-| File | Lines | Functions | Est. Complexity |
-|------|-------|-----------|-----------------|
-| `WaveFunctionChartNode.ts` | 1,610 | ~50+ | Very High |
-| `QuantumBoundStateSolver.ts` | 1,547 | ~40+ | Very High |
-| `EnergyChartNode.ts` | 1,464 | ~45+ | Very High |
+| File                         | Lines | Functions | Est. Complexity |
+| ---------------------------- | ----- | --------- | --------------- |
+| `WaveFunctionChartNode.ts`   | 1,610 | ~50+      | Very High       |
+| `QuantumBoundStateSolver.ts` | 1,547 | ~40+      | Very High       |
+| `EnergyChartNode.ts`         | 1,464 | ~45+      | Very High       |
 
 **Recommendation:** Use static analysis tools (SonarQube, ESLint complexity rules)
 
@@ -657,6 +712,7 @@ Last Updated: November 2024
 ### 10.1 Immediate Critical Actions
 
 **Priority 1: Complete Accessibility Testing**
+
 - ⚠️ **CRITICAL:** Perform actual screen reader testing
 - Conduct WCAG 2.1 AA compliance audit
 - Test keyboard-only navigation with real users
@@ -664,6 +720,7 @@ Last Updated: November 2024
 - **Timeline:** Complete before claiming accessibility support
 
 **Priority 2: Fix Documentation**
+
 - Update all stale timestamps
 - Rename `model.md` to `TEACHER_GUIDE.md`
 - Split `implementation-notes.md` into 4-5 focused documents
@@ -672,6 +729,7 @@ Last Updated: November 2024
 - **Timeline:** 2 weeks
 
 **Priority 3: Add Missing Tests**
+
 - Implement code coverage measurement
 - Add UI component tests
 - Add browser compatibility tests
@@ -757,11 +815,13 @@ Last Updated: November 2024
 The QPPW codebase has **strong physics implementation** but **weak software engineering practices**.
 
 **Strengths:**
+
 - ✅ Solid quantum mechanics implementation
 - ✅ Multiple numerical methods implemented
 - ✅ Comprehensive physics testing
 
 **Critical Weaknesses:**
+
 - ❌ Documentation is poor, outdated, and poorly organized
 - ❌ Accessibility features are untested (not production-ready)
 - ❌ No code coverage metrics or UI tests
@@ -774,14 +834,14 @@ The QPPW codebase has **strong physics implementation** but **weak software engi
 
 **Previous Review vs. Critical Review:**
 
-| Category | Previous Grade | Critical Grade | Gap |
-|----------|----------------|----------------|-----|
-| Architecture & Design | A+ (98/100) | **C+ (75/100)** | -23 |
-| Code Quality | A+ (95/100) | **B- (80/100)** | -15 |
-| Testing | A+ (95/100) | **C (70/100)** | -25 |
-| Documentation | A (92/100) | **D+ (65/100)** | -27 |
-| Accessibility | B+ (87/100) | **Incomplete** | N/A |
-| Performance | A (90/100) | **D (60/100)** | -30 |
+| Category              | Previous Grade | Critical Grade  | Gap |
+| --------------------- | -------------- | --------------- | --- |
+| Architecture & Design | A+ (98/100)    | **C+ (75/100)** | -23 |
+| Code Quality          | A+ (95/100)    | **B- (80/100)** | -15 |
+| Testing               | A+ (95/100)    | **C (70/100)**  | -25 |
+| Documentation         | A (92/100)     | **D+ (65/100)** | -27 |
+| Accessibility         | B+ (87/100)    | **Incomplete**  | N/A |
+| Performance           | A (90/100)     | **D (60/100)**  | -30 |
 
 **Overall Grade: C+ (72/100)**
 
@@ -790,6 +850,7 @@ The QPPW codebase has **strong physics implementation** but **weak software engi
 **Status: NOT Production Ready** ❌
 
 **Blocking Issues:**
+
 1. ❌ Accessibility testing incomplete (Phase 7 not done)
 2. ❌ No code coverage measurement
 3. ❌ No browser compatibility testing
@@ -797,6 +858,7 @@ The QPPW codebase has **strong physics implementation** but **weak software engi
 5. ❌ No versioning or release process
 
 **Recommendation:**
+
 - Complete accessibility testing (Phase 7)
 - Achieve >80% test coverage
 - Fix documentation issues
@@ -810,6 +872,7 @@ The QPPW codebase has **strong physics implementation** but **weak software engi
 The previous review (`CODEBASE_REVIEW.md`) was **far too positive** and lacked critical analysis:
 
 **Issues with previous review:**
+
 - Gave A+ grades without quantitative justification
 - Ignored missing tests and documentation gaps
 - Glossed over architectural issues
@@ -819,6 +882,7 @@ The previous review (`CODEBASE_REVIEW.md`) was **far too positive** and lacked c
 - No discussion of actual bugs or limitations
 
 **This critical review provides:**
+
 - ✅ Specific, actionable issues identified
 - ✅ Quantitative assessment (file sizes, line counts)
 - ✅ Clear blocking issues for production readiness
