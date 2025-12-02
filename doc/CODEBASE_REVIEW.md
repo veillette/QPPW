@@ -59,6 +59,7 @@ QPPW is an interactive quantum mechanics simulation that allows students to expl
 ### 1.3 Project Scope
 
 The simulation provides:
+
 - 4 interactive screens (Intro, One Well, Two Wells, Many Wells)
 - 15+ potential types (12 analytical + multi-well)
 - 6 numerical solving methods
@@ -120,6 +121,7 @@ src/
 **Pattern:** Model-View-Controller (MVC) with reactive properties
 
 **Key Components:**
+
 1. **Model Layer:** `BaseModel` → `OneWellModel`, `TwoWellsModel`, `ManyWellsModel`
 2. **View Layer:** `BaseScreenView` → Screen-specific views
 3. **Solver:** `Schrodinger1DSolver` (unified interface)
@@ -128,14 +130,14 @@ src/
 
 ### 3.2 Design Patterns Used
 
-| Pattern | Implementation | Quality |
-|---------|---------------|---------|
-| **Factory** | `PotentialFactory` creates analytical/numerical potentials | ⭐⭐⭐⭐⭐ Excellent |
-| **Strategy** | 6 interchangeable numerical methods | ⭐⭐⭐⭐⭐ Excellent |
-| **Template Method** | `BaseModel` with abstract methods | ⭐⭐⭐⭐ Good |
-| **Observer** | Axon properties for reactive state | ⭐⭐⭐⭐⭐ Excellent |
-| **Facade** | `Schrodinger1DSolver` unifies all solvers | ⭐⭐⭐⭐⭐ Excellent |
-| **Type Guards** | Discriminated unions for models | ⭐⭐⭐⭐⭐ Excellent |
+| Pattern             | Implementation                                             | Quality              |
+| ------------------- | ---------------------------------------------------------- | -------------------- |
+| **Factory**         | `PotentialFactory` creates analytical/numerical potentials | ⭐⭐⭐⭐⭐ Excellent |
+| **Strategy**        | 6 interchangeable numerical methods                        | ⭐⭐⭐⭐⭐ Excellent |
+| **Template Method** | `BaseModel` with abstract methods                          | ⭐⭐⭐⭐ Good        |
+| **Observer**        | Axon properties for reactive state                         | ⭐⭐⭐⭐⭐ Excellent |
+| **Facade**          | `Schrodinger1DSolver` unifies all solvers                  | ⭐⭐⭐⭐⭐ Excellent |
+| **Type Guards**     | Discriminated unions for models                            | ⭐⭐⭐⭐⭐ Excellent |
 
 ### 3.3 Separation of Concerns
 
@@ -151,6 +153,7 @@ src/
 ### 3.4 Dependency Management
 
 **Dependencies Flow:**
+
 ```
 View → Model → Solver → Analytical Solutions / Numerical Methods
   ↓      ↓        ↓
@@ -169,11 +172,11 @@ Utils  Constants  Linear Algebra
 
 ```json
 {
-  "strict": true,                      // ✅ Full type safety
-  "noUnusedLocals": true,              // ✅ No dead code
-  "noUnusedParameters": true,          // ✅ Clean signatures
-  "noImplicitReturns": true,           // ✅ Explicit returns
-  "noFallthroughCasesInSwitch": true   // ✅ Safe switches
+  "strict": true, // ✅ Full type safety
+  "noUnusedLocals": true, // ✅ No dead code
+  "noUnusedParameters": true, // ✅ Clean signatures
+  "noImplicitReturns": true, // ✅ Explicit returns
+  "noFallthroughCasesInSwitch": true // ✅ Safe switches
 }
 ```
 
@@ -182,15 +185,18 @@ Utils  Constants  Linear Algebra
 ### 4.2 Code Style & Consistency
 
 **ESLint Configuration:**
+
 - TypeScript recommended rules enabled
 - Unused variables detected (with `_` prefix pattern)
 - Browser and Node globals configured
 
 **Prettier Configuration:**
+
 - Consistent formatting across all files
 - Automated via pre-commit hooks (inferred from workflow)
 
 **Naming Conventions:**
+
 - Classes: PascalCase ✅
 - Functions/variables: camelCase ✅
 - Constants: UPPER_SNAKE_CASE ✅
@@ -202,12 +208,14 @@ Utils  Constants  Linear Algebra
 ### 4.3 Documentation Quality
 
 **Code Comments:**
+
 - All public methods have JSDoc comments ✅
 - Complex physics calculations explained ✅
 - Mathematical formulas included ✅
 - References to academic papers provided ✅
 
 **Example from `BaseModel.ts`:**
+
 ```typescript
 /**
  * Calculate classical probability density from potential energy and energy level.
@@ -230,12 +238,14 @@ Utils  Constants  Linear Algebra
 ### 4.4 Error Handling
 
 **Strategy:**
+
 - Defensive programming with null checks ✅
 - Try-catch blocks for numerical methods ✅
 - Graceful fallbacks (analytical → numerical) ✅
 - Validation at system boundaries ✅
 
 **Example:**
+
 ```typescript
 if (!this.boundStateResult) {
   this.calculateBoundStates();
@@ -250,13 +260,15 @@ if (!boundStates || !boundStates.energies) {
 ### 4.5 Type Safety
 
 **Type Guards:**
+
 ```typescript
-export function isOneWellModel(model: BaseModel): model is OneWellModel
-export function hasSuperpositionConfig(model: BaseModel): boolean
-export function hasWellSeparation(model: BaseModel): boolean
+export function isOneWellModel(model: BaseModel): model is OneWellModel;
+export function hasSuperpositionConfig(model: BaseModel): boolean;
+export function hasWellSeparation(model: BaseModel): boolean;
 ```
 
 **Discriminated Unions:**
+
 - `PotentialType` enum (15+ types)
 - `SuperpositionType` enum
 - `NumericalMethod` enum
@@ -272,20 +284,20 @@ export function hasWellSeparation(model: BaseModel): boolean
 
 #### 5.1.1 Implemented Potentials
 
-| Potential | Implementation | Accuracy | References |
-|-----------|---------------|----------|-----------|
-| **Infinite Square Well** | Exact sine solutions | Exact | Griffiths |
-| **Finite Square Well** | Transcendental eqs | Exact | Griffiths |
-| **Harmonic Oscillator** | Hermite polynomials | Exact | Shankar, A&S |
-| **Morse Potential** | Anharmonic vibrations | Exact | Morse (1929) |
-| **Pöschl-Teller** | Hyperbolic secant | Exact | Landau & Lifshitz |
-| **Rosen-Morse** | Variant of P-T | Exact | Rosen-Morse (1932) |
-| **Eckart Potential** | Barrier tunneling | Exact | Eckart (1930) |
-| **Asymmetric Triangle** | Airy functions | Exact | Nanni (2015) |
-| **Triangular Potential** | V-shaped well | Exact | Razavy |
-| **Coulomb 1D** | 1D hydrogen | Exact | - |
-| **Coulomb 3D** | Radial hydrogen | Exact | Abramowitz & Stegun |
-| **Double Square Well** | Coupled wells | Exact | - |
+| Potential                | Implementation        | Accuracy | References          |
+| ------------------------ | --------------------- | -------- | ------------------- |
+| **Infinite Square Well** | Exact sine solutions  | Exact    | Griffiths           |
+| **Finite Square Well**   | Transcendental eqs    | Exact    | Griffiths           |
+| **Harmonic Oscillator**  | Hermite polynomials   | Exact    | Shankar, A&S        |
+| **Morse Potential**      | Anharmonic vibrations | Exact    | Morse (1929)        |
+| **Pöschl-Teller**        | Hyperbolic secant     | Exact    | Landau & Lifshitz   |
+| **Rosen-Morse**          | Variant of P-T        | Exact    | Rosen-Morse (1932)  |
+| **Eckart Potential**     | Barrier tunneling     | Exact    | Eckart (1930)       |
+| **Asymmetric Triangle**  | Airy functions        | Exact    | Nanni (2015)        |
+| **Triangular Potential** | V-shaped well         | Exact    | Razavy              |
+| **Coulomb 1D**           | 1D hydrogen           | Exact    | -                   |
+| **Coulomb 3D**           | Radial hydrogen       | Exact    | Abramowitz & Stegun |
+| **Double Square Well**   | Coupled wells         | Exact    | -                   |
 
 #### 5.1.2 Mathematical Rigor
 
@@ -298,19 +310,21 @@ export function hasWellSeparation(model: BaseModel): boolean
 5. **Node Counting:** Validated (n-th state has n-1 nodes)
 
 **Example from `harmonic-oscillator.ts`:**
+
 ```typescript
 // Energy levels: E_n = ℏω(n + 1/2)
 const energy = QuantumConstants.HBAR * omega * (n + 0.5);
 
 // Hermite polynomials with proper normalization
 const normalization =
-  1.0 / Math.sqrt(Math.pow(2, n) * factorial(n)) *
+  (1.0 / Math.sqrt(Math.pow(2, n) * factorial(n))) *
   Math.pow(alpha / Math.PI, 0.25);
 ```
 
 #### 5.1.3 References & Citations
 
 **Academic rigor:**
+
 - Griffiths: Introduction to Quantum Mechanics ✅
 - Shankar: Principles of Quantum Mechanics ✅
 - Abramowitz & Stegun: Handbook of Mathematical Functions ✅
@@ -323,28 +337,31 @@ const normalization =
 
 #### 5.2.1 Available Methods
 
-| Method | Type | Convergence | Best For | Implementation |
-|--------|------|-------------|----------|----------------|
-| **DVR** | Matrix diag | Exponential | Bound states | `DVRSolver.ts` (default) |
-| **Spectral** | Chebyshev | Exponential | Smooth potentials | `SpectralSolver.ts` |
-| **Matrix Numerov** | Matrix form | Algebraic | General | `MatrixNumerovSolver.ts` |
-| **FGH** | FFT-based | Fast | Periodic | `FGHSolver.ts` |
-| **Numerov Shooting** | Shooting | Adaptive | Single states | `NumerovSolver.ts` |
-| **QuantumBound** | Advanced shooting | High accuracy | Difficult potentials | `QuantumBoundStateSolver.ts` |
+| Method               | Type              | Convergence   | Best For             | Implementation               |
+| -------------------- | ----------------- | ------------- | -------------------- | ---------------------------- |
+| **DVR**              | Matrix diag       | Exponential   | Bound states         | `DVRSolver.ts` (default)     |
+| **Spectral**         | Chebyshev         | Exponential   | Smooth potentials    | `SpectralSolver.ts`          |
+| **Matrix Numerov**   | Matrix form       | Algebraic     | General              | `MatrixNumerovSolver.ts`     |
+| **FGH**              | FFT-based         | Fast          | Periodic             | `FGHSolver.ts`               |
+| **Numerov Shooting** | Shooting          | Adaptive      | Single states        | `NumerovSolver.ts`           |
+| **QuantumBound**     | Advanced shooting | High accuracy | Difficult potentials | `QuantumBoundStateSolver.ts` |
 
 #### 5.2.2 Implementation Quality
 
 **DVR (Discrete Variable Representation):**
+
 - Colbert-Miller kinetic energy formula ✅
 - Properly symmetrized kinetic energy matrix ✅
 - Reference: Colbert & Miller, J. Chem. Phys. 96, 1982 (1992) ✅
 
 **Spectral (Chebyshev):**
+
 - Chebyshev-Gauss-Lobatto collocation points ✅
 - Second derivative matrix with endpoint handling ✅
 - Matrix symmetrization for stability ✅
 
 **FGH (Fourier Grid Hamiltonian):**
+
 - FFT-based kinetic energy ✅
 - Periodic boundary conditions ✅
 - Reference: Marston & Balint-Kurti, J. Chem. Phys. 91, 3571 (1989) ✅
@@ -354,6 +371,7 @@ const normalization =
 ### 5.3 Time Evolution
 
 **Implementation:**
+
 ```typescript
 // Proper eigenstate evolution: ψ(x,t) = Σ c_n * e^(iφ_n) * ψ_n(x) * e^(-iE_n*t/ℏ)
 const timePhase = -(energy * timeInSeconds) / QuantumConstants.HBAR;
@@ -363,6 +381,7 @@ const imagCoeff = amplitude * Math.sin(totalPhase);
 ```
 
 **Features:**
+
 - Individual eigenstate phase evolution ✅
 - Complex superposition handling ✅
 - Real/imaginary/magnitude/probability density ✅
@@ -373,6 +392,7 @@ const imagCoeff = amplitude * Math.sin(totalPhase);
 ### 5.4 Physical Constants
 
 **`QuantumConstants.ts`:**
+
 ```typescript
 HBAR: 1.054571817e-34 J·s         // Planck constant
 ELECTRON_MASS: 9.10938356e-31 kg  // Electron mass
@@ -391,6 +411,7 @@ M_TO_NM: 1e9
 ### 6.1 Component Architecture
 
 **Base Classes:**
+
 - `BaseScreenView` - Abstract screen foundation
 - `BaseChartNode` - Shared chart functionality
 - `ControlPanelNode` - Parameter controls
@@ -401,6 +422,7 @@ M_TO_NM: 1e9
 #### 6.2.1 EnergyChartNode
 
 **Features:**
+
 - Interactive potential editing (drag handles) ✅
 - Energy level visualization ✅
 - Color-coded energy lines ✅
@@ -412,6 +434,7 @@ M_TO_NM: 1e9
 #### 6.2.2 WaveFunctionChartNode
 
 **Features:**
+
 - Multiple display modes (real/imag/magnitude/probability) ✅
 - Filled area visualization ✅
 - Average position indicator ✅
@@ -423,6 +446,7 @@ M_TO_NM: 1e9
 #### 6.2.3 Visualization Tools
 
 **Chart-Tools Directory:**
+
 1. `ZerosVisualization.ts` - Wavefunction nodes
 2. `PhaseColorVisualization.ts` - Complex phase display
 3. `ClassicalProbabilityOverlay.ts` - Classical comparison
@@ -435,6 +459,7 @@ M_TO_NM: 1e9
 ### 6.3 Chart Configuration
 
 **`ChartConstants.ts`:**
+
 ```typescript
 X_AXIS_RANGE_NM: 8.0 nm          // -4 to +4 nm
 CHART_HEIGHT: responsive
@@ -454,6 +479,7 @@ GRID_RESOLUTION: 1000 points     // High resolution
 ### 7.1 Test Suite Overview
 
 **Coverage:**
+
 - Accuracy Tests: All 6 numerical methods
 - Double Well Tests: 23 stringent physics tests
 - Coulomb Potential Tests
@@ -464,6 +490,7 @@ GRID_RESOLUTION: 1000 points     // High resolution
 **`AccuracyTests.ts` (1,078 lines):**
 
 **Test Configuration:**
+
 ```typescript
 Potentials Tested:
   - Harmonic Oscillator: 10 levels, 0.1% tolerance
@@ -478,6 +505,7 @@ Methods: DVR, Spectral, Matrix Numerov, FGH, Numerov, QuantumBound
 ```
 
 **Example Test:**
+
 ```typescript
 testHarmonicOscillator() {
   for (const method of METHODS) {
@@ -514,11 +542,13 @@ testHarmonicOscillator() {
 ### 7.4 Test Execution
 
 **Three Methods:**
+
 1. **Terminal:** `npm test` (fastest)
 2. **Browser:** `tests/accuracy-tests.html`
 3. **Dev Server:** Interactive console
 
 **Output Quality:**
+
 - Color-coded pass/fail ✅
 - Error percentages ✅
 - Performance metrics ✅
@@ -535,12 +565,14 @@ testHarmonicOscillator() {
 **`vite.config.js` Analysis:**
 
 **Optimization Features:**
+
 1. **Minification:** Terser with 2 passes ✅
 2. **Tree Shaking:** Aggressive unused code removal ✅
 3. **Code Splitting:** Manual chunks for optimal loading ✅
 4. **Bundle Analysis:** Visualizer plugin (optional) ✅
 
 **Chunk Strategy:**
+
 ```javascript
 manualChunks: {
   "vendor-scenery":   SceneryStack framework
@@ -557,6 +589,7 @@ manualChunks: {
 ```
 
 **Benefits:**
+
 - Parallel downloads ✅
 - Browser caching ✅
 - Lazy loading potential ✅
@@ -564,6 +597,7 @@ manualChunks: {
 ### 8.2 Build Output
 
 **Single HTML File:**
+
 - Easy deployment ✅
 - Offline capability ✅
 - No server required ✅
@@ -574,6 +608,7 @@ manualChunks: {
 ### 8.3 GitHub Actions
 
 **Workflow (inferred):**
+
 1. Type checking ✅
 2. Linting ✅
 3. Building ✅
@@ -591,13 +626,14 @@ manualChunks: {
 **`PerformanceMonitor.ts`:**
 
 ```typescript
-PerformanceMonitor.measure('wavefunction-calculation', () => {
+PerformanceMonitor.measure("wavefunction-calculation", () => {
   // Tracks execution time
   // Warns if exceeds 16.67ms (60 FPS threshold)
 });
 ```
 
 **Features:**
+
 - Frame time awareness (60 FPS = 16.67ms) ✅
 - Mean, min, max, total statistics ✅
 - Console logging for profiling ✅
@@ -627,6 +663,7 @@ class MemoizationCache<T> {
 ### 9.4 Numerical Efficiency
 
 **Two-Step Approach:**
+
 ```typescript
 // Step 1: Find energies on coarse grid (64-128 points)
 const energies = solver.solveForEnergies(coarseGrid);
@@ -636,6 +673,7 @@ const wavefunctions = computeWavefunctions(energies, fineGrid);
 ```
 
 **Benefits:**
+
 - Fast energy calculation ✅
 - High-resolution display ✅
 - Best of both worlds ✅
@@ -651,6 +689,7 @@ const wavefunctions = computeWavefunctions(energies, fineGrid);
 **Status:** Foundation implemented ✅
 
 **Components:**
+
 - `ScreenSummaryNode.ts` - Screen descriptions
 - `QPPWDescriber.ts` - Physics descriptions
 - `QPPWAlerter.ts` - Live announcements
@@ -659,6 +698,7 @@ const wavefunctions = computeWavefunctions(energies, fineGrid);
 ### 10.2 Keyboard Navigation
 
 **Shortcuts:**
+
 - **Space:** Play/pause ✅
 - **R:** Reset ✅
 - **Arrow Keys:** Energy level selection ✅
@@ -668,6 +708,7 @@ const wavefunctions = computeWavefunctions(energies, fineGrid);
 ### 10.3 Screen Reader Support
 
 **Compatibility:**
+
 - NVDA ✅
 - JAWS ✅
 - VoiceOver ✅
@@ -676,6 +717,7 @@ const wavefunctions = computeWavefunctions(energies, fineGrid);
 ### 10.4 Outstanding Work
 
 **From documentation:**
+
 - Some `helpText` annotations not yet configured
 - Further PDOM expansion possible
 - RMS and average position descriptions needed
@@ -689,6 +731,7 @@ const wavefunctions = computeWavefunctions(energies, fineGrid);
 ### 11.1 Physics & Mathematics
 
 ✅ **Exceptional quantum mechanics implementation**
+
 - 12+ analytical solutions with exact formulas
 - 6 numerical methods with different strengths
 - High accuracy tolerances (0.1-1%)
@@ -699,6 +742,7 @@ const wavefunctions = computeWavefunctions(energies, fineGrid);
 ### 11.2 Software Architecture
 
 ✅ **Professional modular design**
+
 - Clean MVC pattern with reactive properties
 - Factory pattern for potential creation
 - Strategy pattern for solver selection
@@ -709,6 +753,7 @@ const wavefunctions = computeWavefunctions(energies, fineGrid);
 ### 11.3 Code Quality
 
 ✅ **Industry-leading standards**
+
 - Strict TypeScript configuration
 - Comprehensive JSDoc documentation
 - Physics formulas in comments
@@ -719,6 +764,7 @@ const wavefunctions = computeWavefunctions(energies, fineGrid);
 ### 11.4 Testing
 
 ✅ **Rigorous quality assurance**
+
 - Comprehensive accuracy tests (6 methods × multiple potentials)
 - 23 stringent double well tests
 - Orthogonality validation
@@ -729,6 +775,7 @@ const wavefunctions = computeWavefunctions(energies, fineGrid);
 ### 11.5 User Experience
 
 ✅ **Thoughtful design**
+
 - Interactive potential editing
 - Multiple visualization modes
 - Real-time state evolution
@@ -739,6 +786,7 @@ const wavefunctions = computeWavefunctions(energies, fineGrid);
 ### 11.6 Build & Deployment
 
 ✅ **Production-ready pipeline**
+
 - Single HTML file output
 - Aggressive optimization (terser, tree-shaking)
 - Strategic code splitting
@@ -749,6 +797,7 @@ const wavefunctions = computeWavefunctions(energies, fineGrid);
 ### 11.7 Performance
 
 ✅ **Optimized for responsiveness**
+
 - Analytical solutions preferred
 - Memoization of expensive calculations
 - Frame time monitoring (60 FPS aware)
@@ -824,6 +873,7 @@ const wavefunctions = computeWavefunctions(energies, fineGrid);
 **Technical Debt Level: Very Low**
 
 **Evidence:**
+
 - No cyclic dependencies ✅
 - No deprecated code patterns ✅
 - No security vulnerabilities (npm audit clean assumed) ✅
@@ -833,11 +883,13 @@ const wavefunctions = computeWavefunctions(energies, fineGrid);
 ### 13.2 TODO Analysis
 
 **13 TODOs Found:**
+
 - 11× Accessibility `helpText` annotations
 - 1× FFT length validation
 - 1× Potential expansion consideration
 
 **All are:**
+
 - Well-documented ✅
 - Non-blocking ✅
 - Feature enhancements, not bugs ✅
@@ -845,6 +897,7 @@ const wavefunctions = computeWavefunctions(energies, fineGrid);
 ### 13.3 Maintainability Score
 
 **Factors:**
+
 - **Readability:** Excellent (9/10)
 - **Modularity:** Excellent (10/10)
 - **Documentation:** Excellent (9/10)
@@ -932,6 +985,7 @@ The QPPW codebase represents a **professionally-developed, production-ready quan
 **Code Quality: A+ (95/100)**
 
 **Breakdown:**
+
 - Architecture & Design: A+ (98/100)
 - Code Quality: A+ (95/100)
 - Physics Implementation: A+ (98/100)
@@ -946,6 +1000,7 @@ The QPPW codebase represents a **professionally-developed, production-ready quan
 **Status: Production Ready** ✅
 
 This codebase is suitable for:
+
 - Educational deployment in classrooms
 - Self-directed learning
 - Reference implementation for quantum simulations
@@ -1036,36 +1091,39 @@ Logger.ts                            # Logging system
 
 ## Appendix B: Key Metrics Summary
 
-| Metric | Value | Grade |
-|--------|-------|-------|
-| Total LOC | 37,323 | - |
-| TypeScript Files | 117 | - |
-| Analytical Potentials | 12+ | A+ |
-| Numerical Methods | 6 | A+ |
-| Test Accuracy Tolerance | 0.1-1% | A+ |
-| TypeScript Strictness | Maximum | A+ |
-| Cyclic Dependencies | 0 | A+ |
-| Technical Debt | Very Low | A+ |
-| Documentation Coverage | 95% | A |
-| Build Optimization | Comprehensive | A |
-| Accessibility Progress | 85% | B+ |
+| Metric                  | Value         | Grade |
+| ----------------------- | ------------- | ----- |
+| Total LOC               | 37,323        | -     |
+| TypeScript Files        | 117           | -     |
+| Analytical Potentials   | 12+           | A+    |
+| Numerical Methods       | 6             | A+    |
+| Test Accuracy Tolerance | 0.1-1%        | A+    |
+| TypeScript Strictness   | Maximum       | A+    |
+| Cyclic Dependencies     | 0             | A+    |
+| Technical Debt          | Very Low      | A+    |
+| Documentation Coverage  | 95%           | A     |
+| Build Optimization      | Comprehensive | A     |
+| Accessibility Progress  | 85%           | B+    |
 
 ---
 
 ## Appendix C: References
 
 **Physics:**
+
 - Griffiths, D. J. (2018). Introduction to Quantum Mechanics (3rd ed.)
 - Shankar, R. (2012). Principles of Quantum Mechanics (2nd ed.)
 - Abramowitz, M. & Stegun, I. A. (1964). Handbook of Mathematical Functions
 - Nanni, L. (2015). The asymmetric triangular well. arXiv:1502.06337
 
 **Numerical Methods:**
+
 - Colbert & Miller (1992). J. Chem. Phys. 96, 1982
 - Marston & Balint-Kurti (1989). J. Chem. Phys. 91, 3571
 - Press et al. (2007). Numerical Recipes (3rd ed.)
 
 **Software:**
+
 - SceneryStack Framework: https://scenerystack.org
 - PhET Interactive Simulations: https://phet.colorado.edu
 
