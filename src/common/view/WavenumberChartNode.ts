@@ -6,14 +6,12 @@
  * the average wavenumber <k> and RMS wavenumber k_rms.
  */
 
-import { Node, Line, Path, Text } from "scenerystack/scenery";
+import { Line, Path, Text } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
-import { NumberProperty, DerivedProperty } from "scenerystack/axon";
+import { DerivedProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
 import {
-  ChartTransform,
-  ChartRectangle,
   AxisLine,
   TickMarkSet,
   TickLabelSet,
@@ -29,34 +27,12 @@ import {
   createDoubleArrowShape,
   calculateRMSStatistics,
 } from "./RMSIndicatorUtils.js";
+import { BaseChartNode, ChartOptions } from "./BaseChartNode.js";
 
-export class WavenumberChartNode extends Node {
-  private readonly model: ScreenModel;
-  private readonly viewState?: ScreenViewState;
-  private readonly chartWidth: number;
-  private readonly chartHeight: number;
-  private readonly chartMargins = { left: 60, right: 20, top: 40, bottom: 40 };
-
-  // Chart bounds in view coordinates
-  private readonly plotWidth: number;
-  private readonly plotHeight: number;
-
-  // ChartTransform for model-to-view coordinate conversion
-  private readonly chartTransform: ChartTransform;
-
-  // View range properties
-  private readonly kMinProperty: NumberProperty;
-  private readonly kMaxProperty: NumberProperty;
-  private readonly yMinProperty: NumberProperty;
-  private readonly yMaxProperty: NumberProperty;
-
-  // Visual elements
-  private readonly backgroundRect: ChartRectangle;
-  private readonly plotContentNode: Node; // Clipped container for plot content
+export class WavenumberChartNode extends BaseChartNode {
+  // Visual elements specific to wavenumber chart
   private readonly wavenumberPath: Path;
-  private readonly zeroLine: Line;
   private readonly rmsIndicator: Path; // Double arrow indicator for RMS wavenumber
-  private readonly axesNode: Node;
   private readonly titleLabel: Text;
   private readonly avgWavenumberLabel: Text;
   private readonly rmsWavenumberLabel: Text;
@@ -72,16 +48,26 @@ export class WavenumberChartNode extends Node {
       viewState?: ScreenViewState;
     },
   ) {
-    super({
-      // PDOM - make wavenumber chart accessible
-      tagName: "div",
-      labelTagName: "h3",
-      labelContent: "Momentum Distribution",
-      descriptionTagName: "p",
-    });
+    // Call BaseChartNode constructor with chart options
+    // Note: viewState is optional for this chart, so we create a minimal one if not provided
+    const chartOptions: ChartOptions = {
+      width: options?.width ?? 600,
+      height: options?.height ?? 140,
+      margins: { left: 60, right: 20, top: 40, bottom: 40 },
+      xRange: { min: -5, max: 5 },
+      yRange: { min: 0, max: 1 },
+      showZeroLine: true,
+    };
 
-    this.model = model;
-    this.viewState = options?.viewState;
+    // Create a dummy viewState if not provided (wavenumber chart doesn't always need it)
+    const dummyViewState = options?.viewState || ({} as ScreenViewState);
+    super(model, dummyViewState, chartOptions);
+
+    // PDOM - make wavenumber chart accessible
+    this.tagName = "div";
+    this.labelTagName = "h3";
+    this.labelContent = "Momentum Distribution";
+    this.descriptionTagName = "p";
 
     // Set up accessible description after this.model is initialized
     this.descriptionContent = new DerivedProperty(
@@ -98,37 +84,6 @@ export class WavenumberChartNode extends Node {
         );
       },
     );
-    this.chartWidth = options?.width ?? 600;
-    this.chartHeight = options?.height ?? 140;
-
-    this.plotWidth =
-      this.chartWidth - this.chartMargins.left - this.chartMargins.right;
-    this.plotHeight =
-      this.chartHeight - this.chartMargins.top - this.chartMargins.bottom;
-
-    // Initialize view range (will be updated based on data)
-    this.kMinProperty = new NumberProperty(-5);
-    this.kMaxProperty = new NumberProperty(5);
-    this.yMinProperty = new NumberProperty(0);
-    this.yMaxProperty = new NumberProperty(1);
-
-    // Create ChartTransform for model-to-view coordinate conversion
-    this.chartTransform = new ChartTransform({
-      viewWidth: this.plotWidth,
-      viewHeight: this.plotHeight,
-      modelXRange: new Range(this.kMinProperty.value, this.kMaxProperty.value),
-      modelYRange: new Range(this.yMinProperty.value, this.yMaxProperty.value),
-    });
-
-    // Create background using ChartRectangle
-    this.backgroundRect = new ChartRectangle(this.chartTransform, {
-      fill: QPPWColors.backgroundColorProperty,
-      stroke: null,
-      lineWidth: 1,
-    });
-    this.backgroundRect.x = this.chartMargins.left;
-    this.backgroundRect.y = this.chartMargins.top;
-    this.addChild(this.backgroundRect);
 
     // Create title label
     this.titleLabel = new Text("Wavenumber Distribution", {
@@ -142,25 +97,6 @@ export class WavenumberChartNode extends Node {
     // Create axes
     this.axesNode = this.createAxes();
     this.addChild(this.axesNode);
-
-    // Create a clipped content node for all plot elements
-    this.plotContentNode = new Node({
-      clipArea: Shape.rectangle(
-        this.chartMargins.left,
-        this.chartMargins.top,
-        this.plotWidth,
-        this.plotHeight,
-      ),
-    });
-    this.addChild(this.plotContentNode);
-
-    // Create zero line
-    this.zeroLine = new Line(0, 0, 0, 0, {
-      stroke: QPPWColors.gridLineProperty,
-      lineWidth: 1,
-      lineDash: [5, 5],
-    });
-    this.plotContentNode.addChild(this.zeroLine);
 
     // Create wavenumber distribution path
     this.wavenumberPath = new Path(null, {
@@ -281,7 +217,7 @@ export class WavenumberChartNode extends Node {
       {
         stroke: QPPWColors.axisProperty,
         lineWidth: 2,
-        value: this.kMinProperty.value,
+        value: this.xMinProperty.value,
       },
     );
     yAxisLeftNode.x = this.chartMargins.left;
@@ -521,15 +457,15 @@ export class WavenumberChartNode extends Node {
     // Add 20% margin
     const range = maxK - minK;
     const margin = range * 0.2;
-    this.kMinProperty.value = minK - margin;
-    this.kMaxProperty.value = maxK + margin;
+    this.xMinProperty.value = minK - margin;
+    this.xMaxProperty.value = maxK + margin;
 
     this.yMinProperty.value = 0;
     this.yMaxProperty.value = maxValue * 1.2; // 20% margin
 
     // Update ChartTransform
     this.chartTransform.setModelXRange(
-      new Range(this.kMinProperty.value, this.kMaxProperty.value),
+      new Range(this.xMinProperty.value, this.xMaxProperty.value),
     );
     this.chartTransform.setModelYRange(
       new Range(this.yMinProperty.value, this.yMaxProperty.value),
@@ -591,20 +527,6 @@ export class WavenumberChartNode extends Node {
     shape.close();
 
     this.wavenumberPath.shape = shape;
-  }
-
-  /**
-   * Converts data X coordinate to view X coordinate using ChartTransform.
-   */
-  private dataToViewX(x: number): number {
-    return this.chartMargins.left + this.chartTransform.modelToViewX(x);
-  }
-
-  /**
-   * Converts data Y coordinate to view Y coordinate using ChartTransform.
-   */
-  private dataToViewY(y: number): number {
-    return this.chartMargins.top + this.chartTransform.modelToViewY(y);
   }
 
   /**

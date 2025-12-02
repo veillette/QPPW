@@ -142,7 +142,7 @@ export abstract class BaseChartNode extends Node {
   /**
    * Update the zero line position
    */
-  protected updateZeroLine(): void {
+  public updateZeroLine(): void {
     const y = this.yMinProperty.value;
     const yMax = this.yMaxProperty.value;
 
