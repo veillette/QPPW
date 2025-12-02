@@ -103,6 +103,7 @@ export class CurvatureTool extends Node {
       stroke: QPPWColors.curvatureToolStrokeProperty,
       lineWidth: 2,
       lineDash: [4, 3],
+      cursor: "ew-resize", // Make it clear the line is draggable
     });
     this.container.addChild(this.marker);
 
@@ -246,6 +247,7 @@ export class CurvatureTool extends Node {
     });
 
     this.markerHandle.addInputListener(dragListener);
+    this.marker.addInputListener(dragListener); // Make the vertical line draggable too
 
     // Keyboard drag listener
     const keyboardDragListener = new KeyboardDragListener({
