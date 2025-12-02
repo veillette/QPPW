@@ -4,9 +4,7 @@
  */
 
 import { Node, Line, Path, Text, VBox } from "scenerystack/scenery";
-import { Shape } from "scenerystack/kite";
 import { DerivedProperty } from "scenerystack/axon";
-import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
 import {
   AxisLine,
@@ -34,12 +32,16 @@ import { ZerosVisualization } from "./chart-tools/ZerosVisualization.js";
 import { PhaseColorVisualization } from "./chart-tools/PhaseColorVisualization.js";
 import { ClassicalProbabilityOverlay } from "./chart-tools/ClassicalProbabilityOverlay.js";
 import { ChartToolRegistry } from "./chart-tools/ChartToolRegistry.js";
-import stringManager from "../../i18n/StringManager.js";
-import {
-  createDoubleArrowShape,
-  calculateRMSStatistics,
-} from "./RMSIndicatorUtils.js";
 import { BaseChartNode, ChartOptions } from "./BaseChartNode.js";
+import {
+  WaveFunctionDisplayStrategy,
+  type WavefunctionData,
+  type RenderContext,
+  type RMSIndicatorContext,
+} from "./wavefunction-strategies/WaveFunctionDisplayStrategy.js";
+import { ProbabilityDensityDisplayStrategy } from "./wavefunction-strategies/ProbabilityDensityDisplayStrategy.js";
+import { WaveFunctionComponentsDisplayStrategy } from "./wavefunction-strategies/WaveFunctionComponentsDisplayStrategy.js";
+import { PhaseColorDisplayStrategy } from "./wavefunction-strategies/PhaseColorDisplayStrategy.js";
 
 // Chart axis range constant (shared with EnergyChartNode)
 const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
@@ -67,6 +69,9 @@ export class WaveFunctionChartNode extends BaseChartNode {
 
   // Tool registry for centralized management
   private readonly toolRegistry: ChartToolRegistry;
+
+  // Display strategy for current display mode
+  private displayStrategy: WaveFunctionDisplayStrategy;
 
   // Guard flag to prevent reentry during updates
   private isUpdating: boolean = false;
@@ -258,6 +263,11 @@ export class WaveFunctionChartNode extends BaseChartNode {
     this.toolRegistry.registerTool("curvature", this.curvatureTool);
     this.toolRegistry.registerTool("derivative", this.derivativeTool);
 
+    // Initialize display strategy based on current display mode
+    this.displayStrategy = this.createDisplayStrategy(
+      this.getEffectiveDisplayMode(),
+    );
+
     // Create state label in upper right corner (outside clipped area)
     this.stateLabelNode = new Text("", {
       font: new PhetFont({ size: 16, style: "italic" }),
@@ -332,6 +342,21 @@ export class WaveFunctionChartNode extends BaseChartNode {
 
     // Note: Initial update is now done asynchronously inside linkToModel()
     // to prevent blocking the page load
+  }
+
+  /**
+   * Creates the appropriate display strategy based on the display mode.
+   */
+  private createDisplayStrategy(displayMode: string): WaveFunctionDisplayStrategy {
+    switch (displayMode) {
+      case "probabilityDensity":
+        return new ProbabilityDensityDisplayStrategy();
+      case "phaseColor":
+        return new PhaseColorDisplayStrategy(this.phaseColorVisualization);
+      case "waveFunction":
+      default:
+        return new WaveFunctionComponentsDisplayStrategy();
+    }
   }
 
   /**
@@ -563,6 +588,16 @@ export class WaveFunctionChartNode extends BaseChartNode {
       this.update();
     });
     this.viewState.displayModeProperty.lazyLink(() => {
+      // Recreate display strategy when mode changes
+      const newMode = this.getEffectiveDisplayMode();
+      const oldStrategy = this.displayStrategy;
+      this.displayStrategy = this.createDisplayStrategy(newMode);
+
+      // Hide old strategy's visualization if needed (for phase color)
+      if (oldStrategy instanceof PhaseColorDisplayStrategy) {
+        oldStrategy.hide();
+      }
+
       this.updateYAxisLabel();
       this.updateStateLabel();
       this.update();
@@ -697,21 +732,13 @@ export class WaveFunctionChartNode extends BaseChartNode {
    * Updates the Y-axis label based on display mode.
    */
   private updateYAxisLabel(): void {
-    const displayMode = this.getEffectiveDisplayMode();
-    if (displayMode === "probabilityDensity") {
-      this.yAxisLabel.string = "Probability Density (nm⁻¹)";
-    } else if (displayMode === "phaseColor") {
-      this.yAxisLabel.string = "Wave Function Magnitude (nm⁻¹ᐟ²)";
-    } else {
-      this.yAxisLabel.string = "Wave Function (nm⁻¹ᐟ²)";
-    }
+    this.yAxisLabel.string = this.displayStrategy.getYAxisLabel();
   }
 
   /**
    * Updates the state label showing which wavefunction is displayed.
    */
   private updateStateLabel(): void {
-    const displayMode = this.getEffectiveDisplayMode();
     const superpositionType = this.model.superpositionTypeProperty.value;
     const isSuperposition = superpositionType !== SuperpositionType.SINGLE;
 
@@ -738,21 +765,8 @@ export class WaveFunctionChartNode extends BaseChartNode {
           label = "Superposition";
       }
 
-      if (displayMode === "probabilityDensity") {
-        this.stateLabelNode.string =
-          stringManager.stateLabelProbabilityStringProperty.value.replace(
-            "{{label}}",
-            label,
-          );
-      } else if (displayMode === "phaseColor") {
-        this.stateLabelNode.string =
-          stringManager.stateLabelWavefunctionStringProperty.value.replace(
-            "{{label}}",
-            label,
-          );
-      } else {
-        this.stateLabelNode.string = label;
-      }
+      // Format label using display strategy
+      this.stateLabelNode.string = this.displayStrategy.getStateLabel(label);
     } else {
       // Display single eigenstate label
       const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
@@ -768,25 +782,12 @@ export class WaveFunctionChartNode extends BaseChartNode {
         return;
       }
 
-      // Format: ψ₁, ψ₂, etc. (or |ψ₁|² for probability density)
+      // Format: ψ₁, ψ₂, etc. (display strategy handles mode-specific formatting)
       const stateNumber = selectedIndex + 1;
       const stateLabel = `ψ${this.toSubscript(stateNumber)}`;
 
-      if (displayMode === "probabilityDensity") {
-        this.stateLabelNode.string =
-          stringManager.stateLabelProbabilityStringProperty.value.replace(
-            "{{label}}",
-            stateLabel,
-          );
-      } else if (displayMode === "phaseColor") {
-        this.stateLabelNode.string =
-          stringManager.stateLabelWavefunctionStringProperty.value.replace(
-            "{{label}}",
-            stateLabel,
-          );
-      } else {
-        this.stateLabelNode.string = stateLabel;
-      }
+      // Format label using display strategy
+      this.stateLabelNode.string = this.displayStrategy.getStateLabel(stateLabel);
     }
   }
 
@@ -916,51 +917,25 @@ export class WaveFunctionChartNode extends BaseChartNode {
       return;
     }
 
-    const displayMode = this.getEffectiveDisplayMode();
+    // Create wavefunction data structure
+    const wavefunctionData: WavefunctionData = {
+      xGrid: boundStates.xGrid,
+      realPart: nmData.wavefunction.map((psi) => psi), // For single state, wavefunction is real
+      imagPart: nmData.wavefunction.map(() => 0), // Single eigenstate has no imaginary part at t=0
+      magnitude: nmData.wavefunction.map(Math.abs),
+      probabilityDensity: nmData.probabilityDensity,
+      maxMagnitude: Math.max(...nmData.wavefunction.map(Math.abs)),
+    };
 
-    let yMin = 0;
-    let yMax = 0;
-
-    if (displayMode === "probabilityDensity" || displayMode === "phaseColor") {
-      // For probability density, always start at 0 and find the max (in nm^-1)
-      yMax = Math.max(...nmData.probabilityDensity);
-      yMin = 0;
-    } else {
-      // For wave function, use symmetric range around zero (in nm^-1/2)
-      const maxAbs = Math.max(...nmData.wavefunction.map(Math.abs));
-      yMin = -maxAbs;
-      yMax = maxAbs;
-    }
-
-    // Add some padding (10%)
-    const padding = (yMax - yMin) * 0.1;
-    yMin -= padding;
-    yMax += padding;
-
-    // Ensure non-zero range
-    if (yMax - yMin < 0.01) {
-      yMin = -0.01;
-      yMax = 0.01;
-    }
-
-    // Safety check: if range values are too large (indicating a calculation error), use defaults
-    if (Math.abs(yMin) > 1000 || Math.abs(yMax) > 1000) {
-      console.warn(
-        "[WaveFunctionChartNode] Invalid range values detected!",
-        yMin,
-        yMax,
-        "Using defaults",
-      );
-      yMin = -1;
-      yMax = 1;
-    }
+    // Use display strategy to calculate Y range
+    const range = this.displayStrategy.calculateYRange(wavefunctionData);
 
     // Update properties
-    this.yMinProperty.value = yMin;
-    this.yMaxProperty.value = yMax;
+    this.yMinProperty.value = range.min;
+    this.yMaxProperty.value = range.max;
 
     // Update chart transform
-    this.chartTransform.setModelYRange(new Range(yMin, yMax));
+    this.chartTransform.setModelYRange(range);
   }
 
   /**
@@ -981,54 +956,28 @@ export class WaveFunctionChartNode extends BaseChartNode {
       return;
     }
 
-    // Calculate Y range based on display mode
-    const displayMode = this.getEffectiveDisplayMode();
-    let yMin = 0;
-    let yMax = 0;
+    // Create wavefunction data structure
+    const wavefunctionData: WavefunctionData = {
+      xGrid: boundStates.xGrid,
+      realPart: nmData.realPart,
+      imagPart: nmData.imagPart,
+      magnitude: nmData.realPart.map((re, i) => {
+        const im = nmData.imagPart[i];
+        return Math.sqrt(re * re + im * im);
+      }),
+      probabilityDensity: nmData.probabilityDensity,
+      maxMagnitude: nmData.maxMagnitude,
+    };
 
-    if (displayMode === "probabilityDensity" || displayMode === "phaseColor") {
-      // For probability density or phase color, find max of probability density (in nm^-1)
-      yMax = Math.max(...nmData.probabilityDensity);
-      yMin = 0;
-    } else {
-      // For wave function components, use symmetric range (in nm^-1/2)
-      const maxReal = Math.max(...nmData.realPart.map(Math.abs));
-      const maxImag = Math.max(...nmData.imagPart.map(Math.abs));
-      const maxMagnitude = nmData.maxMagnitude;
-      const maxAbs = Math.max(maxReal, maxImag, maxMagnitude);
-      yMin = -maxAbs;
-      yMax = maxAbs;
-    }
-
-    // Add some padding (10%)
-    const padding = (yMax - yMin) * 0.1;
-    yMin -= padding;
-    yMax += padding;
-
-    // Ensure non-zero range
-    if (yMax - yMin < 0.01) {
-      yMin = -0.01;
-      yMax = 0.01;
-    }
-
-    // Safety check: if range values are too large (indicating a calculation error), use defaults
-    if (Math.abs(yMin) > 1000 || Math.abs(yMax) > 1000) {
-      console.warn(
-        "[WaveFunctionChartNode] Invalid range values detected!",
-        yMin,
-        yMax,
-        "Using defaults",
-      );
-      yMin = -1;
-      yMax = 1;
-    }
+    // Use display strategy to calculate Y range
+    const range = this.displayStrategy.calculateYRange(wavefunctionData);
 
     // Update properties
-    this.yMinProperty.value = yMin;
-    this.yMaxProperty.value = yMax;
+    this.yMinProperty.value = range.min;
+    this.yMaxProperty.value = range.max;
 
     // Update chart transform
-    this.chartTransform.setModelYRange(new Range(yMin, yMax));
+    this.chartTransform.setModelYRange(range);
   }
 
   /**
@@ -1050,126 +999,67 @@ export class WaveFunctionChartNode extends BaseChartNode {
     }
 
     const xGrid = boundStates.xGrid;
-    const realPartNm = nmData.realPart;
-    const imagPartNm = nmData.imagPart;
-    const probabilityDensityNm = nmData.probabilityDensity;
 
+    // Create wavefunction data structure
+    const wavefunctionData: WavefunctionData = {
+      xGrid,
+      realPart: nmData.realPart,
+      imagPart: nmData.imagPart,
+      magnitude: nmData.realPart.map((re, i) => {
+        const im = nmData.imagPart[i];
+        return Math.sqrt(re * re + im * im);
+      }),
+      probabilityDensity: nmData.probabilityDensity,
+      maxMagnitude: nmData.maxMagnitude,
+    };
+
+    // Create render context
+    const renderContext: RenderContext = {
+      realPartPath: this.realPartPath,
+      imaginaryPartPath: this.imaginaryPartPath,
+      magnitudePath: this.magnitudePath,
+      probabilityDensityPath: this.probabilityDensityPath,
+      dataToViewX: this.dataToViewX.bind(this),
+      dataToViewY: this.dataToViewY.bind(this),
+      chartMargins: this.chartMargins,
+      yMinProperty: this.yMinProperty,
+      yMaxProperty: this.yMaxProperty,
+      showRealPart: this.viewState.showRealPartProperty.value,
+      showImaginaryPart: this.viewState.showImaginaryPartProperty.value,
+      showMagnitude: this.viewState.showMagnitudeProperty.value,
+    };
+
+    // Delegate rendering to display strategy
+    this.displayStrategy.render(wavefunctionData, renderContext);
+
+    // Create RMS indicator context
+    const rmsContext: RMSIndicatorContext = {
+      avgPositionIndicator: this.avgPositionIndicator,
+      rmsPositionIndicator: this.rmsPositionIndicator,
+      avgPositionLabel: this.avgPositionLabel,
+      rmsPositionLabel: this.rmsPositionLabel,
+      shouldShow: this.shouldShowRMSIndicators(),
+      dataToViewX: this.dataToViewX.bind(this),
+      dataToViewY: this.dataToViewY.bind(this),
+      yMaxValue: this.yMaxProperty.value,
+    };
+
+    // Delegate RMS indicator updates to display strategy
+    this.displayStrategy.updateRMSIndicators(wavefunctionData, rmsContext);
+
+    // Update zeros visualization if enabled and supported by display mode
     // Get SI units for zeros visualization (which still uses SI)
     const siData = this.model.getTimeEvolvedSuperposition(time);
-    const realPartSI = siData ? siData.realPart : realPartNm;
+    const realPartSI = siData ? siData.realPart : nmData.realPart;
 
-    // Display based on mode
-    const displayMode = this.getEffectiveDisplayMode();
-
-    if (displayMode === "probabilityDensity") {
-      // Plot probability density in nm^-1 units
-      this.plotProbabilityDensityFromArray(xGrid, probabilityDensityNm);
-
-      // Calculate and display average and RMS position
-      // Convert xGrid from meters to nanometers for calculations
-      const xGridNm = xGrid.map((x) => x * 1e9);
-      const { avg, rms } = calculateRMSStatistics(
-        xGridNm,
-        probabilityDensityNm,
-      );
-
-      // Only show indicators if showRMSIndicatorProperty is true
-      if (this.shouldShowRMSIndicators()) {
-        this.avgPositionLabel.string =
-          stringManager.averagePositionLabelStringProperty.value.replace(
-            "{{value}}",
-            avg.toFixed(2),
-          );
-        this.rmsPositionLabel.string =
-          stringManager.rmsPositionLabelStringProperty.value.replace(
-            "{{value}}",
-            rms.toFixed(2),
-          );
-
-        // Update average position indicator: vertical line at ⟨x⟩
-        const avgX = this.dataToViewX(avg);
-        const yTop = this.dataToViewY(this.yMaxProperty.value);
-        const yBottom = this.dataToViewY(this.yMinProperty.value);
-        this.avgPositionIndicator.setLine(avgX, yTop, avgX, yBottom);
-
-        // Update RMS indicator: horizontal double arrow from (avg - rms) to (avg + rms)
-        const leftX = avg - rms;
-        const rightX = avg + rms;
-        const x1 = this.dataToViewX(leftX);
-        const x2 = this.dataToViewX(rightX);
-        // Position the indicator at 80% of the visible range
-        const indicatorY = this.dataToViewY(this.yMaxProperty.value * 0.8);
-        this.rmsPositionIndicator.shape = createDoubleArrowShape(
-          x1,
-          x2,
-          indicatorY,
-        );
-      } else {
-        // Hide indicators when checkbox is unchecked
-        this.avgPositionLabel.string = "";
-        this.rmsPositionLabel.string = "";
-        this.avgPositionIndicator.setLine(0, 0, 0, 0);
-        this.rmsPositionIndicator.shape = null;
-      }
-
-      // Hide wavefunction components and phase color
-      this.realPartPath.visible = false;
-      this.imaginaryPartPath.visible = false;
-      this.magnitudePath.visible = false;
-      this.phaseColorVisualization.hide();
-
-      // Update zeros visualization if enabled (uses SI units)
-      if (this.viewState.showZerosProperty.value) {
-        // For superposition, show zeros of the real part
-        this.zerosVisualization.showProperty.value = true;
-        this.zerosVisualization.update(xGrid, realPartSI);
-      } else {
-        this.zerosVisualization.showProperty.value = false;
-      }
-    } else if (displayMode === "phaseColor") {
-      // Plot phase-colored superposition (uses nm units)
-      this.phaseColorVisualization.show();
-      this.phaseColorVisualization.plotSuperposition(
-        xGrid,
-        realPartNm,
-        imagPartNm,
-      );
-
-      // Hide other paths
-      this.probabilityDensityPath.shape = null;
-      this.realPartPath.visible = false;
-      this.imaginaryPartPath.visible = false;
-      this.magnitudePath.visible = false;
-
-      // Hide RMS position indicator and labels
-      this.avgPositionIndicator.setLine(0, 0, 0, 0);
-      this.rmsPositionIndicator.shape = null;
-      this.avgPositionLabel.string = "";
-      this.rmsPositionLabel.string = "";
-
-      // Hide zeros for phase color mode
-      this.zerosVisualization.showProperty.value = false;
+    if (
+      this.viewState.showZerosProperty.value &&
+      this.displayStrategy.shouldShowZeros()
+    ) {
+      this.zerosVisualization.showProperty.value = true;
+      this.zerosVisualization.update(xGrid, realPartSI);
     } else {
-      // waveFunction mode - show real, imaginary, and magnitude (in nm units)
-      this.plotSuperpositionComponents(xGrid, realPartNm, imagPartNm);
-
-      // Hide probability density and phase color
-      this.probabilityDensityPath.shape = null;
-      this.phaseColorVisualization.hide();
-
-      // Hide RMS position indicator and labels
-      this.avgPositionIndicator.setLine(0, 0, 0, 0);
-      this.rmsPositionIndicator.shape = null;
-      this.avgPositionLabel.string = "";
-      this.rmsPositionLabel.string = "";
-
-      // Update zeros visualization if enabled (uses SI units)
-      if (this.viewState.showZerosProperty.value) {
-        this.zerosVisualization.showProperty.value = true;
-        this.zerosVisualization.update(xGrid, realPartSI);
-      } else {
-        this.zerosVisualization.showProperty.value = false;
-      }
+      this.zerosVisualization.showProperty.value = false;
     }
   }
 
@@ -1208,293 +1098,80 @@ export class WaveFunctionChartNode extends BaseChartNode {
 
     const xGrid = boundStates.xGrid;
     const wavefunctionNm = nmData.wavefunction;
-    const probabilityDensityNm = nmData.probabilityDensity;
     const wavefunctionSI = boundStates.wavefunctions[selectedIndex];
-    const displayMode = this.getEffectiveDisplayMode();
 
-    if (displayMode === "probabilityDensity") {
-      // Plot probability density in nm^-1 units
-      this.plotProbabilityDensityFromArray(xGrid, probabilityDensityNm);
-
-      // Calculate and display average and RMS position
-      // Convert xGrid from meters to nanometers for calculations
-      const xGridNm = xGrid.map((x) => x * 1e9);
-      const { avg, rms } = calculateRMSStatistics(
-        xGridNm,
-        probabilityDensityNm,
-      );
-
-      // Only show indicators if showRMSIndicatorProperty is true
-      if (this.shouldShowRMSIndicators()) {
-        this.avgPositionLabel.string =
-          stringManager.averagePositionLabelStringProperty.value.replace(
-            "{{value}}",
-            avg.toFixed(2),
-          );
-        this.rmsPositionLabel.string =
-          stringManager.rmsPositionLabelStringProperty.value.replace(
-            "{{value}}",
-            rms.toFixed(2),
-          );
-
-        // Update average position indicator: vertical line at ⟨x⟩
-        const avgX = this.dataToViewX(avg);
-        const yTop = this.dataToViewY(this.yMaxProperty.value);
-        const yBottom = this.dataToViewY(this.yMinProperty.value);
-        this.avgPositionIndicator.setLine(avgX, yTop, avgX, yBottom);
-
-        // Update RMS indicator: horizontal double arrow from (avg - rms) to (avg + rms)
-        const leftX = avg - rms;
-        const rightX = avg + rms;
-        const x1 = this.dataToViewX(leftX);
-        const x2 = this.dataToViewX(rightX);
-        // Position the indicator at 80% of the visible range
-        const indicatorY = this.dataToViewY(this.yMaxProperty.value * 0.8);
-        this.rmsPositionIndicator.shape = createDoubleArrowShape(
-          x1,
-          x2,
-          indicatorY,
-        );
-      } else {
-        // Hide indicators when checkbox is unchecked
-        this.avgPositionLabel.string = "";
-        this.rmsPositionLabel.string = "";
-        this.avgPositionIndicator.setLine(0, 0, 0, 0);
-        this.rmsPositionIndicator.shape = null;
-      }
-
-      // Hide wavefunction component paths and phase color
-      this.realPartPath.visible = false;
-      this.imaginaryPartPath.visible = false;
-      this.magnitudePath.visible = false;
-      this.phaseColorVisualization.hide();
-
-      // Update zeros visualization if enabled (uses SI units)
-      if (this.viewState.showZerosProperty.value) {
-        this.zerosVisualization.showProperty.value = true;
-        this.zerosVisualization.update(xGrid, wavefunctionSI);
-      } else {
-        this.zerosVisualization.showProperty.value = false;
-      }
-    } else if (displayMode === "phaseColor") {
-      // Calculate global time evolution phase
-      const energy = boundStates.energies[selectedIndex];
-      const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
-      const globalPhase = -(energy * time) / QuantumConstants.HBAR;
-
-      // Plot phase-colored wavefunction (uses nm units)
-      this.phaseColorVisualization.show();
-      this.phaseColorVisualization.plotWavefunction(
-        xGrid,
-        wavefunctionNm,
-        globalPhase,
-      );
-
-      // Hide other paths
-      this.probabilityDensityPath.shape = null;
-      this.realPartPath.visible = false;
-      this.imaginaryPartPath.visible = false;
-      this.magnitudePath.visible = false;
-
-      // Hide RMS position indicator and labels
-      this.avgPositionIndicator.setLine(0, 0, 0, 0);
-      this.rmsPositionIndicator.shape = null;
-      this.avgPositionLabel.string = "";
-      this.rmsPositionLabel.string = "";
-
-      // Hide zeros for phase color mode
-      this.zerosVisualization.showProperty.value = false;
-    } else {
-      // waveFunction mode - show real part, imaginary part, and magnitude (in nm units)
-      this.plotWaveFunctionComponents(xGrid, wavefunctionNm);
-
-      // Hide probability density and phase color
-      this.probabilityDensityPath.shape = null;
-      this.phaseColorVisualization.hide();
-
-      // Hide RMS position indicator and labels
-      this.avgPositionIndicator.setLine(0, 0, 0, 0);
-      this.rmsPositionIndicator.shape = null;
-      this.avgPositionLabel.string = "";
-      this.rmsPositionLabel.string = "";
-
-      // Update zeros visualization if enabled (uses SI units)
-      if (this.viewState.showZerosProperty.value) {
-        this.zerosVisualization.showProperty.value = true;
-        this.zerosVisualization.update(xGrid, wavefunctionSI);
-      } else {
-        this.zerosVisualization.showProperty.value = false;
-      }
-    }
-  }
-
-  /**
-   * Plots the wave function components (real, imaginary, magnitude) for waveFunction display mode.
-   */
-  private plotWaveFunctionComponents(
-    xGrid: number[],
-    wavefunction: number[],
-  ): void {
-    const energy =
-      this.model.getBoundStates()!.energies[
-        this.model.selectedEnergyLevelIndexProperty.value
-      ];
+    // Calculate time evolution phase for single eigenstates
+    const energy = boundStates.energies[selectedIndex];
     const time = this.model.timeProperty.value * 1e-15; // Convert fs to seconds
-
-    // Calculate time evolution phase for the eigenstate: -E_n*t/ℏ
     const globalPhase = -(energy * time) / QuantumConstants.HBAR;
 
-    // Apply time evolution to get real and imaginary parts
-    const realPart = wavefunction.map((psi) => psi * Math.cos(globalPhase));
-    const imagPart = wavefunction.map((psi) => -psi * Math.sin(globalPhase));
+    // Apply time evolution to get real and imaginary parts (for wavefunction mode)
+    const realPart = wavefunctionNm.map((psi) => psi * Math.cos(globalPhase));
+    const imagPart = wavefunctionNm.map((psi) => -psi * Math.sin(globalPhase));
 
-    // Build points for each component
-    const realPoints: { x: number; y: number }[] = [];
-    const imagPoints: { x: number; y: number }[] = [];
-    const magnitudePoints: { x: number; y: number }[] = [];
+    // Create wavefunction data structure
+    const wavefunctionData: WavefunctionData = {
+      xGrid,
+      realPart,
+      imagPart,
+      magnitude: wavefunctionNm.map(Math.abs),
+      probabilityDensity: nmData.probabilityDensity,
+      maxMagnitude: Math.max(...wavefunctionNm.map(Math.abs)),
+    };
 
-    for (let i = 0; i < xGrid.length; i++) {
-      const x = this.dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
+    // Create render context
+    const renderContext: RenderContext = {
+      realPartPath: this.realPartPath,
+      imaginaryPartPath: this.imaginaryPartPath,
+      magnitudePath: this.magnitudePath,
+      probabilityDensityPath: this.probabilityDensityPath,
+      dataToViewX: this.dataToViewX.bind(this),
+      dataToViewY: this.dataToViewY.bind(this),
+      chartMargins: this.chartMargins,
+      yMinProperty: this.yMinProperty,
+      yMaxProperty: this.yMaxProperty,
+      showRealPart: this.viewState.showRealPartProperty.value,
+      showImaginaryPart: this.viewState.showImaginaryPartProperty.value,
+      showMagnitude: this.viewState.showMagnitudeProperty.value,
+    };
 
-      realPoints.push({ x, y: this.dataToViewY(realPart[i]) });
-      imagPoints.push({ x, y: this.dataToViewY(imagPart[i]) });
-      magnitudePoints.push({ x, y: this.dataToViewY(wavefunction[i]) });
-    }
-
-    // Plot real part
-    const realShape = new Shape();
-    if (realPoints.length > 0) {
-      realShape.moveTo(realPoints[0].x, realPoints[0].y);
-      for (let i = 1; i < realPoints.length; i++) {
-        realShape.lineTo(realPoints[i].x, realPoints[i].y);
-      }
-    }
-    this.realPartPath.shape = realShape;
-    this.realPartPath.visible = this.viewState.showRealPartProperty.value;
-
-    // Plot imaginary part
-    const imagShape = new Shape();
-    if (imagPoints.length > 0) {
-      imagShape.moveTo(imagPoints[0].x, imagPoints[0].y);
-      for (let i = 1; i < imagPoints.length; i++) {
-        imagShape.lineTo(imagPoints[i].x, imagPoints[i].y);
-      }
-    }
-    this.imaginaryPartPath.shape = imagShape;
-    this.imaginaryPartPath.visible =
-      this.viewState.showImaginaryPartProperty.value;
-
-    // Plot magnitude
-    const magnitudeShape = new Shape();
-    if (magnitudePoints.length > 0) {
-      magnitudeShape.moveTo(magnitudePoints[0].x, magnitudePoints[0].y);
-      for (let i = 1; i < magnitudePoints.length; i++) {
-        magnitudeShape.lineTo(magnitudePoints[i].x, magnitudePoints[i].y);
-      }
-    }
-    this.magnitudePath.shape = magnitudeShape;
-    this.magnitudePath.visible = this.viewState.showMagnitudeProperty.value;
-  }
-
-  /**
-   * Plots probability density from a pre-calculated array.
-   */
-  private plotProbabilityDensityFromArray(
-    xGrid: number[],
-    probabilityDensity: number[],
-  ): void {
-    const shape = new Shape();
-
-    // Build points array
-    const points: { x: number; y: number }[] = [];
-    for (let i = 0; i < xGrid.length; i++) {
-      const x = this.dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
-      const y = this.dataToViewY(probabilityDensity[i]);
-      points.push({ x, y });
-    }
-
-    if (points.length === 0) {
-      this.probabilityDensityPath.shape = null;
-      return;
-    }
-
-    // Create filled area under the curve
-    const y0 = this.dataToViewY(0); // baseline
-
-    // Start at bottom-left
-    shape.moveTo(points[0].x, y0);
-    shape.lineTo(points[0].x, points[0].y);
-
-    // Trace the curve
-    for (let i = 0; i < points.length - 1; i++) {
-      shape.lineTo(points[i].x, points[i].y);
-    }
-
-    // Close the shape back to baseline
-    shape.lineTo(points[points.length - 1].x, points[points.length - 1].y);
-    shape.lineTo(points[points.length - 1].x, y0);
-    shape.close();
-
-    this.probabilityDensityPath.shape = shape;
-  }
-
-  /**
-   * Plots superposition components (real, imaginary, magnitude).
-   */
-  private plotSuperpositionComponents(
-    xGrid: number[],
-    realPart: number[],
-    imagPart: number[],
-  ): void {
-    // Build points for each component
-    const realPoints: { x: number; y: number }[] = [];
-    const imagPoints: { x: number; y: number }[] = [];
-    const magnitudePoints: { x: number; y: number }[] = [];
-
-    for (let i = 0; i < xGrid.length; i++) {
-      const x = this.dataToViewX(xGrid[i] * QuantumConstants.M_TO_NM);
-      const magnitude = Math.sqrt(
-        realPart[i] * realPart[i] + imagPart[i] * imagPart[i],
+    // Delegate rendering to display strategy
+    // Phase color mode needs special handling for single eigenstate with global phase
+    if (this.displayStrategy instanceof PhaseColorDisplayStrategy) {
+      this.displayStrategy.renderSingleState(
+        wavefunctionData,
+        renderContext,
+        globalPhase,
       );
-
-      realPoints.push({ x, y: this.dataToViewY(realPart[i]) });
-      imagPoints.push({ x, y: this.dataToViewY(imagPart[i]) });
-      magnitudePoints.push({ x, y: this.dataToViewY(magnitude) });
+    } else {
+      this.displayStrategy.render(wavefunctionData, renderContext);
     }
 
-    // Plot real part
-    const realShape = new Shape();
-    if (realPoints.length > 0) {
-      realShape.moveTo(realPoints[0].x, realPoints[0].y);
-      for (let i = 1; i < realPoints.length; i++) {
-        realShape.lineTo(realPoints[i].x, realPoints[i].y);
-      }
-    }
-    this.realPartPath.shape = realShape;
-    this.realPartPath.visible = this.viewState.showRealPartProperty.value;
+    // Create RMS indicator context
+    const rmsContext: RMSIndicatorContext = {
+      avgPositionIndicator: this.avgPositionIndicator,
+      rmsPositionIndicator: this.rmsPositionIndicator,
+      avgPositionLabel: this.avgPositionLabel,
+      rmsPositionLabel: this.rmsPositionLabel,
+      shouldShow: this.shouldShowRMSIndicators(),
+      dataToViewX: this.dataToViewX.bind(this),
+      dataToViewY: this.dataToViewY.bind(this),
+      yMaxValue: this.yMaxProperty.value,
+    };
 
-    // Plot imaginary part
-    const imagShape = new Shape();
-    if (imagPoints.length > 0) {
-      imagShape.moveTo(imagPoints[0].x, imagPoints[0].y);
-      for (let i = 1; i < imagPoints.length; i++) {
-        imagShape.lineTo(imagPoints[i].x, imagPoints[i].y);
-      }
-    }
-    this.imaginaryPartPath.shape = imagShape;
-    this.imaginaryPartPath.visible =
-      this.viewState.showImaginaryPartProperty.value;
+    // Delegate RMS indicator updates to display strategy
+    this.displayStrategy.updateRMSIndicators(wavefunctionData, rmsContext);
 
-    // Plot magnitude
-    const magnitudeShape = new Shape();
-    if (magnitudePoints.length > 0) {
-      magnitudeShape.moveTo(magnitudePoints[0].x, magnitudePoints[0].y);
-      for (let i = 1; i < magnitudePoints.length; i++) {
-        magnitudeShape.lineTo(magnitudePoints[i].x, magnitudePoints[i].y);
-      }
+    // Update zeros visualization if enabled and supported by display mode
+    if (
+      this.viewState.showZerosProperty.value &&
+      this.displayStrategy.shouldShowZeros()
+    ) {
+      this.zerosVisualization.showProperty.value = true;
+      this.zerosVisualization.update(xGrid, wavefunctionSI);
+    } else {
+      this.zerosVisualization.showProperty.value = false;
     }
-    this.magnitudePath.shape = magnitudeShape;
-    this.magnitudePath.visible = this.viewState.showMagnitudeProperty.value;
   }
 
   /**
