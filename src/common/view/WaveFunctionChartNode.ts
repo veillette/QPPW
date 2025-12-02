@@ -5,12 +5,10 @@
 
 import { Node, Line, Path, Text, VBox } from "scenerystack/scenery";
 import { Shape } from "scenerystack/kite";
-import { NumberProperty, DerivedProperty } from "scenerystack/axon";
+import { DerivedProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { Orientation } from "scenerystack/phet-core";
 import {
-  ChartTransform,
-  ChartRectangle,
   AxisLine,
   TickMarkSet,
   TickLabelSet,
@@ -35,46 +33,25 @@ import { DerivativeTool } from "./chart-tools/DerivativeTool.js";
 import { ZerosVisualization } from "./chart-tools/ZerosVisualization.js";
 import { PhaseColorVisualization } from "./chart-tools/PhaseColorVisualization.js";
 import { ClassicalProbabilityOverlay } from "./chart-tools/ClassicalProbabilityOverlay.js";
+import { ChartToolRegistry } from "./chart-tools/ChartToolRegistry.js";
 import stringManager from "../../i18n/StringManager.js";
 import {
   createDoubleArrowShape,
   calculateRMSStatistics,
 } from "./RMSIndicatorUtils.js";
+import { BaseChartNode, ChartOptions } from "./BaseChartNode.js";
 
 // Chart axis range constant (shared with EnergyChartNode)
 const X_AXIS_RANGE_NM = 4; // X-axis extends from -X_AXIS_RANGE_NM to +X_AXIS_RANGE_NM
 
-export class WaveFunctionChartNode extends Node {
-  private readonly model: ScreenModel;
-  private readonly viewState: ScreenViewState;
-  private readonly chartWidth: number;
-  private readonly chartHeight: number;
-  private readonly chartMargins = { left: 60, right: 20, top: 10, bottom: 40 };
-
-  // Chart bounds in view coordinates
-  private readonly plotWidth: number;
-  private readonly plotHeight: number;
-
-  // ChartTransform for model-to-view coordinate conversion
-  private readonly chartTransform: ChartTransform;
-
-  // View range properties (synchronized with EnergyChartNode X-axis)
-  private readonly xMinProperty: NumberProperty;
-  private readonly xMaxProperty: NumberProperty;
-  private readonly yMinProperty: NumberProperty;
-  private readonly yMaxProperty: NumberProperty;
-
-  // Visual elements
-  private readonly backgroundRect: ChartRectangle;
-  private readonly plotContentNode: Node; // Clipped container for plot content
+export class WaveFunctionChartNode extends BaseChartNode {
+  // Visual elements specific to wavefunction chart
   private readonly realPartPath: Path;
   private readonly imaginaryPartPath: Path;
   private readonly magnitudePath: Path;
   private readonly probabilityDensityPath: Path;
-  private readonly zeroLine: Line;
   private readonly avgPositionIndicator: Line; // Vertical line indicator for average position
   private readonly rmsPositionIndicator: Path; // Double arrow indicator for RMS position
-  private readonly axesNode: Node;
   private yAxisLabel!: Text;
   private readonly stateLabelNode: Text; // Label showing which wavefunction is displayed
   private readonly avgPositionLabel: Text;
@@ -87,6 +64,9 @@ export class WaveFunctionChartNode extends Node {
   private readonly zerosVisualization: ZerosVisualization;
   private readonly phaseColorVisualization: PhaseColorVisualization;
   private readonly classicalProbabilityOverlay: ClassicalProbabilityOverlay;
+
+  // Tool registry for centralized management
+  private readonly toolRegistry: ChartToolRegistry;
 
   // Guard flag to prevent reentry during updates
   private isUpdating: boolean = false;
@@ -122,16 +102,23 @@ export class WaveFunctionChartNode extends Node {
       showToolCheckboxes?: boolean; // Whether to show curvature/derivative checkboxes (intro screen only)
     },
   ) {
-    super({
-      // PDOM - make wavefunction chart accessible
-      tagName: "div",
-      labelTagName: "h3",
-      labelContent: "Wavefunction Visualization",
-      descriptionTagName: "p",
-    });
+    // Call BaseChartNode constructor with chart options
+    const chartOptions: ChartOptions = {
+      width: options?.width ?? 600,
+      height: options?.height ?? 140,
+      margins: { left: 60, right: 20, top: 10, bottom: 40 },
+      xRange: { min: -X_AXIS_RANGE_NM, max: X_AXIS_RANGE_NM },
+      yRange: { min: -1, max: 1 },
+      showZeroLine: true,
+    };
 
-    this.model = model;
-    this.viewState = viewState;
+    super(model, viewState, chartOptions);
+
+    // PDOM - make wavefunction chart accessible
+    this.tagName = "div";
+    this.labelTagName = "h3";
+    this.labelContent = "Wavefunction Visualization";
+    this.descriptionTagName = "p";
 
     // Set up accessible description after this.model is initialized
     this.descriptionContent = new DerivedProperty(
@@ -152,61 +139,12 @@ export class WaveFunctionChartNode extends Node {
         );
       },
     );
-    this.chartWidth = options?.width ?? 600;
-    this.chartHeight = options?.height ?? 140;
+
     this.fixedDisplayMode = options?.fixedDisplayMode;
-
-    this.plotWidth =
-      this.chartWidth - this.chartMargins.left - this.chartMargins.right;
-    this.plotHeight =
-      this.chartHeight - this.chartMargins.top - this.chartMargins.bottom;
-
-    // Initialize view range (x-axis is fixed, y-axis will be updated based on data)
-    this.xMinProperty = new NumberProperty(-X_AXIS_RANGE_NM);
-    this.xMaxProperty = new NumberProperty(X_AXIS_RANGE_NM);
-    this.yMinProperty = new NumberProperty(-1);
-    this.yMaxProperty = new NumberProperty(1);
-
-    // Create ChartTransform for model-to-view coordinate conversion
-    this.chartTransform = new ChartTransform({
-      viewWidth: this.plotWidth,
-      viewHeight: this.plotHeight,
-      modelXRange: new Range(this.xMinProperty.value, this.xMaxProperty.value),
-      modelYRange: new Range(this.yMinProperty.value, this.yMaxProperty.value),
-    });
-
-    // Create background using ChartRectangle
-    this.backgroundRect = new ChartRectangle(this.chartTransform, {
-      fill: QPPWColors.backgroundColorProperty,
-      stroke: null, // Remove border to avoid line appearing below energy chart
-      lineWidth: 1,
-    });
-    this.backgroundRect.x = this.chartMargins.left;
-    this.backgroundRect.y = this.chartMargins.top;
-    this.addChild(this.backgroundRect);
 
     // Create axes
     this.axesNode = this.createAxes();
     this.addChild(this.axesNode);
-
-    // Create a clipped content node for all plot elements
-    this.plotContentNode = new Node({
-      clipArea: Shape.rectangle(
-        this.chartMargins.left,
-        this.chartMargins.top,
-        this.plotWidth,
-        this.plotHeight,
-      ),
-    });
-    this.addChild(this.plotContentNode);
-
-    // Create zero line
-    this.zeroLine = new Line(0, 0, 0, 0, {
-      stroke: QPPWColors.gridLineProperty,
-      lineWidth: 1,
-      lineDash: [5, 5],
-    });
-    this.plotContentNode.addChild(this.zeroLine);
 
     // Create wave function paths
     this.realPartPath = new Path(null, {
@@ -313,6 +251,12 @@ export class WaveFunctionChartNode extends Node {
       toolOptions,
     );
     this.plotContentNode.addChild(this.derivativeTool);
+
+    // Initialize tool registry and register all tools
+    this.toolRegistry = new ChartToolRegistry();
+    this.toolRegistry.registerTool("area", this.areaMeasurementTool);
+    this.toolRegistry.registerTool("curvature", this.curvatureTool);
+    this.toolRegistry.registerTool("derivative", this.derivativeTool);
 
     // Create state label in upper right corner (outside clipped area)
     this.stateLabelNode = new Text("", {
@@ -665,18 +609,17 @@ export class WaveFunctionChartNode extends Node {
       });
     }
 
-    // Link tool updates to model changes
+    // Link tool updates to model changes using the tool registry
     const updateTools = () => {
       const displayMode = this.getEffectiveDisplayMode();
-      if (this.areaMeasurementTool.showProperty.value) {
-        this.areaMeasurementTool.update(displayMode);
-      }
-      if (this.curvatureTool.showProperty.value) {
-        this.curvatureTool.update(displayMode);
-      }
-      if (this.derivativeTool.showProperty.value) {
-        this.derivativeTool.update(displayMode);
-      }
+      const boundStates = this.model.getBoundStates();
+      const selectedIndex = this.model.selectedEnergyLevelIndexProperty.value;
+
+      this.toolRegistry.updateAllTools({
+        displayMode,
+        boundStates,
+        selectedIndex,
+      });
     };
 
     // Update tools when display mode changes
@@ -1585,26 +1528,5 @@ export class WaveFunctionChartNode extends Node {
       this.updateWaveFunction(boundStates, selectedIndex);
     }
     // For probability density mode with single eigenstates, nothing changes with time
-  }
-
-  /**
-   * Coordinate transformation: data (nm) to view (pixels).
-   */
-  private dataToViewX(x: number): number {
-    return this.chartMargins.left + this.chartTransform.modelToViewX(x);
-  }
-
-  /**
-   * Coordinate transformation: data value to view (pixels).
-   */
-  private dataToViewY(y: number): number {
-    return this.chartMargins.top + this.chartTransform.modelToViewY(y);
-  }
-
-  /**
-   * Coordinate transformation: view (pixels) to data (nm).
-   */
-  private viewToDataX(x: number): number {
-    return this.chartTransform.viewToModelX(x - this.chartMargins.left);
   }
 }
