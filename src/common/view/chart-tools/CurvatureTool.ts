@@ -52,7 +52,6 @@ export class CurvatureTool extends Node {
 
   private readonly container: Node;
   private readonly marker: Line;
-  private readonly markerHandle: Circle;
   private readonly positionCircle: Circle; // Circle tracking wavefunction position
   private readonly parabola: Path;
   private readonly label: Text;
@@ -104,15 +103,6 @@ export class CurvatureTool extends Node {
       lineWidth: 2,
       lineDash: [4, 3],
       cursor: "ew-resize", // Make it clear the line is draggable
-    });
-    this.container.addChild(this.marker);
-
-    // Create marker handle (draggable circle) - made invisible but still functional
-    this.markerHandle = new Circle(8, {
-      fill: "transparent",
-      stroke: "transparent",
-      lineWidth: 2,
-      cursor: "ew-resize",
 
       // pdom - keyboard accessible marker
       tagName: "div",
@@ -138,12 +128,12 @@ export class CurvatureTool extends Node {
         "Page Up/Down for large steps. " +
         "Shows second derivative (curvature) at selected position.",
     });
-    this.container.addChild(this.markerHandle);
+    this.container.addChild(this.marker);
 
     // Update aria-valuetext when position changes
     this.markerXProperty.link((position) => {
-      this.markerHandle.setPDOMAttribute("aria-valuenow", position.toFixed(2));
-      this.markerHandle.setPDOMAttribute(
+      this.marker.setPDOMAttribute("aria-valuenow", position.toFixed(2));
+      this.marker.setPDOMAttribute(
         "aria-valuetext",
         `Position: ${position.toFixed(2)} nanometers`,
       );
@@ -246,8 +236,7 @@ export class CurvatureTool extends Node {
       },
     });
 
-    this.markerHandle.addInputListener(dragListener);
-    this.marker.addInputListener(dragListener); // Make the vertical line draggable too
+    this.marker.addInputListener(dragListener);
 
     // Keyboard drag listener
     const keyboardDragListener = new KeyboardDragListener({
@@ -275,7 +264,7 @@ export class CurvatureTool extends Node {
       },
     });
 
-    this.markerHandle.addInputListener(keyboardDragListener);
+    this.marker.addInputListener(keyboardDragListener);
   }
 
   /**
@@ -294,10 +283,6 @@ export class CurvatureTool extends Node {
 
     // Update marker line
     this.marker.setLine(viewX, yTop, viewX, yBottom);
-
-    // Update marker handle
-    this.markerHandle.centerX = viewX;
-    this.markerHandle.centerY = yTop + 20;
 
     // Calculate and display derivatives
     const derivatives = this.calculateDerivatives(x, displayMode);
