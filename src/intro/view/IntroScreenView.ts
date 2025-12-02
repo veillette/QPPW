@@ -171,6 +171,10 @@ export class IntroScreenView extends BaseScreenView {
   public override reset(): void {
     super.reset();
     this.viewState.reset();
+
+    // Update IntroScreen-specific charts to reflect reset model state
+    this.probabilityChart.update();
+    this.wavenumberChart.update();
   }
 
   /**
