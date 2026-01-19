@@ -57,7 +57,7 @@
     "globals": "^16.5.0",
     "prettier": "^3.7.4",
     "rollup-plugin-visualizer": "^6.0.5",
-    "terser": "^5.44.1",
+    "terser": "^5.46.0",
     "tsx": "^4.21.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.50.1",
