@@ -194,7 +194,7 @@ export class IntroModel extends BaseModel {
       this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
 
     // Calculate number of states based on potential type and energy range
-    let numStates = IntroModel.DEFAULT_NUM_STATES; // Default for most potentials
+    let numStates: number;
 
     // For harmonic oscillator, calculate states up to MAX_ENERGY_EV
     if (
@@ -525,7 +525,7 @@ export class IntroModel extends BaseModel {
       const psi = wavefunction[i];
       const probabilityDensity = psi * psi;
 
-      let dx = 0;
+      let dx: number;
       if (i === 0) {
         dx =
           ((xGrid[1] - xGrid[0]) / IntroModel.HALF_DIVISOR) *
@@ -564,7 +564,7 @@ export class IntroModel extends BaseModel {
 
     for (let i = 0; i < xGrid.length; i++) {
       const x = xGrid[i];
-      let V = 0;
+      let V: number;
 
       switch (this.potentialTypeProperty.value) {
         case PotentialType.INFINITE_WELL:

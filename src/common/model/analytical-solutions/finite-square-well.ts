@@ -696,7 +696,7 @@ export class FiniteSquareWellSolution extends AnalyticalSolution {
     const xi0 =
       ((this.wellWidth / 2) * Math.sqrt(2 * this.mass * this.wellDepth)) / HBAR;
 
-    let xi: number | null = null;
+    let xi: number | null;
     if (parity === "even") {
       xi = findEvenParityState(xi0, Math.floor(stateIndex / 2));
     } else {
@@ -739,7 +739,7 @@ export class FiniteSquareWellSolution extends AnalyticalSolution {
     const xi0 =
       ((this.wellWidth / 2) * Math.sqrt(2 * this.mass * this.wellDepth)) / HBAR;
 
-    let xi: number | null = null;
+    let xi: number | null;
     if (parity === "even") {
       xi = findEvenParityState(xi0, Math.floor(stateIndex / 2));
     } else {
@@ -779,7 +779,7 @@ export class FiniteSquareWellSolution extends AnalyticalSolution {
     const xi0 =
       ((this.wellWidth / 2) * Math.sqrt(2 * this.mass * this.wellDepth)) / HBAR;
 
-    let xi: number | null = null;
+    let xi: number | null;
     if (parity === "even") {
       xi = findEvenParityState(xi0, Math.floor(stateIndex / 2));
     } else {
@@ -907,7 +907,7 @@ export function solveFiniteSquareWell(
   let oddCount = 0;
 
   for (let n = 0; n < actualNumStates; n++) {
-    let xi: number | null = null;
+    let xi: number | null;
     let parity: "even" | "odd";
 
     // Alternate between even (n=0,2,4,...) and odd (n=1,3,5,...)

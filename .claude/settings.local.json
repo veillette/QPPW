@@ -47,7 +47,8 @@
       "Bash(npm --version:*)",
       "Bash(npm audit:*)",
       "Bash(GITHUB_PAGES=true npm run build)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(gh run *)"
     ],
     "deny": [],
     "ask": []

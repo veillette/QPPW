@@ -774,7 +774,7 @@ export class WaveFunctionChartNode extends Node {
 
     if (isSuperposition) {
       // Display superposition label
-      let label = "";
+      let label: string;
       switch (superpositionType) {
         case SuperpositionType.PSI_I_PSI_J:
           label = "ψ₀+ψ₁";
@@ -975,8 +975,8 @@ export class WaveFunctionChartNode extends Node {
 
     const displayMode = this.getEffectiveDisplayMode();
 
-    let yMin = 0;
-    let yMax = 0;
+    let yMin: number;
+    let yMax: number;
 
     if (displayMode === "probabilityDensity" || displayMode === "phaseColor") {
       // For probability density, always start at 0 and find the max (in nm^-1)
@@ -1040,8 +1040,8 @@ export class WaveFunctionChartNode extends Node {
 
     // Calculate Y range based on display mode
     const displayMode = this.getEffectiveDisplayMode();
-    let yMin = 0;
-    let yMax = 0;
+    let yMin: number;
+    let yMax: number;
 
     if (displayMode === "probabilityDensity" || displayMode === "phaseColor") {
       // For probability density or phase color, find max of probability density (in nm^-1)

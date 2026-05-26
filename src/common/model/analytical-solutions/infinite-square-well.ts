@@ -421,7 +421,7 @@ export function calculateInfiniteWellFourierTransform(
       // Normalization for Fourier transform
       const normFT = 1 / Math.sqrt(2 * Math.PI * HBAR);
 
-      let magnitude = 0;
+      let magnitude: number;
 
       if (Math.abs(p) < 1e-30) {
         // Special case: p ≈ 0

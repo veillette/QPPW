@@ -866,7 +866,7 @@ export class QuantumBoundStateSolver {
     numerovFactor: number,
     matchPoint: number,
   ): { nodes: number; logDerivative: number; psiAtMatch: number } {
-    let psi_prev = BOUNDARY_PSI_INITIAL;
+    let psi_prev: number;
     let psi_current = BOUNDARY_PSI_INITIAL;
     let psi_next = BOUNDARY_PSI_DERIVATIVE;
 
@@ -895,7 +895,6 @@ export class QuantumBoundStateSolver {
       // Periodic renormalization to prevent overflow
       if (Math.abs(psi_next) > RENORM_THRESHOLD) {
         const norm = Math.abs(psi_next);
-        psi_prev /= norm;
         psi_current /= norm;
         psi_next /= norm;
         scaleFactor *= norm;
@@ -966,7 +965,6 @@ export class QuantumBoundStateSolver {
       // Periodic renormalization to prevent overflow
       if (Math.abs(psi_next) > RENORM_THRESHOLD) {
         const norm = Math.abs(psi_next);
-        psi_prev /= norm;
         psi_current /= norm;
         psi_next /= norm;
         scaleFactor *= norm;

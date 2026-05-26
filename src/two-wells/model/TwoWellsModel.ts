@@ -476,7 +476,7 @@ export class TwoWellsModel extends BaseModel {
 
     for (let i = 0; i < xGrid.length; i++) {
       const x = xGrid[i];
-      let V = 0;
+      let V: number;
 
       switch (this.potentialTypeProperty.value) {
         case PotentialType.INFINITE_WELL:

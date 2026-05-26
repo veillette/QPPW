@@ -485,7 +485,7 @@ export class OneWellModel extends BaseModel {
       const probabilityDensity = psi * psi;
 
       // Calculate dx for integration (using trapezoidal rule)
-      let dx = 0;
+      let dx: number;
       if (i === 0) {
         dx =
           ((xGrid[1] - xGrid[0]) / OneWellModel.HALF_DIVISOR) *
@@ -528,7 +528,7 @@ export class OneWellModel extends BaseModel {
       this.particleMassProperty.value * QuantumConstants.ELECTRON_MASS;
 
     // Calculate number of states based on potential type and energy range
-    let numStates = OneWellModel.DEFAULT_NUM_STATES; // Default for most potentials
+    let numStates: number;
 
     // For harmonic oscillator, calculate states up to MAX_ENERGY_EV
     if (
@@ -860,7 +860,7 @@ export class OneWellModel extends BaseModel {
 
     for (let i = 0; i < xGrid.length; i++) {
       const x = xGrid[i];
-      let V = 0;
+      let V: number;
 
       switch (this.potentialTypeProperty.value) {
         case PotentialType.MORSE: {
