@@ -95,9 +95,7 @@ export class WaveFunctionChartNode extends Node {
 
   // Optional fixed display mode (overrides model's display mode)
   private readonly fixedDisplayMode?:
-    | "probabilityDensity"
-    | "waveFunction"
-    | "phaseColor";
+    "probabilityDensity" | "waveFunction" | "phaseColor";
 
   // Public getters for tool show properties (for control panels)
   public get showAreaToolProperty() {

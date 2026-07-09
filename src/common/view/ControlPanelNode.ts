@@ -61,9 +61,7 @@ type ResolvedControlPanelNodeOptions = {
 export class ControlPanelNode extends Node {
   private readonly model: OneWellModel | TwoWellsModel | ManyWellsModel;
   private readonly viewState:
-    | OneWellViewState
-    | TwoWellsViewState
-    | ManyWellsViewState;
+    OneWellViewState | TwoWellsViewState | ManyWellsViewState;
   private readonly options: ResolvedControlPanelNodeOptions;
 
   public constructor(

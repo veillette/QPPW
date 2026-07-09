@@ -13,7 +13,4 @@ import type { ManyWellsViewState } from "../../many-wells/view/ManyWellsViewStat
  * Use this type for components that need to work with multiple screen view states.
  */
 export type ScreenViewState =
-  | IntroViewState
-  | OneWellViewState
-  | TwoWellsViewState
-  | ManyWellsViewState;
+  IntroViewState | OneWellViewState | TwoWellsViewState | ManyWellsViewState;

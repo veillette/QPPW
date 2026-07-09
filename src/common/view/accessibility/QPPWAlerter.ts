@@ -23,10 +23,7 @@ import { SuperpositionType } from "../../model/SuperpositionType.js";
 
 export class QPPWAlerter {
   private readonly model:
-    | BaseModel
-    | OneWellModel
-    | TwoWellsModel
-    | ManyWellsModel;
+    BaseModel | OneWellModel | TwoWellsModel | ManyWellsModel;
   private debouncedAlertTimer: number | null = null;
 
   public constructor(

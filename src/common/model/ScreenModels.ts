@@ -13,7 +13,4 @@ import type { ManyWellsModel } from "../../many-wells/model/ManyWellsModel.js";
  * Use this type for components that need to work with multiple screen models.
  */
 export type ScreenModel =
-  | IntroModel
-  | OneWellModel
-  | TwoWellsModel
-  | ManyWellsModel;
+  IntroModel | OneWellModel | TwoWellsModel | ManyWellsModel;

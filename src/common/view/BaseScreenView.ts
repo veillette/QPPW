@@ -56,10 +56,7 @@ export type ScreenSummaryOptions = {
 export abstract class BaseScreenView extends ScreenView {
   protected readonly resetButton: ResetAllButton;
   protected readonly model:
-    | BaseModel
-    | OneWellModel
-    | TwoWellsModel
-    | ManyWellsModel;
+    BaseModel | OneWellModel | TwoWellsModel | ManyWellsModel;
 
   // Common components (may be undefined for screens that don't use them)
   protected energyChart?: EnergyChartNode;

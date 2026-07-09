@@ -523,8 +523,7 @@ try {
   let derivErrors = 0;
   for (let i = 0; i < result.energies.length; i++) {
     const parity = detectParity(result.xGrid, result.wavefunctions[i]) as
-      | "even"
-      | "odd";
+      "even" | "odd";
     const derivError = checkDerivativeContinuity(
       result.energies[i] * EV_TO_JOULES,
       parity,
